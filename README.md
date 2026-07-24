@@ -92,9 +92,9 @@ Every one of these is documented on the argument that causes it, and pinned by a
 
 ## Documentation
 
-- [`docs/name-parity.md`](docs/name-parity.md) — every function, parameter and column checked
+- [`docs/name-parity.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/name-parity.md) — every function, parameter and column checked
   mechanically against pyMzLib and against the wire. Generated, not written.
-- [`docs/test-parity.md`](docs/test-parity.md) — what the suite covers against the parent's, what
+- [`docs/test-parity.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/test-parity.md) — what the suite covers against the parent's, what
   R's semantics made unnecessary, and what is deliberately not run.
 
 `?pride_list_files`, `?peptidoform_fragments`, `?flashlfq_quantify` and `?readers_identify` carry
@@ -114,4 +114,4 @@ broken. See mzLib
 ## Licence
 
 LGPL-3.0-or-later, matching mzLib, which this package redistributes in compiled form. See
-[`LICENSE.note`](LICENSE.note).
+[`LICENSE.note`](https://github.com/smith-chem-wisc/mzLibR/blob/main/LICENSE.note).
