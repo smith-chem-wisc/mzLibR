@@ -26,7 +26,7 @@ python_src <- if (length(args) >= 1L) {
 }
 fixtures <- if (length(args) >= 2L) args[2L] else "tests/fixtures"
 
-modules <- c("pride", "peptidoform", "flashlfq")
+modules <- c("pride", "peptidoform", "flashlfq", "readers")
 
 # ---------------------------------------------------------------- the Python side
 
@@ -105,7 +105,11 @@ mapping <- c(
   flashlfq_protein_count = "FlashLfqResults.protein_count",
   flashlfq_mbr_peak_count = "FlashLfqResults.mbr_peak_count",
   flashlfq_mbr_peaks = "FlashLfqResults.mbr_peaks",
-  flashlfq_mbr_rescued_peptide_count = "FlashLfqResults.mbr_rescued_peptide_count"
+  flashlfq_mbr_rescued_peptide_count = "FlashLfqResults.mbr_rescued_peptide_count",
+  readers_formats = "readers.formats",
+  readers_identify = "readers.identify",
+  readers_read_results = "readers.read_results",
+  readers_retention_time_in_minutes = "ResultRecords.retention_time_in_minutes"
 )
 
 # Deliberately absent from pyMzLib, with the reason. Anything here is a considered addition, not
@@ -294,6 +298,15 @@ if (!is.null(quant)) {
   )
   report_columns("flashlfq_quantify()$peaks", names(results$peaks),
     names(quant$peaks[[1]]), character(0)
+  )
+}
+
+formats_payload <- read_fixture("readers_formats.json")
+if (!is.null(formats_payload)) {
+  formats <- asNamespace("mzLibR")$readers_parse_formats(formats_payload$data)
+  report_columns("readers_formats()", names(formats),
+    names(formats_payload$data$formats[[1]]),
+    c(is_quantifiable = "\"quantifiable\" is among views (pyMzLib Format.is_quantifiable)")
   )
 }
 

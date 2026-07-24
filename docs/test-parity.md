@@ -9,32 +9,41 @@ reason.
 
 | suite | tests |
 |---|---|
-| pyMzLib | **154** (123 excluding the `readers` module, which mzLibR does not implement) |
+| pyMzLib | **154** |
 | mzLibRust | **137** |
-| mzLibR | **188** with a bridge staged; **176** offline, the other 12 skipping |
+| mzLibR | **214** with a bridge staged; **199** offline, the other 15 skipping |
 
 The offline suite passes with no bridge, no .NET and no network. Live tests `skip()`, never fail,
 on `mzlib_service_unavailable` — a verdict `cargo test` does not have, so mzLibR can do this
 properly where mzLibRust could only print.
 
-## The gap that matters: `readers` is not implemented
+## `readers` — found missing, then implemented as M4
 
 **The bridge exposes eight verbs. PLAN.md section 2 describes five.** The three it omits are
-`readers formats`, `readers identify` and `readers read-results`, and pyMzLib implements all
-three in `readers.py` with **31 tests**. mzLibRust does not implement them either, so this is a
-gap the whole downstream family shares rather than an R-specific one.
+`readers formats`, `readers identify` and `readers read-results`, which pyMzLib implements in
+`readers.py` with 31 tests. **mzLibRust still does not implement them** — so this was a gap the
+whole downstream family shared, and mzLibR is now the only binding besides the parent to close
+it.
 
-What is missing is not marginal. mzLib recognises 29 result-file types from a dozen tools, and
-`readers.identify()` is what tells you which of them a path actually is — including whether it
-is *quantifiable*, the precondition for [flashlfq_quantify()]. Exactly three file types carry
-that view: MetaMorpheus `.psmtsv` and `.osmtsv`, and MSFragger `psm.tsv` — and pyMzLib's own
-documentation warns not to quantify the MSFragger one, because the interface being offered does
-not mean the numbers are comparable.
+It was not marginal. mzLib recognises 29 result-file types, and `readers_identify()` is what
+tells you which one a path is — including whether it is *quantifiable*, the precondition for
+`flashlfq_quantify()`. Exactly three of the 29 carry that view: MetaMorpheus `psmtsv` and
+`osmtsv`, and `MsFraggerPsm`. Without it, a user pointing `flashlfq_quantify()` at a PSM file
+had no supported way to ask what that file was first.
 
-So an mzLibR user pointing `flashlfq_quantify()` at a PSM file has no supported way to ask what
-that file is first. `flashlfq_quantify()` documents the requirement in prose; pyMzLib can check
-it. That is the single largest capability difference between parent and child, and closing it
-would be an M4.
+Two things the port established that are worth carrying back to the other bindings:
+
+- **`is_quantifiable` being `TRUE` is not permission.** It reports what mzLib's *interface*
+  offers. `MsFraggerPsm` has the view and should not be quantified — its retention times are in
+  seconds while MetaMorpheus's are in minutes, and mzLib normalises neither.
+- **`identify()` does not validate contents.** A plain text file containing
+  `"this is not a proteomics result file"` is identified as `CruxResult`, because mzLib
+  dispatches `.txt` there and `identify()` deliberately stops at resolving the type. The honest
+  signal is `views`, which is empty. A live test asserts exactly this, so the behaviour is
+  documented rather than discovered by a user.
+
+**mzLibRust should get this module too.** Everything above is a property of mzLib and the wire,
+not of R.
 
 ## Eliminated by R's semantics
 
@@ -55,7 +64,7 @@ unreachable branches, and unreachable checks rot.
 |---|---|
 | `test_a_real_selection_can_be_downloaded_directly` | Downloads real files from EBI. Not run by default: a test suite that pulls megabytes on every invocation is a test suite people stop running. The argument assembly, the stdin framing and the empty-filter refusal are all covered offline. |
 | `test_a_real_download_still_works_end_to_end` | As above. |
-| all 31 `test_readers.py` tests | The capability is not implemented — see above. Listed here so the count is honest rather than flattering. |
+| — | (the 31 `test_readers.py` tests are now covered; see the M4 section above) |
 
 ## Present in mzLibR and not in pyMzLib
 

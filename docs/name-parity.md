@@ -33,6 +33,10 @@ is the only renaming mzLibR is entitled to do.
 | `pride_list_files()` | `pride.list_files` | 3 identical |
 | `pride_locations()` | *none* | R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field |
 | `pride_total_size_bytes()` | `pride.total_size_bytes` | 1 identical |
+| `readers_formats()` | `readers.formats` | 1 identical |
+| `readers_identify()` | `readers.identify` | 2 identical |
+| `readers_read_results()` | `readers.read_results` | 5 identical |
+| `readers_retention_time_in_minutes()` | `ResultRecords.retention_time_in_minutes` | 0 identical |
 
 ### pyMzLib callables with no mzLibR function
 
@@ -157,6 +161,16 @@ on the wire; every other column must match a wire field exactly.
 | `retention_time` | yes |
 | `num_identifications` | yes |
 | `protein_groups` | yes |
+
+### `readers_formats()`
+
+| column | on the wire |
+|---|---|
+| `file_type` | yes |
+| `extension` | yes |
+| `reader` | yes |
+| `is_quantifiable` | *derived* — "quantifiable" is among views (pyMzLib Format.is_quantifiable) |
+| `views` | yes |
 
 ## Anything needing a reason
 
