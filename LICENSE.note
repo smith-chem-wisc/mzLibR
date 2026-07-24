@@ -1,0 +1,51 @@
+mzLibR licensing
+================
+
+mzLibR itself is licensed **LGPL-3.0-or-later**, as declared in DESCRIPTION
+(`License: LGPL (>= 3)`). The full texts are installed with the package in
+`inst/licenses/`: LGPL-3.0.txt, and GPL-3.0.txt, which the LGPL extends.
+
+Why LGPL and not something more permissive
+------------------------------------------
+
+mzLibR is a binding to mzLib, which is LGPL-3.0-or-later, and the bridge
+executable this package runs contains mzLib in compiled form. Distributing that
+binary — whether bundled, cached by `mzlibr_install_bridge()`, or built from
+pyMzLib — is distributing mzLib, so mzLibR is licensed to match.
+
+This is not a hypothetical. The sibling Rust binding initially declared MIT,
+which would have been a real violation, and it was corrected before release. A
+binding cannot be more permissive than the library it binds.
+
+The bridge override is a licence affordance, not just a convenience
+-------------------------------------------------------------------
+
+`options(mzlibr.bridge=)` and the `MZLIB_BRIDGE` environment variable let a user
+point mzLibR at a bridge executable they built themselves. LGPL-3.0 section 4
+requires that a work using the library be distributed in a form that permits the
+user to relink it against a modified version of that library. For a package that
+invokes the library as a subprocess, replacing the executable *is* relinking, so
+these two overrides are how mzLibR satisfies that clause. They are documented in
+`?mzlibr_bridge_path` and named in the error raised when no bridge is found, and
+they must not be removed.
+
+Third-party components carried by the bridge executable
+-------------------------------------------------------
+
+The bridge is not distributed inside this source package — it is staged,
+downloaded, or pointed at. When present it is a self-contained .NET binary that
+carries the following, each under its own licence:
+
+  mzLib                     LGPL-3.0-or-later   https://github.com/smith-chem-wisc/mzLib
+  .NET runtime & libraries  MIT                 https://github.com/dotnet/runtime
+  Newtonsoft.Json           MIT                 https://github.com/JamesNK/Newtonsoft.Json
+  Intel libmmd              Intel Simplified Software License (redistributable)
+
+Reference data compiled into or read by mzLib:
+
+  Unimod                    Unimod terms of use
+  PSI-MOD                   CC BY 4.0
+  UniProt                   CC BY 4.0
+
+mzLibR contains none of these in its own sources. It contains R code only, and
+the licence texts above.

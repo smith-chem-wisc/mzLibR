@@ -6,3 +6,9 @@
 
 export(mzlibr_bridge_path)
 export(mzlibr_bridge_version)
+
+export(pride_download)
+export(pride_download_files)
+export(pride_list_files)
+export(pride_locations)
+export(pride_total_size_bytes)
