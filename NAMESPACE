@@ -1,0 +1,8 @@
+# Hand-written, not generated.
+#
+# `roxygen2` is a build-time dependency like any other, and this package has none. The `#'`
+# blocks in R/ are kept as the source of truth for the .Rd files in man/, which are written by
+# hand to match.
+
+export(mzlibr_bridge_path)
+export(mzlibr_bridge_version)

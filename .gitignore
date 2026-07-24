@@ -1,0 +1,13 @@
+# The bridge payload is ~140 MB and is never committed — it is staged, cached or downloaded.
+_dotnet/
+inst/_dotnet/
+
+# R build artefacts
+*.Rcheck/
+*.tar.gz
+.Rhistory
+.RData
+.Rproj.user/
+src/*.o
+src/*.so
+src/*.dll
