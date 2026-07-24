@@ -1,10 +1,14 @@
 # Hand-written, not generated.
 #
 # `roxygen2` is a build-time dependency like any other, and this package has none. The `#'`
-# blocks in R/ are kept as the source of truth for the .Rd files in man/, which are written by
-# hand to match.
+# blocks in R/ remain the source of truth for documentation, and `scripts/build-man.R` converts
+# them into man/*.Rd — but this file is maintained by hand, so adding an export here is a
+# deliberate act rather than a side effect of a comment.
+
+importFrom(utils, download.file, unzip)
 
 export(mzlibr_bridge_path)
+export(mzlibr_install_bridge)
 export(mzlibr_bridge_version)
 
 export(census_excluded)

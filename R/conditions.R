@@ -18,8 +18,8 @@
 
 # Build one of ours.
 #
-# `call. = NULL` deliberately: the useful context is in the message — the accession, the file
-# name, the three ways to fix it — and an R call stack pointing at `bridge_invoke()` only adds
+# `call. = NULL` deliberately: the useful context is in the message - the accession, the file
+# name, the three ways to fix it - and an R call stack pointing at `bridge_invoke()` only adds
 # noise for a user who never typed that name.
 mzlib_condition <- function(class, message, ...) {
   structure(
@@ -28,14 +28,14 @@ mzlib_condition <- function(class, message, ...) {
   )
 }
 
-# A call was malformed — a missing or invalid argument. Raised before any work happens.
+# A call was malformed - a missing or invalid argument. Raised before any work happens.
 #
 # Either mzLibR rejected the input, or the bridge answered `{"type": "usage"}` and exit 2.
 mzlib_usage_error <- function(message) {
   mzlib_condition("mzlib_usage_error", message)
 }
 
-# An external service is unavailable — down, rate-limited, timing out, or unreachable.
+# An external service is unavailable - down, rate-limited, timing out, or unreachable.
 #
 # Its own class because the difference between "the repository is having a bad morning" and
 # "something is broken" is the difference between retrying later and filing a bug. HTTP 408,
@@ -61,14 +61,14 @@ mzlib_bridge_error <- function(message, error_type) {
 # subprocess timeout has several possible causes and only one of them is a slow service: the
 # bridge may be wedged, the executable may be corrupt, antivirus may be holding it, or the
 # caller may simply have passed a timeout that was too short. Reporting all of that as "the
-# repository is down" is how a real bug gets skipped by every live suite and never seen again —
+# repository is down" is how a real bug gets skipped by every live suite and never seen again -
 # which is exactly what pyMzLib did until it was found.
 mzlib_timeout <- function(seconds) {
   mzlib_condition(
     "mzlib_timeout",
     paste0(
       "mzLib bridge did not finish within ", format(seconds), "s. This may mean the service ",
-      "is slow, but it can equally mean the bridge is wedged or the timeout was too short — ",
+      "is slow, but it can equally mean the bridge is wedged or the timeout was too short - ",
       "mzLibR will not guess which."
     ),
     seconds = seconds

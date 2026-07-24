@@ -1,8 +1,8 @@
 # Locating and invoking the mzLib bridge executable.
 #
 # This is the only file in mzLibR that knows the bridge exists. Everything above it sees
-# ordinary R functions and data.frames. That boundary is deliberate: the transport — today, a
-# self-contained .NET executable invoked once per call — could be replaced by a long-lived
+# ordinary R functions and data.frames. That boundary is deliberate: the transport - today, a
+# self-contained .NET executable invoked once per call - could be replaced by a long-lived
 # local server without any exported function changing.
 #
 # It is the direct counterpart of pyMzLib's `_bridge.py` and mzLibRust's `src/bridge.rs`, and
@@ -12,7 +12,7 @@
 # No `processx`. Base R's `system2()` has carried a real `timeout` since R 3.5.0, takes stdin
 # through `input=`, and writes stdout and stderr to separate files, which is every capability
 # this transport needs. Both halves of that were verified against the real bridge on Windows
-# before the dependency was dropped — see `tests/test-bridge.R`.
+# before the dependency was dropped - see `tests/test-bridge.R`.
 
 # Wire-format version this package understands. The bridge reports its own; a mismatch means
 # the two halves were built from different sources.
@@ -23,7 +23,7 @@ MZLIB_BRIDGE_OPTION <- "mzlibr.bridge"
 MZLIB_BRIDGE_ENV_VAR <- "MZLIB_BRIDGE"
 
 # The error type the bridge uses for availability failures. Must equal
-# `Program.ServiceUnavailableType` on the C# side — the two halves agree by this string and
+# `Program.ServiceUnavailableType` on the C# side - the two halves agree by this string and
 # nothing else.
 MZLIB_SERVICE_UNAVAILABLE_TYPE <- "ServiceUnavailable"
 
@@ -100,7 +100,7 @@ mzlibr_cache_dir <- function() {
 # What to tell someone who has no bridge at all.
 #
 # Split out from the lookup so it can be tested for its content without the test depending on
-# whether the machine running it happens to have a bridge staged — the mistake that made
+# whether the machine running it happens to have a bridge staged - the mistake that made
 # mzLibRust's equivalent test pass in CI and fail for every developer who had one.
 #
 # Every remedy is named. A bare "not found" leaves the reader with nowhere to go, and the error
@@ -109,12 +109,12 @@ bridge_missing_message <- function(cache_path) {
   paste0(
     "No mzLib bridge executable found.\n\n",
     "Three ways to fix it, cheapest first:\n",
-    "  1. mzlibr_install_bridge() — downloads one into ", cache_path, "\n",
+    "  1. mzlibr_install_bridge() - downloads one into ", cache_path, "\n",
     "  2. Sys.setenv(", MZLIB_BRIDGE_ENV_VAR, " = \"/path/to/", bridge_executable_name(),
-    "\") — for a bridge you already have,\n",
+    "\") - for a bridge you already have,\n",
     "     for example the one pyMzLib stages under pkg/python/src/pymzlib/_dotnet/<rid>/.\n",
     "  3. options(", MZLIB_BRIDGE_OPTION, " = \"/path/to/", bridge_executable_name(),
-    "\") — same thing, scoped to this session.\n\n",
+    "\") - same thing, scoped to this session.\n\n",
     "Overriding the bridge is also how you relink a modified mzLib without rebuilding this ",
     "package, which LGPL section 4 requires mzLibR to allow."
   )
@@ -167,7 +167,7 @@ bridge_available <- function() {
 # Quote one argument for the shell `system2()` will hand the command to.
 #
 # `system2()` quotes the *command* for you and the arguments not at all, so this is the
-# caller's job — and only for the arguments, since quoting the command twice breaks it. It
+# caller's job - and only for the arguments, since quoting the command twice breaks it. It
 # matters the moment a path contains a space, which on Windows is the normal case: a project
 # directory under "My Documents" would otherwise arrive at the bridge split into pieces.
 #
@@ -179,7 +179,7 @@ bridge_quote <- function(argument) {
 # Read a file back as UTF-8 whatever the machine's locale is.
 #
 # The bridge always writes UTF-8. `readLines()` would decode it in the native encoding, which
-# on an older Windows is not UTF-8, and a file name with an accent in it would arrive mangled —
+# on an older Windows is not UTF-8, and a file name with an accent in it would arrive mangled -
 # then fail to match anything, in a way that looks like a PRIDE problem rather than an ours
 # problem.
 bridge_read_utf8 <- function(path) {
@@ -200,8 +200,8 @@ bridge_read_utf8 <- function(path) {
 #
 # This is the seam pyMzLib gets by monkeypatching `subprocess.run` and mzLibRust gets from a
 # `Runner` trait. In R it is simply a function argument, which is the cheapest of the three:
-# the failure paths that matter — a process that dies silently, output that is not JSON, a
-# timeout, a binary that will not launch — are the code most likely to be wrong and the least
+# the failure paths that matter - a process that dies silently, output that is not JSON, a
+# timeout, a binary that will not launch - are the code most likely to be wrong and the least
 # convenient to provoke with a real executable.
 #
 # Returns a list of `stdout`, `stderr`, `status` and `timed_out`.
@@ -322,7 +322,7 @@ bridge_check_timeout <- function(timeout) {
 # Run one bridge command and return the decoded `data` payload.
 #
 # `args` is the verb and its options, already quoted. `stdin` carries a payload that would not
-# fit on the command line — argv has a hard ceiling of roughly 32 KB and a real experiment's
+# fit on the command line - argv has a hard ceiling of roughly 32 KB and a real experiment's
 # worth of file names goes straight past it. `timeout` of `NULL` waits indefinitely, which is
 # the right default for a download that may run for an hour.
 # Both siblings guard here against an argument containing an embedded null, which would
@@ -341,8 +341,8 @@ bridge_invoke <- function(args, stdin = NULL, timeout = NULL, runner = bridge_ru
 
 #' Version information reported by the mzLib bridge
 #'
-#' The whole transport story end to end — locate the executable, run it, parse an envelope,
-#' agree on a wire format — in one call with no network and no arguments. It is the first thing
+#' The whole transport story end to end - locate the executable, run it, parse an envelope,
+#' agree on a wire format - in one call with no network and no arguments. It is the first thing
 #' to make work and the first thing to check when something else is wrong.
 #'
 #' @param runner The function used to run the bridge. Present so the transport's failure paths

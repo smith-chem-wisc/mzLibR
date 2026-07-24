@@ -2,7 +2,7 @@
 #
 # Fetch a UniProt entry, apply its annotated modifications, digest it, and fragment every
 # resulting peptidoform. The result is an `mzlibr_digest`: a few scalars plus three tidy
-# data.frames — `peptides`, `fragments`, `modifications` — which is the shape R wants and which
+# data.frames - `peptides`, `fragments`, `modifications` - which is the shape R wants and which
 # joins on `peptide_index`.
 #
 # Most of the comments in this file are about what the numbers mean rather than how they are
@@ -11,7 +11,7 @@
 
 # The mass of a proton, in daltons.
 #
-# **Not the hydrogen atom, which is 1.007825.** The difference is 0.55 mDa — 1.1 ppm at m/z 500,
+# **Not the hydrogen atom, which is 1.007825.** The difference is 0.55 mDa - 1.1 ppm at m/z 500,
 # which on an Orbitrap is a match versus a miss. Libraries differ on this and rarely say which
 # they used, so mzLibR says.
 PROTON_MASS <- 1.00727646677
@@ -168,8 +168,8 @@ peptidoform_parse_peptides <- function(entries) {
 # One row per fragment ion, across every peptide.
 #
 # Long rather than nested. A digest of a whole protein has tens of thousands of fragments, and
-# every question worth asking of them — counts by series, the ladder for one peptide, the ions
-# above some mass — is a subset or a table of a long frame.
+# every question worth asking of them - counts by series, the ladder for one peptide, the ions
+# above some mass - is a subset or a table of a long frame.
 peptidoform_parse_fragments <- function(entries) {
   parts <- lapply(seq_along(entries), function(index) {
     fragments <- entries[[index]][["fragments"]]
@@ -208,7 +208,7 @@ peptidoform_parse_modifications <- function(entries) {
     data.frame(
       peptide_index = index,
       one_based_residue = vapply(modifications, wire_field, numeric(1L), "one_based_residue", "numeric", NA_real_),
-      # `null` on the wire for a residue modification, which is most of them — the field only
+      # `null` on the wire for a residue modification, which is most of them - the field only
       # carries a value for a terminal modification. NA and not "" so the two are distinct.
       terminus = vapply(modifications, wire_field, character(1L), "terminus", "character", NA_character_),
       id = vapply(modifications, wire_field, character(1L), "id", "character", NA_character_),
@@ -254,7 +254,7 @@ peptidoform_parse_census <- function(data) {
   structure(
     list(
       # Distinct residue positions carrying at least one modification. A histone lists K9me1,
-      # K9me2, K9me3 and K9ac at one residue — four modifications, one site — so this is always
+      # K9me2, K9me3 and K9ac at one residue - four modifications, one site - so this is always
       # the smaller number and is **not** a modification count. Conflating the two made H3.1
       # look as though 93 annotations had been dropped when all had loaded.
       sites = as.numeric(data[["annotated_modification_sites"]]),
@@ -312,13 +312,13 @@ peptidoform_parse <- function(data) {
 #' @param protease The protease, in **mzLib's naming**.
 #'
 #'   **Read this if you are coming from MaxQuant or Mascot.** mzLib's `"trypsin|P"` *applies* the
-#'   Keil rule — it does not cleave before proline — while plain `"trypsin"` cleaves everywhere.
+#'   Keil rule - it does not cleave before proline - while plain `"trypsin"` cleaves everywhere.
 #'   That is the **reverse** of the MaxQuant and Mascot convention, where the `/P` suffix means
 #'   "do cleave before proline". On albumin the two give **195** and **202** peptides, so the
 #'   mistake is quiet and small enough to survive review (smith-chem-wisc/mzLib#1106).
 #' @param dissociation The dissociation type, e.g. `"ETD"`, `"HCD"`, `"CID"`, `"ECD"`.
 #'
-#'   **`"ETD"` and `"ECD"` return three series — `c`, `zDot` *and* `y` — not two.** No
+#'   **`"ETD"` and `"ECD"` return three series - `c`, `zDot` *and* `y` - not two.** No
 #'   fragmentation mechanism produces `y` without `b`, and about **a third** of every ETD
 #'   fragment list is those `y` ions. Use [digest_fragments_by_series()] and select the series
 #'   you mean rather than trusting a total (smith-chem-wisc/mzLib#1109; a fix is proposed in
@@ -332,7 +332,7 @@ peptidoform_parse <- function(data) {
 #' @param min_length Shortest peptide to keep.
 #'
 #'   The default of 7 **silently discards** everything shorter. Albumin goes from **195**
-#'   distinct sequences at `min_length = 7` to **243** at `min_length = 1` — a fifth of the
+#'   distinct sequences at `min_length = 7` to **243** at `min_length = 1` - a fifth of the
 #'   digest lives below the default. If you are looking for a short peptide and not finding it,
 #'   look here first.
 #' @param max_length Longest peptide to keep, or `NULL` for no limit.
@@ -340,13 +340,13 @@ peptidoform_parse <- function(data) {
 #' @param max_isoforms Maximum modification isoforms generated per peptide.
 #'
 #'   **This cap truncates silently.** A truncated result and a genuinely short one look
-#'   identical from the outside — histone H3.1 at four modifications loses about **30%**. Check
+#'   identical from the outside - histone H3.1 at four modifications loses about **30%**. Check
 #'   [digest_truncated()] before treating a peptide list as exhaustive.
 #' @param terminus Which terminus to fragment: `"N"`, `"C"`, `"Both"` or `"None"`.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_digest`: a list with the scalars describing the run, a `census` (see
-#'   [census_explain()]), and three data.frames that join on `peptide_index` —
+#'   [census_explain()]), and three data.frames that join on `peptide_index` -
 #'   `peptides`, `fragments` and `modifications`.
 #'
 #'   **`peptides` holds peptidoforms, not distinct sequences.** One row per
@@ -369,7 +369,7 @@ peptidoform_fragments <- function(accession, protease = "trypsin|P", dissociatio
 
   # The bridge reports max_modifications and max_modification_isoforms back, but not the three
   # settings that decide which peptides exist at all. They are stamped on here so that a digest
-  # sitting in a workspace, or printed six months later, says what produced it — min_length in
+  # sitting in a workspace, or printed six months later, says what produced it - min_length in
   # particular, since its default of 7 silently removes a fifth of the digest and is the first
   # thing to check when an expected peptide is missing.
   digest$min_length <- as.numeric(min_length)
@@ -393,7 +393,7 @@ digest_truncated <- function(digest) {
 
 #' How many distinct base sequences a digest produced
 #'
-#' `nrow(digest$peptides)` counts **peptidoforms** — one per sequence-and-modification-placement.
+#' `nrow(digest$peptides)` counts **peptidoforms** - one per sequence-and-modification-placement.
 #' This counts distinct sequences. On albumin at two modifications the two are **303** and
 #' **195**.
 #'
@@ -420,16 +420,16 @@ digest_modified_peptides <- function(digest) {
 #'
 #' **Prefer this to `nrow(digest$fragments)` whenever the ion series matter, which for ETD is
 #' always.** A bare total folds in two things that are not comparable ions: the spurious `y`
-#' series mzLib emits for ETD (about a third of the total), and one extra full-length `z•` per
+#' series mzLib emits for ETD (about a third of the total), and one extra full-length `z-dot` per
 #' peptide.
 #'
 #' The `zDot` series runs `1..length`, not `1..length-1`. The extra ion numbered `length` is the
-#' whole peptide minus NH2 — the N-Ca cleavage at residue 1 — which is **correct and
+#' whole peptide minus NH2 - the N-Ca cleavage at residue 1 - which is **correct and
 #' deliberate**, not a defect. It is absent when the peptide starts with proline.
 #'
 #' Note also that `zDot` counts come in **below** `length` per peptide rather than above it,
 #' because z-dot ions are suppressed N-terminal to proline while the complementary `c` ions are
-#' not. On albumin that is 138 proline sites, 138 suppressed `z•` and **0** suppressed `c`
+#' not. On albumin that is 138 proline sites, 138 suppressed `z-dot` and **0** suppressed `c`
 #' (smith-chem-wisc/mzLib#1110).
 #'
 #' @param digest An [peptidoform_fragments()] result.
@@ -453,12 +453,12 @@ digest_fragments_by_series <- function(digest) {
 #' Two conventions are handled explicitly, because getting either wrong is invisible in the
 #' answer.
 #'
-#' **The proton mass, not the hydrogen atom.** 1.00727646677 against 1.007825 — a difference of
+#' **The proton mass, not the hydrogen atom.** 1.00727646677 against 1.007825 - a difference of
 #' 0.55 mDa, or 1.1 ppm at m/z 500, which on an Orbitrap is a match versus a miss.
 #'
 #' **Fixed charges are not double-counted.** A peptide whose modification leaves a permanently
-#' charged residue — trimethyl-lysine gives a quaternary ammonium, and UniProt records the delta
-#' as 43.054227, which is C3H7 *minus an electron* — already carries that charge in its
+#' charged residue - trimethyl-lysine gives a quaternary ammonium, and UniProt records the delta
+#' as 43.054227, which is C3H7 *minus an electron* - already carries that charge in its
 #' `monoisotopic_mass`. Only `charge - fixed_charges` protons are added. Adding a full
 #' complement would put a 2+ trimethylated peptide half a Thomson high, on the most important
 #' histone modification there is.
@@ -522,7 +522,7 @@ census_excluded <- function(digest) {
 #' that a rule was ever applied. For serum albumin, 14 modifications are applied out of 38
 #' annotated.
 #'
-#' **The exclusion is correct — do not try to defeat it.** mzLib loads only `modified residue`
+#' **The exclusion is correct - do not try to defeat it.** mzLib loads only `modified residue`
 #' and `lipid moiety-binding region` annotations. On albumin, 22 of the 24 excluded features are
 #' `N-linked (Glc) (glycation) lysine`, and while UniProt's own `ptmlist.txt` does give that a
 #' formula and a mass, glycation is a labile, heterogeneous adduct that progresses to advanced
@@ -533,7 +533,7 @@ census_excluded <- function(digest) {
 #' mzLib reads no qualifiers for any feature type, so it cannot distinguish the 14 albumin sites
 #' marked `; in vitro`, or the two that exist only in the Redhill and Casebrook variants, from
 #' the rest. Those are three different grounds for exclusion needing three different judgements
-#' — this census can only give you the count. Read the UniProt entry before concluding anything
+#' - this census can only give you the count. Read the UniProt entry before concluding anything
 #' about a specific site.
 #'
 #' @param digest An [peptidoform_fragments()] result, or its `census`.
@@ -563,11 +563,11 @@ census_explain <- function(digest) {
     sentences <- c(sentences, paste0(
       "Excluded by type: ",
       paste0(excluded_types$count, " x ", excluded_types$type, collapse = ", "),
-      " — mzLib loads only 'modified residue' and 'lipid moiety-binding region' annotations, so ",
+      " - mzLib loads only 'modified residue' and 'lipid moiety-binding region' annotations, so ",
       "these were dropped on feature type alone. The exclusion is usually right: a glycation or ",
       "glycosylation annotation describes a labile, heterogeneous adduct, so assigning it one ",
       "exact mass and a clean fragment ladder would invent a species you cannot observe. But the ",
-      "reason is not reported, and the qualifier is not read — some annotations are marked ",
+      "reason is not reported, and the qualifier is not read - some annotations are marked ",
       "'in vitro' and some exist only in disease variants, which are different grounds for ",
       "exclusion needing different judgements from you. Read the annotations on the UniProt ",
       "entry before concluding anything about a specific site; this census can only tell you ",
@@ -578,13 +578,22 @@ census_explain <- function(digest) {
   if (length(census$unresolved) > 0L) {
     sentences <- c(sentences, paste0(
       "Could not be resolved to a mass: ", paste(census$unresolved, collapse = ", "),
-      " — annotated by UniProt but absent from its own modification list, so they were dropped."
+      " - annotated by UniProt but absent from its own modification list, so they were dropped."
     ))
   }
 
   paste(sentences, collapse = " ")
 }
 
+#' Print a digest
+#'
+#' A compact summary, and the place several warnings actually reach someone: printing a digest
+#' and reading a fragment total off it is exactly what a person about to count spurious ETD
+#' \code{y} ions does.
+#'
+#' @param x An [peptidoform_fragments()] result.
+#' @param ... Ignored.
+#' @return `x`, invisibly.
 #' @export
 print.mzlibr_digest <- function(x, ...) {
   cat("<mzlibr_digest> ", x$accession, " ", x$name, " (", x$organism, ")\n", sep = "")
@@ -615,7 +624,7 @@ print.mzlibr_digest <- function(x, ...) {
     # fragment total is exactly the person about to count spurious y ions as real ones.
     if (any(series$product_type == "y") && !any(series$product_type == "b")) {
       cat("  ! ", series$n[series$product_type == "y"],
-        " y ions with no b ions — no fragmentation mechanism produces that.\n",
+        " y ions with no b ions - no fragmentation mechanism produces that.\n",
         "    See ?digest_fragments_by_series (smith-chem-wisc/mzLib#1109).\n",
         sep = ""
       )
@@ -624,7 +633,7 @@ print.mzlibr_digest <- function(x, ...) {
 
   if (digest_truncated(x)) {
     cat("  ! ", format(x$peptides_at_isoform_cap),
-      " peptides hit the isoform cap — this list is incomplete.\n",
+      " peptides hit the isoform cap - this list is incomplete.\n",
       sep = ""
     )
   }
@@ -638,6 +647,13 @@ print.mzlibr_digest <- function(x, ...) {
   invisible(x)
 }
 
+#' Print a modification census
+#'
+#' Prints what [census_explain()] returns.
+#'
+#' @param x The `census` of an [peptidoform_fragments()] result.
+#' @param ... Ignored.
+#' @return `x`, invisibly.
 #' @export
 print.mzlibr_census <- function(x, ...) {
   cat(census_explain(x), "\n")

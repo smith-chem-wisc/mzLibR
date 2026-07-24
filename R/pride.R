@@ -4,8 +4,8 @@
 # repository. This module lists what is in a project and pulls files down, using the same
 # paging, URL resolution and safe-download logic mzLib uses in C#.
 #
-# Everything here splits into pure functions the tests can call directly — `pride_build_*()`
-# for argument assembly and `pride_parse_*()` for wire-to-data.frame — so the offline suite
+# Everything here splits into pure functions the tests can call directly - `pride_build_*()`
+# for argument assembly and `pride_parse_*()` for wire-to-data.frame - so the offline suite
 # needs no subprocess and no mocking.
 
 # ---------------------------------------------------------------- validation
@@ -18,7 +18,7 @@
 #
 # The grammar is a short letter prefix and a run of digits, and it is **grammatical only**:
 # "PXD0000019999" is well-formed and costs a live round trip before it fails, so no offline
-# check will catch a transposed digit. That is deliberate — PXD accessions are not fixed-width
+# check will catch a transposed digit. That is deliberate - PXD accessions are not fixed-width
 # forever, and rejecting a valid future accession would be worse than one wasted request.
 pride_normalise_accession <- function(accession) {
   if (!is.character(accession) || length(accession) != 1L || is.na(accession)) {
@@ -93,7 +93,7 @@ pride_normalise_extensions <- function(extensions) {
 # Refuse a value the bridge's parser would read as another option.
 #
 # The bridge treats `--a --b` as two flags, so a value beginning with '-' silently discards the
-# option it belonged to — and can smuggle in a flag the caller never intended.
+# option it belonged to - and can smuggle in a flag the caller never intended.
 pride_reject_flag_like <- function(name, value) {
   if (startsWith(value, "-")) {
     stop(mzlib_usage_error(paste0(
@@ -120,7 +120,7 @@ pride_extension <- function(file_name) {
 
 # Parse one ISO-8601 timestamp, treating anything unreadable as absent.
 #
-# A timestamp that will not parse is not worth failing a whole manifest over — the caller asked
+# A timestamp that will not parse is not worth failing a whole manifest over - the caller asked
 # for a file list, not a date.
 pride_parse_timestamp <- function(value) {
   absent <- .POSIXct(NA_real_, tz = "UTC")
@@ -238,7 +238,7 @@ pride_parse_manifest <- function(data, accession) {
     updated_date = pride_parse_timestamps(
       vapply(entries, wire_field, character(1L), "updated_date", "character", NA_character_)
     ),
-    # Not on the wire — stamped on here so `pride_download_files()` can tell which project to
+    # Not on the wire - stamped on here so `pride_download_files()` can tell which project to
     # fetch from without the caller having to carry the accession alongside the frame.
     project_accession = accession,
     stringsAsFactors = FALSE
@@ -281,7 +281,7 @@ pride_check_filter_matched <- function(written, accession, category, extensions)
 
   stop(mzlib_usage_error(paste0(
     "No file in ", accession, " matched ", paste(described, collapse = " and "),
-    ". Use pride_list_files() to see what the project actually contains — note that ",
+    ". Use pride_list_files() to see what the project actually contains - note that ",
     "compressed files such as 'x.mgf.gz' have the extension '.gz', not '.mgf'."
   )))
 }
@@ -320,7 +320,7 @@ pride_build_download_args <- function(accession, destination, category, extensio
       !nzchar(trimws(category))) {
       stop(mzlib_usage_error(paste0(
         "category is empty. Omit it to download every category, rather than passing a blank ",
-        "value — a filter that selects nothing must not silently select everything."
+        "value - a filter that selects nothing must not silently select everything."
       )))
     }
     args <- c(args, "--category", pride_reject_flag_like("category", trimws(category)))
@@ -385,7 +385,7 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
   }
 
   # The selection travels on stdin rather than argv: a few thousand names would blow the ~32 KB
-  # command-line ceiling. The framing is newline-delimited, which is *almost* general — a POSIX
+  # command-line ceiling. The framing is newline-delimited, which is *almost* general - a POSIX
   # file name may legally contain a newline, so such a name would split in two and silently
   # select the wrong files. PRIDE has never published one, but "never seen it" is not a
   # contract, so it is refused explicitly rather than mis-parsed quietly.
@@ -393,7 +393,7 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
   if (length(broken) > 0L) {
     stop(mzlib_usage_error(paste0(
       "Cannot select '", encodeString(broken[1L]), "': the file name contains a line break, ",
-      "which the selection format cannot represent. Please open an issue — this is worth ",
+      "which the selection format cannot represent. Please open an issue - this is worth ",
       "fixing properly if a real repository ever publishes such a name."
     )))
   }
@@ -418,13 +418,13 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #' @section What this manifest is, and is not:
 #'
 #' **This is what PRIDE's REST API publishes, which is not always everything in the project.**
-#' For PXD000001 the API returns **8** files while the FTP tree holds **13** — and the five it
+#' For PXD000001 the API returns **8** files while the FTP tree holds **13** - and the five it
 #' omits include the two largest, a 450 MB `.mzML` and the matching 472 MB `.mzXML`, which are
 #' exactly the modern open-format conversions most people want. The omission is PRIDE's, not
 #' mzLib's.
 #'
-#' So a manifest that looks short may be short. If completeness matters — mirroring a project,
-#' budgeting a download, proving you analysed everything — cross-check the FTP directory at
+#' So a manifest that looks short may be short. If completeness matters - mirroring a project,
+#' budgeting a download, proving you analysed everything - cross-check the FTP directory at
 #' `https://ftp.pride.ebi.ac.uk/pride/data/archive/<year>/<month>/<accession>/`.
 #'
 #' @param accession A project accession, e.g. `"PXD000001"`. Case and surrounding whitespace are
@@ -443,7 +443,7 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #'   `file_size_bytes` is **the size PRIDE reports, which is not always what you will
 #'   transfer**: for compressed files it is frequently the *decompressed* size. In PXD000001 the
 #'   reported size of `PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz` is 16,448,103 bytes and the
-#'   actual download is 5,984,662 — **2.75x** smaller. The `.mztab.gz` behaves the same way; the
+#'   actual download is 5,984,662 - **2.75x** smaller. The `.mztab.gz` behaves the same way; the
 #'   `.xml.gz` does not. PRIDE's own metadata is inconsistent here, so neither mzLibR nor mzLib
 #'   can correct it. Treat the sum as an upper bound on transfer, and see
 #'   [pride_total_size_bytes()].
@@ -464,7 +464,7 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #'
 #' Prefer [pride_download_files()] when you can. `category` and `extensions` can only express
 #' what they were built to express; "under 5 MB", "the three newest", or "everything except the
-#' MGF" cannot be said in that vocabulary at all — and can all be said with `[`.
+#' MGF" cannot be said in that vocabulary at all - and can all be said with `[`.
 #'
 #' @param accession A project accession, e.g. `"PXD000001"`.
 #' @param destination Directory to write into. A blank path is refused rather than silently taken to
@@ -472,8 +472,8 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #' @param category Keep only files of this category, e.g. `"RAW"`, `"PEAK"`, `"SEARCH"`,
 #'   `"OTHER"`. `NULL` keeps all.
 #'
-#'   Categories are coarser than they look. In PXD000001 `"PEAK"` matches **2** files, not 1 —
-#'   the 6 MB MGF *and* a 243 MB mzXML — so a download you expected to be small is 40x bigger.
+#'   Categories are coarser than they look. In PXD000001 `"PEAK"` matches **2** files, not 1 -
+#'   the 6 MB MGF *and* a 243 MB mzXML - so a download you expected to be small is 40x bigger.
 #'   Check against [pride_list_files()] first.
 #' @param extensions Keep only files with these extensions, e.g. `c(".raw", ".mzML")`. `NULL`
 #'   keeps all. Combined with `category` as AND.
@@ -487,7 +487,7 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #'   A filter that matches nothing raises an error rather than reporting success, because an
 #'   empty result here is nearly always a filter that does not mean what its author thought.
 #' @param overwrite When `FALSE`, a file already present at the destination is left alone and
-#'   not re-fetched — a cheap resume for a large project.
+#'   not re-fetched - a cheap resume for a large project.
 #' @param timeout Seconds to allow, or `NULL` to wait as long as it takes. `NULL` is the default
 #'   because multi-gigabyte projects legitimately run for hours.
 #'
@@ -537,7 +537,7 @@ pride_download_files <- function(files, destination, overwrite = TRUE, timeout =
 #'
 #' You rarely need this: `https_url` already carries the fetchable URL, resolved by mzLib's
 #' `TryGetHttpsDownloadUrl`, which **searches** the locations rather than taking the first.
-#' That distinction matters — **the order is not stable.** In PXD000001 the mztab lists FTP
+#' That distinction matters - **the order is not stable.** In PXD000001 the mztab lists FTP
 #' first while the MGF lists **Aspera** first, so code that took `locations[[1]]` would get an
 #' unfetchable `prd_ascp@fasp.ebi.ac.uk:...` address for some files and a working one for
 #' others, in the same project. Do not re-implement the search.
@@ -587,7 +587,7 @@ pride_locations <- function(files) {
 #'
 #' @section Two reasons this is not the size of the project:
 #'
-#' **It over-reports compressed files.** PRIDE frequently gives the *decompressed* size — the
+#' **It over-reports compressed files.** PRIDE frequently gives the *decompressed* size - the
 #' MGF in PXD000001 reports 16,448,103 bytes and downloads as 5,984,662, a factor of **2.75**.
 #'
 #' **It sums an incomplete manifest.** For PXD000001 this returns **0.51 GB**; the project on

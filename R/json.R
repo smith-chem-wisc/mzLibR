@@ -5,7 +5,7 @@
 # JSON is the single largest hazard an R binding of this bridge faces:
 #
 #   * `fromJSON()` auto-simplifies. An array of objects becomes a data.frame, an array of
-#     scalars becomes a vector, and *which one you get depends on the data* — a manifest with
+#     scalars becomes a vector, and *which one you get depends on the data* - a manifest with
 #     one file comes back a different shape from a manifest with two. Every caller then has to
 #     defend against both.
 #   * JSON `null` becomes R `NULL`, and a `NULL` assigned into a list **deletes the element**.
@@ -14,8 +14,8 @@
 #     `null` for a protein intensity it could not resolve (see `flashlfq.R`), so the one value
 #     that means "no answer" is exactly the one that would vanish.
 #
-# This reader does neither thing. It never simplifies — an object is always a named list, an
-# array is always an unnamed list, whatever is inside them — and `null` becomes `NA`, which
+# This reader does neither thing. It never simplifies - an object is always a named list, an
+# array is always an unnamed list, whatever is inside them - and `null` becomes `NA`, which
 # occupies its slot like any other value. Building the actual data.frames is then a deliberate,
 # per-field act in the module that knows what the field means, which is the only place that
 # knowledge exists.
@@ -29,7 +29,7 @@
 # `NA` was chosen over `NULL` because `NULL` deletes, and over a bespoke sentinel because the
 # rest of R already knows what `NA` means: it survives `[[`, it survives `length()`, it prints
 # as `NA`, and `is.na()` finds it. It is unambiguous here because nothing else in JSON can
-# produce a logical `NA` — `true` and `false` are the only other logicals and both are known.
+# produce a logical `NA` - `true` and `false` are the only other logicals and both are known.
 #
 # Callers coerce it to the `NA` of the right type at the boundary (`as.numeric(NA)` is
 # `NA_real_`), which is the explicit, per-field decision this whole file exists to force.
@@ -40,8 +40,8 @@ JSON_NULL <- NA
 # One regex for every JSON token, tried in this order.
 #
 # Strings come first so that a `{` or a `,` inside one is never mistaken for structure. The
-# string pattern is deliberately permissive about *what* follows a backslash — `\\.` rather
-# than the strict `["\\/bfnrtu]` — because a malformed escape should be reported by the
+# string pattern is deliberately permissive about *what* follows a backslash - `\\.` rather
+# than the strict `["\\/bfnrtu]` - because a malformed escape should be reported by the
 # unescaper, which can say which escape and where, rather than silently failing to match here
 # and leaving the tokeniser to resynchronise in the middle of a string.
 JSON_TOKEN_PATTERN <- paste0(
@@ -92,7 +92,7 @@ json_tokenize <- function(txt) {
   # Not merely an optimisation: `substring()` raises "invalid substring arguments" on
   # zero-length positions rather than returning `character(0)`, so empty or all-whitespace
   # input has to return before reaching it. The gap check above has already run, so input that
-  # is *only* junk — with no tokens at all — is still refused rather than read as empty.
+  # is *only* junk - with no tokens at all - is still refused rather than read as empty.
   if (length(starts) == 0L) {
     return(character(0))
   }
@@ -118,7 +118,7 @@ stop_json <- function(message) {
 # ---------------------------------------------------------------- parsing
 
 # The parse cursor. An environment, not a list, so advancing it does not copy the token vector
-# at every step — with a FlashLFQ payload that vector has hundreds of thousands of entries.
+# at every step - with a FlashLFQ payload that vector has hundreds of thousands of entries.
 json_state <- function(tokens) {
   state <- new.env(parent = emptyenv())
   state$tokens <- tokens
@@ -171,7 +171,7 @@ json_parse <- function(txt) {
   value
 }
 
-# One value of any kind, dispatched on its first character — which is enough, because the
+# One value of any kind, dispatched on its first character - which is enough, because the
 # tokeniser has already decided what each token is.
 json_value <- function(state, depth) {
   if (depth > JSON_MAX_DEPTH) {
@@ -213,8 +213,8 @@ json_value <- function(state, depth) {
 
 # Every JSON number becomes a double, including ones that would fit in an integer.
 #
-# Deliberate. `file_size_bytes` for a PRIDE project runs past 2^31 — the mzXML in PXD000001 is
-# 472 MB and a whole project is 1.44 GB — so anything read as R's 32-bit `integer` would
+# Deliberate. `file_size_bytes` for a PRIDE project runs past 2^31 - the mzXML in PXD000001 is
+# 472 MB and a whole project is 1.44 GB - so anything read as R's 32-bit `integer` would
 # overflow to `NA` on real data. A double is exact to 2^53, which no field on this wire
 # approaches, and it means no caller has to know which fields are large.
 json_number <- function(token) {
@@ -225,7 +225,7 @@ json_number <- function(token) {
   value
 }
 
-# An object, always as a named list — never simplified, never a data.frame.
+# An object, always as a named list - never simplified, never a data.frame.
 #
 # `{}` returns a zero-length *named* list, so `names()` is `character(0)` rather than `NULL`
 # and code that iterates names does not have to special-case the empty case.
@@ -280,7 +280,7 @@ json_object <- function(state, depth) {
   values
 }
 
-# An array, always as an unnamed list — one element per entry, whatever the entries are.
+# An array, always as an unnamed list - one element per entry, whatever the entries are.
 #
 # An array of numbers stays a list of length-1 doubles rather than collapsing to a numeric
 # vector. That is more verbose to consume and it is the point: the caller that knows the field
@@ -327,8 +327,8 @@ JSON_ESCAPES <- list(
 
 # Turn a quoted token into the string it denotes.
 #
-# The bridge escapes generously — it writes `'` for an apostrophe, which shows up in every
-# error message that quotes a file name — so `\u` is a hot path, not an edge case.
+# The bridge escapes generously - it writes `'` for an apostrophe, which shows up in every
+# error message that quotes a file name - so `\u` is a hot path, not an edge case.
 json_unescape <- function(token) {
   body <- substr(token, 2L, nchar(token) - 1L)
   if (!grepl("\\", body, fixed = TRUE)) {
@@ -361,7 +361,7 @@ json_unescape <- function(token) {
       point <- json_code_point(chars, i)
       i <- i + 6L
       # A character outside the basic plane is written as a surrogate pair, and the two halves
-      # only mean anything together — `intToUtf8()` on either alone gives nonsense.
+      # only mean anything together - `intToUtf8()` on either alone gives nonsense.
       if (point >= 0xD800L && point <= 0xDBFF) {
         if (i + 5L <= n && chars[i] == "\\" && chars[i + 1L] == "u") {
           low <- json_code_point(chars, i)

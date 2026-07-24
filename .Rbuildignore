@@ -1,0 +1,9 @@
+# Kept in git, not shipped in the package.
+^KICKOFF\.md$
+^PLAN\.md$
+^docs$
+^scripts$
+^\.claude$
+^\.github$
+^.*\.Rproj$
+^\.Rproj\.user$

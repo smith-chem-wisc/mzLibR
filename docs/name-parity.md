@@ -25,6 +25,7 @@ is the only renaming mzLibR is entitled to do.
 | `flashlfq_quantify()` | `flashlfq.quantify` | 15 identical |
 | `mzlibr_bridge_path()` | *none* | transport; pyMzLib's equivalent is private (_bridge) |
 | `mzlibr_bridge_version()` | *none* | transport; pyMzLib's equivalent is private (_bridge) |
+| `mzlibr_install_bridge()` | *none* | R-only: Python ships the payload inside the wheel and Rust downloads it from build.rs. CRAN allows neither, so the download has to be a function the user calls. |
 | `peptide_mz()` | `Peptide.mz` | 1 identical |
 | `peptidoform_fragments()` | `peptidoform.fragments` | 11 identical |
 | `pride_download()` | `pride.download` | 6 identical |

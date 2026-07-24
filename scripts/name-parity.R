@@ -115,7 +115,11 @@ additions <- c(
   digest_fragments_by_series = "from mzLibRust (Digest::fragments_by_series); pyMzLib has only fragment_count",
   pride_locations = "R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field",
   mzlibr_bridge_path = "transport; pyMzLib's equivalent is private (_bridge)",
-  mzlibr_bridge_version = "transport; pyMzLib's equivalent is private (_bridge)"
+  mzlibr_bridge_version = "transport; pyMzLib's equivalent is private (_bridge)",
+  mzlibr_install_bridge = paste(
+    "R-only: Python ships the payload inside the wheel and Rust downloads it from build.rs.",
+    "CRAN allows neither, so the download has to be a function the user calls."
+  )
 )
 
 # pyMzLib callables with no mzLibR counterpart, with the reason.

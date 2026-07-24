@@ -3,13 +3,13 @@
 # This is the most valuable tranche in mzLibR and the most dangerous, because almost everything
 # that goes wrong here produces a plausible number rather than an error. The bake-off arm that
 # did this task without the library reported 284 peptides, 173 proteins and 8 MBR transfers
-# against a truth of 257, 140 and 2 — wrong in the believable direction, which is the one nobody
+# against a truth of 257, 140 and 2 - wrong in the believable direction, which is the one nobody
 # checks.
 #
 # Three facts drive every design decision in this file:
 #
 #   1. **The peptide roll-up drops most MBR transfers.** Read `peaks`. On mzLib's own K562 pair
-#      there are 140 true transfers and the peptide table shows 52 — a 63% under-count — and a
+#      there are 140 true transfers and the peptide table shows 52 - a 63% under-count - and a
 #      whole run's transfers can vanish entirely (run_3: 62 from peaks, 0 from the roll-up).
 #   2. **A peptide intensity of 0 and a protein intensity of NA mean different things**, and R
 #      is the only one of the three bindings whose type system can say so. See below.
@@ -27,7 +27,7 @@ wire_number <- function(value, name) {
     )))
   }
   # trimws because passing `decimal.mark` routes formatC through prettyNum, which pads the
-  # result out to the digit width — "              10" rather than "10".
+  # result out to the digit width - "              10" rather than "10".
   trimws(formatC(value, format = "g", digits = 15L, decimal.mark = ".", big.mark = ""))
 }
 
@@ -194,7 +194,7 @@ flashlfq_build_args <- function(psms, normalize, ppm_tolerance, isotope_ppm_tole
 
 # Turn a `{run: value}` map into long rows, with an explicit answer for `null`.
 #
-# `missing` is the crux of this whole module and differs by table — 0 for a peptide, NA for a
+# `missing` is the crux of this whole module and differs by table - 0 for a peptide, NA for a
 # protein. See `flashlfq_parse()`.
 flashlfq_long_map <- function(entry, field, missing) {
   values <- entry[[field]]
@@ -224,7 +224,7 @@ flashlfq_parse_peptides <- function(entries) {
   }
 
   parts <- lapply(entries, function(entry) {
-    # A peptide intensity of 0 means "not measured in this run" — it is never "could not be
+    # A peptide intensity of 0 means "not measured in this run" - it is never "could not be
     # resolved", which is a protein-level outcome only. Reading a null here as NA would put an
     # NA into a column where every arithmetic operation then propagates it, and mean() of a
     # peptide column would go from a number to NA across the board.
@@ -269,7 +269,7 @@ flashlfq_parse_proteins <- function(entries) {
 
   parts <- lapply(entries, function(entry) {
     # NA, not 0. A protein intensity of `null` on the wire means FlashLFQ's median-polish
-    # produced NaN — it could not resolve a number at all — which is categorically different
+    # produced NaN - it could not resolve a number at all - which is categorically different
     # from a measured zero. R is the only one of the three bindings whose types can say this
     # without prose: arithmetic propagates NA, so mean(proteins$intensity) returns NA rather
     # than a confidently wrong number, and na.rm = TRUE becomes a visible choice the analyst
@@ -395,7 +395,7 @@ flashlfq_parse <- function(data) {
 #' @param match_between_runs Whether to transfer identifications between runs.
 #'
 #'   MBR needs a **complete, balanced design** to work properly, and `mbr_q_value_threshold` is
-#'   its FDR control — without it roughly 80% of transfers are false. Set `condition` and
+#'   its FDR control - without it roughly 80% of transfers are false. Set `condition` and
 #'   `biological_replicate` on `spectra` so FlashLFQ knows which runs are comparable.
 #'
 #'   **Whatever you do, count transfers from `peaks`, never from `peptides`.** See the return
@@ -414,21 +414,21 @@ flashlfq_parse <- function(data) {
 #'   deliberately.**
 #'
 #'   With more than one thread the peptide roll-up nondeterministically drops MBR intensities,
-#'   so identical inputs give different protein-level answers roughly **1 run in 6** — a
+#'   so identical inputs give different protein-level answers roughly **1 run in 6** - a
 #'   borderline protein was unresolvable in 5 of 6 repeats. Any figure produced multithreaded
 #'   may not reproduce (smith-chem-wisc/mzLib#1111). mzLibR warns if you set anything else.
 #' @param output_directory Where FlashLFQ should write its TSV output, or `NULL` to write none.
 #' @param timeout Seconds to allow, or `NULL` to wait as long as it takes.
 #'
 #' @return An `mzlibr_quant`: `psm_file`, `identification_count`, `parameters`,
-#'   `output_directory`, and four tidy data.frames — `spectra_files`, `peptides`, `proteins`
+#'   `output_directory`, and four tidy data.frames - `spectra_files`, `peptides`, `proteins`
 #'   and `peaks`.
 #'
 #' @section Read peaks, not the peptide roll-up:
 #'
 #' `peptides` is FlashLFQ's roll-up and **it drops most match-between-runs transfers.** On
 #' mzLib's own K562 pair there are **140** true transfers in `peaks` and the peptide table shows
-#' **52** — a 63% under-count. Worse, it is not evenly spread: per run the peaks give run_3
+#' **52** - a 63% under-count. Worse, it is not evenly spread: per run the peaks give run_3
 #' **62** and run_4 **78**, while the roll-up gives run_3 **0** and run_4 52. Read only the
 #' roll-up and MBR appears not to have worked at all in half the experiment.
 #'
@@ -441,7 +441,7 @@ flashlfq_parse <- function(data) {
 #'
 #' `peptides$intensity` is **0** when the peptide was not measured in that run. It is never NA.
 #'
-#' `proteins$intensity` is **NA** when FlashLFQ could not resolve a number at all — its
+#' `proteins$intensity` is **NA** when FlashLFQ could not resolve a number at all - its
 #' median-polish produced NaN. Arithmetic propagates it, so `mean()` on a protein column returns
 #' NA rather than a confidently wrong number, and `na.rm = TRUE` is a choice you make visibly.
 #' mzLibR never applies it on your behalf.
@@ -508,7 +508,7 @@ flashlfq_protein_count <- function(results) {
 #' peaks here. For "how many peptides did MBR rescue", use
 #' [flashlfq_mbr_rescued_peptide_count()].
 #'
-#' Either way, do not count MBR from `peptides` — it under-counts, badly and unevenly. Zero
+#' Either way, do not count MBR from `peptides` - it under-counts, badly and unevenly. Zero
 #' unless `match_between_runs` was on.
 #'
 #' @param results A [flashlfq_quantify()] result.
@@ -533,7 +533,7 @@ flashlfq_mbr_peaks <- function(results) {
 #'
 #' **What this actually computes: the number of distinct modified sequences among the MBR
 #' peaks.** That is stated in code terms on purpose, because the prose definition a reader
-#' supplies — "peptides quantified in at least one run *only* by MBR" — is subtly different and
+#' supplies - "peptides quantified in at least one run *only* by MBR" - is subtly different and
 #' gives a different number. On the K562 pair this is **140** while the strict reading is
 #' **135**; the five that differ have both an MBR peak and a zero-intensity MSMS peak in the
 #' same run.
@@ -547,6 +547,15 @@ flashlfq_mbr_rescued_peptide_count <- function(results) {
   length(unique(flashlfq_mbr_peaks(results)$sequence))
 }
 
+#' Print a quantification result
+#'
+#' A compact summary that names the two things most likely to be misread: how many
+#' match-between-runs transfers the peptide roll-up is hiding, and how many protein intensities
+#' are `NA` rather than `0`.
+#'
+#' @param x A [flashlfq_quantify()] result.
+#' @param ... Ignored.
+#' @return `x`, invisibly.
 #' @export
 print.mzlibr_quant <- function(x, ...) {
   cat("<mzlibr_quant> ", basename(x$psm_file), ", ",
@@ -570,7 +579,7 @@ print.mzlibr_quant <- function(x, ...) {
     if (from_rollup < from_peaks) {
       # Where the mistake is made: someone printing a result and reading off an MBR number.
       cat("  ! the peptide roll-up shows only ", from_rollup,
-        " of those ", from_peaks, " transfers — read peaks, not peptides.\n",
+        " of those ", from_peaks, " transfers - read peaks, not peptides.\n",
         "    See ?flashlfq_quantify (smith-chem-wisc/mzLib#1111 is a separate issue).\n",
         sep = ""
       )
@@ -589,7 +598,7 @@ print.mzlibr_quant <- function(x, ...) {
   threads <- x$parameters[["max_threads"]]
   if (!is.null(threads) && !identical(as.numeric(threads), 1)) {
     cat("  ! max_threads = ", format(threads),
-      " — this result may not reproduce (mzLib#1111).\n",
+      " - this result may not reproduce (mzLib#1111).\n",
       sep = ""
     )
   }
