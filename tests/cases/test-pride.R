@@ -6,15 +6,6 @@
 # did — "37 peptides out of about 200" was stale by 5x and had been copied into a second
 # binding before anyone measured it.
 
-fixture_path <- function(name) {
-  for (candidate in c(file.path("fixtures", name), file.path("tests", "fixtures", name))) {
-    if (file.exists(candidate)) {
-      return(candidate)
-    }
-  }
-  stop("fixture not found: ", name)
-}
-
 recorded_manifest <- function() {
   mz$json_parse(paste(readLines(fixture_path("pride_PXD000001_files.json"), warn = FALSE),
     collapse = "\n"

@@ -7,6 +7,17 @@
 export(mzlibr_bridge_path)
 export(mzlibr_bridge_version)
 
+export(census_explain)
+export(digest_distinct_base_sequences)
+export(digest_fragments_by_series)
+export(digest_modified_peptides)
+export(digest_truncated)
+export(peptidoform_fragments)
+export(peptide_mz)
+
+S3method(print, mzlibr_digest)
+S3method(print, mzlibr_census)
+
 export(pride_download)
 export(pride_download_files)
 export(pride_list_files)

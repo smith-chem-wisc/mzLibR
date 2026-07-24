@@ -163,7 +163,7 @@ Raise a condition when a filter matches nothing, and put the `.gz` explanation *
 | trap | the number |
 |---|---|
 | mzLib's `trypsin\|P` **applies** the Keil rule; plain `trypsin` does not. This is the **reverse** of the MaxQuant/Mascot convention | albumin: **195** vs **202** peptides. mzLib#1106 |
-| `min_length = 7` silently discards shorter peptides | albumin **195 → 254** at min_length 1; roughly a third of a histone digest |
+| `min_length = 7` silently discards shorter peptides | albumin **195 → 243** at min_length 1 (~a fifth of the digest). *Corrected 2026-07-23: this said 254, which matches no setting — plain trypsin gives 257, three missed cleavages 324. Verified by driving the bridge from the shell. It never shipped; neither sibling quotes a min_length figure.* |
 | `peptides` are **peptidoforms**, not distinct sequences | albumin at 2 mods: **303** peptidoforms over **195** sequences. Provide both, name them differently |
 | The isoform cap (default 1024) **truncates silently** | H3.1 at 4 mods loses ~30%. Surface `peptides_at_isoform_cap` and a `truncated` accessor |
 | `--no-modifications` also discards **proteolysis products**, so the peptide list changes | albumin loses 2 signal-peptide peptides. pyMzLib#8 |

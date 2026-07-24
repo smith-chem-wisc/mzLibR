@@ -162,7 +162,7 @@ pride_parse_timestamps <- function(values) {
 # to guess: `checksum` absent means "the repository publishes none" and belongs as `""`, while
 # `https_url` absent means "this file cannot be fetched over HTTPS" and must stay `NA` so that
 # `downloadable` is honest.
-pride_field <- function(entry, name, type, missing) {
+wire_field <- function(entry, name, type, missing) {
   value <- entry[[name]]
   if (is.null(value) || (length(value) == 1L && is.logical(value) && is.na(value))) {
     return(missing)
@@ -186,9 +186,9 @@ pride_parse_locations <- function(entry) {
     ))
   }
   data.frame(
-    accession = vapply(locations, pride_field, character(1L), "accession", "character", ""),
-    name = vapply(locations, pride_field, character(1L), "name", "character", ""),
-    value = vapply(locations, pride_field, character(1L), "value", "character", ""),
+    accession = vapply(locations, wire_field, character(1L), "accession", "character", ""),
+    name = vapply(locations, wire_field, character(1L), "name", "character", ""),
+    value = vapply(locations, wire_field, character(1L), "value", "character", ""),
     stringsAsFactors = FALSE
   )
 }
@@ -210,33 +210,33 @@ pride_parse_manifest <- function(data, accession) {
     )))
   }
 
-  file_name <- vapply(entries, pride_field, character(1L), "file_name", "character", NA_character_)
-  https_url <- vapply(entries, pride_field, character(1L), "https_url", "character", NA_character_)
-  size <- vapply(entries, pride_field, numeric(1L), "file_size_bytes", "numeric", NA_real_)
+  file_name <- vapply(entries, wire_field, character(1L), "file_name", "character", NA_character_)
+  https_url <- vapply(entries, wire_field, character(1L), "https_url", "character", NA_character_)
+  size <- vapply(entries, wire_field, numeric(1L), "file_size_bytes", "numeric", NA_real_)
 
   files <- data.frame(
     file_name = file_name,
     file_size_bytes = size,
     size_mb = size / 1e6,
     extension = pride_extension(file_name),
-    category = vapply(entries, pride_field, character(1L), "category", "character", ""),
+    category = vapply(entries, wire_field, character(1L), "category", "character", ""),
     category_accession = vapply(
-      entries, pride_field, character(1L), "category_accession", "character", ""
+      entries, wire_field, character(1L), "category_accession", "character", ""
     ),
-    checksum = vapply(entries, pride_field, character(1L), "checksum", "character", ""),
+    checksum = vapply(entries, wire_field, character(1L), "checksum", "character", ""),
     https_url = https_url,
     # `NA` and not `FALSE` for a missing URL would be defensible, but this column exists to be
     # used as a filter and `files[files$downloadable, ]` on an NA yields a row of NAs. A file
     # with no HTTPS location simply cannot be fetched, which is a fact, not an unknown.
     downloadable = !is.na(https_url),
     submission_date = pride_parse_timestamps(
-      vapply(entries, pride_field, character(1L), "submission_date", "character", NA_character_)
+      vapply(entries, wire_field, character(1L), "submission_date", "character", NA_character_)
     ),
     publication_date = pride_parse_timestamps(
-      vapply(entries, pride_field, character(1L), "publication_date", "character", NA_character_)
+      vapply(entries, wire_field, character(1L), "publication_date", "character", NA_character_)
     ),
     updated_date = pride_parse_timestamps(
-      vapply(entries, pride_field, character(1L), "updated_date", "character", NA_character_)
+      vapply(entries, wire_field, character(1L), "updated_date", "character", NA_character_)
     ),
     # Not on the wire — stamped on here so `pride_download_files()` can tell which project to
     # fetch from without the caller having to carry the accession alongside the frame.

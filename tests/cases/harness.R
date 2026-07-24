@@ -30,6 +30,20 @@ skip <- function(reason) {
   ))
 }
 
+# Locate a recorded fixture. The suite runs both from tests/ (via run-tests.R) and from the
+# package root, so both are tried rather than assuming a working directory.
+#
+# Defined here rather than in the first test file that needed it: files are sourced in
+# alphabetical order, so a helper living in test-pride.R is invisible to test-peptidoform.R.
+fixture_path <- function(name) {
+  for (candidate in c(file.path("fixtures", name), file.path("tests", "fixtures", name))) {
+    if (file.exists(candidate)) {
+      return(candidate)
+    }
+  }
+  stop("fixture not found: ", name)
+}
+
 skip_if <- function(condition, reason) {
   if (isTRUE(condition)) skip(reason)
   invisible(NULL)
