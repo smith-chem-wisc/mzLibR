@@ -294,6 +294,41 @@ test_that("R itself makes an embedded-null argument unconstructible", {
   expect_error(rawToChar(as.raw(c(0x50L, 0x00L, 0x44L))), contains = "embedded nul")
 })
 
+test_that("a bridge that will not launch still fails as one of ours", {
+  # A quarantined binary, a missing execute bit, a file that is not executable at all. Whatever
+  # the platform makes of it, it must not escape as a bare system error - the promise is that
+  # every failure from this package is an mzlib_error.
+  path <- fake_bridge_file()
+  on.exit(unlink(path), add = TRUE)
+
+  with_bridge_config(option = path, {
+    condition <- tryCatch(mzlibr_bridge_version(), error = function(e) e)
+    expect_true(inherits(condition, "mzlib_error"),
+      info = paste(class(condition), collapse = ", ")
+    )
+  })
+})
+
+test_that("every condition mzLibR raises is catchable as one type", {
+  # So a caller can write a single handler and be done, without enumerating the hierarchy.
+  conditions <- list(
+    mz$mzlib_usage_error("x"),
+    mz$mzlib_service_unavailable("x"),
+    mz$mzlib_bridge_error("x", "SomeException"),
+    mz$mzlib_timeout(5),
+    mz$mzlib_bridge_not_found("x"),
+    mz$mzlib_protocol_error("x"),
+    mz$mzlib_project_not_found("x")
+  )
+  for (condition in conditions) {
+    expect_true(inherits(condition, "mzlib_error"),
+      info = paste(class(condition), collapse = ", ")
+    )
+    expect_true(inherits(condition, "error"))
+    expect_true(nzchar(conditionMessage(condition)))
+  }
+})
+
 test_that("stdin reaches the runner unchanged", {
   # Large or variadic input goes on stdin and never on argv, because argv has a ceiling of
   # roughly 32 KB and a real experiment's worth of file names goes straight past it.

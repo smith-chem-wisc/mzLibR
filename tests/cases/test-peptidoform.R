@@ -151,6 +151,63 @@ test_that("z-dot ions are suppressed at proline while the complementary c ions a
   }
 })
 
+test_that("the c and z-dot ladders close on the precursor mass", {
+  # The strongest internal check available offline: for every complementary pair,
+  # c_k + z_(L-k) = M + 1.00782503, the hydrogen atom. It holds to eight decimal places on both
+  # peptides, so a fragment ladder that was subtly wrong - an off-by-one in numbering, a lost
+  # neutral loss, the wrong terminus - could not survive it.
+  #
+  # Note which constant appears here. The c/z complementarity is a real chemical relation and
+  # takes the **hydrogen atom**; peptide m/z takes the **proton** (see peptide_mz). Both are in
+  # this package, for different and correct reasons, which is exactly why getting them mixed up
+  # is easy and invisible.
+  digest <- recorded_digest()
+
+  for (index in digest$peptides$peptide_index) {
+    peptide <- digest$peptides[digest$peptides$peptide_index == index, ]
+    mine <- digest$fragments[digest$fragments$peptide_index == index, ]
+    c_ions <- mine[mine$product_type == "c", ]
+    z_ions <- mine[mine$product_type == "zDot", ]
+
+    pairs <- 0L
+    for (number in c_ions$fragment_number) {
+      partner <- z_ions$neutral_mass[z_ions$fragment_number == peptide$length - number]
+      if (length(partner) != 1L) {
+        next
+      }
+      total <- c_ions$neutral_mass[c_ions$fragment_number == number] + partner
+      expect_true(abs(total - peptide$monoisotopic_mass - 1.00782503) < 1e-6,
+        info = paste("peptide", index, "c", number)
+      )
+      pairs <- pairs + 1L
+    }
+    # And there really were pairs to check, so the loop cannot pass by doing nothing.
+    expect_true(pairs > 25L, info = paste("peptide", index, "pairs", pairs))
+  }
+})
+
+test_that("modification positions index the peptide's own residues", {
+  # Not the parent protein's. The succinyl-lysine sits at residue 35 of a 35-residue peptide,
+  # which begins at residue 42 of albumin - so a position read against the protein would be
+  # wrong by 41 and still look perfectly plausible.
+  digest <- recorded_digest()
+  modifications <- digest$modifications
+  for (row in seq_len(nrow(modifications))) {
+    peptide <- digest$peptides[
+      digest$peptides$peptide_index == modifications$peptide_index[row],
+    ]
+    expect_true(modifications$one_based_residue[row] >= 1,
+      info = paste("row", row)
+    )
+    expect_true(modifications$one_based_residue[row] <= peptide$length,
+      info = paste(
+        "residue", modifications$one_based_residue[row],
+        "in a peptide of length", peptide$length
+      )
+    )
+  }
+})
+
 test_that("fragments carry neutral_mass and no m/z", {
   # Deliberate, and it must stay that way: a c or z ion carries only the fixed charges within
   # its own span, and per-fragment charge accounting does not exist on this wire. An mz column
@@ -451,6 +508,84 @@ test_that("LIVE: min_length is what hides the short peptides", {
     mzlib_service_unavailable = function(e) skip(paste("UniProt unavailable:", conditionMessage(e)))
   )
   expect_identical(digest_distinct_base_sequences(digest), 243L)
+})
+
+test_that("LIVE: an unknown accession is an error, not an empty digest", {
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  condition <- tryCatch(
+    {
+      peptidoform_fragments("Q9ZZZ9", timeout = 300)
+      NULL
+    },
+    mzlib_service_unavailable = function(e) skip(paste("UniProt unavailable:", conditionMessage(e))),
+    mzlib_error = function(e) e
+  )
+  expect_true(inherits(condition, "mzlib_error"))
+})
+
+test_that("LIVE: an unknown protease names the alternatives", {
+  # A stuck user reads the error message and nothing else, so the message has to carry the list.
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  condition <- tryCatch(
+    {
+      peptidoform_fragments("P02768", protease = "trypsen", timeout = 300)
+      NULL
+    },
+    mzlib_service_unavailable = function(e) skip(paste("UniProt unavailable:", conditionMessage(e))),
+    mzlib_error = function(e) e
+  )
+  expect_true(inherits(condition, "mzlib_error"))
+  expect_true(grepl("trypsin", conditionMessage(condition), fixed = TRUE),
+    info = conditionMessage(condition)
+  )
+})
+
+test_that("LIVE: the isoform cap truncates and says so", {
+  # A truncated peptide list and a genuinely short one look identical from the outside, so the
+  # only defence is that digest_truncated() is honest.
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  capped <- tryCatch(
+    peptidoform_fragments("P02768", max_modifications = 3, max_isoforms = 2, timeout = 600),
+    mzlib_service_unavailable = function(e) skip(paste("UniProt unavailable:", conditionMessage(e)))
+  )
+  expect_true(digest_truncated(capped))
+  expect_true(capped$peptides_at_isoform_cap > 0)
+  expect_true(grepl("hit the isoform cap", paste(capture.output(print(capped)), collapse = "\n"),
+    fixed = TRUE
+  ))
+})
+
+test_that("LIVE: turning modifications off changes the peptide list, not just the modifications", {
+  # smith-chem-wisc/pyMzLib#8: --no-modifications also discards proteolysis products, so the
+  # sequences themselves change. Anyone who reads the flag as "same peptides, no mods" is wrong.
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  bare <- tryCatch(
+    peptidoform_fragments("P02768", modifications = FALSE, timeout = 600),
+    mzlib_service_unavailable = function(e) skip(paste("UniProt unavailable:", conditionMessage(e)))
+  )
+  with_mods <- peptidoform_fragments("P02768", timeout = 600)
+
+  expect_identical(nrow(bare$modifications), 0L)
+  # The distinct sequences differ, which is the finding - not merely the peptidoform count.
+  expect_true(
+    digest_distinct_base_sequences(bare) < digest_distinct_base_sequences(with_mods),
+    info = paste(
+      digest_distinct_base_sequences(bare), "vs",
+      digest_distinct_base_sequences(with_mods)
+    )
+  )
 })
 
 test_that("LIVE: the trypsin naming inversion changes the peptide count", {
