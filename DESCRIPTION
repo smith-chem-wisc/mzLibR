@@ -2,7 +2,8 @@ Package: mzLibR
 Title: R Bindings for the mzLib Proteomics Library
 Version: 0.1.0
 Authors@R:
-    person("trishorts", email = "mshort@chem.wisc.edu", role = c("aut", "cre"))
+    person("Michael R.", "Shortreed", email = "mshort@chem.wisc.edu",
+           role = c("aut", "cre"), comment = c(ORCID = "0000-0003-4626-0863"))
 Description: Calls the mzLib proteomics library from R over a language-neutral
     bridge: PRIDE repository access, in-silico digestion and fragmentation of
     peptidoforms, and label-free quantification with match-between-runs via
