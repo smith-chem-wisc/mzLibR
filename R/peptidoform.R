@@ -365,7 +365,17 @@ peptidoform_fragments <- function(accession, protease = "trypsin|P", dissociatio
     accession, protease, dissociation, terminus, modifications,
     missed_cleavages, min_length, max_length, max_modifications, max_isoforms
   )
-  peptidoform_parse(bridge_invoke(args, timeout = timeout))
+  digest <- peptidoform_parse(bridge_invoke(args, timeout = timeout))
+
+  # The bridge reports max_modifications and max_modification_isoforms back, but not the three
+  # settings that decide which peptides exist at all. They are stamped on here so that a digest
+  # sitting in a workspace, or printed six months later, says what produced it — min_length in
+  # particular, since its default of 7 silently removes a fifth of the digest and is the first
+  # thing to check when an expected peptide is missing.
+  digest$min_length <- as.numeric(min_length)
+  digest$max_length <- if (is.null(max_length)) NA_real_ else as.numeric(max_length)
+  digest$missed_cleavages <- as.numeric(missed_cleavages)
+  digest
 }
 
 #' Whether a digest hit the isoform cap, and is therefore incomplete
@@ -490,6 +500,22 @@ peptide_mz <- function(peptides, charge) {
   (peptides$monoisotopic_mass + (charge - peptides$fixed_charges) * PROTON_MASS) / charge
 }
 
+#' Annotated features that could not be used
+#'
+#' `annotated - applied`. See [census_explain()] for why they were excluded, and why that
+#' exclusion is correct.
+#'
+#' @param digest An [peptidoform_fragments()] result, or its `census`.
+#' @return A single count.
+#' @export
+census_excluded <- function(digest) {
+  census <- if (inherits(digest, "mzlibr_digest")) digest$census else digest
+  if (!inherits(census, "mzlibr_census")) {
+    stop(mzlib_usage_error("Expected a peptidoform_fragments() result or its census."))
+  }
+  max(0, census$annotated - census$applied)
+}
+
 #' What UniProt annotated, and what mzLib could actually use
 #'
 #' A plain-language account, because the alternative is a number arriving with no indication
@@ -566,6 +592,14 @@ print.mzlibr_digest <- function(x, ...) {
     ", terminus ", x$terminus, "\n",
     sep = ""
   )
+  if (!is.null(x$min_length)) {
+    cat("  min_length ", format(x$min_length),
+      if (is.na(x$max_length)) "" else paste0(", max_length ", format(x$max_length)),
+      ", ", format(x$missed_cleavages), " missed cleavages",
+      ", max ", format(x$max_modifications), " modifications\n",
+      sep = ""
+    )
+  }
   cat("  ", nrow(x$peptides), " peptidoforms over ",
     digest_distinct_base_sequences(x), " distinct sequences\n",
     sep = ""

@@ -16,9 +16,9 @@ recorded_files <- function() {
   mz$pride_parse_manifest(recorded_manifest(), "PXD000001")
 }
 
-download_args <- function(accession = "PXD000001", dest = "out", category = NULL,
+download_args <- function(accession = "PXD000001", destination = "out", category = NULL,
                           extensions = NULL, overwrite = TRUE) {
-  mz$pride_build_download_args(accession, dest, category, extensions, overwrite)
+  mz$pride_build_download_args(accession, destination, category, extensions, overwrite)
 }
 
 # ---------------------------------------------------------------- parsing the manifest
@@ -247,8 +247,8 @@ test_that("the overwrite flag is not inverted", {
 })
 
 test_that("a blank destination is refused instead of writing to the working directory", {
-  for (dest in list("", "   ", NA_character_, NULL)) {
-    expect_error(download_args(dest = dest),
+  for (destination in list("", "   ", NA_character_, NULL)) {
+    expect_error(download_args(destination = destination),
       class = "mzlib_usage_error", contains = "destination directory is required"
     )
   }

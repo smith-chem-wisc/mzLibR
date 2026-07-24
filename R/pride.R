@@ -467,7 +467,7 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #' MGF" cannot be said in that vocabulary at all — and can all be said with `[`.
 #'
 #' @param accession A project accession, e.g. `"PXD000001"`.
-#' @param dest Directory to write into. A blank path is refused rather than silently taken to
+#' @param destination Directory to write into. A blank path is refused rather than silently taken to
 #'   mean the working directory.
 #' @param category Keep only files of this category, e.g. `"RAW"`, `"PEAK"`, `"SEARCH"`,
 #'   `"OTHER"`. `NULL` keeps all.
@@ -493,9 +493,9 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #'
 #' @return A character vector of the paths where the files now are.
 #' @export
-pride_download <- function(accession, dest, category = NULL, extensions = NULL,
+pride_download <- function(accession, destination, category = NULL, extensions = NULL,
                            overwrite = TRUE, timeout = NULL) {
-  args <- pride_build_download_args(accession, dest, category, extensions, overwrite)
+  args <- pride_build_download_args(accession, destination, category, extensions, overwrite)
   canonical <- pride_normalise_accession(accession)
   written <- pride_parse_paths(bridge_invoke(args, timeout = timeout))
   pride_check_filter_matched(
@@ -518,7 +518,7 @@ pride_download <- function(accession, dest, category = NULL, extensions = NULL,
 #' @param files Rows of a [pride_list_files()] data.frame. They must all come from one project.
 #'   Rows whose `downloadable` is `FALSE` are refused up front rather than failing halfway
 #'   through a multi-gigabyte transfer.
-#' @param dest Directory to write into.
+#' @param destination Directory to write into.
 #' @param overwrite When `FALSE`, files already present are left alone.
 #' @param timeout Seconds to allow, or `NULL` to wait as long as it takes.
 #'
@@ -526,8 +526,8 @@ pride_download <- function(accession, dest, category = NULL, extensions = NULL,
 #'   transferred just now: with `overwrite = FALSE` a file already present is left alone and its
 #'   path is still returned. Do not read `length()` of this as work done.
 #' @export
-pride_download_files <- function(files, dest, overwrite = TRUE, timeout = NULL) {
-  prepared <- pride_build_download_files_args(files, dest, overwrite)
+pride_download_files <- function(files, destination, overwrite = TRUE, timeout = NULL) {
+  prepared <- pride_build_download_files_args(files, destination, overwrite)
   pride_parse_paths(bridge_invoke(prepared$args, stdin = prepared$stdin, timeout = timeout))
 }
 

@@ -157,6 +157,49 @@ expect_error <- function(code, class = NULL, contains = NULL) {
   invisible(condition)
 }
 
+# Assert that `code` warns, and optionally that the warning says a particular thing.
+#
+# The message check matters as much as the fact of the warning: a warning nobody can act on is
+# noise, and the ones here name an issue number and a remedy.
+expect_warning <- function(code, contains = NULL) {
+  warned <- NULL
+  withCallingHandlers(
+    force(code),
+    warning = function(w) {
+      warned <<- w
+      invokeRestart("muffleWarning")
+    }
+  )
+  if (is.null(warned)) {
+    mz_fail("expected a warning, got none")
+  }
+  for (needle in contains) {
+    if (!grepl(needle, conditionMessage(warned), fixed = TRUE)) {
+      mz_fail(
+        "expected the warning to contain '", needle, "', got:\n      ",
+        conditionMessage(warned)
+      )
+    }
+  }
+  invisible(warned)
+}
+
+# Assert that `code` does NOT warn.
+expect_no_warning <- function(code) {
+  warned <- NULL
+  withCallingHandlers(
+    force(code),
+    warning = function(w) {
+      warned <<- w
+      invokeRestart("muffleWarning")
+    }
+  )
+  if (!is.null(warned)) {
+    mz_fail("expected no warning, got: ", conditionMessage(warned))
+  }
+  invisible(NULL)
+}
+
 # Print the tally and fail the R CMD check run if anything failed.
 mz_report <- function() {
   for (line in mz_results$messages) {
