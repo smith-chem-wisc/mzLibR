@@ -523,18 +523,21 @@ census_excluded <- function(digest) {
 #' annotated.
 #'
 #' **The exclusion is correct - do not try to defeat it.** mzLib loads only `modified residue`
-#' and `lipid moiety-binding region` annotations. On albumin, 22 of the 24 excluded features are
-#' `N-linked (Glc) (glycation) lysine`, and while UniProt's own `ptmlist.txt` does give that a
-#' formula and a mass, glycation is a labile, heterogeneous adduct that progresses to advanced
-#' glycation end-products and dissociates in preference to the backbone. An exact mass plus a
-#' clean fragment ladder would describe a species you cannot observe.
+#' and `lipid moiety-binding region` annotations. On albumin the census reports the 24 excluded
+#' features under one feature *type*, `glycosylation site` - that is the label you will see in
+#' `census$by_type`, and it is the only granularity the census has. At UniProt's finer
+#' modification-*name* level, 22 of those 24 are specifically `N-linked (Glc) (glycation)
+#' lysine`; the census does not surface that, so the "22" is something you confirm by reading
+#' the UniProt entry, not a number this tool reports. Either way the exclusion is right:
+#' glycation and glycosylation are labile, heterogeneous adducts, so assigning one an exact mass
+#' and a clean fragment ladder would describe a species you cannot observe.
 #'
 #' **The defect is the silence, not the exclusion** (smith-chem-wisc/mzLib#1112). Note also that
-#' mzLib reads no qualifiers for any feature type, so it cannot distinguish the 14 albumin sites
-#' marked `; in vitro`, or the two that exist only in the Redhill and Casebrook variants, from
-#' the rest. Those are three different grounds for exclusion needing three different judgements
-#' - this census can only give you the count. Read the UniProt entry before concluding anything
-#' about a specific site.
+#' mzLib reads no qualifiers for any feature type. It cannot tell an annotation marked
+#' `; in vitro`, or one that exists only in a disease variant (albumin's Redhill and Casebrook),
+#' from any other - different grounds for exclusion needing different judgements, which the
+#' census cannot make for you. Read the UniProt entry before concluding anything about a
+#' specific site.
 #'
 #' @param digest An [peptidoform_fragments()] result, or its `census`.
 #' @return A single string.
