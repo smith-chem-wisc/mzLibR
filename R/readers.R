@@ -302,7 +302,7 @@ readers_identify <- function(path, timeout = 60) {
 #'
 #' `caveats` — what the uniform view cannot be trusted to mean for this format, each citing the
 #' mzLib source it came from. Empty for some formats and not for others. This is where you learn
-#' that MSFragger retention times are seconds while MetaMorpheus's are minutes.
+#' that, e.g., TopPIC retention times are seconds while MetaMorpheus's and MSFragger's are minutes.
 #'
 #' Relatedly, `retention_time_unit` is per format and mzLib does **not** normalise it. Convert
 #' with [readers_retention_time_in_minutes()] rather than by hand.
@@ -319,9 +319,10 @@ readers_read_results <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' The conversion you would otherwise write by hand, using `retention_time_unit`.
 #'
 #' **Raises when the unit is `"unknown"` rather than guessing.** A silently unconverted time axis
-#' is the specific mistake this module exists to prevent: MSFragger writes seconds and
-#' MetaMorpheus writes minutes, mzLib normalises neither, and a 60x error in a retention-time
-#' comparison looks like a chromatography problem rather than a units problem.
+#' is the specific mistake this module exists to prevent: TopPIC still writes seconds while
+#' MetaMorpheus and MSFragger write minutes (mzLib normalises MSFragger since PR #1116, but not
+#' TopPIC), and a 60x error in a retention-time comparison looks like a chromatography problem
+#' rather than a units problem.
 #'
 #' @param records A [readers_read_results()] result.
 #' @return A numeric vector of retention times in minutes.
