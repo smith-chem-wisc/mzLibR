@@ -27,10 +27,12 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         r: [release]
         include:
-          # The R 3.5.0 floor, declared in DESCRIPTION and set solely by system2(timeout=).
-          - os: ubuntu-latest
-            r: "3.5"
           # One old-release check for good measure.
+          #
+          # R 3.5 (the DESCRIPTION floor) is deliberately NOT in this matrix: modern r-lib CI
+          # tooling (pak/pkgcache) cannot install on 2018-era R, so that job can only ever produce
+          # a red check, never a real result. The `>= 3.5.0` floor stays a language-feature claim,
+          # held by avoiding post-3.5 syntax rather than by CI. Revisit if r-lib restores 3.5 support.
           - os: ubuntu-latest
             r: oldrel
     env:
@@ -43,6 +45,13 @@ jobs:
         with:
           r-version: ${{ matrix.r }}
           use-public-rspm: true
+      # check-r-package runs rcmdcheck::rcmdcheck(), which must be installed first. Without this
+      # step every R CMD check job failed at setup with "there is no package called 'rcmdcheck'".
+      # The package itself has no runtime deps, so this installs only the check tooling.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
       - uses: r-lib/actions/check-r-package@v2
         with:
           # --as-cran, but the manual needs LaTeX we don't install here.
