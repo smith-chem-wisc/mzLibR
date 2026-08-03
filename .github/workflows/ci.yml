@@ -43,6 +43,13 @@ jobs:
         with:
           r-version: ${{ matrix.r }}
           use-public-rspm: true
+      # check-r-package runs rcmdcheck::rcmdcheck(), which must be installed first. Without this
+      # step every R CMD check job failed at setup with "there is no package called 'rcmdcheck'".
+      # The package itself has no runtime deps, so this installs only the check tooling.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
       - uses: r-lib/actions/check-r-package@v2
         with:
           # --as-cran, but the manual needs LaTeX we don't install here.
