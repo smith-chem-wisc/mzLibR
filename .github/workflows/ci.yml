@@ -21,20 +21,18 @@ jobs:
   check:
     name: R CMD check / ${{ matrix.os }} / R ${{ matrix.r }}
     runs-on: ${{ matrix.os }}
-    # R 3.5 (2018) is below what modern r-lib CI tooling (pak/pkgcache) can install, so that job
-    # cannot complete a check. Keep it as a non-blocking canary rather than dropping the >= 3.5
-    # floor: it still surfaces if a run ever succeeds, but its failure does not gate the workflow.
-    continue-on-error: ${{ matrix.r == '3.5' }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         r: [release]
         include:
-          # The R 3.5.0 floor, declared in DESCRIPTION and set solely by system2(timeout=).
-          - os: ubuntu-latest
-            r: "3.5"
           # One old-release check for good measure.
+          #
+          # R 3.5 (the DESCRIPTION floor) is deliberately NOT in this matrix: modern r-lib CI
+          # tooling (pak/pkgcache) cannot install on 2018-era R, so that job can only ever produce
+          # a red check, never a real result. The `>= 3.5.0` floor stays a language-feature claim,
+          # held by avoiding post-3.5 syntax rather than by CI. Revisit if r-lib restores 3.5 support.
           - os: ubuntu-latest
             r: oldrel
     env:
