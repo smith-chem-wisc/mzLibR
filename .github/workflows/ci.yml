@@ -21,6 +21,10 @@ jobs:
   check:
     name: R CMD check / ${{ matrix.os }} / R ${{ matrix.r }}
     runs-on: ${{ matrix.os }}
+    # R 3.5 (2018) is below what modern r-lib CI tooling (pak/pkgcache) can install, so that job
+    # cannot complete a check. Keep it as a non-blocking canary rather than dropping the >= 3.5
+    # floor: it still surfaces if a run ever succeeds, but its failure does not gate the workflow.
+    continue-on-error: ${{ matrix.r == '3.5' }}
     strategy:
       fail-fast: false
       matrix:
