@@ -318,11 +318,9 @@ peptidoform_parse <- function(data) {
 #'   mistake is quiet and small enough to survive review (smith-chem-wisc/mzLib#1106).
 #' @param dissociation The dissociation type, e.g. `"ETD"`, `"HCD"`, `"CID"`, `"ECD"`.
 #'
-#'   **`"ETD"` and `"ECD"` return three series - `c`, `zDot` *and* `y` - not two.** No
-#'   fragmentation mechanism produces `y` without `b`, and about **a third** of every ETD
-#'   fragment list is those `y` ions. Use [digest_fragments_by_series()] and select the series
-#'   you mean rather than trusting a total (smith-chem-wisc/mzLib#1109; a fix is proposed in
-#'   mzLib PR #1114, so check whether it has merged).
+#'   **`"ETD"` and `"ECD"` return the `c` and `zDot` series** (radical N-Ca cleavage yields
+#'   c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the spurious `y`
+#'   series ETD used to emit.
 #' @param modifications Whether to apply UniProt's annotated modifications.
 #'
 #'   `FALSE` does more than drop modifications: it also discards **proteolysis products**, so
@@ -419,9 +417,8 @@ digest_modified_peptides <- function(digest) {
 #' Fragment ions per product type
 #'
 #' **Prefer this to `nrow(digest$fragments)` whenever the ion series matter, which for ETD is
-#' always.** A bare total folds in two things that are not comparable ions: the spurious `y`
-#' series mzLib emits for ETD (about a third of the total), and one extra full-length `z-dot` per
-#' peptide.
+#' always.** A bare total folds in the one extra full-length `z-dot` per peptide, which is not a
+#' backbone-cleavage ion between two residues.
 #'
 #' The `zDot` series runs `1..length`, not `1..length-1`. The extra ion numbered `length` is the
 #' whole peptide minus NH2 - the N-Ca cleavage at residue 1 - which is **correct and
@@ -590,9 +587,7 @@ census_explain <- function(digest) {
 
 #' Print a digest
 #'
-#' A compact summary, and the place several warnings actually reach someone: printing a digest
-#' and reading a fragment total off it is exactly what a person about to count spurious ETD
-#' \code{y} ions does.
+#' A compact summary of the digest and its fragment series.
 #'
 #' @param x An [peptidoform_fragments()] result.
 #' @param ... Ignored.
@@ -623,15 +618,6 @@ print.mzlibr_digest <- function(x, ...) {
       paste0(series$product_type, "=", series$n, collapse = ", "), "\n",
       sep = ""
     )
-    # Put the warning where the mistake is made. Someone printing a digest and reading off a
-    # fragment total is exactly the person about to count spurious y ions as real ones.
-    if (any(series$product_type == "y") && !any(series$product_type == "b")) {
-      cat("  ! ", series$n[series$product_type == "y"],
-        " y ions with no b ions - no fragmentation mechanism produces that.\n",
-        "    See ?digest_fragments_by_series (smith-chem-wisc/mzLib#1109).\n",
-        sep = ""
-      )
-    }
   }
 
   if (digest_truncated(x)) {
