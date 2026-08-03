@@ -52,7 +52,7 @@ incomplete. \code{NA} when the count could not be established.
 
 \code{caveats} — what the uniform view cannot be trusted to mean for this format, each citing the
 mzLib source it came from. Empty for some formats and not for others. This is where you learn
-that MSFragger retention times are seconds while MetaMorpheus's are minutes.
+that, e.g., TopPIC retention times are seconds while MetaMorpheus's and MSFragger's are minutes.
 
 Relatedly, \code{retention_time_unit} is per format and mzLib does \strong{not} normalise it. Convert
 with \code{\link{readers_retention_time_in_minutes}} rather than by hand.

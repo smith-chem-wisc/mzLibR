@@ -15,9 +15,10 @@ The conversion you would otherwise write by hand, using \code{retention_time_uni
 }
 \details{
 \strong{Raises when the unit is \code{"unknown"} rather than guessing.} A silently unconverted time axis
-is the specific mistake this module exists to prevent: MSFragger writes seconds and
-MetaMorpheus writes minutes, mzLib normalises neither, and a 60x error in a retention-time
-comparison looks like a chromatography problem rather than a units problem.
+is the specific mistake this module exists to prevent: TopPIC still writes seconds while
+MetaMorpheus and MSFragger write minutes (mzLib normalises MSFragger since PR #1116, but not
+TopPIC), and a 60x error in a retention-time comparison looks like a chromatography problem
+rather than a units problem.
 }
 \value{
 A numeric vector of retention times in minutes.
