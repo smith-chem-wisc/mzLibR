@@ -26,7 +26,7 @@ python_src <- if (length(args) >= 1L) {
 }
 fixtures <- if (length(args) >= 2L) args[2L] else "tests/fixtures"
 
-modules <- c("pride", "peptidoform", "flashlfq", "readers")
+modules <- c("pride", "peptidoform", "flashlfq", "readers", "prediction")
 
 # ---------------------------------------------------------------- the Python side
 
@@ -94,6 +94,8 @@ mapping <- c(
   pride_download = "pride.download",
   pride_download_files = "pride.download_files",
   pride_total_size_bytes = "pride.total_size_bytes",
+  pride_list_ftp_files = "pride.list_ftp_files",
+  pride_approximate_total_size_bytes = "pride.approximate_total_size_bytes",
   peptidoform_fragments = "peptidoform.fragments",
   digest_truncated = "Digest.truncated",
   digest_modified_peptides = "Digest.modified_peptides",
@@ -109,7 +111,18 @@ mapping <- c(
   readers_formats = "readers.formats",
   readers_identify = "readers.identify",
   readers_read_results = "readers.read_results",
-  readers_retention_time_in_minutes = "ResultRecords.retention_time_in_minutes"
+  readers_read_records = "readers.read_records",
+  readers_read_features = "readers.read_features",
+  readers_read_matches = "readers.read_matches",
+  readers_read_spectra = "readers.read_spectra",
+  readers_retention_time_in_minutes = "ResultRecords.retention_time_in_minutes",
+  prediction_models = "prediction.models",
+  prediction_retention_time = "prediction.retention_time",
+  prediction_fragments = "prediction.fragments",
+  prediction_ccs = "prediction.ccs",
+  prediction_detectability = "prediction.detectability",
+  prediction_crosslink_fragments = "prediction.crosslink_fragments",
+  constraint_applicable = "Constraint.applicable"
 )
 
 # Deliberately absent from pyMzLib, with the reason. Anything here is a considered addition, not
@@ -123,6 +136,29 @@ additions <- c(
   mzlibr_install_bridge = paste(
     "R-only: Python ships the payload inside the wheel and Rust downloads it from build.rs.",
     "CRAN allows neither, so the download has to be a function the user calls."
+  )
+)
+
+# Parameter lists that deliberately differ from the parent's, with the reason. A divergence not
+# named here is a problem; one named here is a decision, and shows up in the table as such rather
+# than as a warning nobody can act on.
+parameter_divergences <- c(
+  prediction_ccs = paste(
+    "R takes precursor_charge as a data.frame column, which is how an R user already holds a",
+    "peptide table; pyMzLib additionally offers it as a shared keyword default."
+  ),
+  prediction_fragments = paste(
+    "R takes the per-peptide parameters as data.frame columns, which is how an R user already",
+    "holds a peptide table; pyMzLib additionally offers them as shared keyword defaults, which R",
+    "does not need because recycling a column is one assignment."
+  ),
+  prediction_crosslink_fragments = paste(
+    "As prediction_fragments: precursor_charge and collision_energy are data.frame columns here",
+    "and shared keyword defaults in pyMzLib."
+  ),
+  readers_retention_time_in_minutes = paste(
+    "R takes a `column` argument where pyMzLib has one property per column, because R dispatches",
+    "on the object's class and a feature table has two retention-time columns to choose between."
   )
 )
 
@@ -206,8 +242,15 @@ for (name in exported) {
     if (length(only_theirs) > 0L) {
       detail <- c(detail, paste0("only pyMzLib: ", paste(only_theirs, collapse = ", ")))
     }
-    problems <- c(problems, paste0(name, ": ", paste(detail, collapse = "; ")))
-    cat("| `", name, "()` | `", mapped, "` | **", paste(detail, collapse = "; "), "** |\n", sep = "")
+    if (name %in% names(parameter_divergences)) {
+      cat("| `", name, "()` | `", mapped, "` | ", paste(detail, collapse = "; "),
+        " - by design: ", parameter_divergences[[name]], " |\n",
+        sep = ""
+      )
+    } else {
+      problems <- c(problems, paste0(name, ": ", paste(detail, collapse = "; ")))
+      cat("| `", name, "()` | `", mapped, "` | **", paste(detail, collapse = "; "), "** |\n", sep = "")
+    }
   }
 }
 

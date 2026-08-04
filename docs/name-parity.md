@@ -13,6 +13,7 @@ is the only renaming mzLibR is entitled to do.
 |---|---|---|
 | `census_excluded()` | `ModificationCensus.excluded` | 0 identical |
 | `census_explain()` | `ModificationCensus.explain` | 0 identical |
+| `constraint_applicable()` | `Constraint.applicable` | 0 identical |
 | `digest_distinct_base_sequences()` | *none* | from mzLibRust (Digest::distinct_base_sequences); pyMzLib has no equivalent |
 | `digest_fragments_by_series()` | *none* | from mzLibRust (Digest::fragments_by_series); pyMzLib has only fragment_count |
 | `digest_modified_peptides()` | `Digest.modified_peptides` | 0 identical |
@@ -28,26 +29,27 @@ is the only renaming mzLibR is entitled to do.
 | `mzlibr_install_bridge()` | *none* | R-only: Python ships the payload inside the wheel and Rust downloads it from build.rs. CRAN allows neither, so the download has to be a function the user calls. |
 | `peptide_mz()` | `Peptide.mz` | 1 identical |
 | `peptidoform_fragments()` | `peptidoform.fragments` | 11 identical |
+| `prediction_ccs()` | `prediction.ccs` | only pyMzLib: precursor_charge - by design: R takes precursor_charge as a data.frame column, which is how an R user already holds a peptide table; pyMzLib additionally offers it as a shared keyword default. |
+| `prediction_crosslink_fragments()` | `prediction.crosslink_fragments` | only pyMzLib: precursor_charge, collision_energy - by design: As prediction_fragments: precursor_charge and collision_energy are data.frame columns here and shared keyword defaults in pyMzLib. |
+| `prediction_detectability()` | `prediction.detectability` | 6 identical |
+| `prediction_fragments()` | `prediction.fragments` | only pyMzLib: precursor_charge, collision_energy, instrument_type, fragmentation_type - by design: R takes the per-peptide parameters as data.frame columns, which is how an R user already holds a peptide table; pyMzLib additionally offers them as shared keyword defaults, which R does not need because recycling a column is one assignment. |
+| `prediction_models()` | `prediction.models` | 2 identical |
+| `prediction_retention_time()` | `prediction.retention_time` | 6 identical |
+| `pride_approximate_total_size_bytes()` | `pride.approximate_total_size_bytes` | 1 identical |
 | `pride_download()` | `pride.download` | 6 identical |
 | `pride_download_files()` | `pride.download_files` | 4 identical |
 | `pride_list_files()` | `pride.list_files` | 3 identical |
+| `pride_list_ftp_files()` | `pride.list_ftp_files` | 2 identical |
 | `pride_locations()` | *none* | R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field |
 | `pride_total_size_bytes()` | `pride.total_size_bytes` | 1 identical |
-| `prediction_models()` | `prediction.models` | 2 identical |
-| `prediction_retention_time()` | `prediction.retention_time` | 6 identical |
-| `prediction_fragments()` | `prediction.fragments` | 6 identical — R takes the per-peptide parameters as data.frame columns where Python also offers them as shared keyword defaults |
-| `prediction_ccs()` | `prediction.ccs` | 6 identical |
-| `prediction_detectability()` | `prediction.detectability` | 6 identical |
-| `prediction_crosslink_fragments()` | `prediction.crosslink_fragments` | 6 identical |
-| `constraint_applicable()` | `Constraint.applicable` | 0 identical — a property in Python, a function in R, because S3 has no properties |
 | `readers_formats()` | `readers.formats` | 1 identical |
 | `readers_identify()` | `readers.identify` | 2 identical |
-| `readers_read_results()` | `readers.read_results` | 5 identical |
-| `readers_read_records()` | `readers.read_records` | 5 identical |
 | `readers_read_features()` | `readers.read_features` | 5 identical |
 | `readers_read_matches()` | `readers.read_matches` | 5 identical |
+| `readers_read_records()` | `readers.read_records` | 5 identical |
+| `readers_read_results()` | `readers.read_results` | 5 identical |
 | `readers_read_spectra()` | `readers.read_spectra` | 7 identical |
-| `readers_retention_time_in_minutes()` | `ResultRecords.retention_time_in_minutes`, `FeatureRecords.retention_time_start_in_minutes` | 0 identical — R takes a `column` argument where Python has one property per column, because R dispatches on the object's class and Python does not |
+| `readers_retention_time_in_minutes()` | `ResultRecords.retention_time_in_minutes` | only mzLibR: column - by design: R takes a `column` argument where pyMzLib has one property per column, because R dispatches on the object's class and a feature table has two retention-time columns to choose between. |
 
 ### pyMzLib callables with no mzLibR function
 
