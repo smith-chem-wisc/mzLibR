@@ -251,6 +251,37 @@ pride_parse_manifest <- function(data, accession) {
   files
 }
 
+# Build the data.frame for a `pride ftp-files` payload. Simpler than pride_parse_manifest: there is
+# no per-file project accession to stamp and no controlled-vocabulary locations. An empty listing is
+# a project-not-found, the same "0 files, done" trap pride_list_files guards against.
+pride_parse_ftp_files <- function(data, accession) {
+  entries <- if (is.list(data)) data[["files"]] else NULL
+  if (!is.list(entries)) {
+    entries <- list()
+  }
+
+  if (length(entries) == 0L) {
+    stop(mzlib_project_not_found(paste0(
+      "The FTP directory for '", accession, "' listed no files. Either the project is genuinely ",
+      "empty or PRIDE's directory-index format has changed; pride_list_files() may still return ",
+      "its REST manifest."
+    )))
+  }
+
+  file_name <- vapply(entries, wire_field, character(1L), "file_name", "character", NA_character_)
+  size <- vapply(entries, wire_field, numeric(1L), "approximate_size_bytes", "numeric", NA_real_)
+
+  data.frame(
+    relative_path = vapply(entries, wire_field, character(1L), "relative_path", "character", NA_character_),
+    file_name = file_name,
+    url = vapply(entries, wire_field, character(1L), "url", "character", NA_character_),
+    approximate_size_bytes = size,
+    approximate_size_mb = size / 1e6,
+    extension = pride_extension(file_name),
+    stringsAsFactors = FALSE
+  )
+}
+
 # Read the written paths out of a `pride download` payload.
 pride_parse_paths <- function(data) {
   paths <- if (is.list(data)) data[["paths"]] else NULL
@@ -457,6 +488,53 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
   pride_parse_manifest(data, canonical)
 }
 
+#' The complete file list of a PRIDE Archive project, from its FTP directory tree
+#'
+#' The authoritative counterpart to [pride_list_files()]. Where that returns PRIDE's REST manifest -
+#' knowingly incomplete for some projects, omitting for PXD000001 the two largest of 13 files - this
+#' walks the project's FTP directory (subdirectories included) and returns everything the project
+#' holds (mzLib #1121). Reach for it whenever completeness or a true project size matters.
+#'
+#' This is a **listing** surface only. [pride_download()] and [pride_download_files()] operate on the
+#' REST manifest, so a file that appears *only* here - the whole point of this function - is fetched
+#' directly from its `url` with an ordinary HTTPS client (e.g. `download.file(f$url, f$file_name)`).
+#'
+#' @param accession A project accession, e.g. `"PXD000001"`.
+#' @param timeout Seconds to allow for the whole walk, which spans one request per directory.
+#' @return A data.frame with one row per file and columns `relative_path`, `file_name`, `url`,
+#'   `approximate_size_bytes`, `approximate_size_mb`, and `extension`.
+#'
+#'   Sizes are PRIDE's rounded directory-index values - good for a project-size estimate but not
+#'   exact. For the precise transfer size of one file, issue an HTTP HEAD against its `url`. See
+#'   [pride_approximate_total_size_bytes()].
+#'
+#'   An unknown accession **raises** `mzlib_project_not_found` (as [pride_list_files()] does): mzLib
+#'   resolves the project before walking, so a typo fails loudly rather than returning nothing.
+#' @seealso [pride_list_files()] for the rich REST metadata; [pride_approximate_total_size_bytes()].
+#' @export
+pride_list_ftp_files <- function(accession, timeout = 300) {
+  canonical <- pride_normalise_accession(accession)
+  args <- c("pride", "ftp-files", "--accession", canonical)
+
+  data <- tryCatch(
+    bridge_invoke(args, timeout = timeout),
+    # mzLib resolves the project (via the REST API) before walking the tree, so an unknown
+    # accession comes back as an MzLibException, not an empty list. Re-map it to the same
+    # project-not-found pride_list_files raises; a mid-walk transport failure keeps its bridge error.
+    mzlib_bridge_error = function(condition) {
+      if (identical(condition$error_type, "MzLibException")) {
+        stop(mzlib_project_not_found(paste0(
+          "PRIDE has no project '", canonical, "' (or it lacks the publication date needed to ",
+          "locate its FTP directory). Check for a typo - a private project looks the same."
+        )))
+      }
+      stop(condition)
+    }
+  )
+
+  pride_parse_ftp_files(data, canonical)
+}
+
 #' Download files from a PRIDE Archive project
 #'
 #' Files are streamed to a temporary name and moved into place only once complete, so an
@@ -602,4 +680,24 @@ pride_total_size_bytes <- function(files) {
     stop(mzlib_usage_error("files must be a data.frame from pride_list_files()."))
   }
   sum(files$file_size_bytes, na.rm = TRUE)
+}
+
+#' Sum the approximate sizes of some FTP files
+#'
+#' The honest project-size estimate, and the counterpart to [pride_total_size_bytes()] with the
+#' trade-offs reversed. It sums over the **complete** FTP listing ([pride_list_ftp_files()]), so no
+#' files are missing - but each size is PRIDE's rounded directory-index value, so the total is an
+#' **estimate**, not an exact byte count. For PXD000001 it lands near the true 1.44 GB, where
+#' [pride_total_size_bytes()] reports 0.51 GB over the incomplete REST manifest. For the exact bytes
+#' of one file, issue an HTTP HEAD against its `url`.
+#'
+#' @param files A [pride_list_ftp_files()] data.frame, or a subset.
+#' @return The summed approximate size in bytes, as a double.
+#' @seealso [pride_total_size_bytes()], the REST-manifest counterpart.
+#' @export
+pride_approximate_total_size_bytes <- function(files) {
+  if (!is.data.frame(files) || !"approximate_size_bytes" %in% names(files)) {
+    stop(mzlib_usage_error("files must be a data.frame from pride_list_ftp_files()."))
+  }
+  sum(files$approximate_size_bytes, na.rm = TRUE)
 }

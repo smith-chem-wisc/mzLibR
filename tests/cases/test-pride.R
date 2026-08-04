@@ -63,6 +63,50 @@ test_that("total_size_bytes agrees with the manifest's own total", {
   expect_true(mz$pride_total_size_bytes(files) < 0.52e9)
 })
 
+# ---------------------------------------------------------------- ftp-files (mzLib #1121)
+
+recorded_ftp_data <- function() {
+  mz$json_parse(paste(
+    readLines(fixture_path("pride_ftp_PXD000001.json"), warn = FALSE),
+    collapse = "\n"
+  ))
+}
+
+recorded_ftp <- function() {
+  mz$pride_parse_ftp_files(recorded_ftp_data(), "PXD000001")
+}
+
+test_that("the ftp listing includes a file the REST manifest hides", {
+  files <- recorded_ftp()
+  expect_identical(nrow(files), 4L)
+  # The whole point of the verb: a subdirectory file the REST manifest omits is present.
+  expect_true("generated/summary.mztab" %in% files$relative_path)
+})
+
+test_that("a nested ftp file keeps its path but a bare leaf name", {
+  files <- recorded_ftp()
+  nested <- files[grepl("/", files$relative_path, fixed = TRUE), ]
+  expect_identical(nested$relative_path, "generated/summary.mztab")
+  expect_identical(nested$file_name, "summary.mztab")
+  expect_identical(nested$extension, ".mztab")
+  expect_true(startsWith(nested$url, "https://"))
+})
+
+test_that("approximate_total_size_bytes sums the complete listing", {
+  files <- recorded_ftp()
+  expect_identical(
+    mz$pride_approximate_total_size_bytes(files), sum(files$approximate_size_bytes)
+  )
+  expect_identical(files$approximate_size_mb, files$approximate_size_bytes / 1e6)
+})
+
+test_that("approximate_total_size_bytes refuses a frame that is not an ftp listing", {
+  # The REST manifest has no approximate_size_bytes column - guard against passing the wrong frame.
+  expect_error(
+    mz$pride_approximate_total_size_bytes(recorded_files()), class = "mzlib_usage_error"
+  )
+})
+
 test_that("a compressed file's extension is .gz, not what it is compressed from", {
   # The single most common way to get an empty result, and the trap a biologist walked into in
   # the mzLibRust bake-off. Asserted on real data so the doc string cannot drift from it.
@@ -410,6 +454,27 @@ test_that("LIVE: PXD000001 lists the files PRIDE's API publishes", {
   expect_true(all(c("file_name", "file_size_bytes", "https_url", "downloadable") %in% names(files)))
   # The trap, live: whatever else changed, a .gz is still a .gz.
   expect_identical(sum(files$extension == ".mgf"), 0L)
+})
+
+test_that("LIVE: the ftp listing is more complete than the REST manifest", {
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  both <- tryCatch(
+    list(rest = pride_list_files("PXD000001"), ftp = pride_list_ftp_files("PXD000001")),
+    mzlib_service_unavailable = function(e) skip(paste("PRIDE unavailable:", conditionMessage(e)))
+  )
+
+  # The whole reason pride_list_ftp_files exists. A comparison, not a hard count, so it survives
+  # PRIDE re-curating the project - while still catching the walk finding nothing.
+  expect_true(nrow(both$ftp) > 0L)
+  expect_true(nrow(both$ftp) > nrow(both$rest))
+  expect_true(all(startsWith(both$ftp$url, "https://")))
+  # Positive and at least the largest single file. Not FTP-total > REST-total: PRIDE over-reports
+  # decompressed .gz sizes, so that inequality is not durable.
+  largest <- max(both$ftp$approximate_size_bytes)
+  expect_true(largest > 0 && pride_approximate_total_size_bytes(both$ftp) >= largest)
 })
 
 test_that("LIVE: an unknown accession raises rather than returning nothing", {
