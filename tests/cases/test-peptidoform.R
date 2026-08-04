@@ -1,8 +1,9 @@
 # Digestion, fragmentation, and the modification census.
 #
-# The fixture is a two-peptide ETD digest of serum albumin, and it happens to contain all three
-# fragmentation traps at once: y ions in an ETD list, a zDot series numbered past the c series,
-# and zDot counts that come in *below* their own maximum because of proline suppression. Every
+# The fixture is a two-peptide ETD digest of serum albumin, and it happens to contain two
+# fragmentation traps at once: a zDot series numbered past the c series, and zDot counts that come
+# in *below* their own maximum because of proline suppression. (mzLib #1114 removed the spurious
+# ETD y series that used to be a third trap here.) Every
 # one of those is asserted here rather than only described, because these are the numbers the
 # documentation quotes.
 
@@ -61,7 +62,7 @@ test_that("the three frames join on peptide_index", {
   # The point of the key: narrow the peptides, then take exactly those fragments.
   wanted <- digest$peptides[digest$peptides$length == 31, ]
   theirs <- digest$fragments[digest$fragments$peptide_index %in% wanted$peptide_index, ]
-  expect_identical(nrow(theirs), 90L)
+  expect_identical(nrow(theirs), 60L)
 })
 
 test_that("modifications carry NA for a residue modification's absent terminus", {
@@ -77,28 +78,16 @@ test_that("modifications carry NA for a residue modification's absent terminus",
 
 # ---------------------------------------------------------------- the fragmentation traps
 
-test_that("ETD emits y ions with no b ions", {
-  # smith-chem-wisc/mzLib#1109. No fragmentation mechanism produces y without b. A fix is
-  # proposed in mzLib PR #1114; this test asserts what mzLib currently does, so it will fail
-  # loudly when that merges rather than leaving the documentation quietly wrong.
+test_that("ETD emits c and zDot, no y (mzLib #1114)", {
+  # mzLib #1114 removed y from the ETD/ECD product sets - radical N-Ca cleavage yields c/z-dot
+  # only, while b/y come from amide cleavage. Pins the post-#1114 contract, so a fixture or bridge
+  # regressed below f6b0f0d1 fails here rather than resurrecting the retired "spurious y" note.
   series <- mz$digest_fragments_by_series(recorded_digest())
   present <- series$product_type
 
-  expect_true("y" %in% present)
+  expect_false("y" %in% present)
   expect_false("b" %in% present)
-  expect_identical(sort(present), c("c", "y", "zDot"))
-})
-
-test_that("the spurious y series is about a third of an ETD fragment list", {
-  # The "~1/3" in ?peptidoform_fragments, pinned to real data.
-  digest <- recorded_digest()
-  series <- mz$digest_fragments_by_series(digest)
-  y_count <- series$n[series$product_type == "y"]
-
-  expect_identical(nrow(digest$fragments), 191L)
-  expect_identical(y_count, 64L)
-  proportion <- y_count / nrow(digest$fragments)
-  expect_true(proportion > 0.3 && proportion < 0.36, info = format(proportion))
+  expect_identical(sort(present), c("c", "zDot"))
 })
 
 test_that("the c series runs 1..length-1", {
@@ -223,7 +212,7 @@ test_that("fragments_by_series is ordered and totals the fragment frame", {
   series <- mz$digest_fragments_by_series(digest)
   expect_identical(series$product_type, sort(series$product_type))
   expect_identical(sum(series$n), nrow(digest$fragments))
-  expect_identical(series$n, c(64L, 64L, 63L))
+  expect_identical(series$n, c(64L, 63L))
 })
 
 # ---------------------------------------------------------------- peptidoforms vs sequences
@@ -448,14 +437,14 @@ test_that("a large isoform cap is not written in scientific notation", {
 
 # ---------------------------------------------------------------- printing
 
-test_that("printing a digest warns about the y ions and the census", {
-  # The print method is where a warning actually reaches someone: printing a digest and reading
-  # off a fragment total is exactly what a person about to count spurious y ions does.
+test_that("printing a digest shows its identity and census", {
+  # mzLib #1114 removed the spurious ETD y series, so the print method no longer warns about
+  # "y ions with no b ions" - there are none. What it still shows is the run's identity and the
+  # modification census.
   output <- paste(capture.output(print(recorded_digest())), collapse = "\n")
   expect_true(grepl("ALBU_HUMAN", output, fixed = TRUE))
   expect_true(grepl("peptidoforms over", output, fixed = TRUE))
-  expect_true(grepl("y ions with no b ions", output, fixed = TRUE))
-  expect_true(grepl("mzLib#1109", output, fixed = TRUE))
+  expect_false(grepl("y ions with no b ions", output, fixed = TRUE))
   expect_true(grepl("14 of 38", output, fixed = TRUE))
 })
 
