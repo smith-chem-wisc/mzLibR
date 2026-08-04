@@ -13,9 +13,7 @@
 
 }
 \description{
-A compact summary, and the place several warnings actually reach someone: printing a digest
-and reading a fragment total off it is exactly what a person about to count spurious ETD
-\\code\{y\} ions does.
+A compact summary of the digest and its fragment series.
 }
 \value{
 \code{x}, invisibly.

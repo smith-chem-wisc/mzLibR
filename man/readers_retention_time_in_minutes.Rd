@@ -4,10 +4,15 @@
 \alias{readers_retention_time_in_minutes}
 \title{Retention times in minutes, whatever unit the format wrote}
 \usage{
-readers_retention_time_in_minutes(records)
+readers_retention_time_in_minutes(records, column = NULL)
 }
 \arguments{
-\item{records}{A \code{\link{readers_read_results}} result.}
+\item{records}{A \code{\link{readers_read_results}}, \code{\link{readers_read_features}} or
+  \code{\link{readers_read_spectra}} result.}
+
+\item{column}{Which retention-time column to convert. Defaults to \code{retention_time} for a record
+  or scan table and to \code{retention_time_start} for a feature table, which has two. Name the other
+  explicitly — \code{"retention_time_end"} — to convert it.}
 
 }
 \description{
@@ -15,10 +20,20 @@ The conversion you would otherwise write by hand, using \code{retention_time_uni
 }
 \details{
 \strong{Raises when the unit is \code{"unknown"} rather than guessing.} A silently unconverted time axis
-is the specific mistake this module exists to prevent: MSFragger writes seconds and
-MetaMorpheus writes minutes, mzLib normalises neither, and a 60x error in a retention-time
-comparison looks like a chromatography problem rather than a units problem.
+is the specific mistake this module exists to prevent: TopPIC still writes seconds while
+MetaMorpheus and MSFragger write minutes (mzLib normalises MSFragger since PR #1116, but not
+TopPIC), and a 60x error in a retention-time comparison looks like a chromatography problem
+rather than a units problem.
 }
 \value{
 A numeric vector of retention times in minutes.
+
+}
+\section{When it raises}{
+
+
+Whenever the unit is \code{"unknown"}, which is not hypothetical: it is the honest answer for TopFD
+\code{_ms1.feature}, where seconds became minutes at v1.7.0 without the file type changing. Guessing
+there is what mzLib's own deconvolution code does, and what this deliberately does not.
+
 }
