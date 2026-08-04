@@ -92,6 +92,20 @@ Nor can you reproduce the roll-up by pivoting \code{peaks} yourself: where a run
 for one peptide the roll-up reports one rather than their sum.
 
 }
+\section{\code{proteins$file_name} is a sample, not a file}{
+
+
+FlashLFQ measures peptides in \strong{files} but resolves proteins across \strong{samples}, grouping runs
+by condition and biological replicate before the median-polish roll-up. \code{flashlfq_quantify()}
+gives every run its own sample, so \code{proteins$file_name} and \code{peptides$file_name} carry the same
+run base names and the two frames join cleanly on it.
+
+The distinction only bites if runs are ever grouped into replicates: \code{proteins$file_name} would
+then hold a sample label (\code{"condition_replicate"}) covering several runs, while
+\code{peptides$file_name} stayed per run. The column name is kept for symmetry between the two
+frames; read it as "the thing this intensity was measured over".
+
+}
 \section{What 0 and NA mean, and which is rare}{
 
 
