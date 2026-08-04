@@ -47,6 +47,17 @@ S3method(print, mzlibr_feature_records)
 S3method(print, mzlibr_match_records)
 S3method(print, mzlibr_scan_records)
 
+export(constraint_applicable)
+export(prediction_ccs)
+export(prediction_crosslink_fragments)
+export(prediction_detectability)
+export(prediction_fragments)
+export(prediction_models)
+export(prediction_retention_time)
+
+S3method(print, mzlibr_constraint)
+S3method(print, mzlibr_predictions)
+
 export(pride_approximate_total_size_bytes)
 export(pride_download)
 export(pride_download_files)

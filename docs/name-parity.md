@@ -33,6 +33,13 @@ is the only renaming mzLibR is entitled to do.
 | `pride_list_files()` | `pride.list_files` | 3 identical |
 | `pride_locations()` | *none* | R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field |
 | `pride_total_size_bytes()` | `pride.total_size_bytes` | 1 identical |
+| `prediction_models()` | `prediction.models` | 2 identical |
+| `prediction_retention_time()` | `prediction.retention_time` | 6 identical |
+| `prediction_fragments()` | `prediction.fragments` | 6 identical — R takes the per-peptide parameters as data.frame columns where Python also offers them as shared keyword defaults |
+| `prediction_ccs()` | `prediction.ccs` | 6 identical |
+| `prediction_detectability()` | `prediction.detectability` | 6 identical |
+| `prediction_crosslink_fragments()` | `prediction.crosslink_fragments` | 6 identical |
+| `constraint_applicable()` | `Constraint.applicable` | 0 identical — a property in Python, a function in R, because S3 has no properties |
 | `readers_formats()` | `readers.formats` | 1 identical |
 | `readers_identify()` | `readers.identify` | 2 identical |
 | `readers_read_results()` | `readers.read_results` | 5 identical |

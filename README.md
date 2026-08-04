@@ -26,6 +26,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `pride_*` | List and download from the PRIDE Archive, with mzLib's paging and URL resolution |
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
+| `prediction_*` | Predict retention time, MS2 fragments, CCS and detectability from 37 Koina models — `prediction_models()` lists them with the constraints that decide what you may send |
 | `readers_*` | Identify **and read all 29** result-file types — `readers_read_records()` reads any of them into that format own fields; `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
 
 ## Installing
