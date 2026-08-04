@@ -451,8 +451,10 @@ test_that("the spectral-match view says nothing in it is FDR-filtered", {
 
 test_that("the Casanovo scan-number caveat is present", {
   # It is an mzTab index, not an instrument scan number, and joining on it is wrong.
+  # Matched case-insensitively: the caveat capitalises INDEX for emphasis, and a fixed = TRUE
+  # match on the lowercase form silently never fires.
   matches <- recorded_matches()
-  expect_true(any(grepl("index", matches$caveats, fixed = TRUE)))
+  expect_true(any(grepl("index", matches$caveats, ignore.case = TRUE)))
 })
 
 # ---------------------------------------------------------------- read_spectra
@@ -559,4 +561,30 @@ test_that("per-scan peak arrays become a list column, not a length error", {
     vapply(scans$records$mz, length, integer(1L)),
     as.integer(scans$records$peak_count)
   )
+})
+
+test_that("a fabricated zero intensity crosses as NA, not as a measurement", {
+  # A within-type schema variant: Apex_intensity is optional and the FLASHDeconv/OpenMS
+  # _ms1.feature layout omits it, so mzLib substitutes zero for every feature. A whole column of
+  # zeros is indistinguishable from real measurements of nothing.
+  features <- mz$readers_parse_feature_records(recorded_payload("readers_features_flashdeconv.json"))
+
+  expect_true(all(is.na(features$records$intensity)))
+  expect_true(any(grepl("intensity is NULL", features$caveats, fixed = TRUE)))
+})
+
+test_that("a TopFD feature file still reports real intensities", {
+  # The counterpart: nulling every intensity would be an equally serious over-correction.
+  features <- recorded_features()
+  expect_true(all(!is.na(features$records$intensity)))
+  expect_false(any(grepl("intensity is NULL", features$caveats, fixed = TRUE)))
+})
+
+test_that("the Casanovo modification caveat describes what mzLib actually does", {
+  # An earlier version said modifications were not loaded "because mzLib's file factory does not
+  # enable it". The factory does - the parameterless constructor chains to this(TRUE) - and the
+  # recorded payload carries populated full sequences alongside the caveat that denied them.
+  matches <- recorded_matches()
+  expect_false(any(grepl("not loaded", matches$caveats, fixed = TRUE)))
+  expect_true(any(grepl("mass shifts", matches$caveats, fixed = TRUE)))
 })
