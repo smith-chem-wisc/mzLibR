@@ -29,6 +29,30 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `prediction_*` | Predict retention time, MS2 fragments, CCS and detectability from 37 Koina models — `prediction_models()` lists them with the constraints that decide what you may send |
 | `readers_*` | Identify **and read all 29** result-file types — `readers_read_records()` reads any of them into that format own fields; `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
 
+## "I want to…"
+
+The shortest route in, if you already know what you are after:
+
+| I want to… | call |
+|---|---|
+| download a public dataset | `pride_list_files()` / `pride_download()` |
+| work out what a file *is* | `readers_identify()` |
+| read a search result into a data.frame | `readers_read_records()` — works on all 29 formats |
+| compare two search engines' results | `readers_read_results()` — the columns that mean the same thing |
+| read scans or peaks from an mzML/raw | `readers_read_spectra()` |
+| quantify peptides across runs | `flashlfq_quantify()` |
+| digest a protein and fragment its peptides | `peptidoform_fragments()` |
+| predict retention time or an MS2 spectrum | `prediction_retention_time()` / `prediction_fragments()` |
+| find out which prediction models exist | `prediction_models()` |
+
+Every one returns a `data.frame` (or a list of them), so `dplyr`, `ggplot2` and friends work on
+the result with no conversion step.
+
+New to proteomics rather than to R? pyMzLib's
+[tutorial](https://smith-chem-wisc.github.io/pyMzLib/tutorial/) is the gentlest introduction to
+*what these things are*; every function above is the same call under a different name, because all
+three bindings project the same wire contract.
+
 ## Installing
 
 ```r
