@@ -563,21 +563,26 @@ test_that("per-scan peak arrays become a list column, not a length error", {
   )
 })
 
-test_that("a fabricated zero intensity crosses as NA, not as a measurement", {
+test_that("a fabricated zero intensity is disclosed as fabricated", {
   # A within-type schema variant: Apex_intensity is optional and the FLASHDeconv/OpenMS
   # _ms1.feature layout omits it, so mzLib substitutes zero for every feature. A whole column of
   # zeros is indistinguishable from real measurements of nothing.
+  #
+  # The bridge passes mzLib's value through and SAYS the zero is fabricated. Crossing it as NA
+  # makes the wire disagree with mzLib about a number, which ships separately (pyMzLib #28); when
+  # that lands, this flips to asserting NA and this package gains its parity port.
   features <- mz$readers_parse_feature_records(recorded_payload("readers_features_flashdeconv.json"))
 
-  expect_true(all(is.na(features$records$intensity)))
-  expect_true(any(grepl("intensity is NULL", features$caveats, fixed = TRUE)))
+  expect_true(all(features$records$intensity == 0))
+  expect_true(any(grepl("FABRICATED", features$caveats, fixed = TRUE)))
 })
 
-test_that("a TopFD feature file still reports real intensities", {
-  # The counterpart: nulling every intensity would be an equally serious over-correction.
+test_that("a TopFD feature file carries no fabrication caveat", {
+  # The counterpart, and the fixture that proves the caveat above is conditional: TopFD writes
+  # Apex_intensity, so its intensities are real and nothing is claimed about them.
   features <- recorded_features()
-  expect_true(all(!is.na(features$records$intensity)))
-  expect_false(any(grepl("intensity is NULL", features$caveats, fixed = TRUE)))
+  expect_true(all(features$records$intensity > 0))
+  expect_false(any(grepl("FABRICATED", features$caveats, fixed = TRUE)))
 })
 
 test_that("the Casanovo modification caveat describes what mzLib actually does", {
