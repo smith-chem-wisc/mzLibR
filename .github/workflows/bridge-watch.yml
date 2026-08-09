@@ -1,0 +1,149 @@
+# Notices when pyMzLib publishes a new bridge, and opens the pull request that repins mzLibR to it.
+#
+# This is link [C] of the release chain in the bridge project's design/RELEASING.md: published
+# bridge -> the non-Python bindings pin it. It was manual, and expensively so — R/install-bridge.R
+# carried four SHA-256 digests transcribed by hand, with a comment admitting "bumping this means
+# re-recording all four". pyMzLib #31 ended that by publishing a SHA256SUMS manifest on every
+# release, so the digests can now be read from the same run that produced the files.
+#
+# Note that this repins to pyMzLib's WHEELS, which is what install-bridge.R reads today: a wheel is
+# a zip, and each one already carries the bridge under pymzlib/_dotnet/<rid>/. Moving mzLibR off the
+# wheel and onto the raw mzlib-bridge-<rid>.tar.gz that #31 also publishes is a separate change with
+# its own tests (gap G-asset-consumption) — an R package reaching through a Python packaging format
+# is worth fixing, but it is not this workflow's job and doing both at once would make neither
+# reviewable. SHA256SUMS covers the wheels too, so this works either way and will keep working after
+# that move.
+
+name: bridge-watch
+
+on:
+  schedule:
+    # Wednesdays, offset from pyMzLib's own Monday upstream-watch so a week where mzLib moves has
+    # settled into a published bridge before this looks for one.
+    - cron: "0 7 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: bridge-watch
+  cancel-in-progress: false
+
+jobs:
+  pin:
+    name: check pyMzLib for a new bridge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Note whether a PAT is configured
+        id: pat
+        env:
+          BRIDGE_WATCH_TOKEN: ${{ secrets.BRIDGE_WATCH_TOKEN }}
+        run: |
+          if [ -n "${BRIDGE_WATCH_TOKEN:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Find pyMzLib's newest release
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Deliberately NOT releases/latest: that endpoint skips prereleases, and every pyMzLib
+          # release so far is one (the scheme is X.Y.Z.devN). The list endpoint returns newest
+          # first and includes them.
+          tag=$(gh api repos/smith-chem-wisc/pyMzLib/releases --jq '.[0].tag_name')
+          version="${tag#v}"
+          echo "newest pyMzLib release: $tag"
+
+          # The manifest is the thing being pinned FROM, so its absence is the whole story. It is
+          # also the expected state right now: SHA256SUMS arrived with #31, which merged after the
+          # newest release was cut, so no release carries one yet. That is a plain no-op with an
+          # explanation, not a failure — nothing is wrong, the artifact simply does not exist until
+          # someone cuts the next tag.
+          if ! gh api repos/smith-chem-wisc/pyMzLib/releases --jq '.[0].assets[].name' | grep -qx 'SHA256SUMS'; then
+            echo "::notice::pyMzLib $tag publishes no SHA256SUMS asset, so there is nothing to pin from. This is expected until the first tag cut after pyMzLib #31. Nothing changed."
+            echo "action=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          current=$(grep -E '^MZLIB_BRIDGE_VERSION' R/install-bridge.R | sed -E 's/.*"(.*)".*/\1/')
+          echo "currently pinned: $current"
+
+          if [ "$current" = "$version" ]; then
+            echo "Already pinned to $version. Nothing to do."
+            echo "action=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          gh release download "$tag" --repo smith-chem-wisc/pyMzLib --pattern SHA256SUMS --output SHA256SUMS
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "previous=$current" >> "$GITHUB_OUTPUT"
+          echo "action=bump" >> "$GITHUB_OUTPUT"
+
+      - name: Repin from the manifest
+        if: steps.upstream.outputs.action == 'bump'
+        run: |
+          set -euo pipefail
+          Rscript scripts/regen-bridge-pins.R SHA256SUMS R/install-bridge.R "${{ steps.upstream.outputs.version }}"
+          rm -f SHA256SUMS
+
+          # The package must still parse. A generator that produces syntactically broken R would
+          # otherwise be discovered by R CMD check on the pull request, which is fine, but failing
+          # here names the cause instead of leaving someone to infer it from a check log.
+          Rscript -e 'invisible(parse("R/install-bridge.R")); cat("install-bridge.R parses\n")'
+
+      - name: Open (or update) the repin pull request
+        if: steps.upstream.outputs.action == 'bump'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # Same reasoning as pyMzLib's upstream-watch.yml: a pull request opened with the default
+          # GITHUB_TOKEN does not start other workflow runs, so without a PAT this arrives with no
+          # checks on it. Set a repository secret BRIDGE_WATCH_TOKEN (fine-grained PAT, Contents and
+          # Pull requests read/write on this repository) to get real CI on the bump.
+          token: ${{ secrets.BRIDGE_WATCH_TOKEN || github.token }}
+          branch: bridge/pymzlib-${{ steps.upstream.outputs.version }}
+          title: "chore(bridge): repin to pyMzLib ${{ steps.upstream.outputs.tag }}"
+          commit-message: |
+            chore(bridge): repin to pyMzLib ${{ steps.upstream.outputs.tag }}
+
+            Regenerated from the SHA256SUMS asset by scripts/regen-bridge-pins.R.
+            Opened by bridge-watch.yml.
+          body: |
+            pyMzLib published **${{ steps.upstream.outputs.tag }}**. This repins
+            `R/install-bridge.R` from `${{ steps.upstream.outputs.previous }}` to
+            `${{ steps.upstream.outputs.version }}`, with all four SHA-256 digests regenerated by
+            `scripts/regen-bridge-pins.R` from that release's `SHA256SUMS` asset.
+
+            ### What to check before merging
+
+            The digests come from the release manifest, so they are right by construction if the
+            manifest is. What CI cannot tell you is whether the new bridge changes any **value**
+            mzLib reports — the live canaries exercise the wire contract, not the numbers crossing
+            it. If the pyMzLib release notes mention a reader or a unit changing, look for a caveat
+            in this package that has become wrong.
+
+            Under `BRIDGE-MAINTAIN-PARITY`, a bridge bump that retires a caveat retires it in
+            pyMzLib, mzLibRust **and** mzLibR as one unit of work.
+
+            ---
+            Opened by `.github/workflows/bridge-watch.yml`.
+          labels: bridge
+          delete-branch: true
+
+      - name: Note that the pull request has no checks of its own
+        if: steps.upstream.outputs.action == 'bump' && steps.pat.outputs.configured == 'false'
+        run: |
+          echo "::notice::No BRIDGE_WATCH_TOKEN is set, so the pull request opened above has no checks. Re-run CI on the branch by hand, or set the secret to have it happen automatically."
