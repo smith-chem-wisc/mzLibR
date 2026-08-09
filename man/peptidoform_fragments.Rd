@@ -21,11 +21,9 @@ peptidoform_fragments(accession, protease = "trypsin|P", dissociation = "ETD",
 
 \item{dissociation}{The dissociation type, e.g. \code{"ETD"}, \code{"HCD"}, \code{"CID"}, \code{"ECD"}.
 
-  **\code{"ETD"} and \code{"ECD"} return three series - \code{c}, \code{zDot} *and* \code{y} - not two.\strong{ No
-  fragmentation mechanism produces \code{y} without \code{b}, and about }a third** of every ETD
-  fragment list is those \code{y} ions. Use \code{\link{digest_fragments_by_series}} and select the series
-  you mean rather than trusting a total (smith-chem-wisc/mzLib#1109; a fix is proposed in
-  mzLib PR #1114, so check whether it has merged).}
+  \strong{\code{"ETD"} and \code{"ECD"} return the \code{c} and \code{zDot} series} (radical N-Ca cleavage yields
+  c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the spurious \code{y}
+  series ETD used to emit.}
 
 \item{modifications}{Whether to apply UniProt's annotated modifications.
 

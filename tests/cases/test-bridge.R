@@ -364,6 +364,28 @@ test_that("a matching protocol returns the version information", {
     expect_identical(info$bridge, "1.0.0.0")
     expect_identical(info$protocol, 1L)
     expect_identical(info$runtime, "8.0.27")
+    # This payload carries no `mzlib`, which is what a bridge built before that field existed
+    # sends. It must still read, and the missing value must project to NA rather than to "" or a
+    # placeholder: an added wire field may not strand a caller on an older bridge.
+    expect_identical(info$mzlib, NA_character_)
+  })
+})
+
+test_that("the mzLib build is reported when the bridge sends it", {
+  path <- fake_bridge_file()
+  on.exit(unlink(path), add = TRUE)
+  runner <- stub_runner(
+    stdout = paste0(
+      '{"ok":true,"data":{"bridge":"1.0.0.0","protocol":1,"runtime":"8.0.27",',
+      '"mzlib":"1.0.0+f6b0f0d17f32383918ef895006aaecb71cdb9a7e"},"error":null}'
+    )
+  )
+  with_bridge_config(option = path, {
+    info <- mzlibr_bridge_version(runner = runner$run)
+    expect_identical(info$mzlib, "1.0.0+f6b0f0d17f32383918ef895006aaecb71cdb9a7e")
+    # It answers "which mzLib is this?", not "may I talk to it?" - protocol is that, and stays 1
+    # precisely because adding a field is backward compatible.
+    expect_identical(info$protocol, 1L)
   })
 })
 

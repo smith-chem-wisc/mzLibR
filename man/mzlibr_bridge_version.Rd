@@ -17,5 +17,14 @@ agree on a wire format - in one call with no network and no arguments. It is the
 to make work and the first thing to check when something else is wrong.
 }
 \value{
-A list with \code{bridge}, \code{protocol} and \code{runtime}.
+A list with \code{bridge}, \code{protocol}, \code{runtime} and \code{mzlib}.
+
+  \code{mzlib} is which mzLib the bridge was built against, as \code{1.0.0+<commit>}, and is
+  \code{NA_character_} when the bridge did not report one - either because it predates the field,
+  or because its build recorded no source commit. This package installs a bridge rather than
+  building one, so it is the only way to ask which mzLib is actually running.
+
+  It is deliberately \strong{not} a compatibility check. \code{protocol} is that, and it is what this
+  function verifies. \code{mzlib} is for reporting a run, filing a bug, or tying a result to the
+  library that produced it.
 }
