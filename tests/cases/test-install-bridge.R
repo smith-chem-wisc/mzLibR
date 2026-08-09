@@ -4,35 +4,40 @@
 # install an executable it has not verified, and must never write 140 MB anywhere without being
 # asked — and those are all reachable before a byte moves.
 
-test_that("every published platform has a wheel and a checksum", {
-  wheels <- mz$MZLIB_BRIDGE_WHEELS
+test_that("every published platform has a bridge tarball and a checksum", {
+  assets <- mz$MZLIB_BRIDGE_ASSETS
   expect_identical(
-    sort(names(wheels)),
+    sort(names(assets)),
     sort(c("win-x64", "osx-arm64", "osx-x64", "linux-x64"))
   )
-  for (rid in names(wheels)) {
-    entry <- wheels[[rid]]
-    expect_true(grepl("^pymzlib-.*\\.whl$", entry$wheel), info = rid)
+  for (rid in names(assets)) {
+    entry <- assets[[rid]]
+    # The asset name is derived from the rid, so a mismatch here means the table and the runtime
+    # identifier it is keyed by have drifted apart - which would fetch the wrong platform's binary
+    # and pass its checksum.
+    expect_identical(entry$asset, paste0("mzlib-bridge-", rid, ".tar.gz"), info = rid)
     # A checksum is 64 lowercase hex characters. A truncated or upper-cased one would compare
     # unequal against a correct download and produce a very confusing failure.
     expect_true(grepl("^[0-9a-f]{64}$", entry$sha256), info = rid)
   }
 })
 
-test_that("the payload really is the pyMzLib release wheel for this platform", {
-  # Not a separate raw-binary asset. A wheel is a zip and already carries the bridge under
-  # pymzlib/_dotnet/<rid>/, so mzLibR needs nothing published that pyMzLib does not already
-  # publish for its own users.
-  url <- mz$bridge_release_url(mz$MZLIB_BRIDGE_WHEELS[["win-x64"]]$wheel)
+test_that("the payload is the raw bridge tarball, not a Python wheel", {
+  # It was a wheel until 2026-08-09, because no neutral artefact existed: a wheel is a zip and
+  # already carried the bridge under pymzlib/_dotnet/<rid>/. pyMzLib #31 publishes
+  # mzlib-bridge-<rid>.tar.gz for exactly this, so an R package no longer reaches through a Python
+  # packaging format. tar also restores the execute bit, which utils::unzip() drops.
+  url <- mz$bridge_release_url(mz$MZLIB_BRIDGE_ASSETS[["win-x64"]]$asset)
   expect_true(startsWith(url, "https://github.com/smith-chem-wisc/pyMzLib/releases/download/"))
-  expect_true(grepl("win_amd64.whl", url, fixed = TRUE))
+  expect_true(grepl("mzlib-bridge-win-x64.tar.gz", url, fixed = TRUE))
+  expect_false(grepl(".whl", url, fixed = TRUE))
 })
 
 test_that("linux-arm64 is refused with the reason and a way forward", {
-  # pyMzLib publishes no arm64 Linux wheel, so there is genuinely nothing to fetch. Saying which
+  # pyMzLib publishes no arm64 Linux bridge, so there is genuinely nothing to fetch. Saying which
   # platforms do have one, and how to build the missing one, is the difference between a dead
   # end and a next step.
-  expect_true(is.null(mz$MZLIB_BRIDGE_WHEELS[["linux-arm64"]]))
+  expect_true(is.null(mz$MZLIB_BRIDGE_ASSETS[["linux-arm64"]]))
 })
 
 test_that("a url without a checksum is refused", {

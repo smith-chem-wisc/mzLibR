@@ -8,9 +8,9 @@ mzlibr_install_bridge(version = MZLIB_BRIDGE_VERSION, destination = NULL, consen
   overwrite = FALSE, url = NULL, sha256 = NULL, quiet = FALSE, timeout = 1800)
 }
 \arguments{
-\item{version}{The pyMzLib release to take the payload from. The payload lives inside
-  pyMzLib's release wheels, which already carry the bridge and are published with a SHA-256;
-  mzLibR reads the wheel as a zip rather than needing a separate download.}
+\item{version}{The pyMzLib release to take the payload from. Every pyMzLib release publishes
+  the raw bridge for each platform as \code{mzlib-bridge-<rid>.tar.gz}, together with a \code{SHA256SUMS}
+  manifest; this fetches the one matching your platform.}
 
 \item{destination}{Directory to unpack into. Defaults to R's per-user cache directory for
   this package, in the same location \code{tools::R_user_dir()} would choose.}
