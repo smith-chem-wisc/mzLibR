@@ -180,10 +180,15 @@ jobs:
         if: steps.upstream.outputs.action == 'bump'
         uses: peter-evans/create-pull-request@v6
         with:
-          # Same reasoning as pyMzLib's upstream-watch.yml: a pull request opened with the default
-          # GITHUB_TOKEN does not start other workflow runs, so without a PAT this arrives with no
-          # checks on it. Set a repository secret BRIDGE_WATCH_TOKEN (fine-grained PAT, Contents and
-          # Pull requests read/write on this repository) to get real CI on the bump.
+          # What a PAT buys here is not what this comment first said. It claimed a pull request
+          # opened with the default GITHUB_TOKEN starts no workflow runs and so arrives with no
+          # checks. Observed on the first real run (2026-08-09, PR #10): CI DID queue, and landed as
+          # `action_required` — held behind GitHub's approval gate because the author is
+          # github-actions[bot]. Approving it ran the full R CMD check matrix, all green.
+          #
+          # So the checks are not missing, they are waiting. A PAT makes the pull request come from
+          # a human account, which is what removes the gate. Set BRIDGE_WATCH_TOKEN (fine-grained
+          # PAT, Contents and Pull requests read/write here) to skip the click.
           token: ${{ secrets.BRIDGE_WATCH_TOKEN || github.token }}
           branch: bridge/pymzlib-${{ steps.upstream.outputs.version }}
           title: "chore(bridge): repin to pyMzLib ${{ steps.upstream.outputs.tag }}"
@@ -196,7 +201,7 @@ jobs:
           labels: bridge
           delete-branch: true
 
-      - name: Note that the pull request has no checks of its own
+      - name: Say what still needs a human
         if: steps.upstream.outputs.action == 'bump' && steps.pat.outputs.configured == 'false'
         run: |
-          echo "::notice::No BRIDGE_WATCH_TOKEN is set, so the pull request opened above has no checks. Re-run CI on the branch by hand, or set the secret to have it happen automatically."
+          echo "::notice::Opened the repin pull request. Its checks are held for approval because the author is github-actions[bot] — click 'Approve workflows to run' on the PR. Set BRIDGE_WATCH_TOKEN to skip that step."
