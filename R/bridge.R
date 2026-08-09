@@ -347,7 +347,16 @@ bridge_invoke <- function(args, stdin = NULL, timeout = NULL, runner = bridge_ru
 #'
 #' @param runner The function used to run the bridge. Present so the transport's failure paths
 #'   can be tested; not something a caller normally sets.
-#' @return A list with `bridge`, `protocol` and `runtime`.
+#' @return A list with `bridge`, `protocol`, `runtime` and `mzlib`.
+#'
+#'   `mzlib` is which mzLib the bridge was built against, as `1.0.0+<commit>`, and is
+#'   `NA_character_` when the bridge did not report one - either because it predates the field,
+#'   or because its build recorded no source commit. This package installs a bridge rather than
+#'   building one, so it is the only way to ask which mzLib is actually running.
+#'
+#'   It is deliberately **not** a compatibility check. `protocol` is that, and it is what this
+#'   function verifies. `mzlib` is for reporting a run, filing a bug, or tying a result to the
+#'   library that produced it.
 #' @export
 mzlibr_bridge_version <- function(runner = bridge_run) {
   data <- bridge_invoke("version", timeout = 60, runner = runner)
@@ -366,6 +375,10 @@ mzlibr_bridge_version <- function(runner = bridge_run) {
   list(
     bridge = as.character(data$bridge),
     protocol = as.integer(reported),
-    runtime = as.character(data$runtime)
+    runtime = as.character(data$runtime),
+    # An absent field projects to NA, never to "" or to a made-up placeholder. A bridge built
+    # before this field existed simply does not send it, and the honest R answer to "which mzLib?"
+    # in that case is "not known", which is what NA means.
+    mzlib = wire_field(data, "mzlib", "character", NA_character_)
   )
 }

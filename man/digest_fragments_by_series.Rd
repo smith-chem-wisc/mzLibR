@@ -12,9 +12,8 @@ digest_fragments_by_series(digest)
 }
 \description{
 \strong{Prefer this to \code{nrow(digest$fragments)} whenever the ion series matter, which for ETD is
-always.} A bare total folds in two things that are not comparable ions: the spurious \code{y}
-series mzLib emits for ETD (about a third of the total), and one extra full-length \code{z-dot} per
-peptide.
+always.} A bare total folds in the one extra full-length \code{z-dot} per peptide, which is not a
+backbone-cleavage ion between two residues.
 }
 \details{
 The \code{zDot} series runs \code{1..length}, not \code{1..length-1}. The extra ion numbered \code{length} is the
