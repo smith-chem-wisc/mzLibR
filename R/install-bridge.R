@@ -25,24 +25,24 @@
 # fails loudly rather than guessing if either is missing.
 #
 # BEGIN generated bridge pins
-MZLIB_BRIDGE_VERSION <- "0.1.0.dev1"
+MZLIB_BRIDGE_VERSION <- "0.1.0.dev4"
 
 MZLIB_BRIDGE_WHEELS <- list(
   "win-x64" = list(
-    wheel = "pymzlib-0.1.0.dev1-py3-none-win_amd64.whl",
-    sha256 = "9d75d1e25f061ac075b81fa6cc6db71cadd7189944e7faaae99a8a99f7c9d6e8"
+    wheel = "pymzlib-0.1.0.dev4-py3-none-win_amd64.whl",
+    sha256 = "1a284f0165afa2feb24f2c3a4709983f5f24d0c3d7b31af6da2217c2af968bbc"
   ),
   "osx-arm64" = list(
-    wheel = "pymzlib-0.1.0.dev1-py3-none-macosx_12_0_arm64.whl",
-    sha256 = "cd7b43c2b2573c80392f46ae5211283e485b90d93871ae271d73f8bf8d315347"
+    wheel = "pymzlib-0.1.0.dev4-py3-none-macosx_12_0_arm64.whl",
+    sha256 = "df47aaeb20e40be22bcb30313d87312fe852dcb8457d267ba37632a79166877f"
   ),
   "osx-x64" = list(
-    wheel = "pymzlib-0.1.0.dev1-py3-none-macosx_12_0_x86_64.whl",
-    sha256 = "2be4640f56f953ea349cd56a6b34074bcb0039e2ef61c98798c52db31e83f5d7"
+    wheel = "pymzlib-0.1.0.dev4-py3-none-macosx_12_0_x86_64.whl",
+    sha256 = "780339f7283867b11efdb3f65a3498af7754c08047c0bb2c45cc4b620e3fc30d"
   ),
   "linux-x64" = list(
-    wheel = "pymzlib-0.1.0.dev1-py3-none-manylinux_2_28_x86_64.whl",
-    sha256 = "a0143a9d27ca5efdd2acb548ce9031992175cc7214c17ef62f7390b7211a26b7"
+    wheel = "pymzlib-0.1.0.dev4-py3-none-manylinux_2_28_x86_64.whl",
+    sha256 = "077619496295d536d2a5f449e7327b8b413299b2c2092c0a6acf0ffcd322f58f"
   )
 )
 # END generated bridge pins
