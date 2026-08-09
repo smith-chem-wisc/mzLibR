@@ -25,15 +25,14 @@ sums_path <- args[[1L]]
 target_path <- args[[2L]]
 version <- args[[3L]]
 
-# The platform wheel that carries each runtime identifier's bridge. These tags are set by
-# pyMzLib's wheels.yml build matrix; if that matrix changes its plat_tag values, this table is what
-# needs to change with it, and the "no digest for" error below is what will say so.
-TAGS <- c(
-  "win-x64"   = "win_amd64",
-  "osx-arm64" = "macosx_12_0_arm64",
-  "osx-x64"   = "macosx_12_0_x86_64",
-  "linux-x64" = "manylinux_2_28_x86_64"
-)
+# The runtime identifiers mzLibR pins a bridge for. The asset name is `mzlib-bridge-<rid>.tar.gz`,
+# set by pyMzLib's wheels.yml build matrix; if that matrix stops publishing one of these, the
+# "no digest for" error below is what will say so.
+#
+# This used to map each rid to a Python platform tag, because the payload was fetched from a wheel.
+# It no longer is - the raw tarball is published for exactly this purpose - so the rid is the whole
+# story and there is no Python packaging vocabulary left in this package.
+RIDS <- c("win-x64", "osx-arm64", "osx-x64", "linux-x64")
 
 # --- read the manifest -----------------------------------------------------------------------
 
@@ -56,17 +55,17 @@ digests <- stats::setNames(
 # --- build the replacement block -------------------------------------------------------------
 
 entry <- function(rid) {
-  wheel <- sprintf("pymzlib-%s-py3-none-%s.whl", version, TAGS[[rid]])
-  if (!wheel %in% names(digests)) {
+  asset <- sprintf("mzlib-bridge-%s.tar.gz", rid)
+  if (!asset %in% names(digests)) {
     stop(
-      "No digest for ", wheel, " in ", sums_path, ".\n",
+      "No digest for ", asset, " in ", sums_path, ".\n",
       "The manifest lists: ", paste(names(digests), collapse = ", "),
       call. = FALSE
     )
   }
   sprintf(
-    '  "%s" = list(\n    wheel = "%s",\n    sha256 = "%s"\n  )',
-    rid, wheel, digests[[wheel]]
+    '  "%s" = list(\n    asset = "%s",\n    sha256 = "%s"\n  )',
+    rid, asset, digests[[asset]]
   )
 }
 
@@ -76,12 +75,12 @@ entry <- function(rid) {
 # below then compares a 4-element vector against the 16-element one readLines() returns and reports
 # a change on every run. Caught only by running it — the generated file was byte-identical and the
 # script still said it had repinned.
-entries <- paste(vapply(names(TAGS), entry, character(1L)), collapse = ",\n")
+entries <- paste(vapply(RIDS, entry, character(1L)), collapse = ",\n")
 block <- c(
   "# BEGIN generated bridge pins",
   sprintf('MZLIB_BRIDGE_VERSION <- "%s"', version),
   "",
-  "MZLIB_BRIDGE_WHEELS <- list(",
+  "MZLIB_BRIDGE_ASSETS <- list(",
   strsplit(entries, "\n", fixed = TRUE)[[1L]],
   ")",
   "# END generated bridge pins"
