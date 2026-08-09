@@ -82,8 +82,11 @@ quant end-to-end," not knowing Arm B existed.
 1. **Not verified on macOS, Linux, or R 3.5.** Only R 4.6.1 on Windows ran this. `bridge_platform_tag`
    is tested as a table, not on a machine; the `chmod`/Gatekeeper paths in `mzlibr_install_bridge()`
    have never run on their target OS. **Test there before CRAN.** (Memory: `mzlibr-unverified-platforms`.)
-2. **Not on CRAN / not submitted.** On hold. The installer's SHA-256 pins point at pyMzLib's
-   `v0.1.0.dev1` pre-release wheels; a real submission wants a stable bridge release first, plus (1).
+2. **Not on CRAN / not submitted.** On hold. The installer's SHA-256 pins point at a pyMzLib
+   *pre-release*; a real submission wants a stable bridge release first, plus (1). The exact version
+   is deliberately not repeated here — it lives in `R/install-bridge.R` between the generated-pins
+   markers, and `.github/workflows/bridge-watch.yml` rewrites it. A version number in prose is one
+   nothing regenerates and nothing tests, so it is stale from the day it is written.
 3. **The four upstream issues are filed, not resolved** — two on pyMzLib, two on mzLibRust.
 
 ## Immediate next steps

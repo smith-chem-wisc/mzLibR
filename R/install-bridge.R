@@ -11,13 +11,22 @@
 # no separate raw-binary release is needed for mzLibR to work - which is worth knowing, because
 # mzLibRust's crates.io publication was believed to be blocked on exactly that.
 
-# The pyMzLib release these digests came from. Bumping this means re-recording all four.
-MZLIB_BRIDGE_VERSION <- "0.1.0.dev1"
-
 # The wheel that carries each platform's bridge, and its published SHA-256.
 #
 # Recorded here rather than fetched, so the checksum being verified does not come down the same
 # connection as the thing it is verifying.
+#
+# The block below is REWRITTEN MECHANICALLY by .github/workflows/bridge-watch.yml, which reads the
+# SHA256SUMS asset pyMzLib publishes on every release and regenerates the pins from it. Editing it
+# by hand works and is fine for a one-off; the next bump will overwrite the edit. The comment above
+# used to say "bumping this means re-recording all four" — that was the state of things before
+# pyMzLib #31 published a checksum manifest, and re-recording four digests by hand is exactly the
+# chore that manifest exists to end. Keep the markers: the workflow locates the region by them, and
+# fails loudly rather than guessing if either is missing.
+#
+# BEGIN generated bridge pins
+MZLIB_BRIDGE_VERSION <- "0.1.0.dev1"
+
 MZLIB_BRIDGE_WHEELS <- list(
   "win-x64" = list(
     wheel = "pymzlib-0.1.0.dev1-py3-none-win_amd64.whl",
@@ -36,6 +45,7 @@ MZLIB_BRIDGE_WHEELS <- list(
     sha256 = "a0143a9d27ca5efdd2acb548ce9031992175cc7214c17ef62f7390b7211a26b7"
   )
 )
+# END generated bridge pins
 
 bridge_release_url <- function(wheel, version = MZLIB_BRIDGE_VERSION) {
   paste0(
