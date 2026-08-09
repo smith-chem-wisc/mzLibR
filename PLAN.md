@@ -166,7 +166,7 @@ Raise a condition when a filter matches nothing, and put the `.gz` explanation *
 | `min_length = 7` silently discards shorter peptides | albumin **195 → 243** at min_length 1 (~a fifth of the digest). *Corrected 2026-07-24: this said 254. Exhaustive ground truth (both proteases × missed-cleavages 0–2 × min-length 1/7 × mods on/off, distinct and peptidoform counts) is **243**; 254 and 269 reproduce at no setting. **The 254 did ship** — mzLibRust's `design/bakeoff/DESIGN.md` ground-truth table quotes 254 and 269, while that same bake-off's `pep_armB_log.jsonl` measured 243. The sibling's table disagrees with its own arm; the arm was right. This is §8.3 (numbers rot) inside a sibling, and it should be corrected there too.* |
 | `peptides` are **peptidoforms**, not distinct sequences | albumin at 2 mods: **303** peptidoforms over **195** sequences. Provide both, name them differently |
 | The isoform cap (default 1024) **truncates silently** | H3.1 at 4 mods loses ~30%. Surface `peptides_at_isoform_cap` and a `truncated` accessor |
-| `--no-modifications` also discards **proteolysis products**, so the peptide list changes | albumin loses 2 signal-peptide peptides. pyMzLib#8 |
+| ~~`--no-modifications` also discards **proteolysis products**~~ | **Fixed upstream.** Was: albumin loses 2 signal-peptide peptides (pyMzLib#8). Verified 2026-08-09 against the published bridge: both are present either way, 195 distinct base sequences with modifications on or off |
 
 ### 6.3 Peptidoforms — fragmentation
 
@@ -234,7 +234,7 @@ chemically impossible; far worse on histones. mzLib#1113.
 | [mzLib#1103](https://github.com/smith-chem-wisc/mzLib/issues/1103) | TorchSharp bloats the payload ~238 MB | open |
 | [mzLib#1108](https://github.com/smith-chem-wisc/mzLib/issues/1108) | Duplicate peptidoforms at chain/initiator-Met boundary | worked around **in the bridge** |
 | [pyMzLib#7](https://github.com/smith-chem-wisc/pyMzLib/issues/7) | `intensity()` returned `None` against its invariant | **PR #9 open** |
-| [pyMzLib#8](https://github.com/smith-chem-wisc/pyMzLib/issues/8) | `--no-modifications` drops proteolysis products | open |
+| [pyMzLib#8](https://github.com/smith-chem-wisc/pyMzLib/issues/8) | `--no-modifications` drops proteolysis products | **closed / fixed** |
 
 **Check each before writing docs** — some may have merged, and a doc describing a fixed bug is its
 own kind of wrong.

@@ -323,9 +323,15 @@ peptidoform_parse <- function(data) {
 #'   series ETD used to emit.
 #' @param modifications Whether to apply UniProt's annotated modifications.
 #'
-#'   `FALSE` does more than drop modifications: it also discards **proteolysis products**, so
-#'   the peptide list itself changes. On albumin two signal-peptide peptides disappear
-#'   (smith-chem-wisc/pyMzLib#8).
+#'   `FALSE` gives the bare sequences - a clean control, since the digest's distinct backbones
+#'   are unchanged and only the modified variants of them go away. The peptidoform count drops
+#'   a long way; on albumin from **303** to **195**.
+#'
+#'   This once carried a caveat saying `FALSE` also discarded **proteolysis products**, so that
+#'   the peptide list itself changed and albumin lost two signal-peptide peptides
+#'   (smith-chem-wisc/pyMzLib#8). That was true and is no longer: verified against the published
+#'   bridge, both peptides are present either way and albumin gives 195 distinct base sequences
+#'   with modifications on or off.
 #' @param missed_cleavages Maximum missed cleavage sites per peptide.
 #' @param min_length Shortest peptide to keep.
 #'
