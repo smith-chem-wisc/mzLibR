@@ -36,24 +36,24 @@
 # fails loudly rather than guessing if either is missing.
 #
 # BEGIN generated bridge pins
-MZLIB_BRIDGE_VERSION <- "0.1.0.dev4"
+MZLIB_BRIDGE_VERSION <- "0.1.0.dev5"
 
 MZLIB_BRIDGE_ASSETS <- list(
   "win-x64" = list(
     asset = "mzlib-bridge-win-x64.tar.gz",
-    sha256 = "3f531db1aa89b859439ec0ffe69b104355e5e243d5f70aa3f5c3921c2a96beac"
+    sha256 = "6ff5ae776c3daa2b228ad78555e026335725396e3b72cfb965534a9476b6ad0e"
   ),
   "osx-arm64" = list(
     asset = "mzlib-bridge-osx-arm64.tar.gz",
-    sha256 = "a1d92c8c0051786f2fa0e90f108025cc85e9a9742fc19f4f39c4a563c5adb78c"
+    sha256 = "397e1520df30f6cb06fcc27c114ea72fddf7044929826186c4ae9fec0519f4eb"
   ),
   "osx-x64" = list(
     asset = "mzlib-bridge-osx-x64.tar.gz",
-    sha256 = "f59ad323eed954e568e7e24ca43c30e9048a7f3e89bcbb563413c7f18ea6c0fc"
+    sha256 = "90fc1d23574cdfdccebaadb93a649a0b74a9eda05f298ac03924850d7513a58e"
   ),
   "linux-x64" = list(
     asset = "mzlib-bridge-linux-x64.tar.gz",
-    sha256 = "377dc7bafe158a45f463344cb0b17269d6cfe8ae9e624f8e28fb1344987ba985"
+    sha256 = "fb6a15eaa1e9ea8cc719a245b2169ec88a9a33e2ad6b9302685ac56ee933741b"
   )
 )
 # END generated bridge pins
