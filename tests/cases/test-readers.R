@@ -1,6 +1,6 @@
 # Reading result files.
 #
-# The point of this module is to stop someone believing mzLib reads 29 formats into one uniform
+# The point of this module is to stop someone believing mzLib reads 31 formats into one uniform
 # shape. Most of these tests assert that the exceptions are visible.
 
 recorded_formats <- function() {
@@ -15,26 +15,31 @@ recorded_formats <- function() {
 
 test_that("every format mzLib recognises becomes a row", {
   formats <- recorded_formats()
-  expect_identical(nrow(formats), 29L)
+  expect_identical(nrow(formats), 31L)
   expect_true(is.data.frame(formats))
   expect_false(is.factor(formats$file_type))
 })
 
-test_that("exactly three file types are quantifiable", {
-  # The precondition for flashlfq_quantify(), and it is a much smaller set than "29 formats"
+test_that("exactly four file types are quantifiable", {
+  # The precondition for flashlfq_quantify(), and it is a much smaller set than "31 formats"
   # suggests. The number is quoted in ?readers_formats, so it is pinned here.
+  #
+  # It moved from three to four when mzLib 1.0.585 added DiaNnReport (mzLib #1120), which is
+  # how DIA data reaches flashlfq_quantify() at all. This test failing on a bridge repin is
+  # the mechanism working: the claim changed, so the name and the number both moved.
   formats <- recorded_formats()
   quantifiable <- formats[formats$is_quantifiable, ]
-  expect_identical(nrow(quantifiable), 3L)
-  expect_identical(sort(quantifiable$file_type), sort(c("psmtsv", "osmtsv", "MsFraggerPsm")))
+  expect_identical(nrow(quantifiable), 4L)
+  expect_identical(sort(quantifiable$file_type),
+                   sort(c("psmtsv", "osmtsv", "MsFraggerPsm", "DiaNnReport")))
 })
 
 test_that("most formats have no views at all, and that is a real answer", {
-  # 13 of 29. An empty views list means mzLib can parse the file but offers no cross-format
+  # 14 of 31. An empty views list means mzLib can parse the file but offers no cross-format
   # projection of it - not that anything failed.
   formats <- recorded_formats()
   viewless <- vapply(formats$views, function(v) length(v) == 0L, logical(1L))
-  expect_identical(sum(viewless), 13L)
+  expect_identical(sum(viewless), 14L)
 })
 
 test_that("the view vocabulary is the four documented families", {
@@ -253,7 +258,7 @@ test_that("a large limit is not written in scientific notation", {
 
 # ---------------------------------------------------------------- against a real mzLib
 
-test_that("LIVE: mzLib still recognises 29 formats, three of them quantifiable", {
+test_that("LIVE: mzLib still recognises 31 formats, four of them quantifiable", {
   # Enumerated from mzLib itself, so this is the test that notices when the installed version
   # changes what it supports - which is exactly when the numbers in ?readers_formats go stale.
   skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
@@ -261,9 +266,9 @@ test_that("LIVE: mzLib still recognises 29 formats, three of them quantifiable",
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
   formats <- readers_formats()
-  expect_identical(nrow(formats), 29L)
-  expect_identical(sum(formats$is_quantifiable), 3L)
-  expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 13L)
+  expect_identical(nrow(formats), 31L)
+  expect_identical(sum(formats$is_quantifiable), 4L)
+  expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 14L)
 })
 
 test_that("LIVE: identify dispatches on extension and does not validate contents", {

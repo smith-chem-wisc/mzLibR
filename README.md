@@ -26,7 +26,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `pride_*` | List and download from the PRIDE Archive, with mzLib's paging and URL resolution |
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
-| `readers_*` | Identify any of 29 result-file types, and read the three with a uniform record view |
+| `readers_*` | Identify any of 31 result-file types, and read the four with a uniform record view |
 
 ## Installing
 

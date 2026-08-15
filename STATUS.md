@@ -19,7 +19,7 @@ Four capabilities, one more than the Rust and Python siblings currently expose:
 | `pride_*` | list, download, filtered download, locations, total size |
 | `peptidoform_*` | digest + fragment, census, fragments-by-series, m/z, truncation |
 | `flashlfq_*` | quantify, MBR peaks/rescued-count, peptide/protein counts |
-| `readers_*` | **identify 29 file types, read the 3 quantifiable ones** — the capability the plan did not know the bridge had; neither sibling implements it |
+| `readers_*` | **identify 31 file types, read the 4 quantifiable ones** — the capability the plan did not know the bridge had; neither sibling implements it |
 
 ## Why no dependencies — it was a correctness decision
 
