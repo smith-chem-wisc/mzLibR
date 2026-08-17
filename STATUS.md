@@ -93,7 +93,10 @@ quant end-to-end," not knowing Arm B existed.
 
 1. **Get a non-Windows machine** and run `R CMD check --as-cran` + the offline suite. This is the
    single biggest gap between "works" and "portable."
-2. **When a stable bridge release exists**, update the four wheel SHA-256 pins in
-   `R/install-bridge.R` (`MZLIB_BRIDGE_WHEELS`) and bump `MZLIB_BRIDGE_VERSION`.
+2. ~~**When a stable bridge release exists**, update the four wheel SHA-256 pins by hand.~~ **Done,
+   and automated.** `MZLIB_BRIDGE_WHEELS` no longer exists — it is `MZLIB_BRIDGE_ASSETS`, keyed by
+   runtime identifier, and `.github/workflows/bridge-watch.yml` regenerates it from the release's
+   `SHA256SUMS` rather than anyone re-recording four digests. The step to keep is **reviewing** the
+   pull request it opens, not writing the pins.
 3. **Watch the four sibling issues.** A fix upstream (e.g. mzLib PR #1114 removing the ETD `y`
    series) will require updating the tests here that assert current behaviour.

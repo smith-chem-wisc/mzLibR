@@ -6,13 +6,14 @@
 # re-recording all four". pyMzLib #31 ended that by publishing a SHA256SUMS manifest on every
 # release, so the digests can now be read from the same run that produced the files.
 #
-# Note that this repins to pyMzLib's WHEELS, which is what install-bridge.R reads today: a wheel is
-# a zip, and each one already carries the bridge under pymzlib/_dotnet/<rid>/. Moving mzLibR off the
-# wheel and onto the raw mzlib-bridge-<rid>.tar.gz that #31 also publishes is a separate change with
-# its own tests (gap G-asset-consumption) — an R package reaching through a Python packaging format
-# is worth fixing, but it is not this workflow's job and doing both at once would make neither
-# reviewable. SHA256SUMS covers the wheels too, so this works either way and will keep working after
-# that move.
+# This repins the raw `mzlib-bridge-<rid>.tar.gz` assets. It used to say it repinned pyMzLib's
+# WHEELS, because install-bridge.R reached the binary by unzipping one — no neutral artefact existed
+# when this workflow was written, and moving off it was deliberately left as its own change so that
+# neither would be reviewable at once. That change landed in #14, and there is no Python packaging
+# vocabulary left in this package. The sentence outliving it is the reason the stale-prose check
+# below exists at all, which makes it a slightly embarrassing place to have kept one.
+#
+# SHA256SUMS covers both, so nothing about the mechanism changed when the payload did.
 
 name: bridge-watch
 
@@ -67,11 +68,11 @@ jobs:
           version="${tag#v}"
           echo "newest pyMzLib release: $tag"
 
-          # The manifest is the thing being pinned FROM, so its absence is the whole story. It is
-          # also the expected state right now: SHA256SUMS arrived with #31, which merged after the
-          # newest release was cut, so no release carries one yet. That is a plain no-op with an
-          # explanation, not a failure — nothing is wrong, the artifact simply does not exist until
-          # someone cuts the next tag.
+          # The manifest is the thing being pinned FROM, so its absence is the whole story: a plain
+          # no-op with an explanation, not a failure. This used to add that no release carried one
+          # "yet", which was true for one day — v0.1.0.dev4 (2026-08-09) was the first tag cut after
+          # pyMzLib #31 and it publishes one. The branch stays because a release could still predate
+          # #31 if this ever looks at an older tag.
           if ! gh api repos/smith-chem-wisc/pyMzLib/releases --jq '.[0].assets[].name' | grep -qx 'SHA256SUMS'; then
             echo "::notice::pyMzLib $tag publishes no SHA256SUMS asset, so there is nothing to pin from. This is expected until the first tag cut after pyMzLib #31. Nothing changed."
             echo "action=none" >> "$GITHUB_OUTPUT"
