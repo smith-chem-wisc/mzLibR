@@ -311,3 +311,290 @@ test_that("LIVE: reading a file with no quantifiable view names the views it doe
   )
   expect_true(inherits(condition, "mzlib_error"))
 })
+
+# ---------------------------------------------------------------- exhaustive coverage
+#
+# `readers_read_results()` reaches four of the 31 file types. These four verbs reach the rest. The
+# payloads are recorded from the real bridge against real mzLib fixtures, so a wire-shape change
+# shows up here as a parse failure rather than as a fixture that agrees with an R file and with
+# nothing else.
+
+recorded_payload <- function(name) {
+  mz$json_parse(paste(
+    readLines(fixture_path(name), warn = FALSE),
+    collapse = "\n"
+  ))$data
+}
+
+recorded_native <- function() {
+  mz$readers_parse_native_records(recorded_payload("readers_records_toppic.json"))
+}
+
+recorded_features <- function() {
+  mz$readers_parse_feature_records(recorded_payload("readers_features_topfd.json"))
+}
+
+recorded_matches <- function() {
+  mz$readers_parse_match_records(recorded_payload("readers_matches_casanovo.json"))
+}
+
+recorded_scans <- function() {
+  mz$readers_parse_scan_records(recorded_payload("readers_spectra_mzml.json"))
+}
+
+# ---------------------------------------------------------------- read_records
+
+test_that("a format with no cross-format view still becomes a table", {
+  # The whole point of the verb. TopPIC has no view at all and was unreadable before it.
+  records <- recorded_native()
+  expect_identical(records$file_type, "ToppicPrsm")
+  expect_identical(records$record_type, "ToppicPrsm")
+  expect_identical(length(records$views), 0L)
+  expect_true(is.data.frame(records$records))
+  expect_true("e_value" %in% names(records$records))
+})
+
+test_that("the native table has one row per returned record", {
+  records <- recorded_native()
+  expect_identical(nrow(records$records), as.integer(records$returned_count))
+})
+
+test_that("column names are mzLib's own, so they cross-reference the source", {
+  # EValue -> e_value, MIScore -> mi_score, FixedPTMs -> fixed_ptms. A pluralising 's' belongs to
+  # the acronym before it; getting that wrong would give fixed_pt_ms.
+  records <- recorded_native()
+  expect_true("e_value" %in% records$column_names)
+  expect_true("mi_score" %in% records$column_names)
+  expect_true("fixed_ptms" %in% records$column_names)
+})
+
+test_that("a field that could not become a column is named with its reason", {
+  # A column that simply vanished is indistinguishable from a field the format does not have.
+  records <- recorded_native()
+  expect_true(is.data.frame(records$excluded_fields))
+  expect_true("alternative_identifications" %in% records$excluded_fields$field)
+  expect_true(all(nzchar(records$excluded_fields$reason)))
+})
+
+test_that("excluded_fields is a frame with the right columns even when empty", {
+  # So `nrow(x$excluded_fields)` works without a NULL check.
+  empty <- mz$readers_parse_native_records(list())
+  expect_true(is.data.frame(empty$excluded_fields))
+  expect_identical(nrow(empty$excluded_fields), 0L)
+  expect_identical(sort(names(empty$excluded_fields)), sort(c("field", "type", "reason")))
+})
+
+test_that("read_records sends its own verb", {
+  args <- mz$readers_build_read_args("a.tsv", NULL, 0, NULL, "read-records")
+  expect_identical(args[1:2], c("readers", "read-records"))
+})
+
+test_that("a native table cannot be retention-time converted", {
+  # Its columns are the format's own and carry no declared unit, so a conversion would be a guess
+  # dressed as a conversion.
+  records <- recorded_native()
+  expect_error(mz$readers_retention_time_in_minutes(records), contains = "no declared")
+})
+
+# ---------------------------------------------------------------- read_features
+
+test_that("the feature view has the six interface columns", {
+  features <- recorded_features()
+  expect_identical(
+    features$column_names,
+    c(
+      "mz", "charge", "retention_time_start", "retention_time_end",
+      "intensity", "number_of_isotopes"
+    )
+  )
+})
+
+test_that("the _ms1.feature retention-time unit is unknown, not guessed", {
+  # TopFD wrote seconds through v1.6.2 and minutes from v1.7.0 without changing the file type.
+  features <- recorded_features()
+  expect_identical(features$retention_time_unit, "unknown")
+})
+
+test_that("converting an unknown retention-time unit raises rather than guessing", {
+  features <- recorded_features()
+  expect_error(mz$readers_retention_time_in_minutes(features), contains = "no basis to say")
+})
+
+test_that("the feature view says its rows are charge states, not file lines", {
+  # record_count exceeds the file's line count for this format, and a caller comparing the two
+  # must be told why.
+  features <- recorded_features()
+  expect_true(any(grepl("CHARGE STATE", features$caveats, fixed = TRUE)))
+})
+
+test_that("number_of_isotopes is NA for _ms1.feature rather than zero", {
+  # mzLib's single-charge expansion never sets it. Zero would read as "no isotopes found".
+  features <- recorded_features()
+  expect_true(all(is.na(features$records$number_of_isotopes)))
+})
+
+# ---------------------------------------------------------------- read_matches
+
+test_that("the spectral-match view carries identity fields and modifications", {
+  matches <- recorded_matches()
+  expect_true("accession" %in% matches$column_names)
+  expect_true("modifications" %in% matches$column_names)
+  expect_true("modification_count" %in% matches$column_names)
+})
+
+test_that("Casanovo is_decoy is NA, not FALSE", {
+  # De novo sequencing has no target/decoy label at all, so FALSE would let someone filter on a
+  # fabricated column - the trap readers_read_results() already refuses for MSFragger.
+  matches <- recorded_matches()
+  expect_true(all(is.na(matches$records$is_decoy)))
+})
+
+test_that("the spectral-match view says nothing in it is FDR-filtered", {
+  matches <- recorded_matches()
+  expect_true(any(grepl("FDR", matches$caveats, fixed = TRUE)))
+})
+
+test_that("the Casanovo scan-number caveat is present", {
+  # It is an mzTab index, not an instrument scan number, and joining on it is wrong.
+  # Matched case-insensitively: the caveat capitalises INDEX for emphasis, and a fixed = TRUE
+  # match on the lowercase form silently never fires.
+  matches <- recorded_matches()
+  expect_true(any(grepl("index", matches$caveats, ignore.case = TRUE)))
+})
+
+# ---------------------------------------------------------------- read_spectra
+
+test_that("scan headers parse into a table with minutes", {
+  scans <- recorded_scans()
+  expect_true("one_based_scan_number" %in% names(scans$records))
+  expect_identical(scans$retention_time_unit, "minutes")
+})
+
+test_that("the file's total scan count is reported alongside the filtered count", {
+  # So an ms_order filter that matched nothing can never look like an empty file.
+  scans <- recorded_scans()
+  expect_true(scans$scan_count >= scans$record_count)
+})
+
+test_that("peaks are absent unless asked for", {
+  scans <- recorded_scans()
+  expect_false(scans$peaks_included)
+  expect_false("mz" %in% names(scans$records))
+  # ...but you are still told how many peaks each scan has.
+  expect_true("peak_count" %in% names(scans$records))
+})
+
+test_that("read_spectra builds its own verb and window options", {
+  built <- mz$readers_build_read_args("run.mzML", 10, 0, NULL, "read-spectra")
+  expect_identical(built[1:2], c("readers", "read-spectra"))
+  expect_true("--limit" %in% built)
+})
+
+test_that("a bad ms_order is refused before the bridge is spawned", {
+  for (bad in list(0, -1, 1.5, "2", NA_real_)) {
+    expect_error(
+      mz$readers_read_spectra("run.mzML", ms_order = bad),
+      contains = "ms_order"
+    )
+  }
+})
+
+test_that("a non-logical peaks argument is refused", {
+  expect_error(mz$readers_read_spectra("run.mzML", peaks = "yes"), contains = "peaks must be")
+  expect_error(mz$readers_read_spectra("run.mzML", peaks = NA), contains = "peaks must be")
+})
+
+# ---------------------------------------------------------------- shared argument rules
+
+test_that("every read verb refuses a blank path before spawning anything", {
+  for (verb in c("read-records", "read-features", "read-matches", "read-spectra")) {
+    expect_error(mz$readers_build_read_args("", NULL, 0, NULL, verb), contains = "non-empty file path")
+    expect_error(mz$readers_build_read_args(NA_character_, NULL, 0, NULL, verb), contains = "non-empty")
+  }
+})
+
+test_that("every read verb refuses a bad limit and a bad offset", {
+  for (verb in c("read-records", "read-features", "read-matches", "read-spectra")) {
+    expect_error(mz$readers_build_read_args("a.tsv", 0, 0, NULL, verb), contains = "positive whole number")
+    expect_error(mz$readers_build_read_args("a.tsv", 1.5, 0, NULL, verb), contains = "positive whole number")
+    expect_error(mz$readers_build_read_args("a.tsv", NULL, -1, NULL, verb), contains = "non-negative")
+  }
+})
+
+test_that("a zero offset is not sent", {
+  # A default that is sent explicitly is a default the bridge can later disagree with.
+  args <- mz$readers_build_read_args("a.tsv", NULL, 0, NULL, "read-records")
+  expect_false("--offset" %in% args)
+})
+
+# ---------------------------------------------------------------- printing
+
+test_that("every result type prints without erroring", {
+  for (record in list(recorded_native(), recorded_features(), recorded_matches(), recorded_scans())) {
+    output <- utils::capture.output(print(record))
+    expect_true(length(output) > 0L)
+  }
+})
+
+test_that("the native print names what could not be projected", {
+  output <- paste(utils::capture.output(print(recorded_native())), collapse = "\n")
+  expect_true(grepl("could not become columns", output, fixed = TRUE))
+  expect_true(grepl("ToppicPrsm", output, fixed = TRUE))
+})
+
+test_that("the scan print says peaks were omitted", {
+  output <- paste(utils::capture.output(print(recorded_scans())), collapse = "\n")
+  expect_true(grepl("peaks not included", output, fixed = TRUE))
+})
+
+test_that("the feature print shows the unknown unit rather than hiding it", {
+  output <- paste(utils::capture.output(print(recorded_features())), collapse = "\n")
+  expect_true(grepl("retention_time_unit: unknown", output, fixed = TRUE))
+})
+
+test_that("per-scan peak arrays become a list column, not a length error", {
+  # peaks = TRUE returns one mz array and one intensity array PER SCAN. Unlisting those would
+  # splice every scan's peaks into one vector and the length check would then reject the table
+  # with a message about column lengths - a shape complaint about the correct shape.
+  scans <- mz$readers_parse_scan_records(recorded_payload("readers_spectra_peaks.json"))
+
+  expect_true(scans$peaks_included)
+  expect_true("mz" %in% names(scans$records))
+  expect_identical(nrow(scans$records), as.integer(scans$returned_count))
+  # One array per scan, each as long as that scan's reported peak count.
+  expect_identical(
+    vapply(scans$records$mz, length, integer(1L)),
+    as.integer(scans$records$peak_count)
+  )
+})
+
+test_that("a fabricated zero intensity is disclosed as fabricated", {
+  # A within-type schema variant: Apex_intensity is optional and the FLASHDeconv/OpenMS
+  # _ms1.feature layout omits it, so mzLib substitutes zero for every feature. A whole column of
+  # zeros is indistinguishable from real measurements of nothing.
+  #
+  # The bridge passes mzLib's value through and SAYS the zero is fabricated. Crossing it as NA
+  # makes the wire disagree with mzLib about a number, which ships separately (pyMzLib #28); when
+  # that lands, this flips to asserting NA and this package gains its parity port.
+  features <- mz$readers_parse_feature_records(recorded_payload("readers_features_flashdeconv.json"))
+
+  expect_true(all(features$records$intensity == 0))
+  expect_true(any(grepl("FABRICATED", features$caveats, fixed = TRUE)))
+})
+
+test_that("a TopFD feature file carries no fabrication caveat", {
+  # The counterpart, and the fixture that proves the caveat above is conditional: TopFD writes
+  # Apex_intensity, so its intensities are real and nothing is claimed about them.
+  features <- recorded_features()
+  expect_true(all(features$records$intensity > 0))
+  expect_false(any(grepl("FABRICATED", features$caveats, fixed = TRUE)))
+})
+
+test_that("the Casanovo modification caveat describes what mzLib actually does", {
+  # An earlier version said modifications were not loaded "because mzLib's file factory does not
+  # enable it". The factory does - the parameterless constructor chains to this(TRUE) - and the
+  # recorded payload carries populated full sequences alongside the caveat that denied them.
+  matches <- recorded_matches()
+  expect_false(any(grepl("not loaded", matches$caveats, fixed = TRUE)))
+  expect_true(any(grepl("mass shifts", matches$caveats, fixed = TRUE)))
+})

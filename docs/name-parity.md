@@ -36,7 +36,11 @@ is the only renaming mzLibR is entitled to do.
 | `readers_formats()` | `readers.formats` | 1 identical |
 | `readers_identify()` | `readers.identify` | 2 identical |
 | `readers_read_results()` | `readers.read_results` | 5 identical |
-| `readers_retention_time_in_minutes()` | `ResultRecords.retention_time_in_minutes` | 0 identical |
+| `readers_read_records()` | `readers.read_records` | 5 identical |
+| `readers_read_features()` | `readers.read_features` | 5 identical |
+| `readers_read_matches()` | `readers.read_matches` | 5 identical |
+| `readers_read_spectra()` | `readers.read_spectra` | 7 identical |
+| `readers_retention_time_in_minutes()` | `ResultRecords.retention_time_in_minutes`, `FeatureRecords.retention_time_start_in_minutes` | 0 identical — R takes a `column` argument where Python has one property per column, because R dispatches on the object's class and Python does not |
 
 ### pyMzLib callables with no mzLibR function
 
