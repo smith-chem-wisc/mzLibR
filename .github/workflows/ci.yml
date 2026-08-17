@@ -89,10 +89,11 @@ jobs:
   # contract break — mzLib, PRIDE, or UniProt changing under us.
   #
   # The staging step below fetches the published bridge tarball. Note it deliberately does NOT go
-  # through mzlibr_install_bridge(): that function is the USER's path, and it still reads a wheel.
-  # Using it here would make this job test the installer rather than the package, and would hide the
-  # wheel dependency behind a green tick. Moving the installer onto the tarball is its own change,
-  # with its own tests (gap G-asset-consumption).
+  # through mzlibr_install_bridge(), and the reason has changed. It used to be that the installer
+  # still read a wheel, so using it here would have hidden that dependency behind a green tick; #14
+  # moved it onto the same tarball this step fetches. What survives is the better half of the
+  # argument: driving the canaries through the installer would make this job test the installer
+  # rather than the package, and a bug in either would look like a bug in the other.
   live:
     name: live canaries
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -106,9 +107,10 @@ jobs:
       # pyMzLib publishes raw bridge tarballs from v0.1.0.dev4 onward, so the wait is over.
       #
       # tar rather than zip is what keeps this short. R's utils::unzip() drops the execute bit, which
-      # is why the package carries bridge_make_runnable() to chmod after unpacking a wheel; tar
-      # restores the mode, verified on the real asset — the published linux payload records
-      # `-rwxr-xr-x`. Nothing here needs a chmod.
+      # is why bridge_make_runnable() exists; tar restores the mode, verified on the real asset — the
+      # published linux payload records `-rwxr-xr-x`. Nothing here needs a chmod. (Since #14 nothing
+      # in this package unpacks a zip at all, so that function's chmod is now belt and braces; its
+      # macOS quarantine half is still load-bearing and always was.)
       - name: Stage the bridge
         env:
           GH_TOKEN: ${{ github.token }}

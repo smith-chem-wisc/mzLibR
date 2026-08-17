@@ -115,14 +115,14 @@ in every downstream use. Keep `tibble` optional, not a hard dependency.
 `jsonlite`. That is the floor. Everything else is a judgement call; nothing heavy. R's culture
 tolerates dependencies better than Rust's, but every one is a CRAN-check liability.
 
-## 5. Distribution — harder in R than in either sibling, and it is the real work
+## 5. Distribution — the real work, and the constraints here are the tightest
 
-Python solved ~130 MB with a wheel that carries the payload. Rust solved it with `build.rs`
-downloading a checksum-verified binary. **R has neither escape hatch:** CRAN's package size limit is
-~5 MB, and **CRAN policy forbids writing outside `tempdir()` without explicit user consent** and
-forbids downloading during install or `.onLoad`.
+The payload is ~130 MB and this package cannot carry it: **CRAN's package size limit is ~5 MB**, and
+**CRAN policy forbids writing outside `tempdir()` without explicit user consent** and forbids
+downloading during install or `.onLoad`. Python's wheel simply carries the payload, so the question
+never arises there.
 
-So the design is forced, and it is *different from the other two*:
+So the design is forced:
 
 1. **`mzlibr_install_bridge()`** — an exported, user-invoked function that downloads a
    checksum-verified bridge into `tools::R_user_dir("mzlibr", "cache")`. Interactive consent when
@@ -134,8 +134,8 @@ So the design is forced, and it is *different from the other two*:
    vignettes. Guard live code with `skip_on_cran()` and `skip_if(!bridge_available())`. This is not
    optional politeness — CRAN will run your checks on a machine that has no bridge and no network.
 
-mzLibRust's `build.rs` and `scripts/stage-bridge.ps1` are the reference for the download-and-verify
-logic; the *policy* wrapper around it is R-specific.
+The download-and-verify logic is worth porting from a sibling rather than deriving; the *policy*
+wrapper around it — consent, cache location, when it may run at all — is R-specific.
 
 Two payload-shrink levers already found: mzLib **#1103** (TorchSharp/libtorch is ~238 MB, dragged in
 transitively) and the mzML-only native-reader prune (~20 MB). Both matter more here than anywhere.

@@ -1,10 +1,16 @@
 # Fetching a bridge executable, on the user's explicit instruction and never otherwise.
 #
-# Python solves the ~140 MB payload with a wheel that carries it; Rust solves it with a build
-# script that downloads one. R has neither escape hatch. CRAN's package size limit is about
-# 5 MB, CRAN policy forbids writing outside tempdir() without explicit user consent, and it
-# forbids downloading during install or .onLoad. So the design is forced and it is different
-# from both siblings: an exported function the user calls, which asks first.
+# This package cannot carry the ~140 MB payload: CRAN's package size limit is about 5 MB, CRAN
+# policy forbids writing outside tempdir() without explicit user consent, and it forbids
+# downloading during install or .onLoad. So the design is forced: an exported function the user
+# calls, which asks first.
+#
+# It used to add that this was "different from both siblings", on the grounds that Python's wheel
+# carries the payload and Rust's build script downloads one. The first half is still true and is
+# why pyMzLib needs no equivalent. The second was a claim about another repository that nothing
+# here could test - the mistake mzLibRust #16 was opened to stop making - and it is now the wrong
+# way round anyway: the shape below turns out to be the one a binding wants whenever it cannot
+# carry its own payload, whatever its package manager's rules happen to be.
 #
 # The payload source is the raw bridge tarball pyMzLib publishes on every release,
 # `mzlib-bridge-<rid>.tar.gz`, alongside a `SHA256SUMS` manifest.

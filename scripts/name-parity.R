@@ -120,9 +120,14 @@ additions <- c(
   pride_locations = "R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field",
   mzlibr_bridge_path = "transport; pyMzLib's equivalent is private (_bridge)",
   mzlibr_bridge_version = "transport; pyMzLib's equivalent is private (_bridge)",
+  # Says why THIS package needs the function, not what the other bindings do instead. The earlier
+  # wording ("Rust downloads it from build.rs") was a claim about another repository, which nothing
+  # here can test and which goes false when that repository changes with nothing changing here -
+  # the mistake mzLibRust #16 was opened to stop making.
   mzlibr_install_bridge = paste(
-    "R-only: Python ships the payload inside the wheel and Rust downloads it from build.rs.",
-    "CRAN allows neither, so the download has to be a function the user calls."
+    "no pyMzLib counterpart: a wheel carries the payload, so Python never has to fetch one.",
+    "CRAN forbids downloading at install time and writing outside tempdir() without consent,",
+    "so here the download has to be a function the user calls."
   )
 )
 
