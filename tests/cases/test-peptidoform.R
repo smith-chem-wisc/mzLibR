@@ -388,8 +388,9 @@ test_that("a max_length below min_length is refused rather than returning nothin
 
 test_that("the modifications flag is not inverted", {
   # The R argument is `modifications`, the wire flag is `--no-modifications`. Getting the
-  # polarity wrong silently changes the peptide list, because turning modifications off also
-  # discards proteolysis products (smith-chem-wisc/pyMzLib#8).
+  # polarity wrong silently returns bare sequences to a caller who asked for annotated ones, or
+  # the reverse - a wrong answer that looks like a valid digest, which is why it is worth a test
+  # of its own rather than being left to the live canary.
   expect_false("--no-modifications" %in% build_args(modifications = TRUE))
   expect_true("--no-modifications" %in% build_args(modifications = FALSE))
   expect_error(build_args(modifications = NA), class = "mzlib_usage_error")
@@ -553,28 +554,39 @@ test_that("LIVE: the isoform cap truncates and says so", {
   ))
 })
 
-test_that("LIVE: turning modifications off changes the peptide list, not just the modifications", {
-  # smith-chem-wisc/pyMzLib#8: --no-modifications also discards proteolysis products, so the
-  # sequences themselves change. Anyone who reads the flag as "same peptides, no mods" is wrong.
+test_that("LIVE: modifications change the answer substantially", {
+  # The control that shows the annotations are doing real work: modifications multiply
+  # PEPTIDOFORMS, because each backbone gains one row per modification placement. The parity
+  # test both siblings have had all along (pyMzLib test_modifications_change_the_answer_
+  # substantially, mzLibRust modifications_change_the_answer_substantially); mzLibR had no
+  # equivalent, having only ever tested this seam through the bug below.
+  #
+  # What this deliberately does NOT assert is that the distinct BASE sequences differ. They do
+  # not, and should not: digestion produces backbones and modification decorates them, so
+  # toggling modifications cannot add or remove a backbone. A test asserting otherwise stood
+  # here until 2026-08-09 and passed only because mzLib had a defect - `--no-modifications` also
+  # discarded UniProt's feature table, taking the signal-peptide cleavage boundaries with it and
+  # costing albumin two peptides (pyMzLib#8, since fixed). That test pinned a bug rather than a
+  # behaviour, so the fix broke it, which is exactly what such a test does. Deleted rather than
+  # inverted: "backbones are unchanged" is a domain tautology nobody would write unprompted, and
+  # if it ever needs guarding it belongs in mzLib's own suite, not in three bindings' canaries.
   skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
   options(mzlibr.bridge = live_bridge)
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
-  bare <- tryCatch(
-    peptidoform_fragments("P02768", modifications = FALSE, timeout = 600),
+  with_mods <- tryCatch(
+    peptidoform_fragments("P02768", max_modifications = 1, timeout = 600),
     mzlib_service_unavailable = function(e) skip(paste("UniProt unavailable:", conditionMessage(e)))
   )
-  with_mods <- peptidoform_fragments("P02768", timeout = 600)
+  bare <- peptidoform_fragments("P02768", modifications = FALSE, timeout = 600)
 
   expect_identical(nrow(bare$modifications), 0L)
-  # The distinct sequences differ, which is the finding - not merely the peptidoform count.
   expect_true(
-    digest_distinct_base_sequences(bare) < digest_distinct_base_sequences(with_mods),
-    info = paste(
-      digest_distinct_base_sequences(bare), "vs",
-      digest_distinct_base_sequences(with_mods)
-    )
+    nrow(with_mods$peptides) > nrow(bare$peptides),
+    info = paste(nrow(with_mods$peptides), "peptidoforms with mods vs", nrow(bare$peptides), "bare")
   )
+  expect_true(nrow(digest_modified_peptides(with_mods)) > 0L)
+  expect_identical(nrow(digest_modified_peptides(bare)), 0L)
 })
 
 test_that("LIVE: the trypsin naming inversion changes the peptide count", {

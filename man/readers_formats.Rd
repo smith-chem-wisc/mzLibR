@@ -23,14 +23,14 @@ A data.frame with one row per format: \code{file_type}, \code{extension}, \code{
 \section{Views, and why most formats have none}{
 
 
-It is tempting to read "29 formats" as "29 formats in one uniform shape". They are not. The
-formats fall into disjoint families, and \strong{13 of the 29 belong to none of them} — an empty
+It is tempting to read "31 formats" as "31 formats in one uniform shape". They are not. The
+formats fall into disjoint families, and \strong{14 of the 31 belong to none of them} — an empty
 \code{views} is a real and common answer, meaning mzLib can parse the file but offers no
 cross-format projection of it.
 
 - \code{"quantifiable"} — the cross-format record view, and the input \code{\link{flashlfq_quantify}}
-  accepts. \strong{Exactly three file types have it}: MetaMorpheus \code{psmtsv} and \code{osmtsv}, and
-  \code{MsFraggerPsm}.
+  accepts. \strong{Exactly four file types have it}: MetaMorpheus \code{psmtsv} and \code{osmtsv},
+  \code{MsFraggerPsm}, and DIA-NN \code{DiaNnReport}.
 - \code{"ms1_features"} — deconvolved MS1 features (TopFD \code{_ms1.feature}, Dinosaur).
 - \code{"spectra"} — the file is spectra, not results.
 - \code{"spectral_match"} — identifications that share no file-level interface.

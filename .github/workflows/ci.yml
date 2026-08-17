@@ -88,8 +88,12 @@ jobs:
   # only: they cost network time and they SKIP on an outage, so a red result here is a genuine
   # contract break — mzLib, PRIDE, or UniProt changing under us.
   #
-  # The bridge staging step is the one piece of the distribution story that is still manual until a
-  # stable raw-bridge release exists (mzLibr_install_bridge pins pyMzLib's dev wheels today).
+  # The staging step below fetches the published bridge tarball. Note it deliberately does NOT go
+  # through mzlibr_install_bridge(), and the reason has changed. It used to be that the installer
+  # still read a wheel, so using it here would have hidden that dependency behind a green tick; #14
+  # moved it onto the same tarball this step fetches. What survives is the better half of the
+  # argument: driving the canaries through the installer would make this job test the installer
+  # rather than the package, and a bug in either would look like a bug in the other.
   live:
     name: live canaries
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -99,12 +103,38 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+      # This used to be `exit 1` with a comment saying it was waiting for a stable bridge release.
+      # pyMzLib publishes raw bridge tarballs from v0.1.0.dev4 onward, so the wait is over.
+      #
+      # tar rather than zip is what keeps this short. R's utils::unzip() drops the execute bit, which
+      # is why bridge_make_runnable() exists; tar restores the mode, verified on the real asset — the
+      # published linux payload records `-rwxr-xr-x`. Nothing here needs a chmod. (Since #14 nothing
+      # in this package unpacks a zip at all, so that function's chmod is now belt and braces; its
+      # macOS quarantine half is still load-bearing and always was.)
       - name: Stage the bridge
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Staging the mzLib bridge for linux-x64 goes here."
-          echo "Until a stable bridge release exists, this step is manual; mzlibr_install_bridge()"
-          echo "currently pins pyMzLib's v0.1.0.dev1 wheels."
-          exit 1
+          set -euo pipefail
+
+          # The newest release, including prereleases: every pyMzLib release so far is one, and
+          # `releases/latest` skips them. Tracks the newest deliberately rather than pinning — this
+          # job exists to notice when the CURRENT bridge breaks the contract.
+          tag=$(gh api repos/smith-chem-wisc/pyMzLib/releases --jq '.[0].tag_name')
+          echo "Staging the mzLib bridge for linux-x64 from pyMzLib $tag"
+
+          gh release download "$tag" --repo smith-chem-wisc/pyMzLib \
+            --pattern 'mzlib-bridge-linux-x64.tar.gz' --pattern 'SHA256SUMS'
+
+          # Verified against the published manifest rather than trusted to HTTPS. The package itself
+          # refuses to install an executable it cannot verify; a CI job should hold the same line.
+          grep 'mzlib-bridge-linux-x64.tar.gz' SHA256SUMS | sha256sum -c -
+
+          mkdir -p _dotnet/linux-x64
+          tar -xzf mzlib-bridge-linux-x64.tar.gz -C _dotnet/linux-x64
+
+          # Prove it runs before any test blames the package for the payload.
+          ./_dotnet/linux-x64/mzlib-bridge version
       - name: Install and run the full suite
         env:
           MZLIB_BRIDGE: ${{ github.workspace }}/_dotnet/linux-x64/mzlib-bridge

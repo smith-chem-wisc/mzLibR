@@ -1,16 +1,16 @@
 # Reading proteomics result files: what a file is, what can be done with it, and its records.
 #
-# mzLib recognises 29 result-file types written by a dozen tools - MetaMorpheus, MSFragger,
-# TopPIC, TopFD, MsPathFinderT, Crux, Casanovo, FlashDeconv, Dinosaur, FlashLFQ - and dispatches
+# mzLib recognises 31 result-file types written by a dozen tools - MetaMorpheus, MSFragger,
+# TopPIC, TopFD, MsPathFinderT, Crux, Casanovo, FlashDeconv, Dinosaur, DIA-NN, FlashLFQ - and dispatches
 # each to a parser it maintains. This module asks it what a path is.
 #
-# The temptation is to describe mzLib as reading 29 formats into one uniform shape. It does not,
+# The temptation is to describe mzLib as reading 31 formats into one uniform shape. It does not,
 # and the whole design of this module is about not letting anyone believe it does. The formats
-# fall into disjoint families and 13 of the 29 belong to no family at all, so an empty `views` is
+# fall into disjoint families and 14 of the 31 belong to no family at all, so an empty `views` is
 # a real and common answer rather than a failure.
 
 # The view that matters most: the cross-format record projection, and the input
-# `flashlfq_quantify()` accepts. Exactly three of the 29 file types have it.
+# `flashlfq_quantify()` accepts. Exactly four of the 31 file types have it.
 READERS_QUANTIFIABLE <- "quantifiable"
 
 # ---------------------------------------------------------------- parsing
@@ -223,14 +223,14 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #'
 #' @section Views, and why most formats have none:
 #'
-#' It is tempting to read "29 formats" as "29 formats in one uniform shape". They are not. The
-#' formats fall into disjoint families, and **13 of the 29 belong to none of them** — an empty
+#' It is tempting to read "31 formats" as "31 formats in one uniform shape". They are not. The
+#' formats fall into disjoint families, and **14 of the 31 belong to none of them** — an empty
 #' `views` is a real and common answer, meaning mzLib can parse the file but offers no
 #' cross-format projection of it.
 #'
 #' - `"quantifiable"` — the cross-format record view, and the input [flashlfq_quantify()]
-#'   accepts. **Exactly three file types have it**: MetaMorpheus `psmtsv` and `osmtsv`, and
-#'   `MsFraggerPsm`.
+#'   accepts. **Exactly four file types have it**: MetaMorpheus `psmtsv` and `osmtsv`,
+#'   `MsFraggerPsm`, and DIA-NN `DiaNnReport`.
 #' - `"ms1_features"` — deconvolved MS1 features (TopFD `_ms1.feature`, Dinosaur).
 #' - `"spectra"` — the file is spectra, not results.
 #' - `"spectral_match"` — identifications that share no file-level interface.
@@ -458,11 +458,11 @@ print.mzlibr_result_records <- function(x, ...) {
 
 # ---------------------------------------------------------------- exhaustive coverage
 #
-# `readers_read_results()` projects `IQuantifiableResultFile`, which three of the 29 file types
+# `readers_read_results()` projects `IQuantifiableResultFile`, which four of the 31 file types
 # implement. The four verbs below reach the rest, in two different ways because the gap has two
 # shapes.
 #
-# `readers_read_records()` reads ANY of the 29 by projecting each format's own record type, so
+# `readers_read_records()` reads ANY of the 31 by projecting each format's own record type, so
 # its columns are deliberately not uniform - a TopPIC file gives TopPIC's own 36. The other three
 # project the remaining cross-format views, and are uniform in the way `read_results` is.
 #
@@ -587,9 +587,10 @@ readers_parse_scan_records <- function(data) {
 
 #' Read any file mzLib recognises, into that format's own fields
 #'
-#' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. All 29 file
-#' types, including the 13 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-#' peptide and protein tables, the FlashDeconv formats - which no other function here can touch.
+#' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. All 31 file
+#' types, including the 14 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+#' peptide and protein tables, the FlashDeconv formats, SDRF - which no other function here can
+#' touch.
 #'
 #' @param path Path to any file mzLib recognises. A Bruker `.d` directory is also accepted.
 #' @param limit Maximum records to return. `NULL`, the default, returns all of them.

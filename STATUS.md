@@ -19,7 +19,7 @@ Four capabilities, one more than the Rust and Python siblings currently expose:
 | `pride_*` | list, download, filtered download, locations, total size |
 | `peptidoform_*` | digest + fragment, census, fragments-by-series, m/z, truncation |
 | `flashlfq_*` | quantify, MBR peaks/rescued-count, peptide/protein counts |
-| `readers_*` | **identify 29 file types, read the 3 quantifiable ones** — the capability the plan did not know the bridge had; neither sibling implements it |
+| `readers_*` | **identify 31 file types, read the 4 quantifiable ones** — the capability the plan did not know the bridge had; neither sibling implements it |
 
 ## Why no dependencies — it was a correctness decision
 
@@ -82,15 +82,21 @@ quant end-to-end," not knowing Arm B existed.
 1. **Not verified on macOS, Linux, or R 3.5.** Only R 4.6.1 on Windows ran this. `bridge_platform_tag`
    is tested as a table, not on a machine; the `chmod`/Gatekeeper paths in `mzlibr_install_bridge()`
    have never run on their target OS. **Test there before CRAN.** (Memory: `mzlibr-unverified-platforms`.)
-2. **Not on CRAN / not submitted.** On hold. The installer's SHA-256 pins point at pyMzLib's
-   `v0.1.0.dev1` pre-release wheels; a real submission wants a stable bridge release first, plus (1).
+2. **Not on CRAN / not submitted.** On hold. The installer's SHA-256 pins point at a pyMzLib
+   *pre-release*; a real submission wants a stable bridge release first, plus (1). The exact version
+   is deliberately not repeated here — it lives in `R/install-bridge.R` between the generated-pins
+   markers, and `.github/workflows/bridge-watch.yml` rewrites it. A version number in prose is one
+   nothing regenerates and nothing tests, so it is stale from the day it is written.
 3. **The four upstream issues are filed, not resolved** — two on pyMzLib, two on mzLibRust.
 
 ## Immediate next steps
 
 1. **Get a non-Windows machine** and run `R CMD check --as-cran` + the offline suite. This is the
    single biggest gap between "works" and "portable."
-2. **When a stable bridge release exists**, update the four wheel SHA-256 pins in
-   `R/install-bridge.R` (`MZLIB_BRIDGE_WHEELS`) and bump `MZLIB_BRIDGE_VERSION`.
+2. ~~**When a stable bridge release exists**, update the four wheel SHA-256 pins by hand.~~ **Done,
+   and automated.** `MZLIB_BRIDGE_WHEELS` no longer exists — it is `MZLIB_BRIDGE_ASSETS`, keyed by
+   runtime identifier, and `.github/workflows/bridge-watch.yml` regenerates it from the release's
+   `SHA256SUMS` rather than anyone re-recording four digests. The step to keep is **reviewing** the
+   pull request it opens, not writing the pins.
 3. **Watch the four sibling issues.** A fix upstream (e.g. mzLib PR #1114 removing the ETD `y`
    series) will require updating the tests here that assert current behaviour.

@@ -276,6 +276,11 @@ flashlfq_parse_proteins <- function(entries) {
     # makes rather than a default they never saw.
     #
     # mzLibR never passes na.rm = TRUE on the user's behalf, anywhere.
+    #
+    # The keys of `intensities` are sample labels, not file names: protein quant groups runs by
+    # condition and biological replicate first. flashlfq_quantify() gives each run its own sample,
+    # so the two coincide and the column is named file_name to match the peptides frame. A verb
+    # that grouped runs into replicates would break that coincidence.
     intensities <- flashlfq_long_map(entry, "intensities", NA_real_)
     if (length(intensities$file_name) == 0L) {
       return(NULL)
@@ -436,6 +441,18 @@ flashlfq_parse <- function(data) {
 #'
 #' Nor can you reproduce the roll-up by pivoting `peaks` yourself: where a run has several peaks
 #' for one peptide the roll-up reports one rather than their sum.
+#'
+#' @section `proteins$file_name` is a sample, not a file:
+#'
+#' FlashLFQ measures peptides in **files** but resolves proteins across **samples**, grouping runs
+#' by condition and biological replicate before the median-polish roll-up. `flashlfq_quantify()`
+#' gives every run its own sample, so `proteins$file_name` and `peptides$file_name` carry the same
+#' run base names and the two frames join cleanly on it.
+#'
+#' The distinction only bites if runs are ever grouped into replicates: `proteins$file_name` would
+#' then hold a sample label (`"condition_replicate"`) covering several runs, while
+#' `peptides$file_name` stayed per run. The column name is kept for symmetry between the two
+#' frames; read it as "the thing this intensity was measured over".
 #'
 #' @section What 0 and NA mean, and which is rare:
 #'

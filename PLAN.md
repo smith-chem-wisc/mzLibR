@@ -115,14 +115,14 @@ in every downstream use. Keep `tibble` optional, not a hard dependency.
 `jsonlite`. That is the floor. Everything else is a judgement call; nothing heavy. R's culture
 tolerates dependencies better than Rust's, but every one is a CRAN-check liability.
 
-## 5. Distribution — harder in R than in either sibling, and it is the real work
+## 5. Distribution — the real work, and the constraints here are the tightest
 
-Python solved ~130 MB with a wheel that carries the payload. Rust solved it with `build.rs`
-downloading a checksum-verified binary. **R has neither escape hatch:** CRAN's package size limit is
-~5 MB, and **CRAN policy forbids writing outside `tempdir()` without explicit user consent** and
-forbids downloading during install or `.onLoad`.
+The payload is ~130 MB and this package cannot carry it: **CRAN's package size limit is ~5 MB**, and
+**CRAN policy forbids writing outside `tempdir()` without explicit user consent** and forbids
+downloading during install or `.onLoad`. Python's wheel simply carries the payload, so the question
+never arises there.
 
-So the design is forced, and it is *different from the other two*:
+So the design is forced:
 
 1. **`mzlibr_install_bridge()`** — an exported, user-invoked function that downloads a
    checksum-verified bridge into `tools::R_user_dir("mzlibr", "cache")`. Interactive consent when
@@ -134,8 +134,8 @@ So the design is forced, and it is *different from the other two*:
    vignettes. Guard live code with `skip_on_cran()` and `skip_if(!bridge_available())`. This is not
    optional politeness — CRAN will run your checks on a machine that has no bridge and no network.
 
-mzLibRust's `build.rs` and `scripts/stage-bridge.ps1` are the reference for the download-and-verify
-logic; the *policy* wrapper around it is R-specific.
+The download-and-verify logic is worth porting from a sibling rather than deriving; the *policy*
+wrapper around it — consent, cache location, when it may run at all — is R-specific.
 
 Two payload-shrink levers already found: mzLib **#1103** (TorchSharp/libtorch is ~238 MB, dragged in
 transitively) and the mzML-only native-reader prune (~20 MB). Both matter more here than anywhere.
@@ -166,7 +166,7 @@ Raise a condition when a filter matches nothing, and put the `.gz` explanation *
 | `min_length = 7` silently discards shorter peptides | albumin **195 → 243** at min_length 1 (~a fifth of the digest). *Corrected 2026-07-24: this said 254. Exhaustive ground truth (both proteases × missed-cleavages 0–2 × min-length 1/7 × mods on/off, distinct and peptidoform counts) is **243**; 254 and 269 reproduce at no setting. **The 254 did ship** — mzLibRust's `design/bakeoff/DESIGN.md` ground-truth table quotes 254 and 269, while that same bake-off's `pep_armB_log.jsonl` measured 243. The sibling's table disagrees with its own arm; the arm was right. This is §8.3 (numbers rot) inside a sibling, and it should be corrected there too.* |
 | `peptides` are **peptidoforms**, not distinct sequences | albumin at 2 mods: **303** peptidoforms over **195** sequences. Provide both, name them differently |
 | The isoform cap (default 1024) **truncates silently** | H3.1 at 4 mods loses ~30%. Surface `peptides_at_isoform_cap` and a `truncated` accessor |
-| `--no-modifications` also discards **proteolysis products**, so the peptide list changes | albumin loses 2 signal-peptide peptides. pyMzLib#8 |
+| ~~`--no-modifications` also discards **proteolysis products**~~ | **Fixed upstream.** Was: albumin loses 2 signal-peptide peptides (pyMzLib#8). Verified 2026-08-09 against the published bridge: both are present either way, 195 distinct base sequences with modifications on or off |
 
 ### 6.3 Peptidoforms — fragmentation
 
@@ -234,7 +234,7 @@ chemically impossible; far worse on histones. mzLib#1113.
 | [mzLib#1103](https://github.com/smith-chem-wisc/mzLib/issues/1103) | TorchSharp bloats the payload ~238 MB | open |
 | [mzLib#1108](https://github.com/smith-chem-wisc/mzLib/issues/1108) | Duplicate peptidoforms at chain/initiator-Met boundary | worked around **in the bridge** |
 | [pyMzLib#7](https://github.com/smith-chem-wisc/pyMzLib/issues/7) | `intensity()` returned `None` against its invariant | **PR #9 open** |
-| [pyMzLib#8](https://github.com/smith-chem-wisc/pyMzLib/issues/8) | `--no-modifications` drops proteolysis products | open |
+| [pyMzLib#8](https://github.com/smith-chem-wisc/pyMzLib/issues/8) | `--no-modifications` drops proteolysis products | **closed / fixed** |
 
 **Check each before writing docs** — some may have merged, and a doc describing a fixed bug is its
 own kind of wrong.

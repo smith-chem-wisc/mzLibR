@@ -21,9 +21,10 @@ readers_read_records(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 
 }
 \description{
-The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. All 29 file
-types, including the 13 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-peptide and protein tables, the FlashDeconv formats - which no other function here can touch.
+The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. All 31 file
+types, including the 14 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+peptide and protein tables, the FlashDeconv formats, SDRF - which no other function here can
+touch.
 }
 \value{
 An \code{mzlibr_native_records}. \code{records} is a data.frame of this format's own fields, or

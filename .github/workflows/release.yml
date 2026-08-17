@@ -1,0 +1,129 @@
+# Builds, checks and publishes the package on a v* tag.
+#
+# Companion to mzLibRust's release.yml, and written at the same time for the same reason: the
+# release layer was the one place the three bindings were not at parity. pyMzLib had released four
+# times off a hand-cut tag; mzLibR and mzLibRust had no release workflow and no releases at all.
+#
+# WHERE R DIFFERS FROM ITS SIBLINGS, AND WHY THIS CANNOT BE FULLY AUTOMATED
+#
+# PyPI and crates.io both accept an authenticated upload from CI. CRAN does not. A CRAN submission
+# ends at a web form (submit.html), followed by a confirmation email the maintainer must click, and
+# then a human reviewer. There is no token, no API, and automating around it would violate the
+# policy that the named maintainer submits. So this workflow does everything up TO the submission —
+# checks on every platform, builds the exact tarball CRAN would receive, runs the --as-cran gate,
+# and attaches the tarball to the GitHub Release — and then says plainly that the last step is
+# manual. That is a real limit, not an unfinished piece of this file: pretending otherwise would
+# leave someone waiting for a release that no machine was ever going to make.
+#
+# Until a CRAN submission happens, the GitHub Release tarball IS the distribution: it installs with
+# install.packages(<url>, repos = NULL, type = "source").
+
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # The same platform matrix the per-push CI uses, because a release must clear at least the bar
+  # every commit clears. The R 3.5 floor row is kept: DESCRIPTION declares it, so a release that
+  # silently required 4.0 would be making a false claim on the package's own front page.
+  check:
+    name: R CMD check / ${{ matrix.os }} / R ${{ matrix.r }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        r: [release]
+        include:
+          - os: ubuntu-latest
+            r: "3.5"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+
+  build:
+    name: build the source tarball
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # The tag and DESCRIPTION must agree. CRAN rejects a resubmission of a version number it has
+      # already seen, and a GitHub Release whose tarball announces a different version than its tag
+      # is the kind of thing nobody notices until someone reports installing "the wrong one".
+      - name: The tag must match the DESCRIPTION version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          described=$(grep -E '^Version:' DESCRIPTION | sed -E 's/^Version:[[:space:]]*//' | tr -d '[:space:]')
+          echo "tag says $tag, DESCRIPTION says $described"
+          if [ "$tag" != "$described" ]; then
+            echo "::error::tag v$tag does not match DESCRIPTION Version: $described"
+            exit 1
+          fi
+
+      # man/*.Rd is generated (scripts/build-man.R). A release built from a tree whose generated
+      # documentation is stale would ship help pages describing an older API, which R CMD check
+      # cannot detect because the .Rd files it finds are internally valid — they are just wrong.
+      - name: The generated man pages must be current
+        run: |
+          set -euo pipefail
+          Rscript scripts/build-man.R
+          if ! git diff --quiet -- man/; then
+            echo "::error::man/*.Rd is out of date. Run scripts/build-man.R and commit the result."
+            git diff --stat -- man/
+            exit 1
+          fi
+
+      - name: Build
+        run: R CMD build .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-tarball
+          path: '*.tar.gz'
+
+  github-release:
+    name: attach the tarball to the GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: source-tarball
+          path: dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
+          fail_on_unmatched_files: true
+          prerelease: ${{ contains(github.ref_name, 'dev') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
+
+      # Said in the job log rather than only in this comment, because the person who will need to
+      # know is whoever is watching the release go green — not whoever next reads the workflow file.
+      - name: What is left for a human
+        run: |
+          echo "::notice::The tarball is attached to the GitHub Release and installs with install.packages(<url>, repos = NULL, type = 'source')."
+          echo "::notice::CRAN submission is NOT automated and cannot be: it ends at https://cran.r-project.org/submit.html plus an emailed confirmation the maintainer must click."
