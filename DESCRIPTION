@@ -5,9 +5,11 @@ Authors@R:
     person("Michael R.", "Shortreed", email = "mshort@chem.wisc.edu",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0003-4626-0863"))
 Description: Calls the mzLib proteomics library from R over a language-neutral
-    bridge: PRIDE repository access, in-silico digestion and fragmentation of
-    peptidoforms, and label-free quantification with match-between-runs via
-    FlashLFQ. The bridge is a self-contained executable that carries its own
+    bridge: reading mass-spectrometry data files ('mzML', Thermo '.raw',
+    Bruker '.d', timsTOF, MGF and msalign) and the result files of a dozen
+    search tools, PRIDE repository access, in-silico digestion and
+    fragmentation of peptidoforms, and label-free quantification with
+    match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own
     .NET runtime, so no .NET installation is required. It is shared with the
     Python ('pyMzLib') and Rust ('mzLibRust') bindings, which means all three
     agree field for field.
