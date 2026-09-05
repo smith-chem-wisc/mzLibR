@@ -8,6 +8,11 @@ The third sibling of [pyMzLib](https://github.com/smith-chem-wisc/pyMzLib) and
 bridge, so all three agree field for field.
 
 ```r
+# Read a mass-spectrometry data file: mzML, Thermo .raw, Bruker .d, timsTOF .d, MGF, msalign
+scans <- readers_read_spectra("run.mzML", ms_order = 2, limit = 5)
+scans$scan_count                                    # total in the file, before the MS-level filter
+scans$records[, c("one_based_scan_number", "retention_time", "selected_ion_mz")]
+
 files <- pride_list_files("PXD000001")
 files[files$size_mb < 5 & files$downloadable, c("file_name", "size_mb", "category")]
 
@@ -26,7 +31,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `pride_*` | List and download from the PRIDE Archive, with mzLib's paging and URL resolution |
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
-| `readers_*` | Identify **and read all 31** result-file types — `readers_read_records()` reads any of them into that format's own fields; `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
+| `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with `readers_read_spectra()`; identify **and read all 31** file types mzLib knows, search results included — `readers_read_records()` reads any of them into that format's own fields, while `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
 
 ## Installing
 

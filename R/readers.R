@@ -1,8 +1,13 @@
-# Reading proteomics result files: what a file is, what can be done with it, and its records.
+# Reading mass-spectrometry data files and proteomics search results: what a file is, what can be
+# done with it, and its records.
 #
-# mzLib recognises 31 result-file types written by a dozen tools - MetaMorpheus, MSFragger,
-# TopPIC, TopFD, MsPathFinderT, Crux, Casanovo, FlashDeconv, Dinosaur, DIA-NN, FlashLFQ - and dispatches
-# each to a parser it maintains. This module asks it what a path is.
+# Spectra files are read here too, not just search output: readers_read_spectra() reads .mzML,
+# Thermo .raw, Bruker .d, timsTOF .d, .mgf and msalign - scan headers always, peaks on request.
+#
+# mzLib recognises 31 file types in all - those instrument and deconvolution formats, plus the
+# output of a dozen search tools: MetaMorpheus, MSFragger, TopPIC, TopFD, MsPathFinderT, Crux,
+# Casanovo, FlashDeconv, Dinosaur, DIA-NN, FlashLFQ - and dispatches each to a parser it
+# maintains. This module asks it what a path is.
 #
 # The temptation is to describe mzLib as reading 31 formats into one uniform shape. It does not,
 # and the whole design of this module is about not letting anyone believe it does. The formats
