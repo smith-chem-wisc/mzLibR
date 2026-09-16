@@ -7,7 +7,8 @@ Authors@R:
 Description: Calls the mzLib proteomics library from R over a language-neutral
     bridge: reading mass-spectrometry data files ('mzML', Thermo '.raw',
     Bruker '.d', timsTOF, MGF and msalign) and the result files of a dozen
-    search tools, PRIDE repository access, in-silico digestion and
+    search tools, SDRF-Proteomics experimental-design files, PRIDE repository
+    access, in-silico digestion and
     fragmentation of peptidoforms, and label-free quantification with
     match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own
     .NET runtime, so no .NET installation is required. It is shared with the

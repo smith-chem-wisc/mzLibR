@@ -23,8 +23,13 @@ readers_read_records(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 \description{
 The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. All 31 file
 types, including the 14 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-peptide and protein tables, the FlashDeconv formats, SDRF - which no other function here can
-touch.
+peptide and protein tables, the FlashDeconv formats, SDRF - which no other \code{readers_} function
+can touch.
+}
+\details{
+\strong{For SDRF, use \code{\link{sdrf_read}} instead.} This function joins each SDRF row's cells into one
+semicolon-separated string, and SDRF's \code{NT=...;AC=...} grammar puts semicolons inside cells, so
+the joined string cannot be split back apart.
 }
 \value{
 An \code{mzlibr_native_records}. \code{records} is a data.frame of this format's own fields, or
