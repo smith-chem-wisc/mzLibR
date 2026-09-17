@@ -594,8 +594,12 @@ readers_parse_scan_records <- function(data) {
 #'
 #' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. All 31 file
 #' types, including the 14 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-#' peptide and protein tables, the FlashDeconv formats, SDRF - which no other function here can
-#' touch.
+#' peptide and protein tables, the FlashDeconv formats, SDRF - which no other `readers_` function
+#' can touch.
+#'
+#' **For SDRF, use [sdrf_read()] instead.** This function joins each SDRF row's cells into one
+#' semicolon-separated string, and SDRF's `NT=...;AC=...` grammar puts semicolons inside cells, so
+#' the joined string cannot be split back apart.
 #'
 #' @param path Path to any file mzLib recognises. A Bruker `.d` directory is also accepted.
 #' @param limit Maximum records to return. `NULL`, the default, returns all of them.
