@@ -89,3 +89,11 @@ S3method(print, mzlibr_batch)
 S3method(print, mzlibr_protein_group_records)
 S3method(print, mzlibr_quantified_peptide_records)
 S3method(print, mzlibr_occupancy_records)
+
+export(proteins_classify_peptides)
+export(proteins_read)
+export(proteins_resolve_genes)
+
+S3method(print, mzlibr_protein_database)
+S3method(print, mzlibr_gene_resolutions)
+S3method(print, mzlibr_peptide_classification)

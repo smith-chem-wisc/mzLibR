@@ -1,0 +1,121 @@
+---
+title: "Protein databases: organisms, genes and unique peptides"
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(mzLibR)
+# Every call on this page is answered from a recording of the real bridge, made on the small
+# databases in pyMzLib's test fixtures, so the page builds anywhere. With a bridge installed, the
+# same calls read your databases.
+.mzlibr_example <- mzLibR:::replay_bridge_start()
+```
+
+A search result names proteins by accession. Three questions it cannot answer on its own are
+answered by mzLib from the protein database you searched:
+
+| question | function |
+|---|---|
+| what is this accession: organism, taxon, genes, GO terms? | `proteins_read()` |
+| which Ensembl gene is it, reproducibly? | `proteins_resolve_genes()` |
+| does this peptide identify one protein? | `proteins_classify_peptides()` |
+
+All three take one database or several - UniProt XML or FASTA, optionally gzipped - and read
+several in **one** bridge call, `threads` at a time. Mark contaminant databases with
+`contaminants`: it changes answers.
+
+## What is this accession?
+
+```{r}
+db <- proteins_read(c("human_subset.xml", "human_extra.fasta", "mouse_aifm1.fasta"),
+                    contaminants = "contaminants.fasta",
+                    tables = c("proteins", "go_terms", "ensembl_genes"))
+db
+db$proteins[, c("accession", "organism", "ncbi_taxonomy_id", "primary_gene_name",
+                "length", "monoisotopic_mass", "is_contaminant")]
+```
+
+`length` is in residues and `monoisotopic_mass` in daltons, of the unmodified sequence as written
+plus one water - the precursor, not the mature protein. `ncbi_taxonomy_id` is kept a string: it
+is an identifier, not a quantity.
+
+GO terms and Ensembl gene links are long tables, one row per protein and term or transcript,
+returned only when asked for:
+
+```{r}
+head(db$go_terms[, c("accession", "go_id", "aspect", "term_name")])
+db$ensembl_genes[, c("accession", "gene_id", "versioned_gene_id", "gene_version")]
+```
+
+### A FASTA cannot say
+
+A FASTA header carries organism, taxon and gene name, and nothing else. So a FASTA contributes no
+GO or Ensembl rows - and says so, rather than leaving the tables silently short:
+
+```{r}
+db$files[, c("file_type", "contaminant", "protein_count")]
+db$files$absent_fields
+```
+
+Empty there means "this format is silent", never "this protein has none". Read the UniProt XML
+of the same proteome for those.
+
+`source_index` in every table is 1-based, so it indexes `files` directly:
+
+```{r}
+table(basename(db$files$path[db$proteins$source_index]))
+```
+
+## Which gene is it, reproducibly?
+
+`proteins_resolve_genes()` resolves each protein to stable Ensembl gene ids, **counted against a
+gene set you supply**: an Ensembl GTF for one release. Nothing is downloaded or defaulted, because
+the release is part of the answer.
+
+```{r}
+genes <- proteins_resolve_genes(c("human_subset.xml", "human_extra.fasta"),
+                                contaminants = "contaminants.fasta",
+                                gtf = "Homo_sapiens.GRCh38.116.gtf",
+                                xref = "Homo_sapiens.GRCh38.116.uniprot.tsv")
+genes$gene_set[c("source_file_name", "release", "genome_build")]
+genes$outcome_counts
+genes$resolutions[, c("accession", "outcome", "n_genes", "gene_id", "gene_symbol",
+                      "off_primary_genes", "ensembl_xref_agrees")]
+```
+
+Every protein gets exactly one outcome. A `multi_gene` protein has one row per gene, never a
+pick. `off_primary_only` means its genes exist only on ALT haplotypes or patches outside the gene
+set - use Ensembl's primary-assembly GTF. `ensembl_xref_agrees` is `NA` when there is nothing to
+compare, which is unknown, not false. Keep `genes$gene_set$sha256` with your results: it pins the
+exact gene set.
+
+## Does this peptide identify one protein?
+
+```{r}
+calls <- proteins_classify_peptides(
+  c("VGVNGFGR", "LVLNGNPLTLFQER", "ALSEQINIFFDYSGR", "YLYEIAR", "AEFVEVTK", "PEPTIDEK"),
+  c("human_subset.xml", "human_extra.fasta"),
+  contaminants = "contaminants.fasta")
+calls$peptides[, c("peptide", "sharing", "accession_count")]
+calls$sharing_counts
+```
+
+- `LVLNGNPLTLFQER` is GAPDH's `LVINGNPITIFQER`: **I and L are one residue**, because a mass
+  spectrometer cannot tell them apart.
+- `ALSEQINIFFDYSGR` is in three isoforms of one gene: `SharedWithinGene` supports the gene, not
+  an isoform.
+- `YLYEIAR` is in human and bovine albumin, which share no gene. Leave the contaminant database
+  out and it would read as `Unique`.
+
+```{r}
+calls$peptides$accessions[[4]]
+calls$peptides$shared_gene_keys[[3]]
+```
+
+Containment, not digestion: a protein contains a peptide if its sequence contains it anywhere,
+whatever the protease. That is deliberately conservative, so a peptide called `Unique` cannot be
+explained by another entry at a site the search's cleavage rules skipped.
+
+```{r teardown, include = FALSE}
+mzLibR:::replay_bridge_stop(.mzlibr_example)
+```
