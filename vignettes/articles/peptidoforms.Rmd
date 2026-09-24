@@ -1,0 +1,83 @@
+---
+title: "Digesting and fragmenting peptidoforms"
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(mzLibR)
+# Every call on this page is answered from a recording of the real bridge fetching UniProt, so
+# the page builds offline. With a bridge installed, the same calls fetch the entry live.
+.mzlibr_example <- mzLibR:::replay_bridge_start()
+```
+
+`peptidoform_fragments()` fetches a UniProt entry, applies its annotated modifications, digests
+it and computes fragment ions for every peptidoform. The recording used here is human serum
+albumin, P02768, with at most one modification per peptide.
+
+```{r}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+digest
+```
+
+## Three data.frames that join on `peptide_index`
+
+```{r}
+head(digest$peptides[, c("peptide_index", "base_sequence", "monoisotopic_mass",
+                         "modification_count")])
+head(digest$fragments)
+digest$modifications
+```
+
+`monoisotopic_mass` and `neutral_mass` are **neutral** masses in daltons, not m/z.
+`peptide_mz()` converts at a charge:
+
+```{r}
+peptide_mz(digest$peptides, charge = 2)
+```
+
+## Peptidoforms are not sequences
+
+`peptides` has one row per sequence *and* modification placement, so its row count is larger
+than the number of distinct sequences. Both are legitimate answers to "how many peptides", and
+they are not interchangeable:
+
+```{r}
+nrow(digest$peptides)
+digest_distinct_base_sequences(digest)
+digest_modified_peptides(digest)[, c("full_sequence", "modification_count")]
+```
+
+## Fragment series
+
+ETD, the default, produces `c` and `z-dot` ions; HCD and CID produce `b` and `y`.
+
+```{r}
+digest_fragments_by_series(digest)
+```
+
+## Which modifications were applied, and which were not
+
+mzLib loads only some UniProt feature types. The census says how many annotations were
+applied, and why the rest were not:
+
+```{r}
+census_explain(digest)
+head(census_excluded(digest))
+```
+
+## Before treating the list as complete
+
+`max_isoforms` caps the peptidoforms generated per peptide, and the cap truncates silently.
+`digest_truncated()` says whether it was reached:
+
+```{r}
+digest_truncated(digest)
+```
+
+Two defaults also decide which peptides exist at all: `min_length = 7` drops everything shorter,
+and mzLib's `"trypsin|P"` *applies* the proline rule - the reverse of the MaxQuant and Mascot
+spelling. `?peptidoform_fragments` gives the numbers.
+
+```{r teardown, include = FALSE}
+mzLibR:::replay_bridge_stop(.mzlibr_example)
+```

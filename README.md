@@ -98,6 +98,15 @@ Every one of these is documented on the argument that causes it, and pinned by a
 
 ## Documentation
 
+Every help page for a function that calls the bridge carries that call's facts - every parameter
+and returned column with its unit and what `NA` means, the errors it raises, the same call in
+pyMzLib and mzLibRust - generated from the bridge's per-verb specs, and every page has an example
+that `R CMD check` runs. `?mzlib_error` explains the condition classes.
+
+- **[The documentation site](https://smith-chem-wisc.github.io/mzLibR/)** - the help pages and an
+  article per module: reading files, SDRF, PRIDE, peptidoforms and FlashLFQ.
+- [`docs/reference-facts.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/reference-facts.md) - for contributors: how the
+  help pages are generated from the specs and checked against them.
 - [`docs/name-parity.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/name-parity.md) — every function, parameter and column checked
   mechanically against pyMzLib and against the wire. Generated, not written.
 - [`docs/test-parity.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/test-parity.md) — what the suite covers against the parent's, what
