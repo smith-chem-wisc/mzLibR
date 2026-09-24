@@ -492,3 +492,79 @@ test_that("LIVE: an unknown accession raises rather than returning nothing", {
   )
   expect_true(inherits(condition, "mzlib_project_not_found"))
 })
+
+# ---------------------------------------------------------------- search
+
+recorded_search <- function() {
+  mz$pride_parse_search(mz$json_parse(paste(
+    readLines(fixture_path("pride_search_plasmodium.json"), warn = FALSE, encoding = "UTF-8"),
+    collapse = "\n"
+  )))
+}
+
+test_that("every search hit becomes a row, in PRIDE's order", {
+  hits <- recorded_search()
+  expect_identical(nrow(hits), 6L)
+  expect_identical(hits$accession[1L], "PXD070842")
+  expect_false(anyDuplicated(hits$accession) > 0L)
+})
+
+test_that("search dates are calendar dates, never timestamps", {
+  # The search endpoint sends "2025-11-17" with no time and no offset; a POSIXct would invent one.
+  hits <- recorded_search()
+  expect_true(inherits(hits$submission_date, "Date"))
+  expect_identical(hits$submission_date[1L], as.Date("2025-11-17"))
+  expect_identical(mz$pride_parse_date(NA_character_), as.Date(NA))
+})
+
+test_that("list fields are list columns, and empty keywords are passed through", {
+  hits <- recorded_search()
+  expect_true(is.list(hits$organisms))
+  expect_true("Plasmodium falciparum (isolate 3d7)" %in% hits$organisms[[1L]])
+  # PRIDE ships an empty keyword on about 9% of hits; filtering here would disagree with mzLib.
+  expect_identical(hits$keywords[[1L]], "")
+  expect_identical(hits$matched_fields[[1L]], sort(names(hits$highlights[[1L]])))
+  expect_true(is.data.frame(hits$yearly_downloads[[1L]]))
+})
+
+test_that("a zero count means not reported and stays a number", {
+  hits <- recorded_search()
+  expect_true(is.numeric(hits$download_count))
+  expect_false(anyNA(hits$download_count))
+})
+
+test_that("no hits is an empty data.frame with the same columns, not an error", {
+  empty <- mz$pride_parse_search(list(keyword = "x", result_count = 0, results = list()))
+  expect_identical(nrow(empty), 0L)
+  expect_identical(names(empty), names(recorded_search()))
+})
+
+test_that("a search keyword that cannot work is refused before the bridge runs", {
+  for (bad in list("", "   ", NA_character_, NULL, 42, c("a", "b"))) {
+    expect_error(mz$pride_build_search_args(bad, 100), class = "mzlib_usage_error")
+  }
+  expect_error(mz$pride_build_search_args("-phospho", 100), class = "mzlib_usage_error",
+               contains = "may not begin with")
+  expect_error(mz$pride_build_search_args(strrep("a", 1001), 100), class = "mzlib_usage_error",
+               contains = "1000")
+  expect_error(mz$pride_build_search_args("x", 0), class = "mzlib_usage_error")
+  expect_error(mz$pride_build_search_args("x", 2.5), class = "mzlib_usage_error")
+  expect_identical(
+    mz$pride_build_search_args("  plasmodium ", 50),
+    c("pride", "search", "--keyword", "plasmodium", "--page-size", "50")
+  )
+})
+
+test_that("LIVE: a keyword search returns projects, each with an accession", {
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  hits <- tryCatch(
+    pride_search("plasmodium falciparum schizont"),
+    mzlib_service_unavailable = function(e) skip(paste("PRIDE unavailable:", conditionMessage(e)))
+  )
+  expect_true(nrow(hits) > 0L)
+  expect_true(all(nzchar(hits$accession)))
+  expect_false(anyDuplicated(hits$accession) > 0L)
+})

@@ -67,6 +67,7 @@ export(pride_download_files)
 export(pride_list_files)
 export(pride_list_ftp_files)
 export(pride_locations)
+export(pride_search)
 export(pride_total_size_bytes)
 
 export(readers_identify_many)

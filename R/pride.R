@@ -548,6 +548,214 @@ pride_list_ftp_files <- function(accession, timeout = 300) {
   pride_parse_ftp_files(data, canonical)
 }
 
+# ---------------------------------------------------------------- search
+
+# PRIDE answers a longer keyword with HTTP 500, which is indistinguishable from an outage, so mzLib
+# refuses one first and so does this. Mirrors `PrideArchiveClient.MaxKeywordLength`.
+PRIDE_MAX_KEYWORD_LENGTH <- 1000L
+
+# The string-list fields of a search hit, in wire order. Each becomes a list column.
+PRIDE_SEARCH_LISTS <- c(
+  "project_tags", "keywords", "submitters", "lab_pis", "affiliations", "instruments",
+  "softwares", "quantification_methods", "sample_attributes", "organisms", "organism_parts",
+  "diseases", "references", "experiment_types", "project_file_names", "other_omics_links"
+)
+
+# A bare calendar date, as a `Date`.
+#
+# Deliberately not pride_parse_timestamp(): the search endpoint sends "2026-08-15" with no time and
+# no offset, and mzLib types it `DateTime` rather than `DateTimeOffset` precisely so that none is
+# invented. A POSIXct would be midnight in some zone, which PRIDE never said; a Date says exactly
+# what was sent.
+pride_parse_date <- function(value) {
+  if (!is.character(value) || length(value) != 1L || is.na(value) || nchar(value) < 10L) {
+    return(as.Date(NA))
+  }
+  parsed <- tryCatch(as.Date(substr(value, 1L, 10L), format = "%Y-%m-%d"), error = function(e) as.Date(NA))
+  if (length(parsed) != 1L) as.Date(NA) else parsed
+}
+
+pride_build_search_args <- function(keyword, page_size) {
+  if (!is.character(keyword) || length(keyword) != 1L || is.na(keyword) || !nzchar(trimws(keyword))) {
+    stop(mzlib_usage_error("A search keyword is required, as a single string, e.g. 'phosphoproteome'."))
+  }
+  canonical <- pride_reject_flag_like("keyword", trimws(keyword))
+  if (nchar(canonical) > PRIDE_MAX_KEYWORD_LENGTH) {
+    stop(mzlib_usage_error(paste0(
+      "keyword may be at most ", PRIDE_MAX_KEYWORD_LENGTH, " characters; got ", nchar(canonical),
+      ". PRIDE answers a longer keyword with HTTP 500, which cannot be told apart from the ",
+      "service being down."
+    )))
+  }
+
+  if (!is.numeric(page_size) || length(page_size) != 1L || is.na(page_size) ||
+    page_size != round(page_size)) {
+    stop(mzlib_usage_error("page_size must be a single whole number."))
+  }
+  if (page_size < 1) {
+    stop(mzlib_usage_error(paste0("page_size must be positive; got ", page_size, ".")))
+  }
+  if (page_size > 2147483647) {
+    stop(mzlib_usage_error(paste0(
+      "page_size is larger than the API allows; got ", format(page_size, scientific = FALSE), "."
+    )))
+  }
+
+  c("pride", "search", "--keyword", canonical,
+    "--page-size", format(page_size, scientific = FALSE))
+}
+
+# Turn the `pride search` payload into a data.frame, one row per hit.
+#
+# PRIDE omits nothing as null - absence arrives as "", [] or 0 - so those are passed through as
+# themselves, and only the dates can be NA. Empty and whitespace-only keywords are passed through
+# too, rather than filtered, so this package agrees with mzLib and the other bindings about what a
+# project's keywords are.
+pride_parse_search <- function(data) {
+  entries <- if (is.list(data)) data[["results"]] else NULL
+  if (!is.list(entries)) {
+    entries <- list()
+  }
+
+  text <- function(name) {
+    vapply(entries, wire_field, character(1L), name, "character", "")
+  }
+  number <- function(name) {
+    vapply(entries, wire_field, numeric(1L), name, "numeric", 0)
+  }
+  date <- function(name) {
+    dates <- lapply(entries, function(entry) pride_parse_date(wire_field(entry, name, "character", NA_character_)))
+    if (length(dates) == 0L) as.Date(character(0)) else do.call(c, dates)
+  }
+  strings <- function(entry, name) {
+    values <- entry[[name]]
+    if (!is.list(values) || length(values) == 0L) {
+      return(character(0))
+    }
+    vapply(values, function(v) as.character(v)[1L], character(1L), USE.NAMES = FALSE)
+  }
+
+  hits <- data.frame(
+    accession = text("accession"),
+    title = text("title"),
+    project_description = text("project_description"),
+    sample_processing_protocol = text("sample_processing_protocol"),
+    data_processing_protocol = text("data_processing_protocol"),
+    doi = text("doi"),
+    submission_type = text("submission_type"),
+    sdrf = text("sdrf"),
+    submission_date = date("submission_date"),
+    publication_date = date("publication_date"),
+    updated_date = date("updated_date"),
+    download_count = number("download_count"),
+    avg_downloads_per_file = number("avg_downloads_per_file"),
+    percentile = number("percentile"),
+    bot_count = number("bot_count"),
+    hub_count = number("hub_count"),
+    organic_count = number("organic_count"),
+    stringsAsFactors = FALSE
+  )
+
+  # List columns: each hit has a variable number of each, and a filtered frame must keep them -
+  # the same reason pride_list_files()'s `locations` is one.
+  for (name in PRIDE_SEARCH_LISTS) {
+    hits[[name]] <- lapply(entries, strings, name)
+  }
+  hits$highlights <- lapply(entries, function(entry) {
+    found <- entry[["highlights"]]
+    if (!is.list(found) || length(found) == 0L) {
+      return(structure(list(), names = character(0)))
+    }
+    lapply(found, function(snippets) {
+      if (!is.list(snippets)) character(0) else vapply(snippets, function(s) as.character(s)[1L], character(1L))
+    })
+  })
+  hits$matched_fields <- lapply(hits$highlights, function(h) sort(names(h)))
+  hits$yearly_downloads <- lapply(entries, function(entry) {
+    years <- entry[["yearly_downloads"]]
+    if (!is.list(years) || length(years) == 0L) {
+      return(data.frame(year = character(0), count = numeric(0), stringsAsFactors = FALSE))
+    }
+    data.frame(
+      year = vapply(years, wire_field, character(1L), "year", "character", NA_character_),
+      count = vapply(years, wire_field, numeric(1L), "count", "numeric", 0),
+      stringsAsFactors = FALSE
+    )
+  })
+  hits
+}
+
+#' Find PRIDE Archive projects by keyword
+#'
+#' **The discovery entry point.** Every other `pride_` function takes an accession you already
+#' have; this is the one that produces them, so you can go from a subject to a dataset without
+#' leaving R. Paging is handled for you: however many pages the result set spans, you get one
+#' data.frame, with no accession repeated.
+#'
+#' @param keyword What to search for, e.g. `"phosphoproteome"`, as one string of 1 to 1000
+#'   characters. PRIDE matches it across titles, descriptions, keywords, organisms, references and
+#'   more; the `matched_fields` column says which fields actually matched each hit. A keyword
+#'   beginning with `-` is refused, since the bridge would read it as an option.
+#' @param page_size How many projects to request per underlying API call. Changes how many
+#'   requests the fetch takes, never what comes back.
+#' @param timeout Seconds to allow for the whole fetch, or `NULL` to wait indefinitely.
+#'
+#' @return A data.frame with one row per matching project, in PRIDE's ranking order. **Zero rows
+#'   is a real answer** - PRIDE reports no hits as an empty result, and unlike [pride_list_files()]
+#'   this does not raise `mzlib_project_not_found`, because no accession here could have been a
+#'   typo.
+#'
+#'   Text columns: `accession`, `title`, `project_description`, `sample_processing_protocol`,
+#'   `data_processing_protocol`, `doi`, `submission_type` and `sdrf`. Dates: `submission_date`,
+#'   `publication_date` and `updated_date`, as `Date` (bare calendar dates, never timestamps), `NA`
+#'   when PRIDE reported none. Popularity: `download_count` in downloads, `avg_downloads_per_file`
+#'   in downloads per file, `percentile` a download-popularity percentile within PRIDE, and
+#'   `bot_count`, `hub_count` and `organic_count` in downloads split by traffic kind. List
+#'   columns, one character vector per hit: `project_tags`, `keywords`, `submitters`, `lab_pis`,
+#'   `affiliations`, `instruments`, `softwares`, `quantification_methods`, `sample_attributes`,
+#'   `organisms`, `organism_parts`, `diseases`, `references`, `experiment_types`,
+#'   `project_file_names` and `other_omics_links`; `highlights`, a named list per hit (PRIDE field
+#'   to matched snippets, the terms wrapped in `<em>`); `matched_fields`, its sorted names; and
+#'   `yearly_downloads`, a data.frame per hit of `year` and `count`.
+#'
+#' @section A hit is not a project's metadata:
+#'
+#' PRIDE serves search from a separate index in which every controlled-vocabulary field is
+#' **flattened to a display string**: instruments arrive as `"Q Exactive"` with no accession,
+#' contacts as names, publications as pre-formatted citation strings, and `sdrf` as one
+#' space-joined bag of term values - not a file, name or URL. Follow the `accession` for the
+#' vocabulary. `project_file_names` is not the manifest either: use [pride_list_files()] or
+#' [pride_list_ftp_files()] to act on files.
+#'
+#' @section Zero and empty mean not reported:
+#'
+#' PRIDE sends no nulls, so an absent count arrives as **0** and an absent list as empty. A
+#' `download_count` of 0 means "not reported", never "nobody downloaded it", and several fields are
+#' genuinely sparse: sampled over 1,600 hits, `project_tags` was populated on 2.6%, `sdrf` on 2.4%,
+#' and the bot/hub/organic counts on under half. `keywords` may hold empty and whitespace-only
+#' strings, about 9% of hits; they are passed through, so filter before joining.
+#'
+#' @section A live index:
+#'
+#' PRIDE pages a live index with no stable cursor. A project published mid-fetch is deduplicated,
+#' but one removed mid-fetch can fall between two pages and be missed. A result set that fits on
+#' one page cannot be affected.
+#'
+#' @seealso [pride_list_files()], which is usually what you want next.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' hits <- pride_search("plasmodium falciparum schizont")
+#' hits[, c("accession", "submission_type", "publication_date")]
+#' hits$organisms[[1]]
+#' hits$matched_fields[[1]]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+#' @spec pride.search
+#' @export
+pride_search <- function(keyword, page_size = 100, timeout = 300) {
+  args <- pride_build_search_args(keyword, page_size)
+  pride_parse_search(bridge_invoke(args, timeout = timeout))
+}
+
 #' Download files from a PRIDE Archive project
 #'
 #' Files are streamed to a temporary name and moved into place only once complete, so an

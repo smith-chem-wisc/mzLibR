@@ -13,6 +13,22 @@ library(mzLibR)
 The `pride_` functions list a PRIDE Archive project's files and download the ones you choose,
 using mzLib's paging and URL resolution.
 
+## Find a project
+
+`pride_search()` is the discovery step: it turns a subject into the accessions every other
+function takes, with every page fetched and no accession repeated.
+
+```{r}
+hits <- pride_search("plasmodium falciparum schizont")
+hits[, c("accession", "submission_type", "publication_date")]
+hits$organisms[[1]]
+hits$matched_fields[[1]]
+```
+
+A hit is a search-index projection, not the project's metadata: vocabulary fields arrive as
+display strings with no accessions, a count of 0 means "not reported", and `project_file_names`
+is not the manifest. Follow the `accession`.
+
 ## List, then choose with `[`
 
 ```{r}
