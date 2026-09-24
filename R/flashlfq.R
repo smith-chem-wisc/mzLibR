@@ -6,14 +6,18 @@
 # against a truth of 257, 140 and 2 - wrong in the believable direction, which is the one nobody
 # checks.
 #
-# Three facts drive every design decision in this file:
+# Two facts drive every design decision in this file:
 #
 #   1. **The peptide roll-up drops most MBR transfers.** Read `peaks`. On mzLib's own K562 pair
 #      there are 140 true transfers and the peptide table shows 52 - a 63% under-count - and a
 #      whole run's transfers can vanish entirely (run_3: 62 from peaks, 0 from the roll-up).
 #   2. **A peptide intensity of 0 and a protein intensity of NA mean different things**, and R
 #      is the only one of the three bindings whose type system can say so. See below.
-#   3. **max_threads other than 1 makes results non-reproducible** (smith-chem-wisc/mzLib#1111).
+#
+# `max_threads` defaults to 1 here, where the wire, pyMzLib and mzLibRust default to -1. That
+# default dates from mzLib#1111 - multithreaded runs dropped MBR intensities nondeterministically -
+# which mzLib#1155 fixed inside the pinned bridge, so the runtime warning that used to sit here is
+# gone. The default stays until someone re-measures the K562 pair at -1; see ?flashlfq_quantify.
 
 # The wire's spelling of a number, independent of the R session's locale.
 #
@@ -415,13 +419,14 @@ flashlfq_parse <- function(data) {
 #'   only evidence is shared peptides.
 #' @param bayesian_protein_quant Whether to use the Bayesian protein quantification model.
 #' @param use_pep_q_value Whether to use PEP q-values rather than q-values for filtering.
-#' @param max_threads Worker threads. **Defaults to 1 here, which differs from pyMzLib's -1, and
-#'   deliberately.**
+#' @param max_threads Worker threads, or `-1` for one per core. **Defaults to 1 here, where the
+#'   bridge, pyMzLib and mzLibRust default to -1.**
 #'
-#'   With more than one thread the peptide roll-up nondeterministically drops MBR intensities,
-#'   so identical inputs give different protein-level answers roughly **1 run in 6** - a
-#'   borderline protein was unresolvable in 5 of 6 repeats. Any figure produced multithreaded
-#'   may not reproduce (smith-chem-wisc/mzLib#1111). mzLibR warns if you set anything else.
+#'   One thread is reproducible by construction, and it is what this package has always shipped.
+#'   The multithreaded nondeterminism that made it the default here (the peptide roll-up dropping
+#'   MBR intensities, smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
+#'   includes, so `-1` is expected to give the same answer faster; that has not yet been
+#'   re-measured on mzLib's K562 pair, which is why the default has not moved.
 #' @param output_directory Where FlashLFQ should write its TSV output, or `NULL` to write none.
 #' @param timeout Seconds to allow, or `NULL` to wait as long as it takes.
 #'
@@ -498,19 +503,6 @@ flashlfq_quantify <- function(psms, spectra, normalize = FALSE, ppm_tolerance = 
     bayesian_protein_quant, use_pep_q_value, max_threads, output_directory
   )
   stdin <- flashlfq_spectra_stdin(spectra)
-
-  # The warning goes here, at the call that will produce the unreproducible answer, rather than
-  # only in the help a user may never open.
-  if (!identical(as.numeric(max_threads), 1)) {
-    warning(
-      "max_threads = ", max_threads, ": FlashLFQ's peptide roll-up nondeterministically drops ",
-      "MBR intensities when multithreaded, so identical inputs give different protein-level ",
-      "answers roughly 1 run in 6 (smith-chem-wisc/mzLib#1111). Use max_threads = 1 for any ",
-      "result you intend to publish.",
-      call. = FALSE
-    )
-  }
-
   flashlfq_parse(bridge_invoke(args, stdin = stdin, timeout = timeout))
 }
 
@@ -644,7 +636,7 @@ print.mzlibr_quant <- function(x, ...) {
       # Where the mistake is made: someone printing a result and reading off an MBR number.
       cat("  ! the peptide roll-up shows only ", from_rollup,
         " of those ", from_peaks, " transfers - read peaks, not peptides.\n",
-        "    See ?flashlfq_quantify (smith-chem-wisc/mzLib#1111 is a separate issue).\n",
+        "    See ?flashlfq_quantify.\n",
         sep = ""
       )
     }
@@ -655,14 +647,6 @@ print.mzlibr_quant <- function(x, ...) {
   if (unresolved > 0L || zeroed > 0L) {
     cat("  proteins: ", unresolved, " NA (could not be resolved), ",
       zeroed, " zero (not measured)\n",
-      sep = ""
-    )
-  }
-
-  threads <- x$parameters[["max_threads"]]
-  if (!is.null(threads) && !identical(as.numeric(threads), 1)) {
-    cat("  ! max_threads = ", format(threads),
-      " - this result may not reproduce (mzLib#1111).\n",
       sep = ""
     )
   }

@@ -307,18 +307,16 @@ test_that("an impossible thread count is refused", {
 
 # ---------------------------------------------------------------- reproducibility
 
-test_that("max_threads defaults to 1, which differs from pyMzLib deliberately", {
-  # pyMzLib's default is -1. mzLibR's is 1, because with more than one thread FlashLFQ's peptide
-  # roll-up nondeterministically drops MBR intensities and identical inputs give different
-  # protein-level answers roughly 1 run in 6 (smith-chem-wisc/mzLib#1111). A binding that
-  # silently produces unreproducible results by default is worse than one that differs from its
-  # parent in a documented way. The right fix is upstream.
+test_that("max_threads defaults to 1, which differs from the wire's -1 deliberately", {
+  # The bridge, pyMzLib and mzLibRust default to -1. mzLibR's 1 dates from mzLib#1111, which
+  # mzLib#1155 fixed inside the pinned bridge; it stays until -1 is re-measured on the K562 pair.
+  # See ?flashlfq_quantify.
   expect_identical(formals(flashlfq_quantify)$max_threads, 1)
 })
 
-test_that("setting max_threads to anything else warns, naming the issue and the remedy", {
-  # The warning goes at the call that will produce the unreproducible answer, not only in help
-  # the user may never open.
+test_that("a multithreaded call no longer warns: mzLib#1155 fixed the nondeterminism", {
+  # This test used to assert a warning naming mzLib#1111 for any max_threads other than 1. The
+  # fix is inside the pinned bridge, so a warning would now be a false alarm.
   path <- fake_bridge_file()
   on.exit(unlink(path), add = TRUE)
   runner <- stub_runner(stdout = '{"ok":true,"data":{"peptides":[],"proteins":[],"peaks":[]}}')
@@ -326,12 +324,17 @@ test_that("setting max_threads to anything else warns, naming the issue and the 
   with_bridge_config(option = path, {
     # `flashlfq_quantify` does not take a runner, so the warning is checked against the
     # assembled call by invoking the exported function with a bridge that returns a stub.
-    expect_warning(
+    expect_no_warning(
       tryCatch(
         flashlfq_quantify("AllPSMs.psmtsv", "run.mzML", max_threads = 4),
         mzlib_error = function(e) NULL
-      ),
-      contains = c("mzLib#1111", "max_threads = 1")
+      )
+    )
+    expect_no_warning(
+      tryCatch(
+        flashlfq_quantify("AllPSMs.psmtsv", "run.mzML", max_threads = -1),
+        mzlib_error = function(e) NULL
+      )
     )
     expect_no_warning(
       tryCatch(
@@ -342,11 +345,12 @@ test_that("setting max_threads to anything else warns, naming the issue and the 
   })
 })
 
-test_that("printing warns when the result was produced multithreaded", {
+test_that("printing a multithreaded result raises no reproducibility alarm", {
   results <- recorded_quant()
   results$parameters$max_threads <- 8
   output <- paste(capture.output(print(results)), collapse = "\n")
-  expect_true(grepl("may not reproduce", output, fixed = TRUE), info = output)
+  expect_false(grepl("may not reproduce", output, fixed = TRUE), info = output)
+  expect_false(grepl("1111", output, fixed = TRUE), info = output)
 })
 
 test_that("the fixture was produced single-threaded", {

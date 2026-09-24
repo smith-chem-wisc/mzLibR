@@ -98,8 +98,8 @@ so the next reader does not re-derive them. All are in `docs/test-parity.md` too
 The bake-off surfaced **no new mzLib defect**. The biologist arms independently walked into, and
 correctly caught, defects pyMzLib and mzLibRust had already filed:
 
-- **ETD/ECD emit a spurious `y` series**, ~⅓ of the fragment list — [mzLib#1109](https://github.com/smith-chem-wisc/mzLib/issues/1109)
-  (PR #1114 open). The mzLibR tests assert what mzLib *currently does*, so they fail when the fix lands.
+- **ETD/ECD emitted a spurious `y` series**, ~⅓ of the fragment list — [mzLib#1109](https://github.com/smith-chem-wisc/mzLib/issues/1109),
+  fixed by #1114, which the pinned bridge includes; ETD now gives c and z• only.
 - **`trypsin|P` applies the Keil rule and plain `trypsin` does not**, the reverse of MaxQuant/Mascot —
   [mzLib#1106](https://github.com/smith-chem-wisc/mzLib/issues/1106).
 - **Glycosylation-site annotations are dropped on feature type with no report** —

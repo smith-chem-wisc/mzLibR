@@ -90,9 +90,9 @@ Every one of these is documented on the argument that causes it, and pinned by a
 - **A peptide intensity of `0` and a protein intensity of `NA` mean different things.** `0` is
   "not measured in this run"; `NA` is "FlashLFQ could not resolve a number". `NA` is the rare
   outcome (2 proteins) and `0` the common one (847).
-- **`max_threads` defaults to 1 here, unlike pyMzLib.** Above one thread the roll-up
-  nondeterministically drops MBR intensities, so identical inputs disagree roughly 1 run in 6
-  ([mzLib#1111](https://github.com/smith-chem-wisc/mzLib/issues/1111)).
+- **`max_threads` defaults to 1 here, where pyMzLib and mzLibRust use -1** (every core). The
+  multithreaded nondeterminism that set this default (mzLib#1111) was fixed by mzLib#1155, which
+  the pinned bridge includes; the default stays until -1 is re-measured. See `?flashlfq_quantify`.
 - **`readers_identify()` does not validate contents**, and a `TRUE` from `is_quantifiable` is not
   permission — it reports what mzLib's interface offers, not that the numbers are comparable.
 
