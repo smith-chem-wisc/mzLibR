@@ -24,3 +24,10 @@ A character vector with one element per returned row.
 \seealso{
 \code{\link{sdrf_all}} for a column that repeats.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+sdrf_value(doc, "characteristics[organism part]")
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

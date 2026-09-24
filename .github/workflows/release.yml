@@ -81,19 +81,9 @@ jobs:
             exit 1
           fi
 
-      # man/*.Rd is generated (scripts/build-man.R). A release built from a tree whose generated
-      # documentation is stale would ship help pages describing an older API, which R CMD check
-      # cannot detect because the .Rd files it finds are internally valid — they are just wrong.
-      - name: The generated man pages must be current
-        run: |
-          set -euo pipefail
-          Rscript scripts/build-man.R
-          if ! git diff --quiet -- man/; then
-            echo "::error::man/*.Rd is out of date. Run scripts/build-man.R and commit the result."
-            git diff --stat -- man/
-            exit 1
-          fi
-
+      # man/*.Rd being current is checked on every pull request now, by ci.yml's `docs` job, so a
+      # tag cut from main points at a commit that already passed it. (The check that used to live here
+      # also never installed the package, which build-man.R needs.)
       - name: Build
         run: R CMD build .
 

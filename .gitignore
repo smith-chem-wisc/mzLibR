@@ -11,3 +11,7 @@ inst/_dotnet/
 src/*.o
 src/*.so
 src/*.dll
+
+# pkgdown output, and the pyMzLib checkout CI's docs job compares names against
+_site/
+.pymzlib/

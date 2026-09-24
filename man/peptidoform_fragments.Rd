@@ -39,18 +39,18 @@ peptidoform_fragments(accession, protease = "trypsin|P", dissociation = "ETD",
 
 \item{missed_cleavages}{Maximum missed cleavage sites per peptide.}
 
-\item{min_length}{Shortest peptide to keep.
+\item{min_length}{Shortest peptide to keep, in residues.
 
   The default of 7 \strong{silently discards} everything shorter. Albumin goes from \strong{195}
   distinct sequences at \code{min_length = 7} to \strong{243} at \code{min_length = 1} - a fifth of the
   digest lives below the default. If you are looking for a short peptide and not finding it,
   look here first.}
 
-\item{max_length}{Longest peptide to keep, or \code{NULL} for no limit.}
+\item{max_length}{Longest peptide to keep, in residues, or \code{NULL} for no limit.}
 
 \item{max_modifications}{Maximum modifications considered per peptide.}
 
-\item{max_isoforms}{Maximum modification isoforms generated per peptide.
+\item{max_isoforms}{Maximum modification isoforms (peptidoforms) generated per peptide.
 
   \strong{This cap truncates silently.} A truncated result and a genuinely short one look
   identical from the outside - histone H3.1 at four modifications loses about \strong{30\%}. Check
@@ -63,6 +63,8 @@ peptidoform_fragments(accession, protease = "trypsin|P", dissociation = "ETD",
 
 }
 \description{
+Fetch a UniProt entry with its annotated modifications, digest it, and return every peptidoform with its fragment ions, plus a census of which annotations were applied.
+
 Fetches a UniProt entry, applies its annotated modifications, digests it with the named
 protease, and computes fragment ions for every resulting peptidoform.
 }
@@ -71,6 +73,17 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
   \code{\link{census_explain}}), and three data.frames that join on \code{peptide_index} -
   \code{peptides}, \code{fragments} and \code{modifications}.
 
+  The scalars: \code{sequence_length}, the protein's length in residues; \code{max_modifications}, the
+  cap in modifications per peptidoform; \code{max_modification_isoforms}, the cap in peptidoforms
+  per peptide position; and \code{peptides_at_isoform_cap}, the peptide positions that reached it -
+  non-zero means the list is truncated. The census counts \code{sites} in residues (distinct
+  positions carrying a modification), \code{applied} in modifications and \code{annotated} in UniProt
+  features.
+
+  \code{peptides} has \code{monoisotopic_mass}, the neutral mass in Da; \code{length} in residues;
+  \code{missed_cleavages} in cleavage sites; \code{modification_count} in modifications; and
+  \code{fixed_charges}, the formal charge the intact peptide carries before protonation.
+
   \strong{\code{peptides} holds peptidoforms, not distinct sequences.} One row per
   sequence-and-modification-placement, so albumin at two modifications is \strong{303} rows over
   \strong{195} distinct sequences. Both are legitimate answers to "how many peptides" and they are
@@ -78,6 +91,129 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
   \code{\link{digest_distinct_base_sequences}}.
 
 }
+\section{Wraps}{
+Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Loaders.cs}{\code{Loaders.LoadUniprot}} in \code{mzLib/UsefulProteomicsDatabases/Loaders.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/Protein.cs}{\code{Protein.Digest}} in \code{mzLib/Proteomics/Protein/Protein.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs}{\code{DigestionParams}} in \code{mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs}{\code{ProteaseDictionary}} in \code{mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs}{\code{PeptideWithSetModifications.Fragment}} in \code{mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{accession}}{string; required. A UniProtKB accession, e.g. P02768; fetched from rest.uniprot.org. The bridge checks only that it is not blank (the bindings upper-case it and check its shape first). UniProt's 400 or 404 becomes a usage error.}
+\item{\code{protease}}{string; default \code{trypsin|P}; range \samp{a key of mzLib's ProteaseDictionary}. mzLib protease name. The default "trypsin|P" is the Keil rule (cleave after K/R EXCEPT before P); mzLib's plain "trypsin" cleaves before P too. The bracket/bar marks a PREVENTING residue, the reverse of MaxQuant's and Mascot's "Trypsin/P".}
+\item{\code{dissociation}}{string; default \code{ETD}; range \code{a mzLib DissociationType name, case-insensitive: HCD, CID, ETD, EThcD, ...}. Which fragment series to generate: HCD/CID give b and y; ETD gives c and zDot.}
+\item{\code{terminus}}{string; default \code{Both}; range \code{a mzLib FragmentationTerminus name, case-insensitive: Both, N, C}. Which fragment termini to generate; also passed to DigestionParams.}
+\item{\code{modifications} (wire \code{--no-modifications})}{flag; default \code{FALSE}. Digest the bare sequence: UniProt's modifications are discarded but its signal-peptide and propeptide boundaries are kept (pyMzLib#8), so the backbone peptide list is unchanged and only the modified variants go away. A clean control.}
+\item{\code{missed_cleavages} (wire \code{--missed-cleavages})}{int; in \strong{cleavage sites}; default \code{2}; range \code{>= 0}. Maximum missed cleavage sites per peptide.}
+\item{\code{min_length} (wire \code{--min-length})}{int; in \strong{residues}; default \code{7}; range \code{>= 1}. Shortest peptide kept. The default silently drops shorter peptides (about a third of a histone digest); pass 1 for every peptide.}
+\item{\code{max_length} (wire \code{--max-length})}{int; in \strong{residues}; default \code{0}; range \code{>= 0}. Longest peptide kept; 0 means unbounded.}
+\item{\code{max_modifications} (wire \code{--max-mods})}{int; in \strong{modifications}; default \code{2}; range \code{>= 0}. Maximum modifications per peptidoform (DigestionParams maxModsForPeptides). Isoforms grow combinatorially: histone H3.1 gives 49 bare tryptic peptides, 2,563 at 2 and 7,040 at 3.}
+\item{\code{max_isoforms} (wire \code{--max-isoforms})}{int; in \strong{peptidoforms}; default \code{1024}; range \code{>= 1}. Cap on modification isoforms per peptide position (DigestionParams maxModificationIsoforms). mzLib truncates SILENTLY at the cap; peptides_at_isoform_cap reports it.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{accession}}{string; never \code{NA}. The accession UniProt returned.}
+\item{\code{name}}{string; \code{NA} when the entry records no entry name. UniProt entry name, e.g. ALBU_HUMAN.}
+\item{\code{full_name}}{string; \code{NA} when the entry records no recommended name. Recommended protein name, e.g. Albumin.}
+\item{\code{organism}}{string; \code{NA} when the entry records no organism. Scientific name.}
+\item{\code{sequence_length}}{int; in \strong{residues}; never \code{NA}. Length of the full precursor sequence.}
+\item{\code{modifications_applied}}{bool; never \code{NA}. False under no-modifications.}
+\item{\code{census$sites} (wire \code{annotated_modification_sites})}{int; in \strong{residues}; never \code{NA}. Distinct residue positions carrying at least one loaded modification. Not a modification count: K9me1/me2/me3/ac are four modifications at one site.}
+\item{\code{census$applied} (wire \code{annotated_modifications_loaded})}{int; in \strong{modifications}; never \code{NA}. Modifications mzLib loaded onto the protein (summed over sites). Counted from the annotated entry, so unchanged by no-modifications.}
+\item{\code{census$annotated} (wire \code{uniprot_annotated_features})}{int; in \strong{features}; never \code{NA}. Modification-like features in the XML: modified residue, glycosylation site, lipid moiety-binding region and cross-link.}
+\item{\code{census$unresolved} (wire \code{unresolved_modifications})}{string[]; never \code{NA}. Modification names the entry annotates that could not be resolved against UniProt's ptmlist, sorted. These are dropped silently by mzLib otherwise.}
+\item{\code{census$by_type} (wire \code{uniprot_features_by_type})}{object[]; never \code{NA}. \{type, count, loaded\} per feature type, sorted by type. loaded is true only for 'modified residue' and 'lipid moiety-binding region': mzLib drops the others on feature TYPE alone, before any mass lookup.}
+\item{\code{protease}}{string; never \code{NA}. The protease used.}
+\item{\code{dissociation}}{string; never \code{NA}. DissociationType name used.}
+\item{\code{terminus}}{string; never \code{NA}. FragmentationTerminus name used.}
+\item{\code{max_modifications}}{int; in \strong{modifications}; never \code{NA}. max-mods, echoed.}
+\item{\code{max_modification_isoforms}}{int; in \strong{peptidoforms}; never \code{NA}. max-isoforms, echoed.}
+\item{\code{peptides_at_isoform_cap}}{int; in \strong{peptide positions}; never \code{NA}. Peptide positions (start, end) whose distinct peptidoforms reached max-isoforms. Non-zero means the list is TRUNCATED.}
+\item{\code{peptide_count}}{int; in \strong{peptidoforms}; never \code{NA}. Entries in peptides.}
+\item{\code{peptides}}{object[]; never \code{NA}. One entry per distinct peptidoform (start, end, full sequence), in digestion order; fields under result.columns.}
+}
+}
+\section{Columns of \code{peptides}}{
+\describe{
+\item{\code{base_sequence}}{string; never \code{NA}. Bare residues.}
+\item{\code{full_sequence}}{string; never \code{NA}. mzLib full sequence with modifications inline, e.g. ...K[UniProt:N6-succinyllysine on K].}
+\item{\code{monoisotopic_mass}}{float; in \strong{Da}; never \code{NA}. Neutral monoisotopic mass, modifications included.}
+\item{\code{length}}{int; in \strong{residues}; never \code{NA}. Peptide length.}
+\item{\code{one_based_start}}{int; never \code{NA}. First residue's position in the protein, 1-based.}
+\item{\code{one_based_end}}{int; never \code{NA}. Last residue's position in the protein, 1-based, inclusive.}
+\item{\code{missed_cleavages}}{int; in \strong{cleavage sites}; never \code{NA}. Missed cleavage sites spanned.}
+\item{\code{modification_count}}{int; in \strong{modifications}; never \code{NA}. Entries in modifications.}
+\item{\code{fixed_charges}}{int; in \strong{charge}; never \code{NA}. Formal charges the INTACT peptide carries before protonation (e.g. trimethyllysine's quaternary ammonium), recovered from each modification's formula-vs-recorded mass deficit in whole electrons. m/z at charge z is (monoisotopic_mass + (z - fixed_charges) * 1.00727646677) / z. Does NOT apply to fragments.}
+\item{\code{modifications}}{object[]; never \code{NA}. \{one_based_residue, terminus, id, mass, formal_charge\} per modification: one_based_residue is 1-based within the PEPTIDE and null for a terminal modification, which sets terminus 'N' or 'C' instead (terminus is null for a residue modification); id is mzLib's IdWithMotif; mass is its monoisotopic mass in Da (null only if the modification defines none); formal_charge in elementary charges.}
+\item{\code{fragments}}{object[]; never \code{NA}. \{product_type, fragment_number, neutral_mass, neutral_loss, residue_position\} per ion: product_type e.g. b, y, c, zDot; fragment_number the position in its series; neutral_mass the monoisotopic NEUTRAL mass in Da (not an m/z; no proton added); neutral_loss in Da (0 when none); residue_position 1-based within the peptide.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{accession missing or blank; UniProt answers 400 or 404 (no such entry); the entry holds no protein sequence; protease not in ProteaseDictionary; dissociation or terminus not an enum name; an integer option that is not an integer}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{UniProt unreachable by the bridge's own classification: a timeout (HttpClient 100 s), a socket or TLS failure, a request that never got a response, an HTTP 408, 429 or 5xx, or a body cut off in transit}
+\item{\code{mzlib_bridge_error} (correctness)}{any other UniProt status (e.g. 403); UniProt's ptmlist.txt or PSI-MOD.obo.xml missing from the bridge payload (FileNotFoundException: every protein would otherwise look unmodified or carry wrong charges); mzLib failing to parse the entry or to digest it}
+}
+}
+\section{Caveats}{
+\itemize{
+\item UniProt annotates more than mzLib applies: only 'modified residue' and 'lipid moiety-binding region' features load. Serum albumin: 14 of 38 annotated features applied, the 24 glycosylation-site features dropped on type (mzLib#1112). Read uniprot_features_by_type and unresolved_modifications before trusting a modification count.
+\item max-isoforms truncates silently in mzLib (histone H3.1 at four modifications loses about 30\% of peptidoforms at 1024). Check peptides_at_isoform_cap before treating the list as exhaustive.
+\item Duplicate peptidoforms that mzLib's Digest emits where a chain boundary meets the initiator-Met cleavage site (mzLib#1108, open) are collapsed by the bridge on (start, end, full sequence).
+\item Fragment masses are neutral. Converting one to m/z needs the fixed charge within that fragment's span, which the wire does not report; fixed_charges is whole-peptide only.
+\item ETD's zDot ions are suppressed N-terminal to proline while the complementary c ions are not, leaving about 4\% of the c series unobservable (mzLib#1110).
+\item Needs the network: UniProt is queried on every call.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.peptidoform.fragments}
+\item Rust (mzLibRust): \code{mzlib::peptidoform::fragments_with} with \code{FragmentOptions}
+\item R (mzLibR): \code{peptidoform_fragments}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Likely a bridge bug; the doc above describes what the wire does.
+\item The example fixture is hand-trimmed (2 peptides of a max-mods 1 digest), so its peptide_count is not what the live call returns; the envelope keys are the live ones.
+\item Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them. Enum.TryParse also accepts numeric strings, so \code{--dissociation} 3 or \code{--terminus} 7 pass as undefined members. Behaviour of mzLib on such values is unverified.
+\item The wire names max-mods and no-modifications project as max_modifications and modifications (inverted) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries for them.
+\item modifications[].mass nullability: Modification.MonoisotopicMass is double?; a loaded UniProt modification has not been seen without one.
+}
+}
+\references{
+\itemize{
+\item \href{https://doi.org/10.1093/nar/gkae1010}{doi:10.1093/nar/gkae1010}: UniProt, the source of the entry, its sequence and its annotated modifications (UniProt Consortium 2025, NAR)
+}
+}
 \seealso{
 \code{\link{digest_fragments_by_series}}, \code{\link{digest_truncated}}, \code{\link{peptide_mz}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+digest
+head(digest$peptides[, c("base_sequence", "monoisotopic_mass", "modification_count")])
+digest_fragments_by_series(digest)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

@@ -22,3 +22,11 @@ The 1-based position of the first column with this name, or \code{NA}.
 \seealso{
 \code{\link{sdrf_indexes_of}}
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+sdrf_index_of(doc, "source name")
+sdrf_index_of(doc, "no such column")
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

@@ -1,0 +1,70 @@
+---
+title: "Finding and downloading PRIDE Archive data"
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(mzLibR)
+# The listings on this page are answered from recordings of the real bridge talking to PRIDE,
+# so the page builds offline. With a bridge installed, the same calls query EBI.
+.mzlibr_example <- mzLibR:::replay_bridge_start()
+```
+
+The `pride_` functions list a PRIDE Archive project's files and download the ones you choose,
+using mzLib's paging and URL resolution.
+
+## List, then choose with `[`
+
+```{r}
+files <- pride_list_files("PXD000001")
+files[, c("file_name", "category", "size_mb", "downloadable")]
+```
+
+Choose rows with ordinary subsetting, then pass them to `pride_download_files()`. That says
+things the `category` and `extensions` filters of `pride_download()` cannot, such as "under
+5 MB" or "everything except the raw file".
+
+```{r}
+small <- files[files$size_mb < 5 & files$downloadable, ]
+small$file_name
+pride_total_size_bytes(small)
+```
+
+```{r, eval = FALSE}
+pride_download_files(small, "downloads")   # needs the network
+```
+
+## Two things the manifest will not tell you
+
+**Sizes can be the decompressed size.** For some compressed files PRIDE reports the size of the
+content, not of the download: the `.mgf.gz` above is listed at 16 MB and transfers 6 MB. Treat
+`pride_total_size_bytes()` as an upper bound.
+
+**The manifest can be incomplete.** PRIDE's REST API publishes 8 files for PXD000001; the FTP tree
+holds 13, including the two largest. `pride_list_ftp_files()` walks the tree instead:
+
+```{r}
+listing <- pride_list_ftp_files("PXD000001")
+listing[, c("relative_path", "approximate_size_mb")]
+pride_approximate_total_size_bytes(listing)
+```
+
+A file that appears only there is fetched from its `url` with any HTTPS client, for example
+`download.file()`.
+
+## Filters that match nothing are errors
+
+`pride_download()` with a `category` or `extensions` filter that matches nothing raises, rather
+than reporting success with nothing downloaded. A compressed file's extension is `.gz`, so
+`extensions = ".mgf"` matches nothing in PXD000001:
+
+```{r, eval = FALSE}
+pride_download("PXD000001", "downloads", category = "PEAK", extensions = ".gz")
+```
+
+An unknown accession raises `mzlib_project_not_found`, and an EBI outage raises
+`mzlib_service_unavailable`, which is the one to retry. See `?mzlib_error`.
+
+```{r teardown, include = FALSE}
+mzLibR:::replay_bridge_stop(.mzlibr_example)
+```

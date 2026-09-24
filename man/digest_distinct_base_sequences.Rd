@@ -18,3 +18,11 @@ This counts distinct sequences. On albumin at two modifications the two are \str
 \value{
 A single count.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+nrow(digest$peptides)                  # peptidoforms
+digest_distinct_base_sequences(digest)  # distinct sequences
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

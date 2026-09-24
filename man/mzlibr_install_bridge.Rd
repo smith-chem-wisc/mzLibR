@@ -51,3 +51,10 @@ The path of the installed bridge executable, invisibly.
 \seealso{
 \code{\link{mzlibr_bridge_path}}, \code{\link{mzlibr_bridge_version}}
 }
+\examples{
+
+\donttest{
+# Downloads the bridge (about 60 MB) after asking; needs the network.
+if (interactive()) mzlibr_install_bridge()
+}
+}

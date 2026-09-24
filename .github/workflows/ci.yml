@@ -58,6 +58,69 @@ jobs:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
 
+  # Everything generated must match what generates it, on every pull request - not only at release,
+  # which is where the man-page check used to live and so where stale pages were first noticed.
+  #
+  #   docs/specs/*.json   the bridge's verb specs, re-derived from the vendored .yaml
+  #   inst/replay/        the recordings the help-page examples replay, from tests/fixtures/
+  #   man/                every help page, from the #' blocks and the specs (scripts/build-man.R)
+  #   docs/name-parity.md names against pyMzLib, columns against the wire, and help text against
+  #                       the specs' units (scripts/name-parity.R), which also fails on any finding
+  #
+  # Each is regenerated here and compared with git; a difference fails the job with the command
+  # that fixes it. See docs/reference-facts.md.
+  docs:
+    name: generated docs are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      # pyMzLib at the ref the parity page is generated against: the release whose bridge this
+      # package pins, or the commit a port runs ahead to. Public, so no token is needed.
+      - name: Which pyMzLib to compare against
+        id: pymzlib
+        run: echo "ref=$(head -n 1 scripts/pymzlib-ref | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: smith-chem-wisc/pyMzLib
+          ref: ${{ steps.pymzlib.outputs.ref }}
+          path: .pymzlib
+          sparse-checkout: pkg/python/src/pymzlib
+      # The yaml package is for scripts/sync-specs.R --check alone; nothing in mzLibR needs it.
+      - name: Install the package, and yaml for the spec check
+        run: |
+          Rscript -e 'install.packages("yaml")'
+          R CMD INSTALL .
+      - name: The vendored specs' .json copies match their .yaml
+        run: Rscript scripts/sync-specs.R --check
+      - name: The replayed recordings are staged and current
+        run: Rscript scripts/stage-replay.R --check
+      - name: The generated man pages are current
+        run: |
+          Rscript scripts/build-man.R
+          if ! git diff --quiet -- man/; then
+            echo "::error::man/*.Rd is out of date. Run R CMD INSTALL . && Rscript scripts/build-man.R and commit the result."
+            git diff --stat -- man/
+            git diff -- man/ | head -n 80
+            exit 1
+          fi
+      - name: Name parity, and help text against the specs
+        run: |
+          status=0
+          Rscript scripts/name-parity.R .pymzlib/pkg/python/src/pymzlib > docs/name-parity.md || status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::scripts/name-parity.R found problems; they are listed at the end of docs/name-parity.md."
+            sed -n '/## Anything needing a reason/,$p' docs/name-parity.md
+            exit 1
+          fi
+          if ! git diff --quiet -- docs/name-parity.md; then
+            echo "::error::docs/name-parity.md is out of date. Run Rscript scripts/name-parity.R <pyMzLib>/pkg/python/src/pymzlib > docs/name-parity.md and commit it."
+            git diff -- docs/name-parity.md | head -n 80
+            exit 1
+          fi
+
   # A guard that the package genuinely has no dependencies. If a future edit reaches for a package,
   # this fails loudly rather than letting the dependency creep in unnoticed — the no-dependencies
   # property is a feature, not an accident.

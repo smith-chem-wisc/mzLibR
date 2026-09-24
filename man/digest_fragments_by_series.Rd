@@ -28,3 +28,10 @@ not. On albumin that is 138 proline sites, 138 suppressed \code{z-dot} and \stro
 \value{
 A data.frame of \code{product_type} and \code{n}, ordered by product type.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+digest_fragments_by_series(digest)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

@@ -13,3 +13,8 @@ then a bridge downloaded by \code{\link{mzlibr_install_bridge}}.
 \value{
 A single file path.
 }
+\examples{
+
+# Where mzLibR will look; an error naming three remedies when there is no bridge yet.
+try(mzlibr_bridge_path())
+}

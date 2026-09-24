@@ -20,6 +20,8 @@ pride_list_files(accession, page_size = 100, timeout = 300)
 
 }
 \description{
+List a PRIDE Archive project's files as PRIDE's REST API publishes them, with every page already fetched: name, size, checksum, category and download locations.
+
 Paging is handled for you: however many pages the project spans, you get one data.frame.
 }
 \section{What this manifest is, and is not}{
@@ -51,6 +53,98 @@ A data.frame with one row per file and the columns \code{file_name}, \code{file_
   \code{\link{pride_total_size_bytes}}.
 
 }
+\section{Wraps}{
+Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveFile.cs}{\code{PrideArchiveFile}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveFile.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs}{\code{PrideArchiveExtensions.TotalSizeBytes}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs}{\code{PrideArchiveExtensions.TryGetHttpsDownloadUrl}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{accession}}{string; required. The project accession, e.g. PXD000001. Sent to PRIDE as given: the bridge checks only that it is not blank (the bindings upper-case it and check its shape first, because PRIDE is case-sensitive).}
+\item{\code{page_size} (wire \code{--page-size})}{int; in \strong{files}; default \code{100}; range \code{>= 1}. Files requested per underlying API call. Changes how many requests the fetch takes, never what comes back: mzLib pages until the manifest is complete. Leave it at the default; above PRIDE's server-side cap the manifest is complete only while PRIDE reports total_records.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{project_accession} (wire \code{accession})}{string; never \code{NA}. The accession, echoed as given.}
+\item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Entries in files. 0 for an unknown or private accession: PRIDE answers both with an empty manifest, not an error.}
+\item{\code{total_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Sum of file_size_bytes over files (mzLib TotalSizeBytes). A sum of PRIDE-reported sizes over an incomplete manifest; see caveats.}
+\item{\code{files}}{object[]; never \code{NA}. One entry per file in repository order; fields under result.columns.}
+}
+}
+\section{Columns}{
+\describe{
+\item{\code{file_name}}{string; never \code{NA}. The file's name as PRIDE lists it, e.g. TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw.}
+\item{\code{file_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Size as PRIDE reports it. For compressed files PRIDE often reports the DECOMPRESSED size (PXD000001's .mgf.gz: 16448103 reported vs 5984662 transferred).}
+\item{\code{checksum}}{string; never \code{NA}. The repository's checksum; the empty string when PRIDE provides none (never null).}
+\item{\code{category}}{string; never \code{NA}. PRIDE file category value, e.g. RAW, PEAK, SEARCH, RESULT, OTHER.}
+\item{\code{category_accession}}{string; never \code{NA}. The category's PRIDE CV accession, e.g. PRIDE:0000410.}
+\item{\code{https_url}}{string; \code{NA} when the file has no location reachable over HTTPS (for example Aspera-only); pride download cannot fetch it. Direct HTTPS URL: the FTP location scheme-upgraded to HTTPS on PRIDE's FTP host.}
+\item{\code{locations}}{object[]; never \code{NA}. Every published location as \{accession, name, value\} CV terms, e.g. \{PRIDE:0000469, FTP Protocol, ftp://...\}. May be empty.}
+\item{\code{submission_date}}{string; never \code{NA}. ISO-8601 timestamp with offset (DateTimeOffset), e.g. 2012-03-13T00:00:00+00:00. Never null: a date PRIDE omitted arrives as 0001-01-01T00:00:00+00:00.}
+\item{\code{publication_date}}{string; never \code{NA}. As submission_date.}
+\item{\code{updated_date}}{string; never \code{NA}. As submission_date.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{accession missing or blank; page-size not an integer}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, an HttpRequestException with no status but an inner cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut off in transit}
+\item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), or page-size <= 0 (mzLib's ArgumentOutOfRangeException; the bridge does not check it first)}
+}
+}
+\section{Caveats}{
+\itemize{
+\item This is PRIDE's REST manifest, which is knowingly incomplete: for PXD000001 it lists 8 files while the FTP tree holds 13, omitting the two largest. Use pride ftp-files when completeness or the true project size matters.
+\item An unknown accession and a private project both return file_count 0, not an error. The bindings raise their not-found error on an empty manifest; the wire does not.
+\item total_size_bytes is not the number of bytes a download transfers: PRIDE reports some compressed files at their decompressed size, and the sum covers only the files the manifest lists. The two errors run in opposite directions and do not cancel.
+\item Dates are timestamps with an offset here, unlike pride search, whose dates are bare calendar dates.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.pride.list_files}
+\item Rust (mzLibRust): \code{mzlib::pride::list_files_with} with \code{ListOptions}
+\item R (mzLibR): \code{pride_list_files}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item page-size <= 0 crosses as a correctness failure (ArgumentOutOfRangeException) because the bridge, unlike pride search, does not check it before calling mzLib. Every binding rejects it first, so no binding user sees it; the wire should say usage.
+\item An absent PRIDE date crosses as 0001-01-01T00:00:00+00:00, not null (PrideArchiveFile's dates are non-nullable DateTimeOffset, and ToWireFile does not map default to null as pride search's ToWireDate does). Not observed on a real manifest; unverified whether PRIDE ever omits one.
+\item An option given with no value (e.g. \code{--page-size} followed by another option) is parsed as a flag and silently defaulted: OptionalInt does not consult WasProvided.
+\item since.mzlibrust and since.mzlibr are 0.1.0 by the convention of the other back-filled specs; neither repo has a release tag.
+}
+}
+\references{
+\itemize{
+\item \href{https://doi.org/10.1093/nar/gkae1011}{doi:10.1093/nar/gkae1011}: The PRIDE Archive, the repository this verb lists (Perez-Riverol et al., The PRIDE database at 20 years: 2025 update, NAR)
+}
+}
 \seealso{
 \code{\link{pride_download_files}}, which is usually what you want next.
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+files <- pride_list_files("PXD000001")
+files[, c("file_name", "category", "size_mb", "downloadable")]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

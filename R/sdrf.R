@@ -203,6 +203,13 @@ sdrf_build_pool_request <- function(documents, out, limit, offset) {
 #' than reimplemented. Until then this makes no claim about whether a document is correct.
 #'
 #' @seealso [sdrf_pool()], [sdrf_value()], [sdrf_all()], [sdrf_records()]
+#' @spec sdrf.read
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' doc
+#' sdrf_value(doc, "characteristics[organism]")
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_read <- function(path, limit = NULL, offset = 0, timeout = 60) {
   args <- sdrf_build_read_args(path, limit, offset)
@@ -227,7 +234,8 @@ sdrf_read <- function(path, limit = NULL, offset = 0, timeout = 60) {
 #'
 #' @return An `mzlibr_pooled_sdrf`, which is also an `mzlibr_sdrf`: everything [sdrf_read()]
 #'   returns, plus `document_count`, `paths`, `labels`, and `written` (a list of `path` and
-#'   `row_count`, or `NULL` when `out` was not given).
+#'   `row_count`, or `NULL` when `out` was not given). `row_count` counts the rows of the whole
+#'   pooled document; `returned_count` the rows returned, starting `offset` rows in.
 #'
 #' @section Give your documents names:
 #'
@@ -242,6 +250,14 @@ sdrf_read <- function(path, limit = NULL, offset = 0, timeout = 60) {
 #' uniqueness rule. Use [sdrf_source_documents()] as part of any key.
 #'
 #' @seealso [sdrf_read()], [sdrf_source_documents()]
+#' @spec sdrf.pool
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' pooled <- sdrf_pool(c(malaria = "PXD000070.sdrf.tsv", colon = "PXD026824.sdrf.tsv"),
+#'   limit = 4)
+#' pooled
+#' sdrf_source_documents(pooled)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_pool <- function(documents, out = NULL, limit = NULL, offset = 0, timeout = 60) {
   request <- sdrf_build_pool_request(documents, out, limit, offset)
@@ -271,6 +287,12 @@ sdrf_check_column <- function(column) {
 #'
 #' @return The 1-based position of the first column with this name, or `NA`.
 #' @seealso [sdrf_indexes_of()]
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' sdrf_index_of(doc, "source name")
+#' sdrf_index_of(doc, "no such column")
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_index_of <- function(doc, column) {
   positions <- sdrf_indexes_of(doc, column)
@@ -285,6 +307,11 @@ sdrf_index_of <- function(doc, column) {
 #' @return The 1-based positions carrying this name, in document order; empty when the column is
 #'   absent.
 #' @seealso [sdrf_index_of()]
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' sdrf_indexes_of(doc, "comment[modification parameters]")
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_indexes_of <- function(doc, column) {
   sdrf_check_document(doc)
@@ -303,6 +330,11 @@ sdrf_indexes_of <- function(doc, column) {
 #'
 #' @return A character vector with one element per returned row.
 #' @seealso [sdrf_all()] for a column that repeats.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' sdrf_value(doc, "characteristics[organism part]")
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_value <- function(doc, column) {
   i <- sdrf_index_of(doc, column)
@@ -321,6 +353,11 @@ sdrf_value <- function(doc, column) {
 #' @param column A column name.
 #'
 #' @return A list with one character vector per returned row.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' sdrf_all(doc, "comment[modification parameters]")[[1]]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_all <- function(doc, column) {
   positions <- sdrf_indexes_of(doc, column)
@@ -338,6 +375,13 @@ sdrf_all <- function(doc, column) {
 #'
 #' @return A data.frame with one row per returned row and one column per distinct name, in order
 #'   of first appearance. Names are kept verbatim (`check.names = FALSE`).
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' sdrf_has_repeated_columns(doc)   # TRUE: the data.frame keeps the last of each name
+#' records <- sdrf_records(doc)
+#' records[, c("source name", "characteristics[organism]")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_records <- function(doc) {
   sdrf_check_document(doc)
@@ -357,6 +401,11 @@ sdrf_records <- function(doc) {
 #'
 #' @param doc An [sdrf_read()] or [sdrf_pool()] result.
 #' @return `TRUE` or `FALSE`. When `TRUE`, [sdrf_records()] loses cells.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' doc <- sdrf_read("PXD000070.sdrf.tsv")
+#' sdrf_has_repeated_columns(doc)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_has_repeated_columns <- function(doc) {
   sdrf_check_document(doc)
@@ -367,6 +416,11 @@ sdrf_has_repeated_columns <- function(doc) {
 #'
 #' @param doc An [sdrf_read()] or [sdrf_pool()] result.
 #' @return The number of returned rows carrying fewer cells than there are columns.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' ragged <- sdrf_read("PXD059974.sdrf.tsv")
+#' sdrf_ragged_row_count(ragged)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_ragged_row_count <- function(doc) {
   sdrf_check_document(doc)
@@ -377,6 +431,12 @@ sdrf_ragged_row_count <- function(doc) {
 #'
 #' @param pooled An [sdrf_pool()] result.
 #' @return The `comment[source document]` label of each returned row.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' pooled <- sdrf_pool(c(malaria = "PXD000070.sdrf.tsv", colon = "PXD026824.sdrf.tsv"),
+#'   limit = 4)
+#' sdrf_source_documents(pooled)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 sdrf_source_documents <- function(pooled) {
   if (!inherits(pooled, "mzlibr_pooled_sdrf")) {

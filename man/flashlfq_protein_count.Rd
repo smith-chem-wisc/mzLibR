@@ -16,3 +16,11 @@ Number of quantified protein groups
 \value{
 A single count.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+  match_between_runs = TRUE)
+flashlfq_protein_count(quant)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

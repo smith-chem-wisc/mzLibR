@@ -17,3 +17,10 @@ exclusion is correct.
 \value{
 A single count.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+census_excluded(digest)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

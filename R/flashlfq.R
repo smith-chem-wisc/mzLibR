@@ -406,7 +406,7 @@ flashlfq_parse <- function(data) {
 #'   **Whatever you do, count transfers from `peaks`, never from `peptides`.** See the return
 #'   value.
 #' @param mbr_ppm_tolerance Mass tolerance for match-between-runs, in ppm.
-#' @param mbr_q_value_threshold FDR threshold for accepting a transfer.
+#' @param mbr_q_value_threshold FDR threshold for accepting a transfer, as a q-value.
 #' @param use_shared_peptides_for_protein_quant Whether peptides shared between protein groups
 #'   contribute to protein quantification.
 #'
@@ -428,6 +428,13 @@ flashlfq_parse <- function(data) {
 #' @return An `mzlibr_quant`: `psm_file`, `identification_count`, `parameters`,
 #'   `output_directory`, and four tidy data.frames - `spectra_files`, `peptides`, `proteins`
 #'   and `peaks`.
+#'
+#'   `spectra_files` has one row per run, with `peak_count` and `mbr_peak_count` in peaks.
+#'   `peptides` and `proteins` are long - one row per peptide or protein group per run - with
+#'   `intensity` in the instrument's intensity units. `peaks` has one row per chromatographic peak:
+#'   `intensity` in instrument units, `retention_time` of the apex in minutes, and
+#'   `num_identifications`, the identifications that explain the peak (more than one means
+#'   ambiguous).
 #'
 #' @section Read peaks, not the peptide roll-up:
 #'
@@ -467,6 +474,16 @@ flashlfq_parse <- function(data) {
 #' and **847** are 0 in both runs. "No usable number" is 849; "could not be resolved" is 2.
 #'
 #' @seealso [flashlfq_mbr_peaks()], [flashlfq_mbr_rescued_peptide_count()]
+#' @spec quant.flashlfq
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+#'   match_between_runs = TRUE)
+#' quant
+#' quant$spectra_files[, c("file_name", "peak_count", "mbr_peak_count")]
+#' # Count transfers from the peaks, never from the peptide roll-up.
+#' flashlfq_mbr_peaks(quant)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 flashlfq_quantify <- function(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
                               isotope_ppm_tolerance = 5, integrate = FALSE,
@@ -503,6 +520,12 @@ flashlfq_quantify <- function(psms, spectra, normalize = FALSE, ppm_tolerance = 
 #'
 #' @param results A [flashlfq_quantify()] result.
 #' @return A single count.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+#'   match_between_runs = TRUE)
+#' flashlfq_peptide_count(quant)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 flashlfq_peptide_count <- function(results) {
   stopifnot(inherits(results, "mzlibr_quant"))
@@ -513,6 +536,12 @@ flashlfq_peptide_count <- function(results) {
 #'
 #' @param results A [flashlfq_quantify()] result.
 #' @return A single count.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+#'   match_between_runs = TRUE)
+#' flashlfq_protein_count(quant)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 flashlfq_protein_count <- function(results) {
   stopifnot(inherits(results, "mzlibr_quant"))
@@ -530,6 +559,12 @@ flashlfq_protein_count <- function(results) {
 #'
 #' @param results A [flashlfq_quantify()] result.
 #' @return A single count.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+#'   match_between_runs = TRUE)
+#' flashlfq_mbr_peak_count(quant)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 flashlfq_mbr_peak_count <- function(results) {
   stopifnot(inherits(results, "mzlibr_quant"))
@@ -540,6 +575,12 @@ flashlfq_mbr_peak_count <- function(results) {
 #'
 #' @param results A [flashlfq_quantify()] result.
 #' @return The rows of `results$peaks` whose `detection_type` is `"MBR"`.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+#'   match_between_runs = TRUE)
+#' flashlfq_mbr_peaks(quant)[, c("file_name", "sequence", "intensity")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 flashlfq_mbr_peaks <- function(results) {
   stopifnot(inherits(results, "mzlibr_quant"))
@@ -559,6 +600,12 @@ flashlfq_mbr_peaks <- function(results) {
 #'
 #' @param results A [flashlfq_quantify()] result.
 #' @return A single count.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+#'   match_between_runs = TRUE)
+#' flashlfq_mbr_rescued_peptide_count(quant)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 flashlfq_mbr_rescued_peptide_count <- function(results) {
   length(unique(flashlfq_mbr_peaks(results)$sequence))

@@ -1,0 +1,64 @@
+---
+title: "Label-free quantification with FlashLFQ"
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(mzLibR)
+# Every call on this page is answered from a small recording of the real bridge, so the page
+# builds anywhere. With a bridge installed, the same call quantifies your runs.
+.mzlibr_example <- mzLibR:::replay_bridge_start()
+```
+
+`flashlfq_quantify()` takes a search's identifications and the mzML runs they came from, and
+returns FlashLFQ's peptide, protein and peak tables. The recording used here is deliberately
+tiny - two runs, two peptides - so every table fits on the page.
+
+```{r}
+quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+                           match_between_runs = TRUE)
+quant
+```
+
+## Four tidy tables
+
+```{r}
+quant$spectra_files[, c("file_name", "peak_count", "mbr_peak_count")]
+quant$peptides
+quant$proteins
+quant$peaks
+```
+
+`peptides` and `proteins` are long: one row per peptide or protein group per run, with the run
+in `file_name`. Intensities are in the instrument's units; `retention_time` in `peaks` is the
+apex, in minutes.
+
+## 0 and `NA` mean different things
+
+A **peptide** intensity of `0` means the peptide was not measured in that run. A **protein**
+intensity of `NA` means FlashLFQ could not resolve a number at all. mzLibR keeps the two apart,
+so `mean()` over a protein column returns `NA` rather than a confidently wrong number, and
+`na.rm = TRUE` is a choice you make visibly.
+
+## Count transfers from the peaks
+
+With `match_between_runs = TRUE`, count transfers from `peaks`, never from the peptide roll-up,
+which drops most of them. On mzLib's own K562 pair the peaks hold 140 true transfers and the
+peptide table shows 52.
+
+```{r}
+flashlfq_mbr_peaks(quant)
+flashlfq_mbr_peak_count(quant)
+flashlfq_mbr_rescued_peptide_count(quant)
+```
+
+## Before a real run
+
+- Use a MetaMorpheus `.psmtsv` or `.osmtsv`, and mzML runs; convert `.raw` first.
+- Give `spectra` a `condition` and `biological_replicate` so FlashLFQ knows which runs are
+  comparable; match-between-runs needs a balanced design.
+- Read the `max_threads` argument in `?flashlfq_quantify` before changing it.
+
+```{r teardown, include = FALSE}
+mzLibR:::replay_bridge_stop(.mzlibr_example)
+```

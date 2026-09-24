@@ -13,6 +13,8 @@ pride_list_ftp_files(accession, timeout = 300)
 
 }
 \description{
+List every file a PRIDE project holds by walking its FTP directory tree, subdirectories included, with approximate sizes.
+
 The authoritative counterpart to \code{\link{pride_list_files}}. Where that returns PRIDE's REST manifest -
 knowingly incomplete for some projects, omitting for PXD000001 the two largest of 13 files - this
 walks the project's FTP directory (subdirectories included) and returns everything the project
@@ -34,6 +36,92 @@ A data.frame with one row per file and columns \code{relative_path}, \code{file_
   An unknown accession \strong{raises} \code{mzlib_project_not_found} (as \code{\link{pride_list_files}} does): mzLib
   resolves the project before walking, so a typo fails loudly rather than returning nothing.
 }
+\section{Wraps}{
+Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesFromFtpAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideFtpFile.cs}{\code{PrideFtpFile}} in \code{mzLib/UsefulProteomicsDatabases/PrideFtpFile.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs}{\code{PrideArchiveExtensions.TotalApproximateSizeBytes}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{accession}}{string; required. The project accession, e.g. PXD000001. The bridge checks only that it is not blank. mzLib resolves the project first (for its publication date, which locates the FTP directory), so an unknown accession fails instead of listing nothing.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{accession}}{string; never \code{NA}. The accession, echoed as given.}
+\item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Entries in files. 0 only if the resolved project's directory listed nothing (the bindings raise their not-found error on it).}
+\item{\code{approximate_total_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Sum of approximate_size_bytes (mzLib TotalApproximateSizeBytes): an estimate over the COMPLETE file list. PXD000001 comes to about 1.44 GB.}
+\item{\code{files}}{object[]; never \code{NA}. One entry per file in walk order (each directory's autoindex order, depth first); fields under result.columns.}
+}
+}
+\section{Columns}{
+\describe{
+\item{\code{relative_path}}{string; never \code{NA}. Path from the project's FTP root, '/'-separated and URL-decoded, e.g. generated/summary.mztab for a file in a subdirectory.}
+\item{\code{file_name}}{string; never \code{NA}. The last segment of relative_path.}
+\item{\code{url}}{string; never \code{NA}. HTTPS URL on ftp.pride.ebi.ac.uk that the file can be fetched from with any HTTP client.}
+\item{\code{approximate_size_bytes}}{int; in \strong{bytes}; never \code{NA}. PRIDE's autoindex size (e.g. '429M'), expanded with 1024-based multipliers and so rounded to about three significant figures. 0 when the index showed '-' or an unparseable size: 0 means unknown, not empty. For the exact size, HTTP HEAD the url and read Content-Length.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{accession missing or blank}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup or on any directory listing, or a body cut off in transit}
+\item{\code{mzlib_bridge_error} (correctness)}{no project has that accession, or it has no publication date to locate its directory (MzLibException; the bindings re-map it to their not-found error); a directory listing answering any other status; nesting deeper than 64 levels (MzLibException: the listing may be cyclic)}
+}
+}
+\section{Caveats}{
+\itemize{
+\item This is the complete file list; pride files (PRIDE's REST manifest) omits files, for PXD000001 five of 13 including the two largest. The price is metadata: no category, checksum or CV locations here.
+\item Sizes are approximate (rounded autoindex values), so approximate_total_size_bytes is an estimate, but an estimate over every file, unlike pride files' total_size_bytes.
+\item A listing surface only: pride download selects from the REST manifest, so a file that appears only here cannot be fetched by pride download. Fetch it from its url with an ordinary HTTPS client.
+\item One HTTP request per directory: the walk's cost grows with the tree, not the file count.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.pride.list_ftp_files}
+\item Rust (mzLibRust): \code{mzlib::pride::list_ftp_files_with}
+\item R (mzLibR): \code{pride_list_ftp_files}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item No recorded fixture: the verb needs a pride_PXD000001_ftp_files.json recording (live, 13 files) before it can have a checked example, and before the bindings' doctests can drop +SKIP.
+\item An unknown accession crosses as correctness (MzLibException), not usage, although it is the caller's mistake. Every binding re-maps it to its not-found error; the wire itself does not say 'not found'.
+\item Directory order is whatever PRIDE's Apache autoindex serves; not verified to be stable across requests, so files order is not promised.
+\item mzlib::pride::list_ftp_files_with takes the timeout as its second argument rather than an options struct; no Rust options type exists for this verb.
+}
+}
+\references{
+\itemize{
+\item \href{https://doi.org/10.1093/nar/gkae1011}{doi:10.1093/nar/gkae1011}: The PRIDE Archive and its FTP layout (Perez-Riverol et al., The PRIDE database at 20 years: 2025 update, NAR)
+}
+}
 \seealso{
 \code{\link{pride_list_files}} for the rich REST metadata; \code{\link{pride_approximate_total_size_bytes}}.
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+listing <- pride_list_ftp_files("PXD000001")
+listing[, c("relative_path", "approximate_size_mb")]
+pride_approximate_total_size_bytes(listing)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

@@ -1,0 +1,17 @@
+# Written by scripts/stage-replay.R from the verb specs' examples. Do not edit; re-run it.
+# verb<TAB>recording: the recordings the stand-in bridge (R/replay.R) may answer each verb with.
+peptidoform fragments	peptidoform_P02768_small.json
+pride files	pride_PXD000001_files.json
+pride ftp-files	pride_ftp_PXD000001.json
+quant flashlfq	flashlfq_small.json
+readers formats	readers_formats.json
+readers identify	readers_identify_mzid.json
+readers read-features	readers_features_topfd.json
+readers read-matches	readers_matches_casanovo.json
+readers read-records	readers_records_toppic.json
+readers read-results	readers_results_fragger.json
+readers read-spectra	readers_spectra_mzml.json
+sdrf pool	sdrf_pool_two.json
+sdrf read	sdrf_read_PXD000070.json
+sdrf read	sdrf_read_ragged.json
+version	bridge_version.json

@@ -30,3 +30,10 @@ disk is \strong{1.44 GB}, because PRIDE's API omits five files including the two
 The two errors run in opposite directions and do \strong{not} cancel: compressed sizes are
 inflated, whole files are missing entirely.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+files <- pride_list_files("PXD000001")
+pride_total_size_bytes(files)   # an upper bound on the transfer; see Details
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

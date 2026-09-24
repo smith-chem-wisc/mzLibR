@@ -1,0 +1,74 @@
+# The documentation site: https://smith-chem-wisc.github.io/mzLibR/
+#
+# Built by .github/workflows/pkgdown.yml on every pull request (so a broken page fails the PR) and
+# deployed from main. Every help-page example and every article runs while it builds, against the
+# recorded-response bridge in R/replay.R, so what the site shows is what the code printed.
+#
+# Written to _site/, not pkgdown's default docs/, which holds this repository's own markdown.
+url: https://smith-chem-wisc.github.io/mzLibR/
+destination: _site
+
+template:
+  bootstrap: 5
+
+home:
+  title: "mzLibR: mzLib for R"
+  links:
+    - text: pyMzLib (Python)
+      href: https://github.com/smith-chem-wisc/pyMzLib
+    - text: mzLibRust (Rust)
+      href: https://github.com/smith-chem-wisc/mzLibRust
+    - text: mzLib
+      href: https://github.com/smith-chem-wisc/mzLib
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+
+reference:
+  - title: Reading files
+    desc: >
+      What a file is, and its records: spectra, search results, features and matches, or any
+      recognised format in its own fields.
+    contents:
+      - starts_with("readers_")
+  - title: SDRF-Proteomics experimental designs
+    desc: Read one design file, or pool several into one analysis table.
+    contents:
+      - starts_with("sdrf_")
+  - title: PRIDE Archive
+    desc: List a project's files and download the ones you choose.
+    contents:
+      - starts_with("pride_")
+  - title: Peptidoforms
+    desc: Digest a UniProt entry and fragment its peptidoforms.
+    contents:
+      - peptidoform_fragments
+      - starts_with("digest_")
+      - starts_with("census_")
+      - peptide_mz
+  - title: Quantification
+    desc: Label-free quantification with FlashLFQ.
+    contents:
+      - starts_with("flashlfq_")
+  - title: The bridge
+    desc: Installing and locating the bridge every function runs, and asking it what it is.
+    contents:
+      - starts_with("mzlibr_")
+  - title: Errors
+    contents:
+      - mzlib_error
+  - title: Printing
+    contents:
+      - starts_with("print.")
+
+articles:
+  - title: Modules
+    navbar: ~
+    contents:
+      - articles/readers
+      - articles/sdrf
+      - articles/pride
+      - articles/peptidoforms
+      - articles/flashlfq

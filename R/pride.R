@@ -480,6 +480,12 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #'   [pride_total_size_bytes()].
 #'
 #' @seealso [pride_download_files()], which is usually what you want next.
+#' @spec pride.files
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' files <- pride_list_files("PXD000001")
+#' files[, c("file_name", "category", "size_mb", "downloadable")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 pride_list_files <- function(accession, page_size = 100, timeout = 300) {
   args <- pride_build_list_args(accession, page_size)
@@ -511,6 +517,13 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #'   An unknown accession **raises** `mzlib_project_not_found` (as [pride_list_files()] does): mzLib
 #'   resolves the project before walking, so a typo fails loudly rather than returning nothing.
 #' @seealso [pride_list_files()] for the rich REST metadata; [pride_approximate_total_size_bytes()].
+#' @spec pride.ftp-files
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' listing <- pride_list_ftp_files("PXD000001")
+#' listing[, c("relative_path", "approximate_size_mb")]
+#' pride_approximate_total_size_bytes(listing)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 pride_list_ftp_files <- function(accession, timeout = 300) {
   canonical <- pride_normalise_accession(accession)
@@ -570,6 +583,14 @@ pride_list_ftp_files <- function(accession, timeout = 300) {
 #'   because multi-gigabyte projects legitimately run for hours.
 #'
 #' @return A character vector of the paths where the files now are.
+#' @spec pride.download
+#' @examples
+#' \donttest{
+#' # Downloads from EBI, so it needs a bridge and the network.
+#' if (nzchar(Sys.getenv("MZLIB_BRIDGE"))) {
+#'   paths <- pride_download("PXD000001", tempdir(), category = "PEAK", extensions = ".gz")
+#' }
+#' }
 #' @export
 pride_download <- function(accession, destination, category = NULL, extensions = NULL,
                            overwrite = TRUE, timeout = NULL) {
@@ -603,6 +624,17 @@ pride_download <- function(accession, destination, category = NULL, extensions =
 #' @return A character vector of paths. These say **where each file is**, not what was
 #'   transferred just now: with `overwrite = FALSE` a file already present is left alone and its
 #'   path is still returned. Do not read `length()` of this as work done.
+#' @spec pride.download selection
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' files <- pride_list_files("PXD000001")
+#' small <- files[files$size_mb < 1 & files$downloadable, ]
+#' small[, c("file_name", "size_mb")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+#' \donttest{
+#' # Downloads from EBI, so it needs a bridge and the network.
+#' if (nzchar(Sys.getenv("MZLIB_BRIDGE"))) pride_download_files(small, tempdir())
+#' }
 #' @export
 pride_download_files <- function(files, destination, overwrite = TRUE, timeout = NULL) {
   prepared <- pride_build_download_files_args(files, destination, overwrite)
@@ -622,6 +654,11 @@ pride_download_files <- function(files, destination, overwrite = TRUE, timeout =
 #'
 #' @param files A [pride_list_files()] data.frame.
 #' @return A data.frame with `file_name`, `accession`, `name` and `value`, one row per location.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' files <- pride_list_files("PXD000001")
+#' head(pride_locations(files))
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 pride_locations <- function(files) {
   if (!is.data.frame(files) || !"locations" %in% names(files)) {
@@ -674,6 +711,11 @@ pride_locations <- function(files) {
 #'
 #' The two errors run in opposite directions and do **not** cancel: compressed sizes are
 #' inflated, whole files are missing entirely.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' files <- pride_list_files("PXD000001")
+#' pride_total_size_bytes(files)   # an upper bound on the transfer; see Details
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 pride_total_size_bytes <- function(files) {
   if (!is.data.frame(files) || !"file_size_bytes" %in% names(files)) {
@@ -694,6 +736,11 @@ pride_total_size_bytes <- function(files) {
 #' @param files A [pride_list_ftp_files()] data.frame, or a subset.
 #' @return The summed approximate size in bytes, as a double.
 #' @seealso [pride_total_size_bytes()], the REST-manifest counterpart.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' listing <- pride_list_ftp_files("PXD000001")
+#' pride_approximate_total_size_bytes(listing)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 pride_approximate_total_size_bytes <- function(files) {
   if (!is.data.frame(files) || !"approximate_size_bytes" %in% names(files)) {

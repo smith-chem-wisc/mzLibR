@@ -33,6 +33,8 @@ readers_read_spectra(path, limit = NULL, offset = 0, ms_order = NULL, peaks = FA
 
 }
 \description{
+Read the scans of a spectra file: every scan's header always, and its peak arrays only on request.
+
 Seven file types offer the \code{spectra} view: \code{.mzML}, \code{.mgf}, \code{_ms1.msalign}, \code{_ms2.msalign},
 Thermo \code{.raw}, Bruker \code{.d} and timsTOF \code{.d}.
 }
@@ -41,9 +43,19 @@ Retention times here \strong{are} in minutes for every format - mzLib's spectra 
 the boundary, unlike its result-file readers, which pass the tool's own unit through untouched.
 }
 \value{
-An \code{mzlibr_scan_records}. \code{scan_count} is the file's total \strong{before} any \code{ms_order}
-  filter, reported alongside \code{record_count} so a filter that matched nothing can never look like
-  an empty file.
+An \code{mzlibr_scan_records}. \code{scan_count} is the file's total in scans \strong{before} any
+  \code{ms_order} filter, reported alongside \code{record_count} - the scans that passed it - so a filter
+  that matched nothing can never look like an empty file. \code{returned_count} is the scans that
+  came back, starting \code{offset} scans in.
+
+  \code{records} has one row per scan. \code{retention_time} is in minutes for every format;
+  \code{injection_time} in ms; \code{total_ion_current} and \code{selected_ion_intensity} in the instrument's
+  intensity units; \code{peak_count} in peaks; \code{compensation_voltage} in volts;
+  \code{selected_ion_charge_state_guess} a charge; and \code{scan_window_lower_mz},
+  \code{scan_window_upper_mz}, \code{isolation_mz}, \code{isolation_width}, \code{selected_ion_mz} and
+  \code{selected_ion_monoisotopic_guess_mz} in m/z. With \code{peaks = TRUE}, \code{mz} (m/z) and \code{intensity}
+  (instrument units) are list columns, one vector per scan. A precursor field is \code{NA} on an MS1
+  scan; the generated sections below say what \code{NA} means for every column.
 
 }
 \section{Two of the seven need Windows}{
@@ -54,6 +66,144 @@ and are \strong{Windows-x64 only}. Thermo \code{.raw} uses managed vendor assemb
 msalign files hold \strong{deconvolved neutral masses}, not raw m/z - do not re-deconvolve them.
 
 }
+\section{Wraps}{
+Wire verb \code{readers read-spectra}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs}{\code{MsDataFileReader.GetDataFile}} in \code{mzLib/Readers/MsDataFileReader.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/MassSpectrometry/MsDataFile.cs}{\code{MsDataFile.GetAllScansList}} in \code{mzLib/MassSpectrometry/MsDataFile.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/MassSpectrometry/SourceFile.cs}{\code{SourceFile}} in \code{mzLib/MassSpectrometry/SourceFile.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{path}}{path; required. A spectra file: mzML, MGF, ms1/ms2 msalign, Thermo .raw, Bruker .d or timsTOF .d.}
+\item{\code{ms_order} (wire \code{--ms-order})}{int; default absent; range \code{>= 1}. Keep only scans at this MS level. Applied BEFORE offset and limit, so ms-order 2 with limit 10 is the first ten MS2 scans. Given with no value is a usage error; absent means every level.}
+\item{\code{offset}}{int; in \strong{scans}; default \code{0}; range \code{>= 0}. Skip this many scans (after the ms-order filter).}
+\item{\code{limit}}{int; in \strong{scans}; default absent; range \code{>= 0}. Return at most this many scans. Absent means no limit.}
+\item{\code{peaks}}{flag; default \code{FALSE}. Include the mz and intensity arrays. Off by default because peaks are roughly the size of the file; combine with limit, a scan filter, or out.}
+\item{\code{out}}{path; default absent. Write the table to this path as TSV instead of returning columns. Must differ from path. Peak arrays are written as ';'-joined lists.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{path}}{string; never \code{NA}. Absolute path of the input.}
+\item{\code{file_type}}{string; never \code{NA}. mzLib SupportedFileType name.}
+\item{\code{reader}}{string; never \code{NA}. The mzLib MsDataFile class that read it.}
+\item{\code{scan_count}}{int; in \strong{scans}; never \code{NA}. The file's true total, before any filter, so a filter matching nothing never looks like an empty file.}
+\item{\code{ms_order}}{int; \code{NA} when no ms-order filter was applied. The ms-order filter, echoed.}
+\item{\code{record_count}}{int; in \strong{scans}; never \code{NA}. Scans that passed the ms-order filter.}
+\item{\code{returned_count}}{int; in \strong{scans}; never \code{NA}. Scans in columns; 0 when written to out.}
+\item{\code{offset}}{int; in \strong{scans}; never \code{NA}. The offset applied.}
+\item{\code{truncated}}{bool; never \code{NA}. True whenever scans were left out by offset or limit.}
+\item{\code{peaks_included}}{bool; never \code{NA}. Whether mz and intensity columns are present.}
+\item{\code{retention_time_unit}}{string; never \code{NA}. Always "minutes" for this verb: every mzLib MsDataFile reader converts at the boundary.}
+\item{\code{caveats}}{string[]; never \code{NA}. Format-specific traps for THIS file; see caveats below.}
+\item{\code{column_names}}{string[]; never \code{NA}. Column order.}
+\item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-scan values.}
+\item{\code{output}}{object; \code{NA} when out was not given. \{path, format: "tsv", row_count\} when out was given.}
+\item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
+}
+}
+\section{Columns of \code{records}}{
+\describe{
+\item{\code{one_based_scan_number}}{int; never \code{NA}. Scan number. For MGF it may be assigned in file order; see caveats.}
+\item{\code{ms_order}}{int; never \code{NA}. MS level (1, 2, ...).}
+\item{\code{retention_time}}{float; in \strong{min}; never \code{NA}. Retention time.}
+\item{\code{polarity}}{string; never \code{NA}. mzLib Polarity enum name.}
+\item{\code{mz_analyzer}}{string; never \code{NA}. mzLib MZAnalyzerType enum name.}
+\item{\code{is_centroid}}{bool; never \code{NA}. Whether the spectrum is centroided.}
+\item{\code{total_ion_current}}{float; in \strong{intensity (instrument units)}; never \code{NA}. Total ion current.}
+\item{\code{injection_time}}{float; in \strong{ms}; \code{NA} when the file did not record it. Ion injection time.}
+\item{\code{peak_count}}{int; in \strong{peaks}; never \code{NA}. Peaks in the scan; 0 when it has no spectrum.}
+\item{\code{scan_window_lower_mz}}{float; in \strong{m/z}; \code{NA} when no scan window recorded. Lower scan-window bound. DERIVED for MGF (first observed peak).}
+\item{\code{scan_window_upper_mz}}{float; in \strong{m/z}; \code{NA} when no scan window recorded. Upper scan-window bound. DERIVED for MGF (last observed peak).}
+\item{\code{scan_filter}}{string; \code{NA} when the file did not record one. Vendor scan filter string.}
+\item{\code{native_id}}{string; \code{NA} when the file did not record one. Vendor native ID.}
+\item{\code{scan_description}}{string; \code{NA} when the file did not record one. Free-text scan description.}
+\item{\code{one_based_precursor_scan_number}}{int; \code{NA} when MS1 scan, or the file does not record the survey scan (standard MGF). Survey scan this scan was selected from.}
+\item{\code{isolation_mz}}{float; in \strong{m/z}; \code{NA} when MS1 scan, or not recorded. Isolation window centre. May be calibration-adjusted.}
+\item{\code{isolation_width}}{float; in \strong{m/z}; \code{NA} when MS1 scan, or not recorded. Isolation window width.}
+\item{\code{selected_ion_mz}}{float; in \strong{m/z}; \code{NA} when MS1 scan, or not recorded. Selected precursor m/z. May be calibration-adjusted.}
+\item{\code{selected_ion_intensity}}{float; in \strong{intensity (instrument units)}; \code{NA} when MS1 scan, or not recorded. Selected precursor intensity.}
+\item{\code{selected_ion_charge_state_guess}}{int; in \strong{charge}; \code{NA} when MS1 scan, or no charge assigned. Instrument or file charge-state guess.}
+\item{\code{selected_ion_monoisotopic_guess_mz}}{float; in \strong{m/z}; \code{NA} when MS1 scan, or no monoisotopic guess. Monoisotopic precursor m/z guess.}
+\item{\code{dissociation_type}}{string; \code{NA} when MS1 scan, or not recorded. mzLib DissociationType enum name.}
+\item{\code{hcd_energy}}{string; \code{NA} when not HCD, or not recorded. Collision energy AS WRITTEN by the file (mzLib keeps it a string, e.g. "35" or "25,30,35"); not parsed.}
+\item{\code{compensation_voltage}}{float; in \strong{V}; \code{NA} when no FAIMS on this instrument. FAIMS compensation voltage.}
+\item{\code{mz}}{float[]; in \strong{m/z}; \code{NA} when scan has no spectrum. Peak m/z values. \emph{Present only with \code{peaks}.}}
+\item{\code{intensity}}{float[]; in \strong{intensity (instrument units)}; \code{NA} when scan has no spectrum. Peak intensities, parallel to mz. \emph{Present only with \code{peaks}.}}
+}
+}
+\section{On the wire but not projected yet}{
+The bridge sends these, and this version of mzLibR does not return them yet:
+
+\describe{
+\item{\code{source}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{path missing or blank; file not found; the file is not one of the seven spectra types (the message names the views it does have)}
+\item{\code{mzlib_usage_error} (usage)}{ms-order, offset, limit or out given with no value; ms-order < 1; offset or limit < 0; non-integer value}
+\item{\code{mzlib_usage_error} (usage)}{out resolves to the same file as path}
+\item{\code{mzlib_bridge_error} (correctness)}{a vendor format that cannot load on this platform surfaces as its real failure (Bruker/timsTOF native DLLs are Windows x64 only)}
+\item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
+\item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item Headers only unless peaks is set; peak_count tells you how many peaks, not what they are.
+\item Bruker .d and timsTOF .d need vendor native DLLs and read only on Windows x64. Thermo .raw is managed and reads everywhere.
+\item MGF: scan numbers may be file order; precursor scan is null unless the mzLib PRECURSORSCAN header is present; ms_order comes from MSLEVEL or is inferred from PEPMASS; the scan window is derived from observed peaks.
+\item msalign holds DECONVOLVED neutral monoisotopic masses, not raw m/z: the mz column is not comparable with an mzML or raw file's mz and must not be re-deconvolved.
+\item msalign: scan_window_lower_mz/_upper_mz are in m/z while the mz column is neutral MASS, so they are not on the same axis. mzLib synthesises the window by converting each mass back to m/z at its reported charge (MsAlign.cs:526); msalign records no window of its own.
+\item timsTOF .d is ion-mobility-resolved and this view flattens it: the mobility dimension is collapsed into scans and no 1/K0 value is reported.
+\item source.acquisition_start_time from a Thermo .raw is the acquisition PC's local clock (is_utc false); ProteoWizard's mzML of the same run writes it as UTC assuming the CONVERTING machine's time zone, so the two can differ by the site's UTC offset (SourceFile.AcquisitionStartTime).
+\item Many files: \code{--paths-stdin} reads the list in ONE process, \code{--threads} at a time, into one long table with source_index and source_path first. The output does not depend on \code{--threads} (a tested property); the default of 1 is a memory choice, since every reader materialises the whole file.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.readers.read_spectra}; many files: \code{pymzlib.readers.read_spectra_many}
+\item Rust (mzLibRust): \code{mzlib::readers::read_spectra_with} with \code{SpectraOptions}; many files: \code{mzlib::readers::read_spectra_many}
+\item R (mzLibR): \code{readers_read_spectra}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item injection_time unit 'ms' is from the mzML CV term (MS:1000927); not yet confirmed that every mzLib vendor reader (Thermo, Bruker, timsTOF, MGF) emits ms.
+\item source is read from MsDataFile.SourceFile after LoadAllStaticData; Bruker .d and timsTOF .d have not been checked for which of its fields they fill.
+\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
+}
+}
 \seealso{
 \code{\link{readers_read_records}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+scans <- readers_read_spectra("sliced_ethcd.mzML", limit = 3)
+scans
+scans$records[, c("one_based_scan_number", "ms_order", "retention_time", "peak_count")]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

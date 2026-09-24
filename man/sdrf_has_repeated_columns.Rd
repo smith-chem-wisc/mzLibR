@@ -16,3 +16,10 @@ Whether an SDRF document repeats a column name
 \value{
 \code{TRUE} or \code{FALSE}. When \code{TRUE}, \code{\link{sdrf_records}} loses cells.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+sdrf_has_repeated_columns(doc)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

@@ -9,3 +9,8 @@
 ^\.Rproj\.user$
 ^STATUS\.md$
 ^design$
+# The documentation site's config, output and articles: built by pkgdown.yml, never by R CMD build.
+^_pkgdown\.yml$
+^_site$
+^vignettes$
+^\.pymzlib$

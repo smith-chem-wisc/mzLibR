@@ -20,12 +20,19 @@ readers_read_features(path, limit = NULL, offset = 0, out = NULL, timeout = NULL
 
 }
 \description{
+Read deconvolved MS1 features through the cross-format ms1_features view: m/z, charge, retention-time range, apex intensity and isotope count.
+
 Two file types offer it: TopFD/FLASHDeconv \code{_ms1.feature} and Dinosaur \code{.feature.tsv}. A file
 without the view raises, with a message naming the views it does have.
 }
 \value{
-An \code{mzlibr_feature_records}. \code{records} is a data.frame with \code{mz}, \code{charge},
-  \code{retention_time_start}, \code{retention_time_end}, \code{intensity} and \code{number_of_isotopes}.
+An \code{mzlibr_feature_records}. \code{record_count} counts the features in the whole file
+  and \code{returned_count} the features returned, starting \code{offset} features in.
+
+  \code{records} has one row per feature: \code{mz} in m/z; \code{charge}; \code{retention_time_start} and
+  \code{retention_time_end} in the unit \code{retention_time_unit} names - \code{"unknown"} for
+  \code{_ms1.feature}, see below; \code{intensity}, the apex, in the instrument's intensity units; and
+  \code{number_of_isotopes}.
 
 }
 \section{One row is not one line of the file, for \code{_ms1.feature}}{
@@ -50,6 +57,112 @@ launder a guess into a stated fact, so \code{\link{readers_retention_time_in_min
 converting. Dinosaur reports minutes and converts without complaint.
 
 }
+\section{Wraps}{
+Wire verb \code{readers read-features}. Generated from the bridge's verb spec \code{readers.read-features.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/IMs1FeatureFile.cs}{\code{IMs1FeatureFile.GetMs1Features}} in \code{mzLib/Readers/BaseClasses/IMs1FeatureFile.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/ExternalResults/IndividualResultRecords/Ms1Feature.cs}{\code{Ms1Feature.GetSingleChargeFeatures}} in \code{mzLib/Readers/ExternalResults/IndividualResultRecords/Ms1Feature.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{path}}{path; required. A TopFD/FLASHDeconv _ms1.feature or a Dinosaur .feature.tsv.}
+\item{\code{offset}}{int; in \strong{features}; default \code{0}; range \code{>= 0}. Skip this many features. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
+\item{\code{limit}}{int; in \strong{features}; default absent; range \code{>= 0}. Return at most this many features. Absent means no limit; there is deliberately no default cap.}
+\item{\code{out}}{path; default absent. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{path}}{string; never \code{NA}. Absolute path of the input.}
+\item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType that was dispatched.}
+\item{\code{record_count}}{int; in \strong{features}; never \code{NA}. Features in the whole file, before the window.}
+\item{\code{retention_time_unit}}{string; never \code{NA}. minutes for Dinosaur; unknown for _ms1.feature, whose unit changed at TopFD v1.7.0 without a format change.}
+\item{\code{caveats}}{string[]; never \code{NA}. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.}
+\item{\code{column_names}}{string[]; never \code{NA}. Column order.}
+\item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
+\item{\code{returned_count}}{int; in \strong{features}; never \code{NA}. Features returned in columns (the unit offset and limit count in); 0 when written to out.}
+\item{\code{offset}}{int; in \strong{features}; never \code{NA}. The offset applied, in features.}
+\item{\code{truncated}}{bool; never \code{NA}. True whenever records were left out by offset or limit.}
+\item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-row values, in column_names order.}
+\item{\code{output}}{object; \code{NA} when out was not given. \{path, format: "tsv", row_count\} when out was given.}
+}
+}
+\section{Columns of \code{records}}{
+\describe{
+\item{\code{mz}}{float; in \strong{m/z}; never \code{NA}. Monoisotopic m/z of this single-charge feature.}
+\item{\code{charge}}{int; in \strong{charge}; never \code{NA}. Charge state.}
+\item{\code{retention_time_start}}{float; in \strong{retention_time_unit}; never \code{NA}. Feature start, in retention_time_unit.}
+\item{\code{retention_time_end}}{float; in \strong{retention_time_unit}; never \code{NA}. Feature end, in retention_time_unit.}
+\item{\code{intensity}}{float; in \strong{intensity (instrument units)}; \code{NA} when the file has no apex intensity (FLASHDeconv schema, then in absent_fields) or this feature has none. Apex intensity (Dinosaur intensityApex; TopFD Apex_intensity).}
+\item{\code{number_of_isotopes}}{int; \code{NA} when _ms1.feature: mzLib never sets it (then in absent_fields). Isotopes in the feature.}
+}
+}
+\section{On the wire but not projected yet}{
+The bridge sends these, and this version of mzLibR does not return them yet:
+
+\describe{
+\item{\code{reader}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)}
+\item{\code{mzlib_usage_error} (usage)}{offset, limit or out given with no value; offset or limit < 0; non-integer value; out resolves to the same file as path}
+\item{\code{mzlib_usage_error} (usage)}{the file has no ms1_features view}
+\item{\code{mzlib_bridge_error} (correctness)}{mzLib recognises the file and fails to parse it}
+\item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
+\item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item _ms1.feature rows are expanded to one per charge in [ChargeStateMin, ChargeStateMax] (Ms1Feature.cs:84); Dinosaur is one row per file line.
+\item intensity is the per-charge APEX intensity (Ms1Feature.cs:86); a FLASHDeconv file has none and names intensity in absent_fields instead of reporting mzLib's zero.
+\item number_of_isotopes is absent for every _ms1.feature (Ms1Feature.cs:91).
+\item Many files: \code{--paths-stdin} reads the list in ONE process, \code{--threads} at a time, into one long table with source_index and source_path first. The output does not depend on \code{--threads} (a tested property); the default of 1 is a memory choice, since every reader materialises the whole file.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.readers.read_features}; many files: \code{pymzlib.readers.read_features_many}
+\item Rust (mzLibRust): \code{mzlib::readers::read_features_with} with \code{ReadOptions}; many files: \code{mzlib::readers::read_features_many}
+\item R (mzLibR): \code{readers_read_features}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
+\item retention_time_start/_end declare their unit as the envelope's retention_time_unit, not a fixed unit, because it genuinely varies per file.
+}
+}
 \seealso{
 \code{\link{readers_read_records}}, \code{\link{readers_retention_time_in_minutes}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+features <- readers_read_features("Ms1Feature_TopFDv1.6.2_ms1.feature", limit = 5)
+features
+features$records
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

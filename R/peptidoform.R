@@ -333,15 +333,15 @@ peptidoform_parse <- function(data) {
 #'   bridge, both peptides are present either way and albumin gives 195 distinct base sequences
 #'   with modifications on or off.
 #' @param missed_cleavages Maximum missed cleavage sites per peptide.
-#' @param min_length Shortest peptide to keep.
+#' @param min_length Shortest peptide to keep, in residues.
 #'
 #'   The default of 7 **silently discards** everything shorter. Albumin goes from **195**
 #'   distinct sequences at `min_length = 7` to **243** at `min_length = 1` - a fifth of the
 #'   digest lives below the default. If you are looking for a short peptide and not finding it,
 #'   look here first.
-#' @param max_length Longest peptide to keep, or `NULL` for no limit.
+#' @param max_length Longest peptide to keep, in residues, or `NULL` for no limit.
 #' @param max_modifications Maximum modifications considered per peptide.
-#' @param max_isoforms Maximum modification isoforms generated per peptide.
+#' @param max_isoforms Maximum modification isoforms (peptidoforms) generated per peptide.
 #'
 #'   **This cap truncates silently.** A truncated result and a genuinely short one look
 #'   identical from the outside - histone H3.1 at four modifications loses about **30%**. Check
@@ -353,6 +353,17 @@ peptidoform_parse <- function(data) {
 #'   [census_explain()]), and three data.frames that join on `peptide_index` -
 #'   `peptides`, `fragments` and `modifications`.
 #'
+#'   The scalars: `sequence_length`, the protein's length in residues; `max_modifications`, the
+#'   cap in modifications per peptidoform; `max_modification_isoforms`, the cap in peptidoforms
+#'   per peptide position; and `peptides_at_isoform_cap`, the peptide positions that reached it -
+#'   non-zero means the list is truncated. The census counts `sites` in residues (distinct
+#'   positions carrying a modification), `applied` in modifications and `annotated` in UniProt
+#'   features.
+#'
+#'   `peptides` has `monoisotopic_mass`, the neutral mass in Da; `length` in residues;
+#'   `missed_cleavages` in cleavage sites; `modification_count` in modifications; and
+#'   `fixed_charges`, the formal charge the intact peptide carries before protonation.
+#'
 #'   **`peptides` holds peptidoforms, not distinct sequences.** One row per
 #'   sequence-and-modification-placement, so albumin at two modifications is **303** rows over
 #'   **195** distinct sequences. Both are legitimate answers to "how many peptides" and they are
@@ -360,6 +371,14 @@ peptidoform_parse <- function(data) {
 #'   [digest_distinct_base_sequences()].
 #'
 #' @seealso [digest_fragments_by_series()], [digest_truncated()], [peptide_mz()]
+#' @spec peptidoform.fragments
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' digest
+#' head(digest$peptides[, c("base_sequence", "monoisotopic_mass", "modification_count")])
+#' digest_fragments_by_series(digest)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 peptidoform_fragments <- function(accession, protease = "trypsin|P", dissociation = "ETD",
                                   modifications = TRUE, missed_cleavages = 2, min_length = 7,
@@ -389,6 +408,11 @@ peptidoform_fragments <- function(accession, protease = "trypsin|P", dissociatio
 #'
 #' @param digest An [peptidoform_fragments()] result.
 #' @return `TRUE` if any peptide hit `max_isoforms`.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' digest_truncated(digest)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 digest_truncated <- function(digest) {
   stopifnot(inherits(digest, "mzlibr_digest"))
@@ -403,6 +427,12 @@ digest_truncated <- function(digest) {
 #'
 #' @param digest An [peptidoform_fragments()] result.
 #' @return A single count.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' nrow(digest$peptides)                  # peptidoforms
+#' digest_distinct_base_sequences(digest)  # distinct sequences
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 digest_distinct_base_sequences <- function(digest) {
   stopifnot(inherits(digest, "mzlibr_digest"))
@@ -413,6 +443,11 @@ digest_distinct_base_sequences <- function(digest) {
 #'
 #' @param digest An [peptidoform_fragments()] result.
 #' @return The rows of `digest$peptides` with `modification_count > 0`.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' digest_modified_peptides(digest)[, c("full_sequence", "modification_count")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 digest_modified_peptides <- function(digest) {
   stopifnot(inherits(digest, "mzlibr_digest"))
@@ -437,6 +472,11 @@ digest_modified_peptides <- function(digest) {
 #'
 #' @param digest An [peptidoform_fragments()] result.
 #' @return A data.frame of `product_type` and `n`, ordered by product type.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' digest_fragments_by_series(digest)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 digest_fragments_by_series <- function(digest) {
   stopifnot(inherits(digest, "mzlibr_digest"))
@@ -476,6 +516,11 @@ digest_fragments_by_series <- function(digest) {
 #' @param peptides Rows of a `digest$peptides` data.frame.
 #' @param charge Total charge, a positive whole number.
 #' @return A numeric vector of m/z, one per row.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' peptide_mz(digest$peptides, charge = 2)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 peptide_mz <- function(peptides, charge) {
   if (!is.data.frame(peptides) ||
@@ -510,6 +555,11 @@ peptide_mz <- function(peptides, charge) {
 #'
 #' @param digest An [peptidoform_fragments()] result, or its `census`.
 #' @return A single count.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' census_excluded(digest)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 census_excluded <- function(digest) {
   census <- if (inherits(digest, "mzlibr_digest")) digest$census else digest
@@ -544,6 +594,11 @@ census_excluded <- function(digest) {
 #'
 #' @param digest An [peptidoform_fragments()] result, or its `census`.
 #' @return A single string.
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' digest <- peptidoform_fragments("P02768", max_modifications = 1)
+#' census_explain(digest)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 census_explain <- function(digest) {
   census <- if (inherits(digest, "mzlibr_digest")) digest$census else digest

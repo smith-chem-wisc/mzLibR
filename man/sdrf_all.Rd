@@ -21,3 +21,10 @@ reach are skipped, so each element holds only cells that exist.
 \value{
 A list with one character vector per returned row.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+sdrf_all(doc, "comment[modification parameters]")[[1]]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

@@ -12,6 +12,8 @@ mzlibr_bridge_version(runner = bridge_run)
 
 }
 \description{
+Report the bridge's version, its wire protocol, its .NET runtime, the mzLib it was built from, and every verb it dispatches.
+
 The whole transport story end to end - locate the executable, run it, parse an envelope,
 agree on a wire format - in one call with no network and no arguments. It is the first thing
 to make work and the first thing to check when something else is wrong.
@@ -27,4 +29,73 @@ A list with \code{bridge}, \code{protocol}, \code{runtime} and \code{mzlib}.
   It is deliberately \strong{not} a compatibility check. \code{protocol} is that, and it is what this
   function verifies. \code{mzlib} is for reporting a run, filing a bug, or tying a result to the
   library that produced it.
+}
+\section{Wraps}{
+Wire verb \code{version}. Generated from the bridge's verb spec \code{version.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj}{\code{AssemblyInformationalVersionAttribute}} in \code{mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+This verb takes no parameters.
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{bridge}}{string; never \code{NA}. The bridge assembly's version. Not a compatibility number: use protocol.}
+\item{\code{protocol}}{int; never \code{NA}. The wire-format version; a binding is compatible with a bridge by this.}
+\item{\code{runtime}}{string; never \code{NA}. The bundled .NET runtime version.}
+\item{\code{mzlib}}{string; \code{NA} when the build recorded no mzLib commit. Which mzLib the bridge links, as 1.0.0+<commit>, read from the linked assembly.}
+}
+}
+\section{On the wire but not projected yet}{
+The bridge sends these, and this version of mzLibR does not return them yet:
+
+\describe{
+\item{\code{verbs}}{arrives with the mzLib 1.0.592 port.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item verbs lists what the bridge ROUTES, not which options each verb takes: a bulk option (\code{--paths-stdin}) on an older bridge that lists the verb still fails with that bridge's usage error.
+\item Bridges built before verbs existed omit the key; a binding must treat its absence as 'lists nothing', which correctly refuses every verb added since.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.bridge_version}
+\item Rust (mzLibRust): \code{mzlib::bridge_version}
+\item R (mzLibR): \code{mzlibr_bridge_version}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item The Unknown-command message and verbs share one generated list (Program.Verbs, from the DeriveVerbList MSBuild task); check_verbs.py still parses the switch itself. Both read the same pattern, so they cannot disagree unless the switch stops being one arm per line.
+\item pyMzLib returns version as a plain dict, typed as the TypedDict pymzlib.BridgeVersion so its keys are documented and linted; Rust and R spellings are the intended ones.
+}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+info <- mzlibr_bridge_version()
+info$protocol   # the compatibility contract
+info$mzlib      # which mzLib produced the results, for a methods section
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

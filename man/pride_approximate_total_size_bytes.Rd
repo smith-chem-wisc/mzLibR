@@ -24,3 +24,10 @@ The summed approximate size in bytes, as a double.
 \seealso{
 \code{\link{pride_total_size_bytes}}, the REST-manifest counterpart.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+listing <- pride_list_ftp_files("PXD000001")
+pride_approximate_total_size_bytes(listing)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

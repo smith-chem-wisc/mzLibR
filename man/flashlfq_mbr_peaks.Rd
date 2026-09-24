@@ -16,3 +16,11 @@ Exactly the peaks transferred by match-between-runs
 \value{
 The rows of \code{results$peaks} whose \code{detection_type} is \code{"MBR"}.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+  match_between_runs = TRUE)
+flashlfq_mbr_peaks(quant)[, c("file_name", "sequence", "intensity")]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

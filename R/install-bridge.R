@@ -160,6 +160,11 @@ bridge_ask_consent <- function(destination, size_note) {
 #'
 #' @return The path of the installed bridge executable, invisibly.
 #' @seealso [mzlibr_bridge_path()], [mzlibr_bridge_version()]
+#' @examples
+#' \donttest{
+#' # Downloads the bridge (about 60 MB) after asking; needs the network.
+#' if (interactive()) mzlibr_install_bridge()
+#' }
 #' @export
 mzlibr_install_bridge <- function(version = MZLIB_BRIDGE_VERSION, destination = NULL,
                                   consent = NA, overwrite = FALSE, url = NULL, sha256 = NULL,

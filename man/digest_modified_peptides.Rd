@@ -16,3 +16,10 @@ Only the peptidoforms carrying at least one modification
 \value{
 The rows of \code{digest$peptides} with \code{modification_count > 0}.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+digest_modified_peptides(digest)[, c("full_sequence", "modification_count")]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}
