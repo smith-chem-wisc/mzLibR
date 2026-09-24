@@ -37,7 +37,9 @@ jobs:
           extra-packages: any::pkgdown, local::.
           needs: website
       - name: Build the site
-        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        # dest_dir as well as _pkgdown.yml's destination: this function defaults to docs/, which here
+        # holds the repository's own markdown and which pkgdown refuses to clean.
+        run: pkgdown::build_site_github_pages(dest_dir = "_site", new_process = FALSE, install = FALSE)
         shell: Rscript {0}
       - name: Deploy to GitHub Pages
         if: github.event_name != 'pull_request'
