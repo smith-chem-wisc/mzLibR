@@ -72,7 +72,12 @@ python_parameters <- function(lines, start) {
   text <- paste(body, collapse = "\n")
   inner <- sub("^\\s*def [a-z_][a-z0-9_]*\\(", "", text)
   inner <- sub("\\)[^)]*$", "", inner)
-  parameters <- trimws(strsplit(inner, ",\n|,(?![^\\[]*\\])", perl = TRUE)[[1]])
+  # Split on the commas at bracket depth 0 only, so a default such as `("proteins",)` or a type
+  # such as `dict[str, int]` stays one parameter.
+  characters <- strsplit(inner, "", fixed = TRUE)[[1L]]
+  depth <- cumsum(characters %in% c("(", "[", "{")) - cumsum(characters %in% c(")", "]", "}"))
+  cuts <- which(characters == "," & depth == 0L)
+  parameters <- trimws(substring(inner, c(1L, cuts + 1L), c(cuts - 1L, nchar(inner))))
   parameters <- sub("[:=].*$", "", parameters)
   parameters <- trimws(gsub("[*]", "", parameters))
   parameters[nzchar(parameters) & !parameters %in% c("self", "cls", "/")]
