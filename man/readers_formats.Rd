@@ -25,8 +25,8 @@ A data.frame with one row per format: \code{file_type}, \code{extension}, \code{
 \section{Views, and why most formats have none}{
 
 
-It is tempting to read "31 formats" as "31 formats in one uniform shape". They are not. The
-formats fall into disjoint families, and \strong{14 of the 31 belong to none of them} — an empty
+It is tempting to read "36 formats" as "36 formats in one uniform shape". They are not. The
+formats fall into disjoint families, and \strong{17 of the 36 belong to none of them} — an empty
 \code{views} is a real and common answer, meaning mzLib can parse the file but offers no
 cross-format projection of it.
 

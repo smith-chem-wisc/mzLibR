@@ -55,6 +55,21 @@ skip_if_no_bridge <- function() {
   skip_if(!mz$bridge_available(), "no bridge staged")
 }
 
+# Skip a LIVE test unless the staged bridge dispatches `verb`.
+#
+# The weekly live job runs against the newest published bridge, which can be older than the verbs
+# this package already projects: a verb new in pyMzLib 0.2.0 skips against a 0.1.x bridge rather
+# than failing, and runs as soon as a bridge that has it is published.
+skip_unless_bridge_has <- function(verb) {
+  bridge <- Sys.getenv("MZLIB_BRIDGE", "")
+  skip_if(!nzchar(bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  old <- options(mzlibr.bridge = bridge)
+  on.exit(options(old), add = TRUE)
+  verbs <- tryCatch(mzlibr_bridge_version()$verbs, error = function(e) NA_character_)
+  skip_if(!verb %in% verbs, paste0("the staged bridge does not dispatch '", verb, "'"))
+  invisible(NULL)
+}
+
 test_that <- function(description, code) {
   outcome <- tryCatch(
     {

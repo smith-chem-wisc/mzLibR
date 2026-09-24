@@ -31,8 +31,9 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `pride_*` | List and download from the PRIDE Archive, with mzLib's paging and URL resolution |
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
-| `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with `readers_read_spectra()`; identify **and read all 31** file types mzLib knows, search results included — `readers_read_records()` reads any of them into that format's own fields, while `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
-| `sdrf_*` | Read SDRF-Proteomics experimental-design files with `sdrf_read()`, and pool several into one table with provenance with `sdrf_pool()`. Use these rather than `readers_read_records()`, which joins each SDRF row into one string that cannot be split back apart |
+| `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with `readers_read_spectra()`; identify **and read all 36** file types mzLib knows, search results included — `readers_read_records()` reads any of them into that format's own fields, while `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
+| `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with `proteins_read()`, which gene it resolves to against a pinned Ensembl release with `proteins_resolve_genes()`, and whether a peptide is unique to one protein or gene with `proteins_classify_peptides()` |
+| `sdrf_*` | Read SDRF-Proteomics experimental-design files with `sdrf_read()`, and pool several into one table with provenance with `sdrf_pool()`; check them with `sdrf_validate()`, `sdrf_assess()` and `sdrf_lint()`, and get each sample's ages in years with `sdrf_samples()`. Use these rather than `readers_read_records()`, which joins each SDRF row into one string that cannot be split back apart |
 
 ## Installing
 
@@ -90,9 +91,9 @@ Every one of these is documented on the argument that causes it, and pinned by a
 - **A peptide intensity of `0` and a protein intensity of `NA` mean different things.** `0` is
   "not measured in this run"; `NA` is "FlashLFQ could not resolve a number". `NA` is the rare
   outcome (2 proteins) and `0` the common one (847).
-- **`max_threads` defaults to 1 here, unlike pyMzLib.** Above one thread the roll-up
-  nondeterministically drops MBR intensities, so identical inputs disagree roughly 1 run in 6
-  ([mzLib#1111](https://github.com/smith-chem-wisc/mzLib/issues/1111)).
+- **`max_threads` defaults to 1 here, where pyMzLib and mzLibRust use -1** (every core). The
+  multithreaded nondeterminism that set this default (mzLib#1111) was fixed by mzLib#1155, which
+  the pinned bridge includes; the default stays until -1 is re-measured. See `?flashlfq_quantify`.
 - **`readers_identify()` does not validate contents**, and a `TRUE` from `is_quantifiable` is not
   permission — it reports what mzLib's interface offers, not that the numbers are comparable.
 

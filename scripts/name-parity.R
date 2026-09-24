@@ -72,7 +72,12 @@ python_parameters <- function(lines, start) {
   text <- paste(body, collapse = "\n")
   inner <- sub("^\\s*def [a-z_][a-z0-9_]*\\(", "", text)
   inner <- sub("\\)[^)]*$", "", inner)
-  parameters <- trimws(strsplit(inner, ",\n|,(?![^\\[]*\\])", perl = TRUE)[[1]])
+  # Split on the commas at bracket depth 0 only, so a default such as `("proteins",)` or a type
+  # such as `dict[str, int]` stays one parameter.
+  characters <- strsplit(inner, "", fixed = TRUE)[[1L]]
+  depth <- cumsum(characters %in% c("(", "[", "{")) - cumsum(characters %in% c(")", "]", "}"))
+  cuts <- which(characters == "," & depth == 0L)
+  parameters <- trimws(substring(inner, c(1L, cuts + 1L), c(cuts - 1L, nchar(inner))))
   parameters <- sub("[:=].*$", "", parameters)
   parameters <- trimws(gsub("[*]", "", parameters))
   parameters[nzchar(parameters) & !parameters %in% c("self", "cls", "/")]
@@ -117,107 +122,12 @@ for (module in modules) {
 
 # ---------------------------------------------------------------- the mapping
 
-# R flattens pyMzLib's classes away, so the correspondence has to be stated. Anything not named
-# here is reported as unmapped rather than quietly passing.
-mapping <- c(
-  pride_list_files = "pride.list_files",
-  pride_list_ftp_files = "pride.list_ftp_files",
-  pride_download = "pride.download",
-  pride_download_files = "pride.download_files",
-  pride_total_size_bytes = "pride.total_size_bytes",
-  pride_approximate_total_size_bytes = "pride.approximate_total_size_bytes",
-  peptidoform_fragments = "peptidoform.fragments",
-  digest_truncated = "Digest.truncated",
-  digest_modified_peptides = "Digest.modified_peptides",
-  census_explain = "ModificationCensus.explain",
-  census_excluded = "ModificationCensus.excluded",
-  peptide_mz = "Peptide.mz",
-  flashlfq_quantify = "flashlfq.quantify",
-  flashlfq_peptide_count = "FlashLfqResults.peptide_count",
-  flashlfq_protein_count = "FlashLfqResults.protein_count",
-  flashlfq_mbr_peak_count = "FlashLfqResults.mbr_peak_count",
-  flashlfq_mbr_peaks = "FlashLfqResults.mbr_peaks",
-  flashlfq_mbr_rescued_peptide_count = "FlashLfqResults.mbr_rescued_peptide_count",
-  readers_formats = "readers.formats",
-  readers_identify = "readers.identify",
-  readers_read_results = "readers.read_results",
-  readers_read_records = "readers.read_records",
-  readers_read_features = "readers.read_features",
-  readers_read_matches = "readers.read_matches",
-  readers_read_spectra = "readers.read_spectra",
-  sdrf_read = "sdrf.read",
-  sdrf_pool = "sdrf.pool",
-  sdrf_index_of = "SdrfDocument.index_of",
-  sdrf_indexes_of = "SdrfDocument.indexes_of",
-  sdrf_value = "SdrfDocument.value",
-  sdrf_all = "SdrfDocument.all",
-  sdrf_records = "SdrfDocument.records",
-  sdrf_has_repeated_columns = "SdrfDocument.has_repeated_columns",
-  sdrf_ragged_row_count = "SdrfDocument.ragged_row_count",
-  sdrf_source_documents = "PooledSdrf.source_documents"
-)
-
-# Parameters that differ by necessity rather than by accident, with the reason. Keyed by the R
-# function; each entry names the parameters on each side that the comparison should not count.
-parameter_reasons <- list(
-  sdrf_pool = list(
-    r = character(0), py = character(0),
-    why = "R names the documents vector's elements with their labels; pyMzLib takes a {path: label} map. Same parameter, `documents`, both sides"
-  )
-)
-
-# Deliberately absent from pyMzLib, with the reason. Anything here is a considered addition, not
-# an oversight.
-additions <- c(
-  digest_distinct_base_sequences = "from mzLibRust (Digest::distinct_base_sequences); pyMzLib has no equivalent",
-  digest_fragments_by_series = "from mzLibRust (Digest::fragments_by_series); pyMzLib has only fragment_count",
-  pride_locations = "R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field",
-  readers_retention_time_in_minutes = paste(
-    "one function with a `column` argument where pyMzLib has one property per column",
-    "(ResultRecords.retention_time_in_minutes, FeatureRecords.retention_time_start_in_minutes and",
-    "_end_in_minutes), because R dispatches on the object's class and Python does not"
-  ),
-  mzlibr_bridge_path = "transport; pyMzLib's equivalent is private (_bridge)",
-  mzlibr_bridge_version = "transport; pyMzLib's equivalent is pymzlib.bridge_version, outside the modules compared here",
-  # Says why THIS package needs the function, not what the other bindings do instead. The earlier
-  # wording ("Rust downloads it from build.rs") was a claim about another repository, which nothing
-  # here can test and which goes false when that repository changes with nothing changing here -
-  # the mistake mzLibRust #16 was opened to stop making.
-  mzlibr_install_bridge = paste(
-    "no pyMzLib counterpart: a wheel carries the payload, so Python never has to fetch one.",
-    "CRAN forbids downloading at install time and writing outside tempdir() without consent,",
-    "so here the download has to be a function the user calls."
-  )
-)
-
-# pyMzLib callables with no mzLibR counterpart, with the reason. Every pyMzLib callable must be
-# mapped above or listed here; one that is neither fails the check, which is how a new pyMzLib
-# function gets noticed on the day it lands.
-omissions <- c(
-  "PrideFile.size_mb" = "a column, `size_mb`, not a function",
-  "PrideFile.extension" = "a column, `extension`, not a function",
-  "PrideFile.downloadable" = "a column, `downloadable`, not a function",
-  "PrideFile.as_dict" = "meaningless in R: the data.frame is already the record",
-  "PrideFtpFile.approximate_size_mb" = "a column, `approximate_size_mb`, not a function",
-  "PrideFtpFile.extension" = "a column, `extension`, not a function",
-  "PrideFtpFile.as_dict" = "meaningless in R: the data.frame is already the record",
-  "PrideProjectSearchResult.matched_fields" = "parity debt: `pride search` arrives with the mzLib 1.0.592 port",
-  "PrideProjectSearchResult.as_dict" = "parity debt: `pride search` arrives with the mzLib 1.0.592 port",
-  "pride.search" = "parity debt: `pride search` arrives with the mzLib 1.0.592 port",
-  "flashlfq.median_polish" = "parity debt: `quant median-polish` arrives with the mzLib 1.0.592 port",
-  "Peptide.is_modified" = "a column comparison, `modification_count > 0`",
-  "Peptide.intensity" = "a row of the long `peptides` frame",
-  "Peptide.detection_type" = "a column of the long `peptides` frame",
-  "ProteinGroup.intensity" = "a row of the long `proteins` frame",
-  "Peak.is_mbr" = "a column comparison, `detection_type == \"MBR\"`",
-  "Digest.fragment_count" = "`nrow(digest$fragments)`; not promoted to a function because a bare total folds in the spurious ETD y series — see ?digest_fragments_by_series",
-  "Format.is_quantifiable" = "a column of readers_formats(), `is_quantifiable`",
-  "FileInfo.is_quantifiable" = "an element of readers_identify(), `is_quantifiable`",
-  "ResultRecords.retention_time_in_minutes" = "readers_retention_time_in_minutes()",
-  "FeatureRecords.retention_time_start_in_minutes" = "readers_retention_time_in_minutes(column = \"retention_time_start\")",
-  "FeatureRecords.retention_time_end_in_minutes" = "readers_retention_time_in_minutes(column = \"retention_time_end\")",
-  "ScanRecords.total_ion_current" = "a column of `records`, `total_ion_current`"
-)
+# Which pyMzLib callable each mzLibR function mirrors, which mzLibR functions have none, and which
+# pyMzLib callables mzLibR does not have: PARENT_MAP, PARENT_ADDITIONS and PARENT_OMISSIONS, each
+# kept per module in scripts/deviations/<module>.R.
+mapping <- PARENT_MAP
+additions <- PARENT_ADDITIONS
+omissions <- PARENT_OMISSIONS
 
 # ---------------------------------------------------------------- the R side
 
@@ -472,30 +382,9 @@ mentioned_with_unit <- function(text, field, unit) {
   }, logical(1L)))
 }
 
-# How to parse each verb's recorded fixture into the R object, for the fields-present check.
-PARSE_FIXTURE <- list(
-  "version" = list("bridge_version.json", function(d) {
-    text <- rawToChar(readBin(file.path(fixtures, "bridge_version.json"), "raw", 1e6))
-    old <- options(mzlibr.bridge = file.path(fixtures, "bridge_version.json"))
-    on.exit(options(old))
-    mzlibr_bridge_version(runner = function(exe, args, stdin = NULL, timeout = NULL) {
-      list(stdout = paste0("{\"ok\":true,\"data\":", text, "}"), stderr = "", status = 0L, timed_out = FALSE)
-    })
-  }),
-  "readers formats" = list("readers_formats.json", function(d) mz$readers_parse_formats(d)),
-  "readers identify" = list("readers_identify_mzid.json", function(d) mz$readers_parse_file_info(d)),
-  "readers read-results" = list("readers_results_fragger.json", function(d) mz$readers_parse_records(d)),
-  "readers read-records" = list("readers_records_toppic.json", function(d) mz$readers_parse_native_records(d)),
-  "readers read-features" = list("readers_features_topfd.json", function(d) mz$readers_parse_feature_records(d)),
-  "readers read-matches" = list("readers_matches_casanovo.json", function(d) mz$readers_parse_match_records(d)),
-  "readers read-spectra" = list("readers_spectra_mzml.json", function(d) mz$readers_parse_scan_records(d)),
-  "sdrf read" = list("sdrf_read_PXD000070.json", function(d) mz$sdrf_parse_document(d)),
-  "sdrf pool" = list("sdrf_pool_two.json", function(d) mz$sdrf_parse_pooled(d)),
-  "pride files" = list("pride_PXD000001_files.json", function(d) mz$pride_parse_manifest(d, "PXD000001")),
-  "pride ftp-files" = list("pride_ftp_PXD000001.json", function(d) mz$pride_parse_ftp_files(d, "PXD000001")),
-  "peptidoform fragments" = list("peptidoform_P02768_small.json", function(d) mz$peptidoform_parse(d)),
-  "quant flashlfq" = list("flashlfq_small.json", function(d) mz$flashlfq_parse(d))
-)
+# How to parse each verb's recorded fixture into the R object, for the fields-present check:
+# FIELD_CHECKS, kept per module in scripts/deviations/<module>.R.
+PARSE_FIXTURE <- FIELD_CHECKS
 
 # Every name reachable in the R object: its elements, the columns of any data.frame among them,
 # and `a$b` paths one level into a list element (the peptidoform census).

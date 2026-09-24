@@ -23,7 +23,7 @@ pride_download(accession, destination, category = NULL, extensions = NULL,
 \item{extensions}{Keep only files with these extensions, e.g. \code{c(".raw", ".mzML")}. \code{NULL}
   keeps all. Combined with \code{category} as AND.
 
-  \strong{A compressed file's extension is \code{.gz}, not what it is compressed from.} PXD000001's
+  **A compressed file's extension is \code{.gz}, not what it is compressed from.** PXD000001's
   peak list is \code{PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz}, so \code{".mgf"} matches \strong{nothing},
   while \code{".gz"} over-matches to three unrelated files. To select one compressed type, combine
   \code{category = "PEAK"} with \code{extensions = ".gz"}, or skip these filters and pass the rows you

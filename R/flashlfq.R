@@ -6,14 +6,18 @@
 # against a truth of 257, 140 and 2 - wrong in the believable direction, which is the one nobody
 # checks.
 #
-# Three facts drive every design decision in this file:
+# Two facts drive every design decision in this file:
 #
 #   1. **The peptide roll-up drops most MBR transfers.** Read `peaks`. On mzLib's own K562 pair
 #      there are 140 true transfers and the peptide table shows 52 - a 63% under-count - and a
 #      whole run's transfers can vanish entirely (run_3: 62 from peaks, 0 from the roll-up).
 #   2. **A peptide intensity of 0 and a protein intensity of NA mean different things**, and R
 #      is the only one of the three bindings whose type system can say so. See below.
-#   3. **max_threads other than 1 makes results non-reproducible** (smith-chem-wisc/mzLib#1111).
+#
+# `max_threads` defaults to 1 here, where the wire, pyMzLib and mzLibRust default to -1. That
+# default dates from mzLib#1111 - multithreaded runs dropped MBR intensities nondeterministically -
+# which mzLib#1155 fixed inside the pinned bridge, so the runtime warning that used to sit here is
+# gone. The default stays until someone re-measures the K562 pair at -1; see ?flashlfq_quantify.
 
 # The wire's spelling of a number, independent of the R session's locale.
 #
@@ -79,11 +83,19 @@ flashlfq_spectra_stdin <- function(spectra) {
     )))
   }
 
+  flashlfq_design_lines(spectra, paths, "spectra")
+}
+
+# The design columns of `frame` rendered as the bridge's tab-separated lines, one per row:
+# `first[\tcondition[\tbiorep[\ttechrep[\tfraction]]]]`. Shared by flashlfq_quantify(), whose first
+# field is an mzML path, and flashlfq_median_polish(), whose first field is a run name. `label`
+# names the argument in error messages.
+flashlfq_design_lines <- function(frame, first, label) {
   design_field <- function(name) {
-    if (!name %in% names(spectra)) {
-      return(rep("", nrow(spectra)))
+    if (!name %in% names(frame)) {
+      return(rep("", nrow(frame)))
     }
-    values <- spectra[[name]]
+    values <- frame[[name]]
     rendered <- character(length(values))
     for (index in seq_along(values)) {
       value <- values[index]
@@ -93,7 +105,7 @@ flashlfq_spectra_stdin <- function(spectra) {
       }
       if (!is.numeric(value) || value != round(value) || value < 0) {
         stop(mzlib_usage_error(paste0(
-          "spectra$", name, "[", index, "] must be a non-negative whole number; got ",
+          label, "$", name, "[", index, "] must be a non-negative whole number; got ",
           paste(deparse(value), collapse = " "), "."
         )))
       }
@@ -102,20 +114,25 @@ flashlfq_spectra_stdin <- function(spectra) {
     rendered
   }
 
-  condition <- if ("condition" %in% names(spectra)) {
-    ifelse(is.na(spectra$condition), "", as.character(spectra$condition))
+  condition <- if ("condition" %in% names(frame)) {
+    ifelse(is.na(frame$condition), "", as.character(frame$condition))
   } else {
-    rep("", nrow(spectra))
+    rep("", nrow(frame))
+  }
+  if (any(grepl("[\t\r\n]", condition))) {
+    stop(mzlib_usage_error(paste0(
+      label, "$condition may not contain a tab or a newline; those are the wire's separators."
+    )))
   }
 
   fields <- list(
-    paths, condition,
+    first, condition,
     design_field("biological_replicate"),
     design_field("technical_replicate"),
     design_field("fraction")
   )
 
-  vapply(seq_len(nrow(spectra)), function(row) {
+  vapply(seq_len(nrow(frame)), function(row) {
     line <- vapply(fields, function(column) column[row], character(1L))
     # Drop trailing empties so a bare path stays a bare path on the wire.
     while (length(line) > 1L && !nzchar(line[length(line)])) {
@@ -415,13 +432,14 @@ flashlfq_parse <- function(data) {
 #'   only evidence is shared peptides.
 #' @param bayesian_protein_quant Whether to use the Bayesian protein quantification model.
 #' @param use_pep_q_value Whether to use PEP q-values rather than q-values for filtering.
-#' @param max_threads Worker threads. **Defaults to 1 here, which differs from pyMzLib's -1, and
-#'   deliberately.**
+#' @param max_threads Worker threads, or `-1` for one per core. **Defaults to 1 here, where the
+#'   bridge, pyMzLib and mzLibRust default to -1.**
 #'
-#'   With more than one thread the peptide roll-up nondeterministically drops MBR intensities,
-#'   so identical inputs give different protein-level answers roughly **1 run in 6** - a
-#'   borderline protein was unresolvable in 5 of 6 repeats. Any figure produced multithreaded
-#'   may not reproduce (smith-chem-wisc/mzLib#1111). mzLibR warns if you set anything else.
+#'   One thread is reproducible by construction, and it is what this package has always shipped.
+#'   The multithreaded nondeterminism that made it the default here (the peptide roll-up dropping
+#'   MBR intensities, smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
+#'   includes, so `-1` is expected to give the same answer faster; that has not yet been
+#'   re-measured on mzLib's K562 pair, which is why the default has not moved.
 #' @param output_directory Where FlashLFQ should write its TSV output, or `NULL` to write none.
 #' @param timeout Seconds to allow, or `NULL` to wait as long as it takes.
 #'
@@ -498,20 +516,203 @@ flashlfq_quantify <- function(psms, spectra, normalize = FALSE, ppm_tolerance = 
     bayesian_protein_quant, use_pep_q_value, max_threads, output_directory
   )
   stdin <- flashlfq_spectra_stdin(spectra)
+  flashlfq_parse(bridge_invoke(args, stdin = stdin, timeout = timeout))
+}
 
-  # The warning goes here, at the call that will produce the unreproducible answer, rather than
-  # only in the help a user may never open.
-  if (!identical(as.numeric(max_threads), 1)) {
-    warning(
-      "max_threads = ", max_threads, ": FlashLFQ's peptide roll-up nondeterministically drops ",
-      "MBR intensities when multithreaded, so identical inputs give different protein-level ",
-      "answers roughly 1 run in 6 (smith-chem-wisc/mzLib#1111). Use max_threads = 1 for any ",
-      "result you intend to publish.",
-      call. = FALSE
-    )
+# ---------------------------------------------------------------- median polish
+
+# The design for median polish, as stdin lines: `run[\tcondition[\tbiorep[\ttechrep[\tfraction]]]]`.
+# `NULL` sends nothing, and the bridge then makes each Intensity_ column its own biological
+# replicate with a blank condition - what FlashLFQ assumes when it writes the file with no design.
+flashlfq_design_stdin <- function(design) {
+  if (is.null(design)) {
+    return(NULL)
+  }
+  if (is.character(design)) {
+    design <- data.frame(file_name = design, stringsAsFactors = FALSE)
+  }
+  if (!is.data.frame(design) || !"file_name" %in% names(design)) {
+    stop(mzlib_usage_error(paste0(
+      "design must be a data.frame with a 'file_name' column - one row per run, naming its ",
+      "Intensity_<file_name> column - and optional condition, biological_replicate, ",
+      "technical_replicate and fraction columns; or a character vector of run names; or NULL."
+    )))
+  }
+  if (nrow(design) == 0L) {
+    stop(mzlib_usage_error("design has no rows; pass NULL for no design."))
+  }
+  runs <- as.character(design$file_name)
+  if (any(is.na(runs) | !nzchar(trimws(runs)))) {
+    stop(mzlib_usage_error("Every design$file_name must be a non-empty run name."))
+  }
+  if (any(grepl("[\t\r\n]", runs))) {
+    stop(mzlib_usage_error(
+      "A design$file_name may not contain a tab or a newline; those are the wire's separators."
+    ))
+  }
+  if (anyDuplicated(runs) > 0L) {
+    stop(mzlib_usage_error(paste0(
+      "design names run '", runs[anyDuplicated(runs)], "' twice; one row per run."
+    )))
+  }
+  flashlfq_design_lines(design, trimws(runs), "design")
+}
+
+flashlfq_build_median_polish_args <- function(peptides, use_shared_peptides, output_directory) {
+  if (!is.character(peptides) || length(peptides) != 1L || is.na(peptides) ||
+    !nzchar(trimws(peptides))) {
+    stop(mzlib_usage_error(
+      "peptides must be a path to a FlashLFQ QuantifiedPeptides.tsv."
+    ))
+  }
+  if (!is.logical(use_shared_peptides) || length(use_shared_peptides) != 1L ||
+    is.na(use_shared_peptides)) {
+    stop(mzlib_usage_error("use_shared_peptides must be TRUE or FALSE."))
   }
 
-  flashlfq_parse(bridge_invoke(args, stdin = stdin, timeout = timeout))
+  args <- c("quant", "median-polish", "--peptides", trimws(peptides))
+  if (use_shared_peptides) {
+    args <- c(args, "--shared-peptides")
+  }
+  if (!is.null(output_directory)) {
+    if (!is.character(output_directory) || length(output_directory) != 1L ||
+      is.na(output_directory) || !nzchar(trimws(output_directory))) {
+      stop(mzlib_usage_error(
+        "output_directory must be a non-empty path, or NULL to write nothing."
+      ))
+    }
+    args <- c(args, "--out", trimws(output_directory))
+  }
+  args
+}
+
+flashlfq_parse_samples <- function(entries) {
+  if (!is.list(entries) || length(entries) == 0L) {
+    return(data.frame(
+      label = character(0), condition = character(0), biological_replicate = numeric(0),
+      stringsAsFactors = FALSE
+    ))
+  }
+  data.frame(
+    label = vapply(entries, wire_field, character(1L), "label", "character", NA_character_),
+    condition = vapply(entries, wire_field, character(1L), "condition", "character", ""),
+    biological_replicate = vapply(entries, wire_field, numeric(1L), "biological_replicate", "numeric", NA_real_),
+    stringsAsFactors = FALSE
+  )
+}
+
+flashlfq_parse_median_polish <- function(data) {
+  proteins <- flashlfq_parse_proteins(if (is.list(data[["proteins"]])) data[["proteins"]] else list())
+  # Median polish keys intensities by SAMPLE - a run, or "condition_biorep" once a design groups
+  # runs - so the column is `sample`, not flashlfq_quantify()'s `file_name`, where every run is
+  # its own sample and the two coincide.
+  names(proteins)[names(proteins) == "file_name"] <- "sample"
+
+  parameters <- data[["parameters"]]
+  output <- data[["output_directory"]]
+  structure(
+    list(
+      peptides_file = as.character(wire_field(data, "peptides_file", "character", NA_character_)),
+      parameters = if (is.list(parameters)) parameters else list(),
+      samples = flashlfq_parse_samples(data[["samples"]]),
+      peptide_count = as.numeric(wire_field(data, "peptide_count", "numeric", NA_real_)),
+      protein_count = as.numeric(wire_field(data, "protein_count", "numeric", NA_real_)),
+      proteins = proteins,
+      output_directory = as.character(wire_field(data, "output_directory", "character", NA_character_))
+    ),
+    class = "mzlibr_median_polish"
+  )
+}
+
+#' Roll a FlashLFQ peptide table up to protein intensities, under a new design
+#'
+#' The second half of [flashlfq_quantify()] on its own. Given a `QuantifiedPeptides.tsv` FlashLFQ
+#' already wrote, it rebuilds FlashLFQ's peptide and protein graph and runs the same median-polish
+#' protein quantification, without re-reading any spectra. Reach for it to re-quantify proteins
+#' under a different experimental design, or with shared peptides toggled, without paying for
+#' peak-finding again.
+#'
+#' @param peptides Path to a FlashLFQ `QuantifiedPeptides.tsv` - the file [flashlfq_quantify()]
+#'   writes into `output_directory`. It must carry `Sequence`, `Base Sequence`, `Protein Groups`
+#'   and one `Intensity_<run>` column per run; a blank intensity cell is read as 0 (not measured).
+#' @param design The experimental design: a data.frame with one row per run, a `file_name` column
+#'   matching each `Intensity_<file_name>` column, and optional `condition`,
+#'   `biological_replicate`, `technical_replicate` and `fraction` columns (0-based whole
+#'   numbers); or a character vector of run names. **Median polish groups runs by condition and
+#'   biological replicate, so this is how you say which runs are replicates of which sample** -
+#'   the whole reason to re-run it. A design must name every run in the table and only those.
+#'   `NULL`, the default, makes each run its own biological replicate with a blank condition,
+#'   which is what FlashLFQ assumes when it writes the file with no design.
+#' @param use_shared_peptides Whether peptides shared between protein groups contribute. `FALSE`
+#'   by default, when a group with only shared peptides quantifies to 0.
+#' @param output_directory Where FlashLFQ should also write `QuantifiedProteins.tsv`, or `NULL` to
+#'   write nothing. Its columns are labelled by the same rule as `samples$label`.
+#' @param timeout Seconds to allow, or `NULL` to wait as long as it takes.
+#'
+#' @return An `mzlibr_median_polish`: `peptides_file`, `parameters`, `output_directory` (`NA`
+#'   when nothing was written), `peptide_count` - distinct peptides read from the table - and
+#'   `protein_count`, in protein groups; `samples`, a data.frame with one row per sample (`label`,
+#'   `condition`, `biological_replicate`, 0-based); and `proteins`, long, one row per protein group
+#'   per sample, with `protein_group`, `gene_name`, `organism`, `sample` (a `samples$label`) and
+#'   `intensity` in the instrument's intensity units.
+#'
+#' @section What 0 and NA mean:
+#'
+#' A protein `intensity` is **NA** where median polish could not resolve a number - a degenerate
+#' peptide matrix - and **0** where the protein was not measured in that sample. They are
+#' different facts, the same two [flashlfq_quantify()] reports. A sample of several runs
+#' (fractions, technical replicates) reports their sum.
+#'
+#' @section Sample labels:
+#'
+#' A sample is labelled by its run name when no design groups runs, and `"<condition>_<n>"` once
+#' one does, where `n` is the biological replicate plus one: `control_1`. Runs are names, never
+#' opened as files: nothing but the peptide table is read, so peak-level facts - match-between-runs
+#' peaks, retention times - are not available here. Use [flashlfq_quantify()] for those.
+#'
+#' @seealso [flashlfq_quantify()]
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' polished <- flashlfq_median_polish("QuantifiedPeptides.tsv",
+#'   design = data.frame(file_name = c("run_3", "run_4"), condition = c("control", "treated"),
+#'                       biological_replicate = 0))
+#' polished
+#' polished$samples
+#' polished$proteins
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+#' @spec quant.median-polish
+#' @export
+flashlfq_median_polish <- function(peptides, design = NULL, use_shared_peptides = FALSE,
+                                   output_directory = NULL, timeout = NULL) {
+  args <- flashlfq_build_median_polish_args(peptides, use_shared_peptides, output_directory)
+  stdin <- flashlfq_design_stdin(design)
+  flashlfq_parse_median_polish(bridge_invoke(args, stdin = stdin, timeout = timeout))
+}
+
+#' Print a median-polish result
+#'
+#' @param x A [flashlfq_median_polish()] result.
+#' @param ... Ignored.
+#' @return `x`, invisibly.
+#' @export
+print.mzlibr_median_polish <- function(x, ...) {
+  cat("<mzlibr_median_polish> ", basename(x$peptides_file), "\n", sep = "")
+  cat("  ", format(x$peptide_count), " peptides, ", format(x$protein_count), " protein groups, ",
+    nrow(x$samples), " samples: ", paste(x$samples$label, collapse = ", "), "\n",
+    sep = ""
+  )
+  unresolved <- sum(is.na(x$proteins$intensity))
+  zeroed <- sum(!is.na(x$proteins$intensity) & x$proteins$intensity == 0)
+  if (unresolved > 0L || zeroed > 0L) {
+    cat("  proteins: ", unresolved, " NA (could not be resolved), ",
+      zeroed, " zero (not measured)\n",
+      sep = ""
+    )
+  }
+  if (!is.na(x$output_directory)) {
+    cat("  written to ", x$output_directory, "\n", sep = "")
+  }
+  invisible(x)
 }
 
 #' Number of quantified peptides
@@ -644,7 +845,7 @@ print.mzlibr_quant <- function(x, ...) {
       # Where the mistake is made: someone printing a result and reading off an MBR number.
       cat("  ! the peptide roll-up shows only ", from_rollup,
         " of those ", from_peaks, " transfers - read peaks, not peptides.\n",
-        "    See ?flashlfq_quantify (smith-chem-wisc/mzLib#1111 is a separate issue).\n",
+        "    See ?flashlfq_quantify.\n",
         sep = ""
       )
     }
@@ -655,14 +856,6 @@ print.mzlibr_quant <- function(x, ...) {
   if (unresolved > 0L || zeroed > 0L) {
     cat("  proteins: ", unresolved, " NA (could not be resolved), ",
       zeroed, " zero (not measured)\n",
-      sep = ""
-    )
-  }
-
-  threads <- x$parameters[["max_threads"]]
-  if (!is.null(threads) && !identical(as.numeric(threads), 1)) {
-    cat("  ! max_threads = ", format(threads),
-      " - this result may not reproduce (mzLib#1111).\n",
       sep = ""
     )
   }

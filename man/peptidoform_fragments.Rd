@@ -21,7 +21,7 @@ peptidoform_fragments(accession, protease = "trypsin|P", dissociation = "ETD",
 
 \item{dissociation}{The dissociation type, e.g. \code{"ETD"}, \code{"HCD"}, \code{"CID"}, \code{"ECD"}.
 
-  \strong{\code{"ETD"} and \code{"ECD"} return the \code{c} and \code{zDot} series} (radical N-Ca cleavage yields
+  **\code{"ETD"} and \code{"ECD"} return the \code{c} and \code{zDot} series** (radical N-Ca cleavage yields
   c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the spurious \code{y}
   series ETD used to emit.}
 
@@ -84,9 +84,9 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
   \code{missed_cleavages} in cleavage sites; \code{modification_count} in modifications; and
   \code{fixed_charges}, the formal charge the intact peptide carries before protonation.
 
-  \strong{\code{peptides} holds peptidoforms, not distinct sequences.} One row per
-  sequence-and-modification-placement, so albumin at two modifications is \strong{303} rows over
-  \strong{195} distinct sequences. Both are legitimate answers to "how many peptides" and they are
+  **\code{peptides} holds peptidoforms, not distinct sequences.\strong{ One row per
+  sequence-and-modification-placement, so albumin at two modifications is }303\strong{ rows over
+  }195** distinct sequences. Both are legitimate answers to "how many peptides" and they are
   not interchangeable; quoting one for the other is a large error, not a rounding one. See
   \code{\link{digest_distinct_base_sequences}}.
 

@@ -54,13 +54,16 @@ rd_inline <- function(text) {
   text <- gsub("{", "\\{", text, fixed = TRUE)
   text <- gsub("}", "\\}", text, fixed = TRUE)
 
-  # `[fn()]` and `[fn]` become links; do this before code spans so the brackets are still there.
-  text <- gsub("\\[([a-zA-Z_][a-zA-Z0-9_.]*)\\(\\)\\]", "\\\\code\\{\\\\link\\{\\1\\}\\}", text)
-  text <- gsub("\\[([a-zA-Z_][a-zA-Z0-9_.]*)\\]", "\\\\code\\{\\\\link\\{\\1\\}\\}", text)
-
-  text <- gsub("\\*\\*([^*]+)\\*\\*", "\\\\strong\\{\\1\\}", text)
-  text <- gsub("`([^`]+)`", "\\\\code\\{\\1\\}", text)
-  text
+  # `[fn()]` and `[fn]` become links - but only outside code spans, where `characteristics[age]`
+  # is an SDRF column name and not a link to a topic called `age`.
+  spans <- gregexpr("`[^`]+`", text)[[1L]]
+  code <- if (spans[1L] == -1L) character(0) else regmatches(text, list(spans))[[1L]]
+  prose <- if (spans[1L] == -1L) text else regmatches(text, list(spans), invert = TRUE)[[1L]]
+  prose <- gsub("\\[([a-zA-Z_][a-zA-Z0-9_.]*)\\(\\)\\]", "\\\\code\\{\\\\link\\{\\1\\}\\}", prose)
+  prose <- gsub("\\[([a-zA-Z_][a-zA-Z0-9_.]*)\\]", "\\\\code\\{\\\\link\\{\\1\\}\\}", prose)
+  prose <- gsub("\\*\\*([^*]+)\\*\\*", "\\\\strong\\{\\1\\}", prose)
+  code <- sub("^`([^`]+)`$", "\\\\code\\{\\1\\}", code)
+  paste0(prose, c(code, ""), collapse = "")
 }
 
 # ---------------------------------------------------------------- block parsing

@@ -307,18 +307,16 @@ test_that("an impossible thread count is refused", {
 
 # ---------------------------------------------------------------- reproducibility
 
-test_that("max_threads defaults to 1, which differs from pyMzLib deliberately", {
-  # pyMzLib's default is -1. mzLibR's is 1, because with more than one thread FlashLFQ's peptide
-  # roll-up nondeterministically drops MBR intensities and identical inputs give different
-  # protein-level answers roughly 1 run in 6 (smith-chem-wisc/mzLib#1111). A binding that
-  # silently produces unreproducible results by default is worse than one that differs from its
-  # parent in a documented way. The right fix is upstream.
+test_that("max_threads defaults to 1, which differs from the wire's -1 deliberately", {
+  # The bridge, pyMzLib and mzLibRust default to -1. mzLibR's 1 dates from mzLib#1111, which
+  # mzLib#1155 fixed inside the pinned bridge; it stays until -1 is re-measured on the K562 pair.
+  # See ?flashlfq_quantify.
   expect_identical(formals(flashlfq_quantify)$max_threads, 1)
 })
 
-test_that("setting max_threads to anything else warns, naming the issue and the remedy", {
-  # The warning goes at the call that will produce the unreproducible answer, not only in help
-  # the user may never open.
+test_that("a multithreaded call no longer warns: mzLib#1155 fixed the nondeterminism", {
+  # This test used to assert a warning naming mzLib#1111 for any max_threads other than 1. The
+  # fix is inside the pinned bridge, so a warning would now be a false alarm.
   path <- fake_bridge_file()
   on.exit(unlink(path), add = TRUE)
   runner <- stub_runner(stdout = '{"ok":true,"data":{"peptides":[],"proteins":[],"peaks":[]}}')
@@ -326,12 +324,17 @@ test_that("setting max_threads to anything else warns, naming the issue and the 
   with_bridge_config(option = path, {
     # `flashlfq_quantify` does not take a runner, so the warning is checked against the
     # assembled call by invoking the exported function with a bridge that returns a stub.
-    expect_warning(
+    expect_no_warning(
       tryCatch(
         flashlfq_quantify("AllPSMs.psmtsv", "run.mzML", max_threads = 4),
         mzlib_error = function(e) NULL
-      ),
-      contains = c("mzLib#1111", "max_threads = 1")
+      )
+    )
+    expect_no_warning(
+      tryCatch(
+        flashlfq_quantify("AllPSMs.psmtsv", "run.mzML", max_threads = -1),
+        mzlib_error = function(e) NULL
+      )
     )
     expect_no_warning(
       tryCatch(
@@ -342,13 +345,101 @@ test_that("setting max_threads to anything else warns, naming the issue and the 
   })
 })
 
-test_that("printing warns when the result was produced multithreaded", {
+test_that("printing a multithreaded result raises no reproducibility alarm", {
   results <- recorded_quant()
   results$parameters$max_threads <- 8
   output <- paste(capture.output(print(results)), collapse = "\n")
-  expect_true(grepl("may not reproduce", output, fixed = TRUE), info = output)
+  expect_false(grepl("may not reproduce", output, fixed = TRUE), info = output)
+  expect_false(grepl("1111", output, fixed = TRUE), info = output)
 })
 
 test_that("the fixture was produced single-threaded", {
   expect_identical(recorded_quant()$parameters$max_threads, 1)
+})
+
+# ---------------------------------------------------------------- median polish
+
+recorded_polish <- function() {
+  mz$flashlfq_parse_median_polish(mz$json_parse(paste(
+    readLines(fixture_path("median_polish_small.json"), warn = FALSE),
+    collapse = "\n"
+  )))
+}
+
+test_that("median polish becomes samples plus a long protein table keyed by sample", {
+  polished <- recorded_polish()
+  expect_true(inherits(polished, "mzlibr_median_polish"))
+  expect_identical(polished$samples$label, c("control_1", "treated_1"))
+  expect_identical(polished$samples$biological_replicate, c(0, 0))
+  expect_identical(polished$peptide_count, 4)
+  expect_identical(polished$protein_count, 3)
+  # One row per protein group per sample, and the sample - not a file - names the column.
+  expect_identical(nrow(polished$proteins), 6L)
+  expect_true("sample" %in% names(polished$proteins))
+  expect_false("file_name" %in% names(polished$proteins))
+  expect_true(all(polished$proteins$sample %in% polished$samples$label))
+  expect_true(is.na(polished$output_directory))
+})
+
+test_that("an unresolvable protein is NA in median polish too, never 0", {
+  proteins <- recorded_polish()$proteins
+  expect_true(all(is.na(proteins$intensity[proteins$protein_group == "P3"])))
+  expect_equal(proteins$intensity[proteins$protein_group == "P1" & proteins$sample == "control_1"], 3005.6)
+})
+
+test_that("median polish prints its samples and its NA count", {
+  output <- paste(capture.output(print(recorded_polish())), collapse = "\n")
+  expect_true(grepl("control_1, treated_1", output, fixed = TRUE), info = output)
+  expect_true(grepl("2 NA (could not be resolved)", output, fixed = TRUE), info = output)
+})
+
+test_that("a design becomes one stdin line per run, trailing blanks dropped", {
+  lines <- mz$flashlfq_design_stdin(data.frame(
+    file_name = c("run_3", "run_4"), condition = c("control", "treated"), biological_replicate = 0
+  ))
+  expect_identical(lines, c("run_3\tcontrol\t0", "run_4\ttreated\t0"))
+  expect_identical(mz$flashlfq_design_stdin(c("run_3", "run_4")), c("run_3", "run_4"))
+  expect_true(is.null(mz$flashlfq_design_stdin(NULL)))
+})
+
+test_that("a design that cannot mean anything is refused before the bridge runs", {
+  expect_error(mz$flashlfq_design_stdin(data.frame(run = "a")), class = "mzlib_usage_error", contains = "file_name")
+  expect_error(mz$flashlfq_design_stdin(c("a", "a")), class = "mzlib_usage_error", contains = "twice")
+  expect_error(mz$flashlfq_design_stdin(c("a", "")), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_design_stdin(data.frame(file_name = "a", fraction = -1)), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_design_stdin(data.frame(file_name = character(0))), class = "mzlib_usage_error")
+})
+
+test_that("median polish arguments are assembled and checked", {
+  args <- mz$flashlfq_build_median_polish_args("QuantifiedPeptides.tsv", TRUE, "out")
+  expect_identical(args, c("quant", "median-polish", "--peptides", "QuantifiedPeptides.tsv",
+                           "--shared-peptides", "--out", "out"))
+  expect_identical(mz$flashlfq_build_median_polish_args("p.tsv", FALSE, NULL),
+                   c("quant", "median-polish", "--peptides", "p.tsv"))
+  expect_error(mz$flashlfq_build_median_polish_args("", FALSE, NULL), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_build_median_polish_args("p.tsv", NA, NULL), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_build_median_polish_args("p.tsv", FALSE, ""), class = "mzlib_usage_error")
+})
+
+test_that("LIVE: median polish groups two runs into samples by the design", {
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  table <- tempfile("mzlibr-peptides-", fileext = ".tsv")
+  on.exit(unlink(table), add = TRUE)
+  writeLines(c(
+    "Sequence\tBase Sequence\tProtein Groups\tGene Names\tOrganism\tIntensity_run_3\tIntensity_run_4",
+    "PEPTIDEK\tPEPTIDEK\tP1\tGENE1\tHomo sapiens\t1000\t2000",
+    "ACDEFGHIK\tACDEFGHIK\tP1\tGENE1\tHomo sapiens\t3000\t6000",
+    "LMNPQR\tLMNPQR\tP2\tGENE2\tHomo sapiens\t500\t0"
+  ), table)
+
+  polished <- flashlfq_median_polish(table, design = data.frame(
+    file_name = c("run_3", "run_4"), condition = c("control", "treated"), biological_replicate = 0
+  ))
+  expect_identical(sort(polished$samples$label), c("control_1", "treated_1"))
+  expect_identical(polished$peptide_count, 3)
+  expect_identical(sort(unique(polished$proteins$protein_group)), c("P1", "P2"))
+  expect_true(all(polished$proteins$sample %in% polished$samples$label))
 })

@@ -30,7 +30,7 @@ histone modification there is.
 A peptide with a fixed charge is observable at that charge with no protonation at all, which
 is why \code{charge} may not be below it.
 
-Note that \strong{fragments carry \code{neutral_mass} and deliberately have no m/z}: a c or z ion
+Note that **fragments carry \code{neutral_mass} and deliberately have no m/z**: a c or z ion
 carries only the fixed charges within its own span, and per-fragment charge accounting does
 not exist on this wire.
 }

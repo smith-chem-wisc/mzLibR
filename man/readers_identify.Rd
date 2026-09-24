@@ -35,7 +35,7 @@ An \code{mzlibr_file_info}: \code{path}, \code{file_type}, \code{extension}, \co
 \code{is_quantifiable} is the precondition for \code{\link{flashlfq_quantify}} — when \code{FALSE}, mzLib can
 still read the file, it simply has no uniform view, and quantification would fail on it.
 
-\strong{But \code{TRUE} is not permission.} It reports what mzLib's *interface* offers, not that the
+**But \code{TRUE} is not permission.** It reports what mzLib's *interface* offers, not that the
 numbers are comparable. \code{MsFraggerPsm} is quantifiable by interface and should not be
 quantified: among other things its retention times are in seconds while MetaMorpheus's are in
 minutes, and mzLib does not normalise them. See \code{\link{readers_read_results}} and the \code{caveats} it
@@ -68,7 +68,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 }
 }
 \section{Errors}{
-Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} comes only from \code{\link{readers_identify_many}()}.
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{path missing, blank or not found; mzLib does not recognise the file type}
@@ -86,13 +86,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 }
 \section{Performance}{
-Every call starts one bridge process, which costs a .NET start-up before any work. 
+Every call starts one bridge process, which costs a .NET start-up before any work. For many files call \code{\link{readers_identify_many}()} once rather than looping this function: one process, one start-up, and the thread count stated on the wire.
 }
 \section{Same verb in other bindings}{
 \itemize{
 \item Python (pyMzLib): \code{pymzlib.readers.identify}; many files: \code{pymzlib.readers.identify_many}
 \item Rust (mzLibRust): \code{mzlib::readers::identify}; many files: \code{mzlib::readers::identify_many}
-\item R (mzLibR): \code{readers_identify}
+\item R (mzLibR): \code{readers_identify}; many files: \code{\link{readers_identify_many}}
 }
 }
 \section{Since}{
@@ -107,7 +107,7 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{readers_formats}}, \code{\link{readers_read_results}}
+\code{\link{readers_identify_many}}, \code{\link{readers_formats}}, \code{\link{readers_read_results}}
 }
 \examples{
 

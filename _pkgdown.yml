@@ -37,6 +37,11 @@ reference:
     desc: Read one design file, or pool several into one analysis table.
     contents:
       - starts_with("sdrf_")
+  - title: Protein databases
+    desc: >
+      What an accession is, which gene it resolves to, and whether a peptide is unique.
+    contents:
+      - starts_with("proteins_")
   - title: PRIDE Archive
     desc: List a project's files and download the ones you choose.
     contents:
@@ -70,5 +75,6 @@ articles:
       - articles/readers
       - articles/sdrf
       - articles/pride
+      - articles/proteins
       - articles/peptidoforms
       - articles/flashlfq

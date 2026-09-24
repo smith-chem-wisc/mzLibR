@@ -4,15 +4,21 @@
 \alias{readers_read_matches}
 \title{Read identifications, in the cross-format \code{spectral_match} view}
 \usage{
-readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
+readers_read_matches(path, limit = NULL, offset = 0, scores = FALSE, out = NULL,
+  timeout = NULL)
 }
 \arguments{
-\item{path}{Path to an MsPathFinderT \code{_IcTarget.tsv} / \code{_IcDecoy.tsv} / \code{_IcTDA.tsv}, or a
-  Casanovo \code{.mztab}.}
+\item{path}{Path to an MsPathFinderT \code{_IcTarget.tsv} / \code{_IcDecoy.tsv} / \code{_IcTDA.tsv}, a
+  Casanovo \code{.mztab}, or an mzIdentML \code{.mzid} / \code{.mzid.gz}.}
 
 \item{limit}{Maximum matches to return. \code{NULL}, the default, returns all of them.}
 
 \item{offset}{Matches to skip.}
+
+\item{scores}{Make the table long by score: one row per match and engine score, adding
+  \code{match_index}, \code{score_name} and \code{score_value}. \code{limit} and \code{offset} still count matches. Only
+  mzIdentML records scores; for other formats the two score columns are \code{NA} and named in
+  \code{absent_fields}.}
 
 \item{out}{Write a tab-separated table here and return only a summary.}
 
@@ -23,36 +29,47 @@ readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 \description{
 Read identifications through the cross-format spectral_match view - scan, sequences, accession, decoy flag, modifications and the q-value, rank and threshold a format records - optionally with each engine's scores as long rows.
 
-Four file types offer it: MsPathFinderT's targets, decoys and combined results, and Casanovo's
-\code{.mztab}. These are the identification formats that share no *file*-level interface, so
-\code{\link{readers_read_results}} cannot reach them.
+Six file types offer it: MsPathFinderT's targets, decoys and combined results, Casanovo's
+\code{.mztab}, and mzIdentML \code{.mzid} and \code{.mzid.gz} - the format most search engines can export. These
+are the identification formats that share no *file*-level interface, so \code{\link{readers_read_results}}
+cannot reach them.
 }
 \value{
 An \code{mzlibr_match_records}. \code{record_count} counts the matches in the whole file and
-  \code{returned_count} the matches returned, starting \code{offset} matches in.
+  \code{returned_count} the matches returned, starting \code{offset} matches in; \code{row_count} counts the
+  rows in \code{records} - more rows than matches with \code{scores = TRUE}. For mzIdentML,
+  \code{skipped_count} counts the identification items mzLib did not turn into rows, and \code{skipped}
+  lists each with its reason; both are \code{NA}/\code{NULL} for formats that keep no such list.
 
   \code{records} is a data.frame with \code{file_name_without_extension}, \code{one_based_scan_number},
-  \code{base_sequence}, \code{full_sequence}, \code{accession}, \code{is_decoy} (\code{NA} where the format records no
-  target/decoy label), \code{modifications} and \code{modification_count}.
+  \code{base_sequence}, \code{full_sequence}, \code{accession}, \code{is_decoy}, \code{modifications},
+  \code{modification_count}, \code{q_value} - a fraction from 0 to 1 - \code{rank} and \code{pass_threshold}; with
+  \code{scores = TRUE} also \code{match_index}, \code{score_name} and \code{score_value}, in whatever units the
+  engine's score has. A column this format has no source for is \code{NA} in every row and is named
+  in \code{absent_fields}. \code{rows_not_read}, the rows that did not become matches, is not counted for
+  this view and is \code{NA}.
 
 }
-\section{Nothing here is FDR-filtered, and there is nothing to filter on}{
+\section{Nothing here is FDR-filtered}{
 
 
-mzLib's \code{ISpectralMatch} carries identity fields only. Every one of these formats records an
-E-value or q-value somewhere; \code{\link{readers_read_records}} will give you those columns. Filter
-before you report.
+Every match is a row, as the file lists it: for mzIdentML that includes lower ranks and items
+that failed the engine's threshold. \code{q_value} is filled only by mzIdentML and by an MsPathFinderT
+file that carries a \code{QValue} column; \code{rank} and \code{pass_threshold} only by mzIdentML. Filter before
+you report - for mzIdentML, on \code{rank == 1} and \code{pass_threshold}.
 
 }
-\section{Two is_decoy traps, both reported in caveats}{
+\section{Three is_decoy traps, all reported in caveats}{
 
 
 \strong{MsPathFinderT} infers decoys from the protein *name* - mzLib reports a decoy when the name
 starts with \code{XXX}. A database whose decoys carry a different prefix reads entirely as targets.
 
-\strong{Casanovo} is de novo and writes no target/decoy label at all. mzLib leaves the field at its
-default \code{FALSE} and never assigns it, so \code{FALSE} would mean *unknown*; it arrives as \code{NA}
-instead - the rule \code{\link{readers_read_results}} already applies to MSFragger.
+\strong{Casanovo} is de novo and writes no target/decoy label at all, so \code{is_decoy} is \code{NA} and in
+\code{absent_fields} - never a \code{FALSE} that would read as "target".
+
+\strong{mzIdentML}'s \code{isDecoy} attribute defaults to false when a writer omits it, so mzLib cannot tell
+"target" from "not recorded"; \code{is_decoy} is \code{NA} and in \code{absent_fields} here too.
 
 }
 \section{Wraps}{
@@ -69,7 +86,7 @@ Wire verb \code{readers read-matches}. Generated from the bridge's verb spec \co
 \item{\code{path}}{path; required. An MsPathFinderT _IcTarget/_IcDecoy/_IcTda.tsv, a Casanovo .mztab, or an mzIdentML .mzid / .mzid.gz.}
 \item{\code{offset}}{int; in \strong{matches}; default \code{0}; range \code{>= 0}. Skip this many matches. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
 \item{\code{limit}}{int; in \strong{matches}; default absent; range \code{>= 0}. Return at most this many matches. Absent means no limit; there is deliberately no default cap.}
-\item{wire \code{--scores}}{flag; default \code{FALSE}. Make the table long by score: one row per match and engine score, adding match_index, score_name and score_value. Only mzIdentML records scores (#1306); other formats keep one row per match with the two columns in absent_fields. offset and limit still count matches. \emph{Not an argument here: arrives with the mzLib 1.0.592 port.}}
+\item{\code{scores}}{flag; default \code{FALSE}. Make the table long by score: one row per match and engine score, adding match_index, score_name and score_value. Only mzIdentML records scores (#1306); other formats keep one row per match with the two columns in absent_fields. offset and limit still count matches.}
 \item{\code{out}}{path; default absent. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created.}
 }
 }
@@ -79,11 +96,21 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \describe{
 \item{\code{path}}{string; never \code{NA}. Absolute path of the input.}
 \item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType that was dispatched.}
+\item{\code{reader}}{string; never \code{NA}. The mzLib reader class that parsed the file.}
+\item{\code{skipped_count}}{int; in \strong{items}; \code{NA} when the format keeps no skip list (every format but mzIdentML). mzIdentML items mzLib did not represent (crosslinks, unresolvable modifications, substitutions); record_count + skipped_count is the items in the file (#1313).}
+\item{\code{skipped}}{object[]; \code{NA} when as skipped_count. \{spectrum_identification_item_id, spectrum_id, reason\} per skipped item.}
 \item{\code{record_count}}{int; in \strong{matches}; never \code{NA}. Matches in the whole file, before the window.}
+\item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when never counted for this view. Data rows that did not become records.}
+\item{\code{retention_time_unit}}{string; \code{NA} when the view has no time column. Always null for this view.}
 \item{\code{caveats}}{string[]; never \code{NA}. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.}
 \item{\code{column_names}}{string[]; never \code{NA}. Column order.}
+\item{\code{absent_fields}}{string[]; never \code{NA}. Columns the view defines that this file's format has no column or source for; null in every row (BULK.md section 4). Empty when every column has a source.}
+\item{\code{failed_fields}}{string[]; never \code{NA}. 'field: ExceptionType' for each column whose read threw on some returned rows; those cells are null.}
+\item{\code{excluded_fields}}{object[]; never \code{NA}. \{field, type, reason, verb\} for each field with no column shape; verb names the command that carries it, or null.}
 \item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
+\item{\code{scores_included}}{bool; never \code{NA}. Whether \code{--scores} made the table long by score.}
 \item{\code{returned_count}}{int; in \strong{matches}; never \code{NA}. Matches returned in columns (the unit offset and limit count in); 0 when written to out.}
+\item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. Rows in columns: more than returned_count in a long table, where one record gives several rows; 0 when written to out.}
 \item{\code{offset}}{int; in \strong{matches}; never \code{NA}. The offset applied, in matches.}
 \item{\code{truncated}}{bool; never \code{NA}. True whenever records were left out by offset or limit.}
 \item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-row values, in column_names order.}
@@ -100,32 +127,16 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{is_decoy}}{bool; \code{NA} when every format but MsPathFinderT (then in absent_fields). Decoy flag.}
 \item{\code{modifications}}{string; never \code{NA}. 'position:name' pairs, ';'-joined, 1 = N-terminus.}
 \item{\code{modification_count}}{int; never \code{NA}. Modifications on the match.}
-}
-}
-\section{On the wire but not projected yet}{
-The bridge sends these, and this version of mzLibR does not return them yet:
-
-\describe{
-\item{\code{reader}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{skipped_count}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{skipped}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{retention_time_unit}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{scores_included}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{row_count}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{q_value}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{rank}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{pass_threshold}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{match_index}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{score_name}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{score_value}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{q_value}}{float; in \strong{fraction (0 to 1)}; \code{NA} when the format has no q-value (in absent_fields) or this mzIdentML item reports none. PSM-level q-value (mzIdentML MS:1002354 or a child; MsPathFinderT QValue).}
+\item{\code{rank}}{int; \code{NA} when not mzIdentML (in absent_fields). The item's rank; filter on rank == 1.}
+\item{\code{pass_threshold}}{bool; \code{NA} when not mzIdentML (in absent_fields). The item's passThreshold.}
+\item{\code{match_index}}{int; never \code{NA}. 0-based position of the match among the file's matches. \emph{Present only with \code{scores}.}}
+\item{\code{score_name}}{string; \code{NA} when the match has no scores, or the format records none (in absent_fields). Engine score name as written, e.g. MS-GF:SpecEValue. \emph{Present only with \code{scores}.}}
+\item{\code{score_value}}{float; in \strong{engine-defined (see score_name)}; \code{NA} when as score_name. The score's value. \emph{Present only with \code{scores}.}}
 }
 }
 \section{Errors}{
-Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} comes only from \code{\link{readers_read_matches_many}()}.
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)}
@@ -150,13 +161,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 }
 \section{Performance}{
-Every call starts one bridge process, which costs a .NET start-up before any work. 
+Every call starts one bridge process, which costs a .NET start-up before any work. For many files call \code{\link{readers_read_matches_many}()} once rather than looping this function: one process, one start-up, and the thread count stated on the wire.
 }
 \section{Same verb in other bindings}{
 \itemize{
 \item Python (pyMzLib): \code{pymzlib.readers.read_matches}; many files: \code{pymzlib.readers.read_matches_many}
 \item Rust (mzLibRust): \code{mzlib::readers::read_matches_with} with \code{MatchOptions}; many files: \code{mzlib::readers::read_matches_many}
-\item R (mzLibR): \code{readers_read_matches}
+\item R (mzLibR): \code{readers_read_matches}; many files: \code{\link{readers_read_matches_many}}
 }
 }
 \section{Since}{
@@ -172,14 +183,21 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{readers_read_records}}
+\code{\link{readers_read_matches_many}}, \code{\link{readers_read_records}}
 }
 \examples{
 
 \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
-matches <- readers_read_matches("Casanovo_5.0.0.mztab")
+matches <- readers_read_matches("PXD078927_msgf_1_1_0.mzid", limit = 3)
 matches
+matches$records[, c("one_based_scan_number", "base_sequence", "q_value", "rank")]
+
+# One row per match and engine score:
+scored <- readers_read_matches("PXD078927_msgf_1_1_0.mzid", limit = 1, scores = TRUE)
+scored$records[, c("match_index", "score_name", "score_value")]
+
 # Casanovo writes no target/decoy label, so is_decoy is NA rather than a false FALSE.
-matches$records[, c("one_based_scan_number", "base_sequence", "is_decoy")]
+denovo <- readers_read_matches("Casanovo_5.0.0.mztab")
+denovo$absent_fields
 \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

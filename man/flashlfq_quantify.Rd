@@ -11,7 +11,7 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
   use_pep_q_value = FALSE, max_threads = 1, output_directory = NULL, timeout = NULL)
 }
 \arguments{
-\item{psms}{Path to a PSM result file. \strong{Use a MetaMorpheus \code{.psmtsv} or \code{.osmtsv}.} Every
+\item{psms}{Path to a PSM result file. **Use a MetaMorpheus \code{.psmtsv} or \code{.osmtsv}.** Every
   run named in the file must have a matching mzML in \code{spectra}; FlashLFQ matches
   identifications to runs by base file name.}
 
@@ -36,7 +36,7 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
   its FDR control - without it roughly 80\% of transfers are false. Set \code{condition} and
   \code{biological_replicate} on \code{spectra} so FlashLFQ knows which runs are comparable.
 
-  \strong{Whatever you do, count transfers from \code{peaks}, never from \code{peptides}.} See the return
+  **Whatever you do, count transfers from \code{peaks}, never from \code{peptides}.** See the return
   value.}
 
 \item{mbr_ppm_tolerance}{Mass tolerance for match-between-runs, in ppm.}
@@ -54,13 +54,14 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 \item{use_pep_q_value}{Whether to use PEP q-values rather than q-values for filtering.}
 
-\item{max_threads}{Worker threads. \strong{Defaults to 1 here, which differs from pyMzLib's -1, and
-  deliberately.}
+\item{max_threads}{Worker threads, or \code{-1} for one per core. \strong{Defaults to 1 here, where the
+  bridge, pyMzLib and mzLibRust default to -1.}
 
-  With more than one thread the peptide roll-up nondeterministically drops MBR intensities,
-  so identical inputs give different protein-level answers roughly \strong{1 run in 6} - a
-  borderline protein was unresolvable in 5 of 6 repeats. Any figure produced multithreaded
-  may not reproduce (smith-chem-wisc/mzLib#1111). mzLibR warns if you set anything else.}
+  One thread is reproducible by construction, and it is what this package has always shipped.
+  The multithreaded nondeterminism that made it the default here (the peptide roll-up dropping
+  MBR intensities, smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
+  includes, so \code{-1} is expected to give the same answer faster; that has not yet been
+  re-measured on mzLib's K562 pair, which is why the default has not moved.}
 
 \item{output_directory}{Where FlashLFQ should write its TSV output, or \code{NULL} to write none.}
 

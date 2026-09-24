@@ -195,14 +195,15 @@ sdrf_build_pool_request <- function(documents, out, limit, offset) {
 #' **A reserved word is a real value.** `"not available"` and `"not applicable"` mean the
 #' experiment stated an absence. `NA` means the document has no such column. Do not collapse them.
 #'
-#' @section It does not validate yet:
+#' @section Reading is not validating:
 #'
-#' mzLib models SDRF's structural rules in `SdrfValidator` and its vocabulary-drift rules in
-#' `SdrfDriftLint`. Both have been public since mzLib #1207, which the pinned bridge includes, but
-#' the bridge does not expose them yet. When it does, they will be projected here from mzLib rather
-#' than reimplemented. Until then this makes no claim about whether a document is correct.
+#' This reads whatever the file holds and makes no claim that it is correct. mzLib's judgements
+#' about a document are their own functions: [sdrf_validate()] checks the specification's
+#' structural rules, [sdrf_assess()] asks whether the sample columns describe a design at all,
+#' [sdrf_samples()] merges each sample's rows with its age parsed, and [sdrf_lint()] finds
+#' concepts several documents wrote inconsistently.
 #'
-#' @seealso [sdrf_pool()], [sdrf_value()], [sdrf_all()], [sdrf_records()]
+#' @seealso [sdrf_pool()], [sdrf_value()], [sdrf_all()], [sdrf_records()], [sdrf_validate()]
 #' @spec sdrf.read
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}

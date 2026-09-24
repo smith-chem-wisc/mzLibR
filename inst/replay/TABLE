@@ -1,17 +1,44 @@
 # Written by scripts/stage-replay.R from the verb specs' examples. Do not edit; re-run it.
 # verb<TAB>recording: the recordings the stand-in bridge (R/replay.R) may answer each verb with.
+genes resolve	genes_resolve_human.json
 peptidoform fragments	peptidoform_P02768_small.json
 pride files	pride_PXD000001_files.json
 pride ftp-files	pride_ftp_PXD000001.json
+pride search	pride_search_plasmodium.json
+proteins classify-peptides	proteins_classify_peptides.json
+proteins read	proteins_read_human.json
 quant flashlfq	flashlfq_small.json
+quant median-polish	median_polish_small.json
 readers formats	readers_formats.json
 readers identify	readers_identify_mzid.json
+readers identify	readers_many_identify.json
 readers read-features	readers_features_topfd.json
 readers read-matches	readers_matches_casanovo.json
+readers read-matches	readers_matches_mzid.json
+readers read-matches	readers_matches_mzid_scores.json
+readers read-occupancy	readers_occupancy.json
+readers read-protein-groups	readers_protein_groups.json
+readers read-quantified-peptides	readers_quantified_peptides.json
+readers read-records	readers_many_records_mzid.json
+readers read-records	readers_records_crux.json
+readers read-records	readers_records_flashlfq_peaks.json
+readers read-records	readers_records_mm_peptides.json
+readers read-records	readers_records_mm_protein_groups.json
+readers read-records	readers_records_mzid_gz.json
 readers read-records	readers_records_toppic.json
 readers read-results	readers_results_fragger.json
+readers read-spectra	readers_many_spectra.json
 readers read-spectra	readers_spectra_mzml.json
+sdrf assess	sdrf_assess_bulk.json
+sdrf assess	sdrf_assess_cohort.json
+sdrf lint	sdrf_lint_cohort.json
+sdrf parse-age	sdrf_parse_age.json
 sdrf pool	sdrf_pool_two.json
 sdrf read	sdrf_read_PXD000070.json
 sdrf read	sdrf_read_ragged.json
+sdrf samples	sdrf_samples_bulk.json
+sdrf samples	sdrf_samples_cohort.json
+sdrf validate	sdrf_validate_bulk.json
+sdrf validate	sdrf_validate_cohort.json
+sdrf validate	sdrf_validate_skeleton.json
 version	bridge_version.json

@@ -23,8 +23,8 @@ readers_read_records(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 \description{
 Read any file mzLib recognises into a table of that format's own record fields, naming every field that could not become a column.
 
-The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. All 31 file
-types, including the 14 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. All 36 file
+types, including the 17 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
 peptide and protein tables, the FlashDeconv formats, SDRF - which no other \code{readers_} function
 can touch.
 }
@@ -37,7 +37,11 @@ the joined string cannot be split back apart.
 An \code{mzlibr_native_records}. \code{records} is a data.frame of this format's own fields, or
   \code{NULL} when \code{out} was given. \code{record_count} counts the records in the whole file,
   \code{returned_count} the records returned, starting \code{offset} records in. \code{column_names},
-  \code{record_type}, \code{views}, \code{excluded_fields} and \code{failed_fields} describe the table.
+  \code{record_type}, \code{views}, \code{caveats}, \code{absent_fields}, \code{excluded_fields} and \code{failed_fields}
+  describe the table. For mzIdentML, \code{skipped_count} counts the identification items mzLib did
+  not turn into rows and \code{skipped} lists each with its reason (\code{NA}/\code{NULL} for every other
+  format). \code{retention_time_unit} is \code{NA}: the columns are the format's own and declare none.
+  \code{rows_not_read} counts data rows that did not become records, where one line is one record.
 
 }
 \section{The columns are not uniform, by design}{
@@ -102,7 +106,13 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{offset}}{int; in \strong{records}; never \code{NA}. The offset applied.}
 \item{\code{truncated}}{bool; never \code{NA}. True whenever records were left out by offset or limit.}
 \item{\code{excluded_fields}}{table; never \code{NA}. Every property of record_type that could not become a column, as \{field, type, reason, verb\}: nested objects, lists of composites, and dictionaries (reason starts "a dictionary"). verb names the command that carries the field (sample_groups: readers read-protein-groups; samples: readers read-quantified-peptides; mzIdentML scores: readers read-matches) or is null. Empty when every property projects.}
+\item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when the count is not meaningful for this format (only the psmtsv family and MSFragger are one line per record). Data rows that did not become records; mzLib drops a malformed psmtsv line silently.}
+\item{\code{retention_time_unit}}{string; \code{NA} when always: the columns are the format's own, and several formats carry more than one time column. Always null for this verb; use a typed view when units matter.}
+\item{\code{caveats}}{string[]; never \code{NA}. Always empty for this verb; the static caveats below apply.}
+\item{\code{absent_fields}}{string[]; never \code{NA}. Columns this file's header has no column for: the record type reads them from an [Optional] CsvHelper column the file lacks, so every value is mzLib's default and crosses null (e.g. mbr_score on a current FlashLFQ peaks table, #1345; q_value and pep_q_value on an MsPathFinderT targets file). Judged from mzLib's own [Name]/[Optional] attributes against the file's header; empty means none found or no basis to judge.}
 \item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
+\item{\code{skipped_count}}{int; in \strong{items}; \code{NA} when the format keeps no skip list (every format but mzIdentML). mzIdentML items mzLib did not represent as records (crosslinks, unresolvable modifications, substitutions; #1313).}
+\item{\code{skipped}}{object[]; \code{NA} when as skipped_count. \{spectrum_identification_item_id, spectrum_id, reason\} per skipped item.}
 \item{\code{failed_fields}}{string[]; never \code{NA}. "field: ExceptionType" for every property that threw while being read on a returned record; those cells are null.}
 \item{\code{column_names}}{string[]; never \code{NA}. The record type's projectable public properties in snake_case, base class first, in declaration order.}
 \item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-record values, in column_names order.}
@@ -120,20 +130,8 @@ The columns are \strong{per format}: this file's own mzLib record fields, named 
 \item A column named in absent_fields is null in every row, whatever default mzLib filled in.
 }
 }
-\section{On the wire but not projected yet}{
-The bridge sends these, and this version of mzLibR does not return them yet:
-
-\describe{
-\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{retention_time_unit}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{caveats}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{skipped_count}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{skipped}}{arrives with the mzLib 1.0.592 port.}
-}
-}
 \section{Errors}{
-Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} comes only from \code{\link{readers_read_records_many}()}.
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{path missing or blank; file or directory not found}
@@ -161,13 +159,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 }
 \section{Performance}{
-Every call starts one bridge process, which costs a .NET start-up before any work. 
+Every call starts one bridge process, which costs a .NET start-up before any work. For many files call \code{\link{readers_read_records_many}()} once rather than looping this function: one process, one start-up, and the thread count stated on the wire.
 }
 \section{Same verb in other bindings}{
 \itemize{
 \item Python (pyMzLib): \code{pymzlib.readers.read_records}; many files: \code{pymzlib.readers.read_records_many}
 \item Rust (mzLibRust): \code{mzlib::readers::read_records_with} with \code{ReadOptions}; many files: \code{mzlib::readers::read_records_many}
-\item R (mzLibR): \code{readers_read_records}
+\item R (mzLibR): \code{readers_read_records}; many files: \code{\link{readers_read_records_many}}
 }
 }
 \section{Since}{
@@ -183,12 +181,12 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{readers_identify}}, \code{\link{readers_read_results}}
+\code{\link{readers_read_records_many}}, \code{\link{readers_identify}}, \code{\link{readers_read_results}}
 }
 \examples{
 
 \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
-prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv", limit = 3)
+prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv")
 prsms
 head(prsms$column_names)
 prsms$records[, c("one_based_scan_number", "base_sequence", "e_value")]

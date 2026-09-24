@@ -57,6 +57,23 @@ An \code{mzlibr_scan_records}. \code{scan_count} is the file's total in scans \s
   (instrument units) are list columns, one vector per scan. A precursor field is \code{NA} on an MS1
   scan; the generated sections below say what \code{NA} means for every column.
 
+  \code{source} is what the file records about the run (mzLib \code{SourceFile}): \code{instrument_model},
+  \code{instrument_model_accession} (match on this, never the name), \code{instrument_serial_number},
+  \code{acquisition_start_time} as ISO-8601 text, and \code{acquisition_start_time_is_utc}. Each is \code{NA}
+  when the file does not record it - MGF and msalign record none - and \code{source} is \code{NULL} only
+  when the reader built no description at all. \code{failed_fields} names any column whose read
+  threw on some scans. \code{rows_not_read} is always \code{NA}: rows are not counted for this view.
+
+}
+\section{When did acquisition start, and on which clock}{
+
+
+\code{acquisition_start_time} ends in \code{Z} only when the file fixed the instant, as an mzML
+\code{startTimeStamp} with an offset does; otherwise it is the acquisition computer's wall-clock time,
+and \code{acquisition_start_time_is_utc} is \code{FALSE}. A Thermo \code{.raw} is always local time, and
+ProteoWizard's mzML of the same run writes it as UTC assuming the *converting* machine's time
+zone - so the two can differ by the site's UTC offset.
+
 }
 \section{Two of the seven need Windows}{
 
@@ -104,6 +121,11 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{column_names}}{string[]; never \code{NA}. Column order.}
 \item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-scan values.}
 \item{\code{output}}{object; \code{NA} when out was not given. \{path, format: "tsv", row_count\} when out was given.}
+\item{\code{source}}{object; \code{NA} when the reader built no source-file description at all (inner fields are null individually when the file does not record them). \{instrument_model, instrument_model_accession, instrument_serial_number, acquisition_start_time, acquisition_start_time_is_utc\} from mzLib SourceFile (#1349). instrument_model is the model NAME and instrument_model_accession its PSI-MS accession (mzML has both; Thermo .raw only the name, so the accession is null - match on the accession, never the name). acquisition_start_time is ISO-8601 text, ending in Z only when the source fixed the instant (mzML startTimeStamp with an offset); otherwise the acquisition PC's wall-clock time. acquisition_start_time_is_utc is never null: false means local instrument-PC time or absent, and is always false for Thermo .raw. Each inner field is null when the file does not record it (MGF and msalign record none).}
+\item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when never counted for this verb. Always null.}
+\item{\code{absent_fields}}{string[]; never \code{NA}. Always empty for this verb: an unrecorded scan field is null per scan.}
+\item{\code{failed_fields}}{string[]; never \code{NA}. 'field: ExceptionType' for each column whose read threw on some scans; those cells are null.}
+\item{\code{excluded_fields}}{object[]; never \code{NA}. Always empty for this verb.}
 \item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
 }
 }
@@ -137,19 +159,8 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{intensity}}{float[]; in \strong{intensity (instrument units)}; \code{NA} when scan has no spectrum. Peak intensities, parallel to mz. \emph{Present only with \code{peaks}.}}
 }
 }
-\section{On the wire but not projected yet}{
-The bridge sends these, and this version of mzLibR does not return them yet:
-
-\describe{
-\item{\code{source}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
-}
-}
 \section{Errors}{
-Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} comes only from \code{\link{readers_read_spectra_many}()}.
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{path missing or blank; file not found; the file is not one of the seven spectra types (the message names the views it does have)}
@@ -175,13 +186,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 }
 \section{Performance}{
-Every call starts one bridge process, which costs a .NET start-up before any work. 
+Every call starts one bridge process, which costs a .NET start-up before any work. For many files call \code{\link{readers_read_spectra_many}()} once rather than looping this function: one process, one start-up, and the thread count stated on the wire.
 }
 \section{Same verb in other bindings}{
 \itemize{
 \item Python (pyMzLib): \code{pymzlib.readers.read_spectra}; many files: \code{pymzlib.readers.read_spectra_many}
 \item Rust (mzLibRust): \code{mzlib::readers::read_spectra_with} with \code{SpectraOptions}; many files: \code{mzlib::readers::read_spectra_many}
-\item R (mzLibR): \code{readers_read_spectra}
+\item R (mzLibR): \code{readers_read_spectra}; many files: \code{\link{readers_read_spectra_many}}
 }
 }
 \section{Since}{
@@ -197,7 +208,7 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{readers_read_records}}
+\code{\link{readers_read_spectra_many}}, \code{\link{readers_read_records}}
 }
 \examples{
 
