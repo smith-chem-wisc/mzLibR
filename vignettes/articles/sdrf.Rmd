@@ -71,6 +71,72 @@ Columns are the union over the documents, and a cell a document did not have is 
 originals. The pooled table is for analysis, not for deposit: two experiments may both have a
 "Sample 1", so keep `sdrf_source_documents()` in any key.
 
+## Is the document well-formed?
+
+`sdrf_validate()` checks the specification's structural rules - required columns, ragged rows,
+the uniqueness of `source name` + `assay name` + `comment[label]` - and locates each finding by
+line:
+
+```{r}
+skeleton <- sdrf_validate("sdrf_skeleton.sdrf.tsv")
+skeleton
+skeleton$records[, c("severity", "rule", "line_number", "column_name")]
+```
+
+Warnings never make a document invalid. A document-wide finding, such as a missing column, has
+`NA` for its line.
+
+## Does it describe its samples?
+
+A document can be perfectly valid and still say nothing: reserved words in every sample column,
+one replicate number, no factor. `sdrf_assess()` is the gate for that, and its verdict is how
+many of three checks pass:
+
+```{r}
+assessment <- sdrf_assess("sdrf_cohort.sdrf.tsv")
+assessment
+assessment$records[, c("role", "column_name", "filled", "distinct_values", "fill_rate")]
+```
+
+For a corpus, `sdrf_assess_many()` reads every document in one bridge call:
+
+```{r}
+batch <- sdrf_assess_many(c("sdrf_cohort.sdrf.tsv", "sdrf_skeleton.sdrf.tsv", "PXD000070.sdrf.tsv"))
+batch$files[, c("path", "verdict")]
+```
+
+## Each sample, merged over its rows, with its age
+
+`sdrf_samples()` gives one row per sample x column. Where a sample's rows disagree about a
+column, mzLib withholds it rather than let the first row win, and `status` says
+`"conflicting"`. Ages are parsed into years on the `characteristics[age]` rows:
+
+```{r}
+samples <- sdrf_samples("sdrf_cohort.sdrf.tsv")
+samples$records[samples$records$status == "conflicting", c("source_name", "column_name")]
+ages <- samples$records[samples$records$column_name == "characteristics[age]", ]
+ages[, c("source_name", "value", "age_years", "age_precision", "age_refusal")]
+```
+
+A bare `63` is refused as `"no_unit"`: 63 years and 63 days are both plausible in one study.
+`sdrf_parse_ages()` applies the same rules to any cells you have:
+
+```{r}
+sdrf_parse_ages(c("58Y", "40Y-85Y", ">=90Y", "6-8 weeks", "63"))$records[
+  , c("cell", "years", "min_years", "max_years", "refusal")]
+```
+
+## Do several documents agree?
+
+Every document can pass `sdrf_validate()` and a pooled table still be unusable because one writes
+`"Homo sapiens"` and another `"homo sapiens"`. `sdrf_lint()` finds those, one row per spelling:
+
+```{r}
+drift <- sdrf_lint(c(cohort = "sdrf_cohort.sdrf.tsv", partner = "sdrf_cohort_partner.sdrf.tsv"))
+drift
+drift$records[, c("finding_index", "kind", "value", "occurrences")]
+```
+
 ## Instead of `readers_read_records()`
 
 `readers_read_records()` recognises SDRF too, but joins each row into one semicolon-separated

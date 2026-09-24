@@ -60,8 +60,25 @@ export(sdrf_records)
 export(sdrf_source_documents)
 export(sdrf_value)
 
+export(sdrf_assess)
+export(sdrf_assess_many)
+export(sdrf_lint)
+export(sdrf_parse_ages)
+export(sdrf_samples)
+export(sdrf_samples_many)
+export(sdrf_validate)
+export(sdrf_validate_many)
+
 S3method(print, mzlibr_sdrf)
 S3method(print, mzlibr_pooled_sdrf)
+S3method(print, mzlibr_sdrf_validation)
+S3method(print, mzlibr_sdrf_drift)
+S3method(print, mzlibr_sdrf_assessment)
+S3method(print, mzlibr_sdrf_samples)
+S3method(print, mzlibr_sdrf_ages)
+
+# The shared print method of every `_many` result (R/bulk.R).
+S3method(print, mzlibr_batch)
 
 export(pride_approximate_total_size_bytes)
 export(pride_download)
