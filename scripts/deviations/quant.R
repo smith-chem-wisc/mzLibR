@@ -1,5 +1,7 @@
 # Quantification: FlashLFQ. See scripts/spec-facts.R for what each list means.
 
+R_TABLE["quant median-polish"] <- "proteins"
+
 R_DEVIATIONS[["quant flashlfq"]] <- list(
   "param.stdin" = as_r("spectra", "one stdin line per run, with its design columns"),
   "param.ppm" = as_r("ppm_tolerance", "mzLib's parameter name"),
@@ -10,7 +12,7 @@ R_DEVIATIONS[["quant flashlfq"]] <- list(
   "param.shared-peptides" = as_r("use_shared_peptides_for_protein_quant", "mzLib's parameter name"),
   "param.bayesian" = as_r("bayesian_protein_quant", "mzLib's parameter name"),
   "param.use-pep-q" = as_r("use_pep_q_value", "mzLib's parameter name"),
-  "param.threads" = as_r("max_threads", "mzLib's parameter name; the default differs, see its argument"),
+  "param.threads" = as_r("max_threads", "mzLib's parameter name; the default is 1 here, see its argument"),
   "param.out" = as_r("output_directory", "mzLib's parameter name"),
   "field.peptide_count" = not_here("flashlfq_peptide_count() of the result"),
   "field.protein_count" = not_here("flashlfq_protein_count() of the result"),
@@ -19,23 +21,30 @@ R_DEVIATIONS[["quant flashlfq"]] <- list(
   "field.proteins.intensities" = as_r("intensity", "unnested: one row per protein group per sample, the sample in file_name")
 )
 
+R_DEVIATIONS[["quant median-polish"]] <- list(
+  "param.stdin" = as_r("design", "one stdin line per row of `design`, its run name first"),
+  "param.shared-peptides" = as_r("use_shared_peptides", "pyMzLib's name for FlashLFQ's UseSharedPeptidesForProteinQuant"),
+  "param.out" = as_r("output_directory", "the name flashlfq_quantify() uses"),
+  "field.intensities" = as_r("intensity", "unnested: one row per protein group per sample, the sample label in `sample`")
+)
+
 PARENT_MAP[c(
-  "flashlfq_quantify", "flashlfq_peptide_count", "flashlfq_protein_count",
-  "flashlfq_mbr_peak_count", "flashlfq_mbr_peaks", "flashlfq_mbr_rescued_peptide_count"
+  "flashlfq_quantify", "flashlfq_median_polish", "flashlfq_peptide_count",
+  "flashlfq_protein_count", "flashlfq_mbr_peak_count", "flashlfq_mbr_peaks",
+  "flashlfq_mbr_rescued_peptide_count"
 )] <- c(
-  "flashlfq.quantify", "FlashLfqResults.peptide_count", "FlashLfqResults.protein_count",
-  "FlashLfqResults.mbr_peak_count", "FlashLfqResults.mbr_peaks",
+  "flashlfq.quantify", "flashlfq.median_polish", "FlashLfqResults.peptide_count",
+  "FlashLfqResults.protein_count", "FlashLfqResults.mbr_peak_count", "FlashLfqResults.mbr_peaks",
   "FlashLfqResults.mbr_rescued_peptide_count"
 )
 PARENT_OMISSIONS[c(
-  "Peptide.intensity", "Peptide.detection_type", "ProteinGroup.intensity", "Peak.is_mbr",
-  "flashlfq.median_polish"
+  "Peptide.intensity", "Peptide.detection_type", "ProteinGroup.intensity", "Peak.is_mbr"
 )] <- c(
   "a row of the long `peptides` frame",
   "a column of the long `peptides` frame",
   "a row of the long `proteins` frame",
-  "a column comparison, `detection_type == \"MBR\"`",
-  "parity debt: `quant median-polish` arrives with the mzLib 1.0.592 port"
+  "a column comparison, `detection_type == \"MBR\"`"
 )
 
 FIELD_CHECKS[["quant flashlfq"]] <- list("flashlfq_small.json", function(d) mz$flashlfq_parse(d))
+FIELD_CHECKS[["quant median-polish"]] <- list("median_polish_small.json", function(d) mz$flashlfq_parse_median_polish(d))

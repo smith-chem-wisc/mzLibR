@@ -356,3 +356,90 @@ test_that("printing a multithreaded result raises no reproducibility alarm", {
 test_that("the fixture was produced single-threaded", {
   expect_identical(recorded_quant()$parameters$max_threads, 1)
 })
+
+# ---------------------------------------------------------------- median polish
+
+recorded_polish <- function() {
+  mz$flashlfq_parse_median_polish(mz$json_parse(paste(
+    readLines(fixture_path("median_polish_small.json"), warn = FALSE),
+    collapse = "\n"
+  )))
+}
+
+test_that("median polish becomes samples plus a long protein table keyed by sample", {
+  polished <- recorded_polish()
+  expect_true(inherits(polished, "mzlibr_median_polish"))
+  expect_identical(polished$samples$label, c("control_1", "treated_1"))
+  expect_identical(polished$samples$biological_replicate, c(0, 0))
+  expect_identical(polished$peptide_count, 4)
+  expect_identical(polished$protein_count, 3)
+  # One row per protein group per sample, and the sample - not a file - names the column.
+  expect_identical(nrow(polished$proteins), 6L)
+  expect_true("sample" %in% names(polished$proteins))
+  expect_false("file_name" %in% names(polished$proteins))
+  expect_true(all(polished$proteins$sample %in% polished$samples$label))
+  expect_true(is.na(polished$output_directory))
+})
+
+test_that("an unresolvable protein is NA in median polish too, never 0", {
+  proteins <- recorded_polish()$proteins
+  expect_true(all(is.na(proteins$intensity[proteins$protein_group == "P3"])))
+  expect_equal(proteins$intensity[proteins$protein_group == "P1" & proteins$sample == "control_1"], 3005.6)
+})
+
+test_that("median polish prints its samples and its NA count", {
+  output <- paste(capture.output(print(recorded_polish())), collapse = "\n")
+  expect_true(grepl("control_1, treated_1", output, fixed = TRUE), info = output)
+  expect_true(grepl("2 NA (could not be resolved)", output, fixed = TRUE), info = output)
+})
+
+test_that("a design becomes one stdin line per run, trailing blanks dropped", {
+  lines <- mz$flashlfq_design_stdin(data.frame(
+    file_name = c("run_3", "run_4"), condition = c("control", "treated"), biological_replicate = 0
+  ))
+  expect_identical(lines, c("run_3\tcontrol\t0", "run_4\ttreated\t0"))
+  expect_identical(mz$flashlfq_design_stdin(c("run_3", "run_4")), c("run_3", "run_4"))
+  expect_true(is.null(mz$flashlfq_design_stdin(NULL)))
+})
+
+test_that("a design that cannot mean anything is refused before the bridge runs", {
+  expect_error(mz$flashlfq_design_stdin(data.frame(run = "a")), class = "mzlib_usage_error", contains = "file_name")
+  expect_error(mz$flashlfq_design_stdin(c("a", "a")), class = "mzlib_usage_error", contains = "twice")
+  expect_error(mz$flashlfq_design_stdin(c("a", "")), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_design_stdin(data.frame(file_name = "a", fraction = -1)), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_design_stdin(data.frame(file_name = character(0))), class = "mzlib_usage_error")
+})
+
+test_that("median polish arguments are assembled and checked", {
+  args <- mz$flashlfq_build_median_polish_args("QuantifiedPeptides.tsv", TRUE, "out")
+  expect_identical(args, c("quant", "median-polish", "--peptides", "QuantifiedPeptides.tsv",
+                           "--shared-peptides", "--out", "out"))
+  expect_identical(mz$flashlfq_build_median_polish_args("p.tsv", FALSE, NULL),
+                   c("quant", "median-polish", "--peptides", "p.tsv"))
+  expect_error(mz$flashlfq_build_median_polish_args("", FALSE, NULL), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_build_median_polish_args("p.tsv", NA, NULL), class = "mzlib_usage_error")
+  expect_error(mz$flashlfq_build_median_polish_args("p.tsv", FALSE, ""), class = "mzlib_usage_error")
+})
+
+test_that("LIVE: median polish groups two runs into samples by the design", {
+  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  options(mzlibr.bridge = live_bridge)
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+
+  table <- tempfile("mzlibr-peptides-", fileext = ".tsv")
+  on.exit(unlink(table), add = TRUE)
+  writeLines(c(
+    "Sequence\tBase Sequence\tProtein Groups\tGene Names\tOrganism\tIntensity_run_3\tIntensity_run_4",
+    "PEPTIDEK\tPEPTIDEK\tP1\tGENE1\tHomo sapiens\t1000\t2000",
+    "ACDEFGHIK\tACDEFGHIK\tP1\tGENE1\tHomo sapiens\t3000\t6000",
+    "LMNPQR\tLMNPQR\tP2\tGENE2\tHomo sapiens\t500\t0"
+  ), table)
+
+  polished <- flashlfq_median_polish(table, design = data.frame(
+    file_name = c("run_3", "run_4"), condition = c("control", "treated"), biological_replicate = 0
+  ))
+  expect_identical(sort(polished$samples$label), c("control_1", "treated_1"))
+  expect_identical(polished$peptide_count, 3)
+  expect_identical(sort(unique(polished$proteins$protein_group)), c("P1", "P2"))
+  expect_true(all(polished$proteins$sample %in% polished$samples$label))
+})
