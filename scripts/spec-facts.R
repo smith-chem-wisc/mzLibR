@@ -226,7 +226,8 @@ spec_read_json <- function(path) {
 
 # Every vendored spec, keyed by its wire verb, each with `.file` set to its file stem.
 load_specs <- function(dir = SPEC_DIR) {
-  files <- sort(list.files(dir, pattern = "[.]json$", full.names = TRUE))
+  # C-locale order (radix), so every generated page lists the specs the same way on any machine.
+  files <- sort(list.files(dir, pattern = "[.]json$", full.names = TRUE), method = "radix")
   specs <- lapply(files, function(path) {
     spec <- spec_read_json(path)
     spec$.file <- sub("[.]json$", "", basename(path))

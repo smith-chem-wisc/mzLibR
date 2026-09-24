@@ -221,7 +221,8 @@ omissions <- c(
 
 # ---------------------------------------------------------------- the R side
 
-exported <- sort(getNamespaceExports("mzLibR"))
+# Sorted in the C locale (radix), so the page is the same whichever machine writes it.
+exported <- sort(getNamespaceExports("mzLibR"), method = "radix")
 exported <- exported[!grepl("^print\\.", exported)]
 functions <- exported[vapply(exported, function(n) is.function(get(n, envir = mz)), logical(1L))]
 
