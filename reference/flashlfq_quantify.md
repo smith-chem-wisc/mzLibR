@@ -20,9 +20,10 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 - psms:
 
-  Path to a PSM result file. **Use a MetaMorpheus `.psmtsv` or
-  `.osmtsv`.** Every run named in the file must have a matching mzML in
-  `spectra`; FlashLFQ matches identifications to runs by base file name.
+  Path to a PSM result file. \*\*Use a MetaMorpheus `.psmtsv` or
+  `.osmtsv`.\*\* Every run named in the file must have a matching mzML
+  in `spectra`; FlashLFQ matches identifications to runs by base file
+  name.
 
 - spectra:
 
@@ -59,8 +60,8 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
   transfers are false. Set `condition` and `biological_replicate` on
   `spectra` so FlashLFQ knows which runs are comparable.
 
-  **Whatever you do, count transfers from `peaks`, never from
-  `peptides`.** See the return value.
+  \*\*Whatever you do, count transfers from `peaks`, never from
+  `peptides`.\*\* See the return value.
 
 - mbr_ppm_tolerance:
 
@@ -90,15 +91,16 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 - max_threads:
 
-  Worker threads. **Defaults to 1 here, which differs from pyMzLib's -1,
-  and deliberately.**
+  Worker threads, or `-1` for one per core. **Defaults to 1 here, where
+  the bridge, pyMzLib and mzLibRust default to -1.**
 
-  With more than one thread the peptide roll-up nondeterministically
-  drops MBR intensities, so identical inputs give different
-  protein-level answers roughly **1 run in 6** - a borderline protein
-  was unresolvable in 5 of 6 repeats. Any figure produced multithreaded
-  may not reproduce (smith-chem-wisc/mzLib#1111). mzLibR warns if you
-  set anything else.
+  One thread is reproducible by construction, and it is what this
+  package has always shipped. The multithreaded nondeterminism that made
+  it the default here (the peptide roll-up dropping MBR intensities,
+  smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned
+  bridge includes, so `-1` is expected to give the same answer faster;
+  that has not yet been re-measured on mzLib's K562 pair, which is why
+  the default has not moved.
 
 - output_directory:
 

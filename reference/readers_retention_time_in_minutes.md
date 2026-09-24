@@ -15,10 +15,12 @@ readers_retention_time_in_minutes(records, column = NULL)
 
   A
   [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md),
-  [`readers_read_features`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md)
-  or
+  [`readers_read_features`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md),
   [`readers_read_spectra`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md)
-  result.
+  or
+  [`readers_read_quantified_peptides`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_quantified_peptides.md)
+  result, or the `_many` form of one, whose rows are converted by each
+  file's own unit.
 
 - column:
 
@@ -29,11 +31,11 @@ readers_retention_time_in_minutes(records, column = NULL)
 
 ## Details
 
-**Raises when the unit is `"unknown"` rather than guessing.** A silently
-unconverted time axis is the specific mistake this module exists to
-prevent: TopPIC still writes seconds while MetaMorpheus and MSFragger
-write minutes (mzLib normalises MSFragger since PR \#1116, but not
-TopPIC), and a 60x error in a retention-time comparison looks like a
+\*\*Raises when the unit is `"unknown"` rather than guessing.\*\* A
+silently unconverted time axis is the specific mistake this module
+exists to prevent: TopPIC still writes seconds while MetaMorpheus and
+MSFragger write minutes (mzLib normalises MSFragger since PR \#1116, but
+not TopPIC), and a 60x error in a retention-time comparison looks like a
 chromatography problem rather than a units problem.
 
 ## Value

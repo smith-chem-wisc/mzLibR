@@ -41,8 +41,8 @@ pride_download(accession, destination, category = NULL, extensions = NULL,
   Keep only files with these extensions, e.g. `c(".raw", ".mzML")`.
   `NULL` keeps all. Combined with `category` as AND.
 
-  **A compressed file's extension is `.gz`, not what it is compressed
-  from.** PXD000001's peak list is
+  \*\*A compressed file's extension is `.gz`, not what it is compressed
+  from.\*\* PXD000001's peak list is
   `PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz`, so `".mgf"` matches
   **nothing**, while `".gz"` over-matches to three unrelated files. To
   select one compressed type, combine `category = "PEAK"` with

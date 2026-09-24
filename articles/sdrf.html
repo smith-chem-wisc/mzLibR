@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul>
@@ -164,6 +165,155 @@ computed on the pooled table is not the fill rate of the originals. The
 pooled table is for analysis, not for deposit: two experiments may both
 have a “Sample 1”, so keep <code><a href="../reference/sdrf_source_documents.html">sdrf_source_documents()</a></code> in any
 key.</p>
+</div>
+<div class="section level2">
+<h2 id="is-the-document-well-formed">Is the document well-formed?<a class="anchor" aria-label="anchor" href="#is-the-document-well-formed"></a>
+</h2>
+<p><code><a href="../reference/sdrf_validate.html">sdrf_validate()</a></code> checks the specification’s structural
+rules - required columns, ragged rows, the uniqueness of
+<code>source name</code> + <code>assay name</code> +
+<code>comment[label]</code> - and locates each finding by line:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">skeleton</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_validate.html">sdrf_validate</a></span><span class="op">(</span><span class="st">"sdrf_skeleton.sdrf.tsv"</span><span class="op">)</span></span>
+<span><span class="va">skeleton</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_sdrf_validation&gt; sdrf_skeleton.sdrf.tsv: NOT valid</span></span>
+<span><span class="co">#&gt;   7 error(s), 2 warning(s) over 2 rows</span></span>
+<span><span class="co">#&gt;   ! Error RequiredColumn x7</span></span>
+<span><span class="co">#&gt;   ! Warning RecommendedColumn x2</span></span>
+<span><span class="co">#&gt;   4 caveat(s) - read x$caveats once</span></span>
+<span><span class="va">skeleton</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"severity"</span>, <span class="st">"rule"</span>, <span class="st">"line_number"</span>, <span class="st">"column_name"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   severity              rule line_number</span></span>
+<span><span class="co">#&gt; 1    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 2    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 3    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 4    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 5    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 6    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 7    Error    RequiredColumn          NA</span></span>
+<span><span class="co">#&gt; 8  Warning RecommendedColumn          NA</span></span>
+<span><span class="co">#&gt; 9  Warning RecommendedColumn          NA</span></span>
+<span><span class="co">#&gt;                                   column_name</span></span>
+<span><span class="co">#&gt; 1                             technology type</span></span>
+<span><span class="co">#&gt; 2                         comment[instrument]</span></span>
+<span><span class="co">#&gt; 3                              comment[label]</span></span>
+<span><span class="co">#&gt; 4             comment[cleavage agent details]</span></span>
+<span><span class="co">#&gt; 5                comment[technical replicate]</span></span>
+<span><span class="co">#&gt; 6                comment[fraction identifier]</span></span>
+<span><span class="co">#&gt; 7 comment[proteomics data acquisition method]</span></span>
+<span><span class="co">#&gt; 8                  characteristics[cell type]</span></span>
+<span><span class="co">#&gt; 9            comment[modification parameters]</span></span></code></pre></div>
+<p>Warnings never make a document invalid. A document-wide finding, such
+as a missing column, has <code>NA</code> for its line.</p>
+</div>
+<div class="section level2">
+<h2 id="does-it-describe-its-samples">Does it describe its samples?<a class="anchor" aria-label="anchor" href="#does-it-describe-its-samples"></a>
+</h2>
+<p>A document can be perfectly valid and still say nothing: reserved
+words in every sample column, one replicate number, no factor.
+<code><a href="../reference/sdrf_assess.html">sdrf_assess()</a></code> is the gate for that, and its verdict is how
+many of three checks pass:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">assessment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_assess.html">sdrf_assess</a></span><span class="op">(</span><span class="st">"sdrf_cohort.sdrf.tsv"</span><span class="op">)</span></span>
+<span><span class="va">assessment</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_sdrf_assessment&gt; sdrf_cohort.sdrf.tsv: Informative</span></span>
+<span><span class="co">#&gt;   factor value varies: yes; sample described: yes; biological replicate varies: yes</span></span>
+<span><span class="co">#&gt;   4 caveat(s) - read x$caveats once</span></span>
+<span><span class="va">assessment</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"role"</span>, <span class="st">"column_name"</span>, <span class="st">"filled"</span>, <span class="st">"distinct_values"</span>, <span class="st">"fill_rate"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                    role                           column_name filled</span></span>
+<span><span class="co">#&gt; 1          factor_value                 factor value[disease]     12</span></span>
+<span><span class="co">#&gt; 2 sample_characteristic                  characteristics[age]     10</span></span>
+<span><span class="co">#&gt; 3 sample_characteristic            characteristics[cell type]      0</span></span>
+<span><span class="co">#&gt; 4 sample_characteristic              characteristics[disease]     12</span></span>
+<span><span class="co">#&gt; 5 sample_characteristic        characteristics[organism part]     12</span></span>
+<span><span class="co">#&gt; 6 sample_characteristic                  characteristics[sex]     12</span></span>
+<span><span class="co">#&gt; 7  biological_replicate characteristics[biological replicate]     12</span></span>
+<span><span class="co">#&gt;   distinct_values fill_rate</span></span>
+<span><span class="co">#&gt; 1               2 1.0000000</span></span>
+<span><span class="co">#&gt; 2               5 0.8333333</span></span>
+<span><span class="co">#&gt; 3               0 0.0000000</span></span>
+<span><span class="co">#&gt; 4               2 1.0000000</span></span>
+<span><span class="co">#&gt; 5               1 1.0000000</span></span>
+<span><span class="co">#&gt; 6               2 1.0000000</span></span>
+<span><span class="co">#&gt; 7               6 1.0000000</span></span></code></pre></div>
+<p>For a corpus, <code><a href="../reference/sdrf_assess_many.html">sdrf_assess_many()</a></code> reads every document in
+one bridge call:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">batch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_assess_many.html">sdrf_assess_many</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sdrf_cohort.sdrf.tsv"</span>, <span class="st">"sdrf_skeleton.sdrf.tsv"</span>, <span class="st">"PXD000070.sdrf.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">batch</span><span class="op">$</span><span class="va">files</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"path"</span>, <span class="st">"verdict"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                     path     verdict</span></span>
+<span><span class="co">#&gt; 1   sdrf_cohort.sdrf.tsv Informative</span></span>
+<span><span class="co">#&gt; 2 sdrf_skeleton.sdrf.tsv    Skeleton</span></span>
+<span><span class="co">#&gt; 3     PXD000070.sdrf.tsv     Partial</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="each-sample-merged-over-its-rows-with-its-age">Each sample, merged over its rows, with its age<a class="anchor" aria-label="anchor" href="#each-sample-merged-over-its-rows-with-its-age"></a>
+</h2>
+<p><code><a href="../reference/sdrf_samples.html">sdrf_samples()</a></code> gives one row per sample x column. Where
+a sample’s rows disagree about a column, mzLib withholds it rather than
+let the first row win, and <code>status</code> says
+<code>"conflicting"</code>. Ages are parsed into years on the
+<code>characteristics[age]</code> rows:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_samples.html">sdrf_samples</a></span><span class="op">(</span><span class="st">"sdrf_cohort.sdrf.tsv"</span><span class="op">)</span></span>
+<span><span class="va">samples</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">samples</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"conflicting"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"source_name"</span>, <span class="st">"column_name"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    source_name              column_name</span></span>
+<span><span class="co">#&gt; 54          S6 characteristics[disease]</span></span>
+<span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="va">samples</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">samples</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">column_name</span> <span class="op">==</span> <span class="st">"characteristics[age]"</span>, <span class="op">]</span></span>
+<span><span class="va">ages</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"source_name"</span>, <span class="st">"value"</span>, <span class="st">"age_years"</span>, <span class="st">"age_precision"</span>, <span class="st">"age_refusal"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    source_name         value age_years age_precision   age_refusal</span></span>
+<span><span class="co">#&gt; 6           S1           58Y      58.0         Exact          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 15          S2       40Y-85Y      62.5         Range          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 24          S3         &gt;=90Y      90.0    LowerBound          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 33          S4            63        NA          &lt;NA&gt;       no_unit</span></span>
+<span><span class="co">#&gt; 42          S5 Not available        NA          &lt;NA&gt; reserved_word</span></span>
+<span><span class="co">#&gt; 50          S6       40Y-40Y      40.0         Exact          &lt;NA&gt;</span></span></code></pre></div>
+<p>A bare <code>63</code> is refused as <code>"no_unit"</code>: 63 years
+and 63 days are both plausible in one study.
+<code><a href="../reference/sdrf_parse_ages.html">sdrf_parse_ages()</a></code> applies the same rules to any cells you
+have:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sdrf_parse_ages.html">sdrf_parse_ages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"58Y"</span>, <span class="st">"40Y-85Y"</span>, <span class="st">"&gt;=90Y"</span>, <span class="st">"6-8 weeks"</span>, <span class="st">"63"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">records</span><span class="op">[</span></span>
+<span>  , <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell"</span>, <span class="st">"years"</span>, <span class="st">"min_years"</span>, <span class="st">"max_years"</span>, <span class="st">"refusal"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;             cell      years  min_years  max_years       refusal</span></span>
+<span><span class="co">#&gt; 1            58Y 58.0000000 58.0000000 58.0000000          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2          30Y6M 30.5000000 30.5000000 30.5000000          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 3        40Y-85Y 62.5000000 40.0000000 85.0000000          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 4        40Y-40Y 40.0000000 40.0000000 40.0000000          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 5          &gt;=90Y 90.0000000 90.0000000         NA          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 6            &lt;1Y  1.0000000  0.0000000  1.0000000          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 7      6-8 weeks  0.1341547  0.1149897  0.1533196          &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 8             63         NA         NA         NA       no_unit</span></span>
+<span><span class="co">#&gt; 9  not available         NA         NA         NA reserved_word</span></span>
+<span><span class="co">#&gt; 10                       NA         NA         NA         empty</span></span>
+<span><span class="co">#&gt; 11   about forty         NA         NA         NA    unreadable</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="do-several-documents-agree">Do several documents agree?<a class="anchor" aria-label="anchor" href="#do-several-documents-agree"></a>
+</h2>
+<p>Every document can pass <code><a href="../reference/sdrf_validate.html">sdrf_validate()</a></code> and a pooled
+table still be unusable because one writes <code>"Homo sapiens"</code>
+and another <code>"homo sapiens"</code>. <code><a href="../reference/sdrf_lint.html">sdrf_lint()</a></code> finds
+those, one row per spelling:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">drift</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_lint.html">sdrf_lint</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cohort <span class="op">=</span> <span class="st">"sdrf_cohort.sdrf.tsv"</span>, partner <span class="op">=</span> <span class="st">"sdrf_cohort_partner.sdrf.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">drift</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_sdrf_drift&gt; 2 documents: cohort, partner</span></span>
+<span><span class="co">#&gt;   4 finding(s)</span></span>
+<span><span class="co">#&gt;   ! AccessionNameConflict: Exploris 480 | Orbitrap Exploris 480</span></span>
+<span><span class="co">#&gt;   ! MixedTermAndFreeText: controlled vocabulary term | free text</span></span>
+<span><span class="co">#&gt;   ! ColumnNameVariant: Characteristics[sex] | characteristics[sex]</span></span>
+<span><span class="co">#&gt;   ! ValueCaseVariant: Homo sapiens | homo sapiens</span></span>
+<span><span class="co">#&gt;   5 caveat(s) - read x$caveats once</span></span>
+<span><span class="va">drift</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"finding_index"</span>, <span class="st">"kind"</span>, <span class="st">"value"</span>, <span class="st">"occurrences"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   finding_index                  kind                      value occurrences</span></span>
+<span><span class="co">#&gt; 1             1 AccessionNameConflict               Exploris 480           1</span></span>
+<span><span class="co">#&gt; 2             1 AccessionNameConflict      Orbitrap Exploris 480           1</span></span>
+<span><span class="co">#&gt; 3             2  MixedTermAndFreeText controlled vocabulary term           1</span></span>
+<span><span class="co">#&gt; 4             2  MixedTermAndFreeText                  free text           1</span></span>
+<span><span class="co">#&gt; 5             3     ColumnNameVariant       Characteristics[sex]           1</span></span>
+<span><span class="co">#&gt; 6             3     ColumnNameVariant       characteristics[sex]           1</span></span>
+<span><span class="co">#&gt; 7             4      ValueCaseVariant               Homo sapiens           1</span></span>
+<span><span class="co">#&gt; 8             4      ValueCaseVariant               homo sapiens           1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="instead-of-readers_read_records">Instead of <code>readers_read_records()</code><a class="anchor" aria-label="anchor" href="#instead-of-readers_read_records"></a>

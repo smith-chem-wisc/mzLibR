@@ -25,6 +25,7 @@ installed version and cannot go stale."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -75,8 +76,8 @@ installed version and cannot go stale.</p>
 
 
 
-<p>It is tempting to read "31 formats" as "31 formats in one uniform shape". They are not. The
-formats fall into disjoint families, and <strong>14 of the 31 belong to none of them</strong> — an empty
+<p>It is tempting to read "36 formats" as "36 formats in one uniform shape". They are not. The
+formats fall into disjoint families, and <strong>17 of the 36 belong to none of them</strong> — an empty
 <code>views</code> is a real and common answer, meaning mzLib can parse the file but offers no
 cross-format projection of it.</p>
 <p>- <code>"quantifiable"</code> — the cross-format record view, and the input <code><a href="flashlfq_quantify.html">flashlfq_quantify</a></code>
@@ -173,7 +174,7 @@ told apart by what the directory holds, and several formats share <code>.tsv</co
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu">readers_formats</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">formats</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 31</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 36</span>
 <span class="r-in"><span><span class="va">formats</span><span class="op">[</span><span class="va">formats</span><span class="op">$</span><span class="va">is_quantifiable</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_type"</span>, <span class="st">"extension"</span>, <span class="st">"reader"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       file_type  extension           reader</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 12       psmtsv    .psmtsv   PsmFromTsvFile</span>
@@ -183,7 +184,7 @@ told apart by what the directory holds, and several formats share <code>.tsv</co
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths</a></span><span class="op">(</span><span class="va">formats</span><span class="op">$</span><span class="va">views</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 17</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

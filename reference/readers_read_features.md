@@ -46,7 +46,8 @@ features in.
 `retention_time_start` and `retention_time_end` in the unit
 `retention_time_unit` names - `"unknown"` for `_ms1.feature`, see below;
 `intensity`, the apex, in the instrument's intensity units; and
-`number_of_isotopes`.
+`number_of_isotopes`. `rows_not_read` is always `NA`: one line is not
+one feature here.
 
 ## One row is not one line of the file, for `_ms1.feature`
 
@@ -125,10 +126,20 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string; never `NA`. The mzLib SupportedFileType that was dispatched.
 
+- `reader`:
+
+  string; never `NA`. The mzLib reader class that parsed the file.
+
 - `record_count`:
 
   int; in **features**; never `NA`. Features in the whole file, before
   the window.
+
+- `rows_not_read`:
+
+  int; in **rows**; `NA` when never counted: one line is not one feature
+  (\_ms1.feature rows are expanded per charge). Data rows that did not
+  become records.
 
 - `retention_time_unit`:
 
@@ -143,6 +154,22 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `column_names`:
 
   string\[\]; never `NA`. Column order.
+
+- `absent_fields`:
+
+  string\[\]; never `NA`. Columns the view defines that this file's
+  format has no column or source for; null in every row (BULK.md section
+  4). Empty when every column has a source.
+
+- `failed_fields`:
+
+  string\[\]; never `NA`. 'field: ExceptionType' for each column whose
+  read threw on some returned rows; those cells are null.
+
+- `excluded_fields`:
+
+  object\[\]; never `NA`. {field, type, reason, verb} for each field
+  with no column shape; verb names the command that carries it, or null.
 
 - `error`:
 
@@ -207,37 +234,13 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   int; `NA` when \_ms1.feature: mzLib never sets it (then in
   absent_fields). Isotopes in the feature.
 
-## On the wire but not projected yet
-
-The bridge sends these, and this version of mzLibR does not return them
-yet:
-
-- `reader`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `rows_not_read`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `absent_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `failed_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `excluded_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
 ## Errors
 
 Each is an R condition carrying the class shown and `mzlib_error`; see
 [`mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md).
-A condition that mentions `paths-stdin`, `threads` or `on-error` belongs
-to the verb's many-files form.
+A condition that mentions `paths-stdin`, `threads` or `on-error` comes
+only from
+[`readers_read_features_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features_many.md).
 
 - `mzlib_usage_error` (usage):
 
@@ -299,7 +302,10 @@ to the verb's many-files form.
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
-any work.
+any work. For many files call
+[`readers_read_features_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features_many.md)
+once rather than looping this function: one process, one start-up, and
+the thread count stated on the wire.
 
 ## Same verb in other bindings
 
@@ -309,7 +315,8 @@ any work.
 - Rust (mzLibRust): `mzlib::readers::read_features_with` with
   `ReadOptions`; many files: `mzlib::readers::read_features_many`
 
-- R (mzLibR): `readers_read_features`
+- R (mzLibR): `readers_read_features`; many files:
+  [`readers_read_features_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features_many.md)
 
 ## Since
 
@@ -329,6 +336,7 @@ The spec records these as open. They are listed rather than hidden:
 
 ## See also
 
+[`readers_read_features_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features_many.md),
 [`readers_read_records`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md),
 [`readers_retention_time_in_minutes`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_retention_time_in_minutes.md)
 
@@ -338,7 +346,7 @@ The spec records these as open. They are listed rather than hidden:
 
 features <- readers_read_features("Ms1Feature_TopFDv1.6.2_ms1.feature", limit = 5)
 features
-#> <mzlibr_feature_records> E:\CodeReview\pymzlib-readers-wt\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\Ms1Feature_TopFDv1.6.2_ms1.feature (Ms1Feature)
+#> <mzlibr_feature_records> C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\Ms1Feature_TopFDv1.6.2_ms1.feature (Ms1Feature)
 #>   25 records in the file, 5 returned
 #>   ! truncated - records were left behind
 #>   retention_time_unit: unknown
@@ -346,6 +354,7 @@ features
 #>   ! intensity is the per-charge APEX intensity (Ms1Feature.cs:86), not the summed intensity over the feature. The file's own Intensity column is a different number, and read-records has it.
 #>   ! retention_time_start/_end are in UNKNOWN units for this format. TopFD wrote seconds through v1.6.2 and minutes from v1.7.0 without changing the file type, and mzLib normalises neither - its deconvolution parameters instead GUESS, dividing by 60 when the largest end time exceeds 500. Check the values against your gradient length before comparing them with anything.
 #>   ! number_of_isotopes is null for every row of this format: the single-charge expansion mzLib builds never sets it (Ms1Feature.cs:91). Null means 'not reported', not 'no isotopes found'.
+#>   absent from this file (NA in every row): number_of_isotopes
 features$records
 #>          mz charge retention_time_start retention_time_end intensity
 #> 1 1548.9862      7              2372.27            2401.92 912795139

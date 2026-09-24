@@ -11,24 +11,65 @@ matches, or any recognised format in its own fields.
 - [`readers_identify()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
   : Identify a result file without parsing its contents
 
+- [`readers_identify_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify_many.md)
+  : Identify many files in one bridge call
+
 - [`readers_read_features()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md)
   :
 
   Read deconvolved MS1 features, in the cross-format `ms1_features` view
+
+- [`readers_read_features_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features_many.md)
+  : Read MS1 features from many files, in one bridge call
 
 - [`readers_read_matches()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches.md)
   :
 
   Read identifications, in the cross-format `spectral_match` view
 
+- [`readers_read_matches_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches_many.md)
+  : Read identifications from many files, in one bridge call
+
+- [`readers_read_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_occupancy.md)
+  : Read PTM site occupancy from a MetaMorpheus protein-group table
+
+- [`readers_read_occupancy_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_occupancy_many.md)
+  : Read the PTM site occupancy of many protein-group tables, in one
+  bridge call
+
+- [`readers_read_protein_groups()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_protein_groups.md)
+  : Read a MetaMorpheus protein-group table, one row per group per
+  sample group
+
+- [`readers_read_protein_groups_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_protein_groups_many.md)
+  : Read many protein-group tables into one long table, in one bridge
+  call
+
+- [`readers_read_quantified_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_quantified_peptides.md)
+  : Read a FlashLFQ peptide table, one row per peptide per sample
+
+- [`readers_read_quantified_peptides_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_quantified_peptides_many.md)
+  : Read many peptide tables into one long table, in one bridge call
+
 - [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
   : Read any file mzLib recognises, into that format's own fields
+
+- [`readers_read_records_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records_many.md)
+  : Read many files, each into its format's own fields, in one bridge
+  call
 
 - [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
   : Read a result file into the uniform record view
 
+- [`readers_read_results_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results_many.md)
+  : Read many result files into the uniform record view, in one bridge
+  call
+
 - [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md)
   : Read the scans of a spectra file: headers always, peaks on request
+
+- [`readers_read_spectra_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra_many.md)
+  : Read the scans of many spectra files, in one bridge call
 
 - [`readers_retention_time_in_minutes()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_retention_time_in_minutes.md)
   : Retention times in minutes, whatever unit the format wrote
@@ -39,12 +80,22 @@ Read one design file, or pool several into one analysis table.
 
 - [`sdrf_all()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_all.md)
   : Every cell under a column, one list element per row
+- [`sdrf_assess()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md)
+  : Decide whether an SDRF file describes its samples, or is a valid
+  skeleton
+- [`sdrf_assess_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess_many.md)
+  : Assess many SDRF files in one bridge call
 - [`sdrf_has_repeated_columns()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_has_repeated_columns.md)
   : Whether an SDRF document repeats a column name
 - [`sdrf_index_of()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_index_of.md)
   : Where a column first sits in an SDRF document
 - [`sdrf_indexes_of()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_indexes_of.md)
   : Every position a column name occupies in an SDRF document
+- [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md)
+  : Find the concepts a set of SDRF documents annotated inconsistently
+- [`sdrf_parse_ages()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_parse_ages.md)
+  : Read SDRF age cells into years, refusing anything that would need a
+  guess
 - [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md)
   : Merge several SDRF documents into one analysis table
 - [`sdrf_ragged_row_count()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_ragged_row_count.md)
@@ -53,10 +104,34 @@ Read one design file, or pool several into one analysis table.
   : Read one SDRF-Proteomics experimental-design file
 - [`sdrf_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_records.md)
   : An SDRF document as a data.frame, when its shape allows one
+- [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md)
+  : Each sample's characteristics and factor values, merged over its
+  rows, ages parsed
+- [`sdrf_samples_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples_many.md)
+  : The samples of many SDRF files, in one bridge call
 - [`sdrf_source_documents()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_source_documents.md)
   : Which document each pooled row came from
+- [`sdrf_validate()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md)
+  : Check one SDRF file against the specification's structural rules
+- [`sdrf_validate_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate_many.md)
+  : Validate many SDRF files in one bridge call
 - [`sdrf_value()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_value.md)
   : The first cell under a column, one per row
+
+## Protein databases
+
+What an accession is, which gene it resolves to, and whether a peptide
+is unique.
+
+- [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md)
+  : Classify peptides by how widely they are shared across protein
+  databases, with I = L
+- [`proteins_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.md)
+  : Read protein databases: one row per protein, with GO terms and
+  Ensembl genes on request
+- [`proteins_resolve_genes()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.md)
+  : Resolve every protein to stable Ensembl gene ids, against a gene set
+  you pin
 
 ## PRIDE Archive
 
@@ -75,6 +150,8 @@ List a project’s files and download the ones you choose.
   directory tree
 - [`pride_locations()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_locations.md)
   : The published locations of each file, as controlled-vocabulary terms
+- [`pride_search()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_search.md)
+  : Find PRIDE Archive projects by keyword
 - [`pride_total_size_bytes()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_total_size_bytes.md)
   : Total size of a set of PRIDE files
 
@@ -109,6 +186,9 @@ Label-free quantification with FlashLFQ.
   : Exactly the peaks transferred by match-between-runs
 - [`flashlfq_mbr_rescued_peptide_count()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_mbr_rescued_peptide_count.md)
   : Distinct peptides rescued by match-between-runs
+- [`flashlfq_median_polish()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_median_polish.md)
+  : Roll a FlashLFQ peptide table up to protein intensities, under a new
+  design
 - [`flashlfq_peptide_count()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_peptide_count.md)
   : Number of quantified peptides
 - [`flashlfq_protein_count()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_protein_count.md)
@@ -142,6 +222,8 @@ what it is.
 
 ## Printing
 
+- [`print(`*`<mzlibr_batch>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_batch.md)
+  : Print a batch read from many files
 - [`print(`*`<mzlibr_census>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_census.md)
   : Print a modification census
 - [`print(`*`<mzlibr_digest>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_digest.md)
@@ -150,17 +232,41 @@ what it is.
   : Print an MS1 feature table
 - [`print(`*`<mzlibr_file_info>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_file_info.md)
   : Print a file identification
+- [`print(`*`<mzlibr_gene_resolutions>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_gene_resolutions.md)
+  : Print a gene resolution
 - [`print(`*`<mzlibr_match_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_match_records.md)
   : Print a spectral-match table
+- [`print(`*`<mzlibr_median_polish>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_median_polish.md)
+  : Print a median-polish result
 - [`print(`*`<mzlibr_native_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_native_records.md)
   : Print a native record table
+- [`print(`*`<mzlibr_occupancy_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_occupancy_records.md)
+  : Print a site-occupancy table
+- [`print(`*`<mzlibr_peptide_classification>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_peptide_classification.md)
+  : Print a peptide classification
 - [`print(`*`<mzlibr_pooled_sdrf>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_pooled_sdrf.md)
   : Print a pooled SDRF table
+- [`print(`*`<mzlibr_protein_database>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_protein_database.md)
+  : Print a protein database read
+- [`print(`*`<mzlibr_protein_group_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_protein_group_records.md)
+  : Print a protein-group table
 - [`print(`*`<mzlibr_quant>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_quant.md)
   : Print a quantification result
+- [`print(`*`<mzlibr_quantified_peptide_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_quantified_peptide_records.md)
+  : Print a quantified-peptide table
 - [`print(`*`<mzlibr_result_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_result_records.md)
   : Print a record view
 - [`print(`*`<mzlibr_scan_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_scan_records.md)
   : Print a scan table
 - [`print(`*`<mzlibr_sdrf>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf.md)
   : Print an SDRF document
+- [`print(`*`<mzlibr_sdrf_ages>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_ages.md)
+  : Print parsed SDRF ages
+- [`print(`*`<mzlibr_sdrf_assessment>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_assessment.md)
+  : Print an SDRF informativeness assessment
+- [`print(`*`<mzlibr_sdrf_drift>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_drift.md)
+  : Print SDRF drift findings
+- [`print(`*`<mzlibr_sdrf_samples>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_samples.md)
+  : Print an SDRF document's samples
+- [`print(`*`<mzlibr_sdrf_validation>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_validation.md)
+  : Print an SDRF validation

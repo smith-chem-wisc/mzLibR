@@ -27,6 +27,7 @@ half you need to compare results across experiments."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -113,14 +114,15 @@ because it cannot be told apart from a <code>comment[file uri]</code> cell whose
 experiment stated an absence. <code>NA</code> means the document has no such column. Do not collapse them.</p>
     </div>
     <div class="section level2">
-    <h2 id="it-does-not-validate-yet">It does not validate yet<a class="anchor" aria-label="anchor" href="#it-does-not-validate-yet"></a></h2>
+    <h2 id="reading-is-not-validating">Reading is not validating<a class="anchor" aria-label="anchor" href="#reading-is-not-validating"></a></h2>
 
 
 
-<p>mzLib models SDRF's structural rules in <code>SdrfValidator</code> and its vocabulary-drift rules in
-<code>SdrfDriftLint</code>. Both have been public since mzLib #1207, which the pinned bridge includes, but
-the bridge does not expose them yet. When it does, they will be projected here from mzLib rather
-than reimplemented. Until then this makes no claim about whether a document is correct.</p>
+<p>This reads whatever the file holds and makes no claim that it is correct. mzLib's judgements
+about a document are their own functions: <code><a href="sdrf_validate.html">sdrf_validate</a></code> checks the specification's
+structural rules, <code><a href="sdrf_assess.html">sdrf_assess</a></code> asks whether the sample columns describe a design at all,
+<code><a href="sdrf_samples.html">sdrf_samples</a></code> merges each sample's rows with its age parsed, and <code><a href="sdrf_lint.html">sdrf_lint</a></code> finds
+concepts several documents wrote inconsistently.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
@@ -219,7 +221,7 @@ than reimplemented. Until then this makes no claim about whether a document is c
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="sdrf_pool.html">sdrf_pool</a></code>, <code><a href="sdrf_value.html">sdrf_value</a></code>, <code><a href="sdrf_all.html">sdrf_all</a></code>, <code><a href="sdrf_records.html">sdrf_records</a></code></p></div>
+    <div class="dont-index"><p><code><a href="sdrf_pool.html">sdrf_pool</a></code>, <code><a href="sdrf_value.html">sdrf_value</a></code>, <code><a href="sdrf_all.html">sdrf_all</a></code>, <code><a href="sdrf_records.html">sdrf_records</a></code>, <code><a href="sdrf_validate.html">sdrf_validate</a></code></p></div>
     </div>
 
     <div class="section level2">

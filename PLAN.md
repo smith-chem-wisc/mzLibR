@@ -209,7 +209,7 @@ explanation *in the error text*.
 
 | trap | the number |
 |----|----|
-| **ETD/ECD emit `y` ions with no `b` ions.** No fragmentation mechanism produces that | ~**⅓** of every ETD fragment list. mzLib#1109, **PR \#1114 open** — check whether it merged before documenting |
+| **ETD/ECD emit `y` ions with no `b` ions.** No fragmentation mechanism produces that | ~**⅓** of every ETD fragment list. mzLib#1109, **fixed by \#1114 (merged)**; the bridge pins include it |
 | The `zDot` series runs **1..L**, not 1..L−1. The extra one is `M − NH₂`, the N–Cα cleavage at residue 1 — **correct and deliberate**, not a bug | 1 per peptide; absent when the peptide starts with proline |
 | **z• is suppressed N-terminal to proline; the complementary c ion is not** | albumin: **138** proline sites, 138 suppressed z•, **0** suppressed c. mzLib#1110 |
 | Fragments expose `neutral_mass`, **not m/z**, and must not gain an `mz()` — a c or z ion carries only the fixed charges within its own span | per-fragment charge accounting does not exist |
@@ -253,7 +253,7 @@ Ground truth on mzLib’s own K562 pair (`AllPSMs.psmtsv` +
 | “Peptides quantified in both runs” | **257** from peaks; **169** from the peptide table |
 | **Protein intensity can be unresolvable** (median-polish NaN → `null` → `NA_real_`) | **2** proteins. But **847** are `0` in both runs, mostly because `use_shared_peptides_for_protein_quant` defaults FALSE. “No usable number” is **849**; “could not be resolved” is **2** |
 | `mbr_rescued_peptide_count` is *distinct sequences among MBR peaks* — the prose “rescued” definition differs | **140** vs **135** strict; the 5 have both an MBR peak and a zero-intensity MSMS peak in the same run |
-| **`max_threads = -1` makes results non-reproducible.** The roll-up nondeterministically drops MBR intensities | a borderline protein was unresolvable in **5 of 6** runs. **Default to 1 in mzLibR, or warn loudly.** mzLib#1111 |
+| ~~**`max_threads = -1` makes results non-reproducible.**~~ Fixed by mzLib#1155, which the pinned bridge includes | was: a borderline protein unresolvable in 5 of 6 runs (mzLib#1111). mzLibR keeps its default of 1 until −1 is re-measured |
 | The peptide roll-up does **not sum** multiple peaks in a run; it reports one | pivoting `peaks` yourself will not reproduce `QuantifiedPeptides.tsv` intensities |
 | MBR needs a **complete, balanced design** and `mbr_q_value_threshold` as its FDR control | ~80% false transfers without it |
 | mzML only | reject `.raw`/`.d` up front with a clear message |
@@ -271,9 +271,9 @@ mzLib#1113.
 
 | issue | what | status |
 |----|----|----|
-| [mzLib#1109](https://github.com/smith-chem-wisc/mzLib/issues/1109) | ETD/ECD emit `y` with no `b` | **PR \#1114 open** — 5334 tests pass |
+| [mzLib#1109](https://github.com/smith-chem-wisc/mzLib/issues/1109) | ETD/ECD emit `y` with no `b` | **fixed** by \#1114 (merged) |
 | [mzLib#1110](https://github.com/smith-chem-wisc/mzLib/issues/1110) | z• proline-suppressed, c ions not | open |
-| [mzLib#1111](https://github.com/smith-chem-wisc/mzLib/issues/1111) | FlashLFQ roll-up nondeterministic | open |
+| [mzLib#1111](https://github.com/smith-chem-wisc/mzLib/issues/1111) | FlashLFQ roll-up nondeterministic | **fixed** by \#1155 (in the pin) |
 | [mzLib#1112](https://github.com/smith-chem-wisc/mzLib/issues/1112) | Glycosylation annotations dropped silently | open; **read the correction comment** |
 | [mzLib#1113](https://github.com/smith-chem-wisc/mzLib/issues/1113) | Mods applied after digestion | open |
 | [mzLib#1106](https://github.com/smith-chem-wisc/mzLib/issues/1106) | `trypsin` / `trypsin\|P` naming inversion | open |

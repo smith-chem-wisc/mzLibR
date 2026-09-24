@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="mzLibR: mzLib for R">
-<meta name="description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files, PRIDE repository access, in-silico digestion and fragmentation of peptidoforms, and label-free quantification with match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
-<meta property="og:description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files, PRIDE repository access, in-silico digestion and fragmentation of peptidoforms, and label-free quantification with match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
+<meta name="description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files, protein databases (UniProt XML, FASTA) with Ensembl gene resolution, PRIDE repository access, in-silico digestion and fragmentation of peptidoforms, and label-free quantification with match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
+<meta property="og:description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files, protein databases (UniProt XML, FASTA) with Ensembl gene resolution, PRIDE repository access, in-silico digestion and fragmentation of peptidoforms, and label-free quantification with match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -38,6 +38,7 @@
 <li><a class="dropdown-item" href="articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul>
@@ -99,11 +100,16 @@
 </tr>
 <tr>
 <td><code>readers_*</code></td>
-<td>Read spectra from <strong>mzML</strong>, Thermo <code>.raw</code>, Bruker <code>.d</code>, timsTOF <code>.d</code>, MGF and msalign with <code><a href="reference/readers_read_spectra.html">readers_read_spectra()</a></code>; identify <strong>and read all 31</strong> file types mzLib knows, search results included — <code><a href="reference/readers_read_records.html">readers_read_records()</a></code> reads any of them into that format’s own fields, while <code><a href="reference/readers_read_results.html">readers_read_results()</a></code>, <code><a href="reference/readers_read_features.html">readers_read_features()</a></code>, <code><a href="reference/readers_read_matches.html">readers_read_matches()</a></code> and <code><a href="reference/readers_read_spectra.html">readers_read_spectra()</a></code> project the four cross-format views</td>
+<td>Read spectra from <strong>mzML</strong>, Thermo <code>.raw</code>, Bruker <code>.d</code>, timsTOF <code>.d</code>, MGF and msalign with <code><a href="reference/readers_read_spectra.html">readers_read_spectra()</a></code>; identify <strong>and read all 36</strong> file types mzLib knows, search results included — <code><a href="reference/readers_read_records.html">readers_read_records()</a></code> reads any of them into that format’s own fields, while <code><a href="reference/readers_read_results.html">readers_read_results()</a></code>, <code><a href="reference/readers_read_features.html">readers_read_features()</a></code>, <code><a href="reference/readers_read_matches.html">readers_read_matches()</a></code> and <code><a href="reference/readers_read_spectra.html">readers_read_spectra()</a></code> project the four cross-format views</td>
+</tr>
+<tr>
+<td><code>proteins_*</code></td>
+<td>What an accession is (organism, taxon, GO terms, Ensembl ids) with <code><a href="reference/proteins_read.html">proteins_read()</a></code>, which gene it resolves to against a pinned Ensembl release with <code><a href="reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code>, and whether a peptide is unique to one protein or gene with <code><a href="reference/proteins_classify_peptides.html">proteins_classify_peptides()</a></code>
+</td>
 </tr>
 <tr>
 <td><code>sdrf_*</code></td>
-<td>Read SDRF-Proteomics experimental-design files with <code><a href="reference/sdrf_read.html">sdrf_read()</a></code>, and pool several into one table with provenance with <code><a href="reference/sdrf_pool.html">sdrf_pool()</a></code>. Use these rather than <code><a href="reference/readers_read_records.html">readers_read_records()</a></code>, which joins each SDRF row into one string that cannot be split back apart</td>
+<td>Read SDRF-Proteomics experimental-design files with <code><a href="reference/sdrf_read.html">sdrf_read()</a></code>, and pool several into one table with provenance with <code><a href="reference/sdrf_pool.html">sdrf_pool()</a></code>; check them with <code><a href="reference/sdrf_validate.html">sdrf_validate()</a></code>, <code><a href="reference/sdrf_assess.html">sdrf_assess()</a></code> and <code><a href="reference/sdrf_lint.html">sdrf_lint()</a></code>, and get each sample’s ages in years with <code><a href="reference/sdrf_samples.html">sdrf_samples()</a></code>. Use these rather than <code><a href="reference/readers_read_records.html">readers_read_records()</a></code>, which joins each SDRF row into one string that cannot be split back apart</td>
 </tr>
 </tbody>
 </table>
@@ -152,7 +158,7 @@
 <li>
 <strong>A peptide intensity of <code>0</code> and a protein intensity of <code>NA</code> mean different things.</strong> <code>0</code> is “not measured in this run”; <code>NA</code> is “FlashLFQ could not resolve a number”. <code>NA</code> is the rare outcome (2 proteins) and <code>0</code> the common one (847).</li>
 <li>
-<strong><code>max_threads</code> defaults to 1 here, unlike pyMzLib.</strong> Above one thread the roll-up nondeterministically drops MBR intensities, so identical inputs disagree roughly 1 run in 6 (<a href="https://github.com/smith-chem-wisc/mzLib/issues/1111" class="external-link">mzLib#1111</a>).</li>
+<strong><code>max_threads</code> defaults to 1 here, where pyMzLib and mzLibRust use -1</strong> (every core). The multithreaded nondeterminism that set this default (mzLib#1111) was fixed by mzLib#1155, which the pinned bridge includes; the default stays until -1 is re-measured. See <code><a href="reference/flashlfq_quantify.html">?flashlfq_quantify</a></code>.</li>
 <li>
 <strong><code><a href="reference/readers_identify.html">readers_identify()</a></code> does not validate contents</strong>, and a <code>TRUE</code> from <code>is_quantifiable</code> is not permission — it reports what mzLib’s interface offers, not that the numbers are comparable.</li>
 </ul>

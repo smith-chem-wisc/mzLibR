@@ -25,6 +25,7 @@ more than identifying an empty one."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -87,7 +88,7 @@ an unreadable file raises rather than returning a guess.</p>
 
 <p><code>is_quantifiable</code> is the precondition for <code><a href="flashlfq_quantify.html">flashlfq_quantify</a></code> — when <code>FALSE</code>, mzLib can
 still read the file, it simply has no uniform view, and quantification would fail on it.</p>
-<p><strong>But <code>TRUE</code> is not permission.</strong> It reports what mzLib's *interface* offers, not that the
+<p>**But <code>TRUE</code> is not permission.** It reports what mzLib's *interface* offers, not that the
 numbers are comparable. <code>MsFraggerPsm</code> is quantifiable by interface and should not be
 quantified: among other things its retention times are in seconds while MetaMorpheus's are in
 minutes, and mzLib does not normalise them. See <code><a href="readers_read_results.html">readers_read_results</a></code> and the <code>caveats</code> it
@@ -132,7 +133,7 @@ returns.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="errors">Errors<a class="anchor" aria-label="anchor" href="#errors"></a></h2>
-    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> belongs to the verb's many-files form.</p>
+    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> comes only from <code><a href="readers_identify_many.html">readers_identify_many()</a></code>.</p>
 <dl><dt><code>mzlib_usage_error</code> (usage)</dt>
 <dd><p>path missing, blank or not found; mzLib does not recognise the file type</p></dd>
 
@@ -159,14 +160,14 @@ returns.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>
-    <p>Every call starts one bridge process, which costs a .NET start-up before any work.</p>
+    <p>Every call starts one bridge process, which costs a .NET start-up before any work. For many files call <code><a href="readers_identify_many.html">readers_identify_many()</a></code> once rather than looping this function: one process, one start-up, and the thread count stated on the wire.</p>
     </div>
     <div class="section level2">
     <h2 id="same-verb-in-other-bindings">Same verb in other bindings<a class="anchor" aria-label="anchor" href="#same-verb-in-other-bindings"></a></h2>
 
 <ul><li><p>Python (pyMzLib): <code>pymzlib.readers.identify</code>; many files: <code>pymzlib.readers.identify_many</code></p></li>
 <li><p>Rust (mzLibRust): <code>mzlib::readers::identify</code>; many files: <code>mzlib::readers::identify_many</code></p></li>
-<li><p>R (mzLibR): <code>readers_identify</code></p></li>
+<li><p>R (mzLibR): <code>readers_identify</code>; many files: <code><a href="readers_identify_many.html">readers_identify_many</a></code></p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
@@ -180,7 +181,7 @@ returns.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="readers_formats.html">readers_formats</a></code>, <code><a href="readers_read_results.html">readers_read_results</a></code></p></div>
+    <div class="dont-index"><p><code><a href="readers_identify_many.html">readers_identify_many</a></code>, <code><a href="readers_formats.html">readers_formats</a></code>, <code><a href="readers_read_results.html">readers_read_results</a></code></p></div>
     </div>
 
     <div class="section level2">

@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -65,10 +66,24 @@
 
         <dt>
 
+          <code><a href="readers_identify_many.html">readers_identify_many()</a></code>
+
+        </dt>
+        <dd>Identify many files in one bridge call</dd>
+
+        <dt>
+
           <code><a href="readers_read_features.html">readers_read_features()</a></code>
 
         </dt>
         <dd>Read deconvolved MS1 features, in the cross-format <code>ms1_features</code> view</dd>
+
+        <dt>
+
+          <code><a href="readers_read_features_many.html">readers_read_features_many()</a></code>
+
+        </dt>
+        <dd>Read MS1 features from many files, in one bridge call</dd>
 
         <dt>
 
@@ -79,10 +94,66 @@
 
         <dt>
 
+          <code><a href="readers_read_matches_many.html">readers_read_matches_many()</a></code>
+
+        </dt>
+        <dd>Read identifications from many files, in one bridge call</dd>
+
+        <dt>
+
+          <code><a href="readers_read_occupancy.html">readers_read_occupancy()</a></code>
+
+        </dt>
+        <dd>Read PTM site occupancy from a MetaMorpheus protein-group table</dd>
+
+        <dt>
+
+          <code><a href="readers_read_occupancy_many.html">readers_read_occupancy_many()</a></code>
+
+        </dt>
+        <dd>Read the PTM site occupancy of many protein-group tables, in one bridge call</dd>
+
+        <dt>
+
+          <code><a href="readers_read_protein_groups.html">readers_read_protein_groups()</a></code>
+
+        </dt>
+        <dd>Read a MetaMorpheus protein-group table, one row per group per sample group</dd>
+
+        <dt>
+
+          <code><a href="readers_read_protein_groups_many.html">readers_read_protein_groups_many()</a></code>
+
+        </dt>
+        <dd>Read many protein-group tables into one long table, in one bridge call</dd>
+
+        <dt>
+
+          <code><a href="readers_read_quantified_peptides.html">readers_read_quantified_peptides()</a></code>
+
+        </dt>
+        <dd>Read a FlashLFQ peptide table, one row per peptide per sample</dd>
+
+        <dt>
+
+          <code><a href="readers_read_quantified_peptides_many.html">readers_read_quantified_peptides_many()</a></code>
+
+        </dt>
+        <dd>Read many peptide tables into one long table, in one bridge call</dd>
+
+        <dt>
+
           <code><a href="readers_read_records.html">readers_read_records()</a></code>
 
         </dt>
         <dd>Read any file mzLib recognises, into that format's own fields</dd>
+
+        <dt>
+
+          <code><a href="readers_read_records_many.html">readers_read_records_many()</a></code>
+
+        </dt>
+        <dd>Read many files, each into its format's own fields, in one bridge call</dd>
 
         <dt>
 
@@ -93,10 +164,24 @@
 
         <dt>
 
+          <code><a href="readers_read_results_many.html">readers_read_results_many()</a></code>
+
+        </dt>
+        <dd>Read many result files into the uniform record view, in one bridge call</dd>
+
+        <dt>
+
           <code><a href="readers_read_spectra.html">readers_read_spectra()</a></code>
 
         </dt>
         <dd>Read the scans of a spectra file: headers always, peaks on request</dd>
+
+        <dt>
+
+          <code><a href="readers_read_spectra_many.html">readers_read_spectra_many()</a></code>
+
+        </dt>
+        <dd>Read the scans of many spectra files, in one bridge call</dd>
 
         <dt>
 
@@ -123,6 +208,20 @@
 
         <dt>
 
+          <code><a href="sdrf_assess.html">sdrf_assess()</a></code>
+
+        </dt>
+        <dd>Decide whether an SDRF file describes its samples, or is a valid skeleton</dd>
+
+        <dt>
+
+          <code><a href="sdrf_assess_many.html">sdrf_assess_many()</a></code>
+
+        </dt>
+        <dd>Assess many SDRF files in one bridge call</dd>
+
+        <dt>
+
           <code><a href="sdrf_has_repeated_columns.html">sdrf_has_repeated_columns()</a></code>
 
         </dt>
@@ -141,6 +240,20 @@
 
         </dt>
         <dd>Every position a column name occupies in an SDRF document</dd>
+
+        <dt>
+
+          <code><a href="sdrf_lint.html">sdrf_lint()</a></code>
+
+        </dt>
+        <dd>Find the concepts a set of SDRF documents annotated inconsistently</dd>
+
+        <dt>
+
+          <code><a href="sdrf_parse_ages.html">sdrf_parse_ages()</a></code>
+
+        </dt>
+        <dd>Read SDRF age cells into years, refusing anything that would need a guess</dd>
 
         <dt>
 
@@ -172,6 +285,20 @@
 
         <dt>
 
+          <code><a href="sdrf_samples.html">sdrf_samples()</a></code>
+
+        </dt>
+        <dd>Each sample's characteristics and factor values, merged over its rows, ages parsed</dd>
+
+        <dt>
+
+          <code><a href="sdrf_samples_many.html">sdrf_samples_many()</a></code>
+
+        </dt>
+        <dd>The samples of many SDRF files, in one bridge call</dd>
+
+        <dt>
+
           <code><a href="sdrf_source_documents.html">sdrf_source_documents()</a></code>
 
         </dt>
@@ -179,10 +306,54 @@
 
         <dt>
 
+          <code><a href="sdrf_validate.html">sdrf_validate()</a></code>
+
+        </dt>
+        <dd>Check one SDRF file against the specification's structural rules</dd>
+
+        <dt>
+
+          <code><a href="sdrf_validate_many.html">sdrf_validate_many()</a></code>
+
+        </dt>
+        <dd>Validate many SDRF files in one bridge call</dd>
+
+        <dt>
+
           <code><a href="sdrf_value.html">sdrf_value()</a></code>
 
         </dt>
         <dd>The first cell under a column, one per row</dd>
+      </dl></div><div class="section level2">
+      <h2 id="protein-databases">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases"></a></h2>
+
+      <div class="section-desc"><p>What an accession is, which gene it resolves to, and whether a peptide is unique.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="proteins_classify_peptides.html">proteins_classify_peptides()</a></code>
+
+        </dt>
+        <dd>Classify peptides by how widely they are shared across protein databases, with I = L</dd>
+
+        <dt>
+
+          <code><a href="proteins_read.html">proteins_read()</a></code>
+
+        </dt>
+        <dd>Read protein databases: one row per protein, with GO terms and Ensembl genes on request</dd>
+
+        <dt>
+
+          <code><a href="proteins_resolve_genes.html">proteins_resolve_genes()</a></code>
+
+        </dt>
+        <dd>Resolve every protein to stable Ensembl gene ids, against a gene set you pin</dd>
       </dl></div><div class="section level2">
       <h2 id="pride-archive">PRIDE Archive<a class="anchor" aria-label="anchor" href="#pride-archive"></a></h2>
 
@@ -234,6 +405,13 @@
 
         </dt>
         <dd>The published locations of each file, as controlled-vocabulary terms</dd>
+
+        <dt>
+
+          <code><a href="pride_search.html">pride_search()</a></code>
+
+        </dt>
+        <dd>Find PRIDE Archive projects by keyword</dd>
 
         <dt>
 
@@ -339,6 +517,13 @@
 
         <dt>
 
+          <code><a href="flashlfq_median_polish.html">flashlfq_median_polish()</a></code>
+
+        </dt>
+        <dd>Roll a FlashLFQ peptide table up to protein intensities, under a new design</dd>
+
+        <dt>
+
           <code><a href="flashlfq_peptide_count.html">flashlfq_peptide_count()</a></code>
 
         </dt>
@@ -415,6 +600,13 @@
 
       <dl><dt>
 
+          <code><a href="print.mzlibr_batch.html">print(<i>&lt;mzlibr_batch&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a batch read from many files</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_census.html">print(<i>&lt;mzlibr_census&gt;</i>)</a></code>
 
         </dt>
@@ -443,10 +635,24 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_gene_resolutions.html">print(<i>&lt;mzlibr_gene_resolutions&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a gene resolution</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_match_records.html">print(<i>&lt;mzlibr_match_records&gt;</i>)</a></code>
 
         </dt>
         <dd>Print a spectral-match table</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_median_polish.html">print(<i>&lt;mzlibr_median_polish&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a median-polish result</dd>
 
         <dt>
 
@@ -457,6 +663,20 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_occupancy_records.html">print(<i>&lt;mzlibr_occupancy_records&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a site-occupancy table</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_peptide_classification.html">print(<i>&lt;mzlibr_peptide_classification&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a peptide classification</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_pooled_sdrf.html">print(<i>&lt;mzlibr_pooled_sdrf&gt;</i>)</a></code>
 
         </dt>
@@ -464,10 +684,31 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_protein_database.html">print(<i>&lt;mzlibr_protein_database&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a protein database read</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_protein_group_records.html">print(<i>&lt;mzlibr_protein_group_records&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a protein-group table</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_quant.html">print(<i>&lt;mzlibr_quant&gt;</i>)</a></code>
 
         </dt>
         <dd>Print a quantification result</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_quantified_peptide_records.html">print(<i>&lt;mzlibr_quantified_peptide_records&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a quantified-peptide table</dd>
 
         <dt>
 
@@ -489,6 +730,41 @@
 
         </dt>
         <dd>Print an SDRF document</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_sdrf_ages.html">print(<i>&lt;mzlibr_sdrf_ages&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print parsed SDRF ages</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_sdrf_assessment.html">print(<i>&lt;mzlibr_sdrf_assessment&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an SDRF informativeness assessment</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_sdrf_drift.html">print(<i>&lt;mzlibr_sdrf_drift&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print SDRF drift findings</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_sdrf_samples.html">print(<i>&lt;mzlibr_sdrf_samples&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an SDRF document's samples</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_sdrf_validation.html">print(<i>&lt;mzlibr_sdrf_validation&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an SDRF validation</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

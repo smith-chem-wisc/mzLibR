@@ -57,10 +57,12 @@ readers_read_results(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 
 ## Value
 
-An `mzlibr_result_records`. `record_count` counts the records in the
-**whole file** regardless of `limit` and `offset`; `returned_count`
-counts the records that came back, starting `offset` records in;
-`rows_not_read` counts data rows that did not become records.
+An `mzlibr_result_records`, carrying the file's `reader`,
+`absent_fields`, `failed_fields` and `excluded_fields` as every read
+does. `record_count` counts the records in the **whole file** regardless
+of `limit` and `offset`; `returned_count` counts the records that came
+back, starting `offset` records in; `rows_not_read` counts data rows
+that did not become records.
 
 `records` is a data.frame of the record view, one row per record, or
 `NULL` when `out` was given. `retention_time` is in minutes for all four
@@ -137,6 +139,10 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string; never `NA`. The mzLib SupportedFileType that was dispatched.
 
+- `reader`:
+
+  string; never `NA`. The mzLib reader class that parsed the file.
+
 - `record_count`:
 
   int; in **records**; never `NA`. Records in the whole file, before the
@@ -163,6 +169,22 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `column_names`:
 
   string\[\]; never `NA`. Column order.
+
+- `absent_fields`:
+
+  string\[\]; never `NA`. Columns the view defines that this file's
+  format has no column or source for; null in every row (BULK.md section
+  4). Empty when every column has a source.
+
+- `failed_fields`:
+
+  string\[\]; never `NA`. 'field: ExceptionType' for each column whose
+  read threw on some returned rows; those cells are null.
+
+- `excluded_fields`:
+
+  object\[\]; never `NA`. {field, type, reason, verb} for each field
+  with no column shape; verb names the command that carries it, or null.
 
 - `error`:
 
@@ -242,33 +264,13 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string; never `NA`. ';'-joined organisms.
 
-## On the wire but not projected yet
-
-The bridge sends these, and this version of mzLibR does not return them
-yet:
-
-- `reader`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `absent_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `failed_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `excluded_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
 ## Errors
 
 Each is an R condition carrying the class shown and `mzlib_error`; see
 [`mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md).
-A condition that mentions `paths-stdin`, `threads` or `on-error` belongs
-to the verb's many-files form.
+A condition that mentions `paths-stdin`, `threads` or `on-error` comes
+only from
+[`readers_read_results_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results_many.md).
 
 - `mzlib_usage_error` (usage):
 
@@ -335,7 +337,10 @@ to the verb's many-files form.
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
-any work.
+any work. For many files call
+[`readers_read_results_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results_many.md)
+once rather than looping this function: one process, one start-up, and
+the thread count stated on the wire.
 
 ## Same verb in other bindings
 
@@ -345,7 +350,8 @@ any work.
 - Rust (mzLibRust): `mzlib::readers::read_results_with` with
   `ReadOptions`; many files: `mzlib::readers::read_results_many`
 
-- R (mzLibR): `readers_read_results`
+- R (mzLibR): `readers_read_results`; many files:
+  [`readers_read_results_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results_many.md)
 
 ## Since
 
@@ -361,6 +367,7 @@ The spec records these as open. They are listed rather than hidden:
 
 ## See also
 
+[`readers_read_results_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results_many.md),
 [`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md),
 [`readers_retention_time_in_minutes`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_retention_time_in_minutes.md)
 
@@ -377,6 +384,7 @@ psms
 #>   ! is_decoy is null for this format: MSFragger's psm.tsv carries no target/decoy column, so mzLib cannot report decoy status (MsFraggerPsm.cs:231) and the field crosses as null. Null means 'unknown', not 'target' - do not filter this format on is_decoy == false.
 #>   ! monoisotopic_mass is the THEORETICAL peptide mass (MsFraggerPsm.cs:233, CalculatedPeptideMass), not the observed precursor mass. The psmtsv formats report the theoretical mass here too, so the two are consistent - but neither is what the instrument measured.
 #>   ! file_name is the full 'Spectrum File' path including its .pep.xml extension, whereas the psmtsv formats report a bare base name. The field is not a join key across formats.
+#>   absent from this file (NA in every row): is_decoy
 psms$records[, c("base_sequence", "charge_state", "retention_time")]
 #>   base_sequence charge_state retention_time
 #> 1       KPVGAAK            2     0.03233000

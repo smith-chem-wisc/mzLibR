@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul>
@@ -150,6 +151,30 @@ peptide table shows 52.</p>
 <span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="re-quantify-proteins-under-a-new-design">Re-quantify proteins under a new design<a class="anchor" aria-label="anchor" href="#re-quantify-proteins-under-a-new-design"></a>
+</h2>
+<p><code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code> reruns only the protein
+roll-up, from the <code>QuantifiedPeptides.tsv</code> FlashLFQ wrote,
+without re-reading any spectra. The design says which runs are
+replicates of which sample, and the result is keyed by sample:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">polished</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish</a></span><span class="op">(</span><span class="st">"QuantifiedPeptides.tsv"</span>,</span>
+<span>  design <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>file_name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"run_3"</span>, <span class="st">"run_4"</span><span class="op">)</span>, condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"treated"</span><span class="op">)</span>,</span>
+<span>                      biological_replicate <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">polished</span><span class="op">$</span><span class="va">samples</span></span>
+<span><span class="co">#&gt;       label condition biological_replicate</span></span>
+<span><span class="co">#&gt; 1 control_1   control                    0</span></span>
+<span><span class="co">#&gt; 2 treated_1   treated                    0</span></span>
+<span><span class="va">polished</span><span class="op">$</span><span class="va">proteins</span></span>
+<span><span class="co">#&gt;   protein_group gene_name     organism    sample intensity</span></span>
+<span><span class="co">#&gt; 1            P1     GENE1 Homo sapiens control_1    3005.6</span></span>
+<span><span class="co">#&gt; 2            P1     GENE1 Homo sapiens treated_1    6011.3</span></span>
+<span><span class="co">#&gt; 3            P2     GENE2 Homo sapiens control_1    2262.7</span></span>
+<span><span class="co">#&gt; 4            P2     GENE2 Homo sapiens treated_1    2368.5</span></span>
+<span><span class="co">#&gt; 5            P3     GENE3 Homo sapiens control_1        NA</span></span>
+<span><span class="co">#&gt; 6            P3     GENE3 Homo sapiens treated_1        NA</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="before-a-real-run">Before a real run<a class="anchor" aria-label="anchor" href="#before-a-real-run"></a>
 </h2>
 <ul>
@@ -158,8 +183,9 @@ mzML runs; convert <code>.raw</code> first.</li>
 <li>Give <code>spectra</code> a <code>condition</code> and
 <code>biological_replicate</code> so FlashLFQ knows which runs are
 comparable; match-between-runs needs a balanced design.</li>
-<li>Read the <code>max_threads</code> argument in
-<code><a href="../reference/flashlfq_quantify.html">?flashlfq_quantify</a></code> before changing it.</li>
+<li>
+<code>max_threads</code> defaults to 1 here and to every core in
+pyMzLib and mzLibRust; <code><a href="../reference/flashlfq_quantify.html">?flashlfq_quantify</a></code> says why.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

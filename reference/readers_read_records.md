@@ -5,7 +5,7 @@ fields, naming every field that could not become a column.
 
 The exhaustive verb: if
 [`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
-succeeds on a path, this reads it. All 31 file types, including the 14
+succeeds on a path, this reads it. All 36 file types, including the 17
 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
 peptide and protein tables, the FlashDeconv formats, SDRF - which no
 other `readers_` function can touch.
@@ -57,7 +57,13 @@ An `mzlibr_native_records`. `records` is a data.frame of this format's
 own fields, or `NULL` when `out` was given. `record_count` counts the
 records in the whole file, `returned_count` the records returned,
 starting `offset` records in. `column_names`, `record_type`, `views`,
-`excluded_fields` and `failed_fields` describe the table.
+`caveats`, `absent_fields`, `excluded_fields` and `failed_fields`
+describe the table. For mzIdentML, `skipped_count` counts the
+identification items mzLib did not turn into rows and `skipped` lists
+each with its reason (`NA`/`NULL` for every other format).
+`retention_time_unit` is `NA`: the columns are the format's own and
+declare none. `rows_not_read` counts data rows that did not become
+records, where one line is one record.
 
 ## The columns are not uniform, by design
 
@@ -195,11 +201,52 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   mzIdentML scores: readers read-matches) or is null. Empty when every
   property projects.
 
+- `rows_not_read`:
+
+  int; in **rows**; `NA` when the count is not meaningful for this
+  format (only the psmtsv family and MSFragger are one line per record).
+  Data rows that did not become records; mzLib drops a malformed psmtsv
+  line silently.
+
+- `retention_time_unit`:
+
+  string; `NA` when always: the columns are the format's own, and
+  several formats carry more than one time column. Always null for this
+  verb; use a typed view when units matter.
+
+- `caveats`:
+
+  string\[\]; never `NA`. Always empty for this verb; the static caveats
+  below apply.
+
+- `absent_fields`:
+
+  string\[\]; never `NA`. Columns this file's header has no column for:
+  the record type reads them from an \[Optional\] CsvHelper column the
+  file lacks, so every value is mzLib's default and crosses null (e.g.
+  mbr_score on a current FlashLFQ peaks table, \#1345; q_value and
+  pep_q_value on an MsPathFinderT targets file). Judged from mzLib's own
+  \[Name\]/\[Optional\] attributes against the file's header; empty
+  means none found or no basis to judge.
+
 - `error`:
 
   object; `NA` when always, for a single path: a file that cannot be
   read fails the call instead. {kind, type, message}; non-null only in a
   files\[\] entry under on-error skip.
+
+- `skipped_count`:
+
+  int; in **items**; `NA` when the format keeps no skip list (every
+  format but mzIdentML). mzIdentML items mzLib did not represent as
+  records (crosslinks, unresolvable modifications, substitutions;
+  \#1313).
+
+- `skipped`:
+
+  object\[\]; `NA` when as skipped_count.
+  {spectrum_identification_item_id, spectrum_id, reason} per skipped
+  item.
 
 - `failed_fields`:
 
@@ -249,41 +296,13 @@ named in `column_names`. Every cell follows these rules:
 - A column named in absent_fields is null in every row, whatever default
   mzLib filled in.
 
-## On the wire but not projected yet
-
-The bridge sends these, and this version of mzLibR does not return them
-yet:
-
-- `rows_not_read`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `retention_time_unit`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `caveats`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `absent_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `skipped_count`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `skipped`:
-
-  arrives with the mzLib 1.0.592 port.
-
 ## Errors
 
 Each is an R condition carrying the class shown and `mzlib_error`; see
 [`mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md).
-A condition that mentions `paths-stdin`, `threads` or `on-error` belongs
-to the verb's many-files form.
+A condition that mentions `paths-stdin`, `threads` or `on-error` comes
+only from
+[`readers_read_records_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records_many.md).
 
 - `mzlib_usage_error` (usage):
 
@@ -380,7 +399,10 @@ to the verb's many-files form.
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
-any work.
+any work. For many files call
+[`readers_read_records_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records_many.md)
+once rather than looping this function: one process, one start-up, and
+the thread count stated on the wire.
 
 ## Same verb in other bindings
 
@@ -390,7 +412,8 @@ any work.
 - Rust (mzLibRust): `mzlib::readers::read_records_with` with
   `ReadOptions`; many files: `mzlib::readers::read_records_many`
 
-- R (mzLibR): `readers_read_records`
+- R (mzLibR): `readers_read_records`; many files:
+  [`readers_read_records_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records_many.md)
 
 ## Since
 
@@ -416,6 +439,7 @@ The spec records these as open. They are listed rather than hidden:
 
 ## See also
 
+[`readers_read_records_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records_many.md),
 [`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md),
 [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
 
@@ -423,12 +447,11 @@ The spec records these as open. They are listed rather than hidden:
 
 ``` r
 
-prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv", limit = 3)
+prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv")
 prsms
-#> <mzlibr_native_records> E:\CodeReview\pymzlib-readers-wt\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\ToppicPrsm_TopPICv1.6.2_prsm.tsv (ToppicPrsm)
+#> <mzlibr_native_records> C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\ToppicPrsm_TopPICv1.6.2_prsm.tsv (ToppicPrsm)
 #>   36 columns from ToppicPrsm - no cross-format view
-#>   4 records in the file, 3 returned
-#>   ! truncated - records were left behind
+#>   4 records in the file, 4 returned
 #>   1 field(s) could not become columns: alternative_identifications
 head(prsms$column_names)
 #> [1] "file_name_without_extension" "file_path"                  
@@ -439,9 +462,10 @@ prsms$records[, c("one_based_scan_number", "base_sequence", "e_value")]
 #> 1                   259        GYASDS  1e+300
 #> 2                   270         THIGY  1e+300
 #> 3                   354      SAECTKRF  1e+300
+#> 4                   361      THASEKGY  1e+300
 prsms$excluded_fields
 #>                         field                      type
 #> 1 alternative_identifications List<AlternativeToppicId>
-#>                                                    reason
-#> 1 a list of composite values has no faithful column shape
+#>                                                    reason verb
+#> 1 a list of composite values has no faithful column shape   NA
 ```

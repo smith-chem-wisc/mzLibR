@@ -23,7 +23,7 @@ mzlibr_bridge_version(runner = bridge_run)
 
 ## Value
 
-A list with `bridge`, `protocol`, `runtime` and `mzlib`.
+A list with `bridge`, `protocol`, `runtime`, `mzlib` and `verbs`.
 
 `mzlib` is which mzLib the bridge was built against, as
 `1.0.0+<commit>`, and is `NA_character_` when the bridge did not report
@@ -35,6 +35,14 @@ running.
 It is deliberately **not** a compatibility check. `protocol` is that,
 and it is what this function verifies. `mzlib` is for reporting a run,
 filing a bug, or tying a result to the library that produced it.
+
+`verbs` is every command the bridge dispatches, such as
+`"readers read-protein-groups"`, taken from its own dispatch table when
+it was built, so it cannot list one it lacks. It is `NA_character_` for
+a bridge from before pyMzLib 0.2.0, which did not report it. mzLibR
+checks it before calling a command newer than the bridge it may be
+paired with, so an old bridge is reported as old rather than answering
+"Unknown command".
 
 ## Wraps
 
@@ -73,14 +81,14 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   string; `NA` when the build recorded no mzLib commit. Which mzLib the
   bridge links, as 1.0.0+\<commit\>, read from the linked assembly.
 
-## On the wire but not projected yet
-
-The bridge sends these, and this version of mzLibR does not return them
-yet:
-
 - `verbs`:
 
-  arrives with the mzLib 1.0.592 port.
+  string\[\]; never `NA`. Every verb this bridge dispatches, in dispatch
+  order, GENERATED at build time from the DispatchAsync switch (BULK.md
+  section 5). Absent from bridges before pyMzLib 0.2.0 (optional
+  forever). A binding calling a verb its bridge does not list raises its
+  usage error naming the release that has it, from that verb's since,
+  instead of spawning a process.
 
 ## Errors
 

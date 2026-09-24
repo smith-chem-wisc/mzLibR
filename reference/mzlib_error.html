@@ -27,6 +27,7 @@ Nothing needs to be imported: tryCatch() dispatches on the class vector itself."
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -117,7 +118,7 @@ add <code>error_type</code>; <code>mzlib_timeout</code> adds <code>seconds</code
 <span class="r-in"><span>  <span class="fu"><a href="readers_read_spectra.html">readers_read_spectra</a></span><span class="op">(</span><span class="st">"run.mzML"</span>, limit <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  mzlib_usage_error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">conditionMessage</a></span><span class="op">(</span><span class="va">e</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "limit must be a positive whole number, or NULL for every record; got -1."</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "limit must be a non-negative whole number, or NULL for every record; got -1."</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Every class also carries mzlib_error, so one handler can catch them all.</span></span></span>
 <span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mzlibr.bridge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-bridge"</span><span class="op">)</span><span class="op">)</span></span></span>

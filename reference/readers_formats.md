@@ -26,9 +26,9 @@ A data.frame with one row per format: `file_type`, `extension`,
 
 ## Views, and why most formats have none
 
-It is tempting to read "31 formats" as "31 formats in one uniform
-shape". They are not. The formats fall into disjoint families, and **14
-of the 31 belong to none of them** — an empty `views` is a real and
+It is tempting to read "36 formats" as "36 formats in one uniform
+shape". They are not. The formats fall into disjoint families, and **17
+of the 36 belong to none of them** — an empty `views` is a real and
 common answer, meaning mzLib can parse the file but offers no
 cross-format projection of it.
 
@@ -166,7 +166,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 formats <- readers_formats()
 nrow(formats)
-#> [1] 31
+#> [1] 36
 formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
 #>       file_type  extension           reader
 #> 12       psmtsv    .psmtsv   PsmFromTsvFile
@@ -176,5 +176,5 @@ formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
 
 # An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.
 sum(lengths(formats$views) == 0)
-#> [1] 14
+#> [1] 17
 ```

@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul>
@@ -73,9 +74,34 @@
 files and download the ones you choose, using mzLib’s paging and URL
 resolution.</p>
 <div class="section level2">
+<h2 id="find-a-project">Find a project<a class="anchor" aria-label="anchor" href="#find-a-project"></a>
+</h2>
+<p><code><a href="../reference/pride_search.html">pride_search()</a></code> is the discovery step: it turns a subject
+into the accessions every other function takes, with every page fetched
+and no accession repeated.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hits</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pride_search.html">pride_search</a></span><span class="op">(</span><span class="st">"plasmodium falciparum schizont"</span><span class="op">)</span></span>
+<span><span class="va">hits</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"accession"</span>, <span class="st">"submission_type"</span>, <span class="st">"publication_date"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   accession submission_type publication_date</span></span>
+<span><span class="co">#&gt; 1 PXD070842        COMPLETE       2026-06-01</span></span>
+<span><span class="co">#&gt; 2 PXD020210        COMPLETE       2021-01-25</span></span>
+<span><span class="co">#&gt; 3 PXD020189        COMPLETE       2021-01-25</span></span>
+<span><span class="co">#&gt; 4 PXD008250         PARTIAL       2018-02-13</span></span>
+<span><span class="co">#&gt; 5 PXD001684         PARTIAL       2015-04-23</span></span>
+<span><span class="co">#&gt; 6 PXD000070        COMPLETE       2014-04-24</span></span>
+<span><span class="va">hits</span><span class="op">$</span><span class="va">organisms</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "Homo sapiens (human)"                "Plasmodium falciparum (isolate 3d7)"</span></span>
+<span><span class="va">hits</span><span class="op">$</span><span class="va">matched_fields</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "references" "title"</span></span></code></pre></div>
+<p>A hit is a search-index projection, not the project’s metadata:
+vocabulary fields arrive as display strings with no accessions, a count
+of 0 means “not reported”, and <code>project_file_names</code> is not
+the manifest. Follow the <code>accession</code>.</p>
+</div>
+<div class="section level2">
 <h2 id="list-then-choose-with">List, then choose with <code>[</code><a class="anchor" aria-label="anchor" href="#list-then-choose-with"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pride_list_files.html">pride_list_files</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span></span>
 <span><span class="va">files</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_name"</span>, <span class="st">"category"</span>, <span class="st">"size_mb"</span>, <span class="st">"downloadable"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                                                     file_name category</span></span>
@@ -101,7 +127,7 @@ resolution.</p>
 <code>category</code> and <code>extensions</code> filters of
 <code><a href="../reference/pride_download.html">pride_download()</a></code> cannot, such as “under 5 MB” or
 “everything except the raw file”.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">small</span> <span class="op">&lt;-</span> <span class="va">files</span><span class="op">[</span><span class="va">files</span><span class="op">$</span><span class="va">size_mb</span> <span class="op">&lt;</span> <span class="fl">5</span> <span class="op">&amp;</span> <span class="va">files</span><span class="op">$</span><span class="va">downloadable</span>, <span class="op">]</span></span>
 <span><span class="va">small</span><span class="op">$</span><span class="va">file_name</span></span>
 <span><span class="co">#&gt; [1] "PRIDE_Exp_Complete_Ac_22134.pride.mztab.gz"</span></span>
@@ -109,7 +135,7 @@ resolution.</p>
 <span><span class="co">#&gt; [3] "F063721.dat-mztab.txt"</span></span>
 <span><span class="fu"><a href="../reference/pride_total_size_bytes.html">pride_total_size_bytes</a></span><span class="op">(</span><span class="va">small</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 2460451</span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pride_download_files.html">pride_download_files</a></span><span class="op">(</span><span class="va">small</span>, <span class="st">"downloads"</span><span class="op">)</span>   <span class="co"># needs the network</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -124,7 +150,7 @@ bound.</p>
 publishes 8 files for PXD000001; the FTP tree holds 13, including the
 two largest. <code><a href="../reference/pride_list_ftp_files.html">pride_list_ftp_files()</a></code> walks the tree
 instead:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">listing</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pride_list_ftp_files.html">pride_list_ftp_files</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span></span>
 <span><span class="va">listing</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"relative_path"</span>, <span class="st">"approximate_size_mb"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;             relative_path approximate_size_mb</span></span>
@@ -145,7 +171,7 @@ with any HTTPS client, for example <code><a href="https://rdrr.io/r/utils/downlo
 reporting success with nothing downloaded. A compressed file’s extension
 is <code>.gz</code>, so <code>extensions = ".mgf"</code> matches nothing
 in PXD000001:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pride_download.html">pride_download</a></span><span class="op">(</span><span class="st">"PXD000001"</span>, <span class="st">"downloads"</span>, category <span class="op">=</span> <span class="st">"PEAK"</span>, extensions <span class="op">=</span> <span class="st">".gz"</span><span class="op">)</span></span></code></pre></div>
 <p>An unknown accession raises <code>mzlib_project_not_found</code>, and
 an EBI outage raises <code>mzlib_service_unavailable</code>, which is

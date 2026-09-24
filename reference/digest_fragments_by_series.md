@@ -1,7 +1,7 @@
 # Fragment ions per product type
 
-**Prefer this to `nrow(digest$fragments)` whenever the ion series
-matter, which for ETD is always.** A bare total folds in the one extra
+\*\*Prefer this to `nrow(digest$fragments)` whenever the ion series
+matter, which for ETD is always.\*\* A bare total folds in the one extra
 full-length `z-dot` per peptide, which is not a backbone-cleavage ion
 between two residues.
 

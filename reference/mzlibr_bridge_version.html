@@ -27,6 +27,7 @@ to make work and the first thing to check when something else is wrong."></head>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -71,7 +72,7 @@ to make work and the first thing to check when something else is wrong.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>bridge</code>, <code>protocol</code>, <code>runtime</code> and <code>mzlib</code>.</p>
+    <p>A list with <code>bridge</code>, <code>protocol</code>, <code>runtime</code>, <code>mzlib</code> and <code>verbs</code>.</p>
 <p><code>mzlib</code> is which mzLib the bridge was built against, as <code>1.0.0+&lt;commit&gt;</code>, and is
   <code>NA_character_</code> when the bridge did not report one - either because it predates the field,
   or because its build recorded no source commit. This package installs a bridge rather than
@@ -79,6 +80,11 @@ to make work and the first thing to check when something else is wrong.</p>
 <p>It is deliberately <strong>not</strong> a compatibility check. <code>protocol</code> is that, and it is what this
   function verifies. <code>mzlib</code> is for reporting a run, filing a bug, or tying a result to the
   library that produced it.</p>
+<p><code>verbs</code> is every command the bridge dispatches, such as <code>"readers read-protein-groups"</code>,
+  taken from its own dispatch table when it was built, so it cannot list one it lacks. It is
+  <code>NA_character_</code> for a bridge from before pyMzLib 0.2.0, which did not report it. mzLibR checks
+  it before calling a command newer than the bridge it may be paired with, so an old bridge is
+  reported as old rather than answering "Unknown command".</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
@@ -104,13 +110,8 @@ to make work and the first thing to check when something else is wrong.</p>
 <dt><code>mzlib</code></dt>
 <dd><p>string; <code>NA</code> when the build recorded no mzLib commit. Which mzLib the bridge links, as 1.0.0+&lt;commit&gt;, read from the linked assembly.</p></dd>
 
-
-</dl></div>
-    <div class="section level2">
-    <h2 id="on-the-wire-but-not-projected-yet">On the wire but not projected yet<a class="anchor" aria-label="anchor" href="#on-the-wire-but-not-projected-yet"></a></h2>
-    <p>The bridge sends these, and this version of mzLibR does not return them yet:</p>
-<dl><dt><code>verbs</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
+<dt><code>verbs</code></dt>
+<dd><p>string[]; never <code>NA</code>. Every verb this bridge dispatches, in dispatch order, GENERATED at build time from the DispatchAsync switch (BULK.md section 5). Absent from bridges before pyMzLib 0.2.0 (optional forever). A binding calling a verb its bridge does not list raises its usage error naming the release that has it, from that verb's since, instead of spawning a process.</p></dd>
 
 
 </dl></div>

@@ -5,16 +5,18 @@ scan, sequences, accession, decoy flag, modifications and the q-value,
 rank and threshold a format records - optionally with each engine's
 scores as long rows.
 
-Four file types offer it: MsPathFinderT's targets, decoys and combined
-results, and Casanovo's `.mztab`. These are the identification formats
-that share no \*file\*-level interface, so
+Six file types offer it: MsPathFinderT's targets, decoys and combined
+results, Casanovo's `.mztab`, and mzIdentML `.mzid` and `.mzid.gz` - the
+format most search engines can export. These are the identification
+formats that share no \*file\*-level interface, so
 [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
 cannot reach them.
 
 ## Usage
 
 ``` r
-readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
+readers_read_matches(path, limit = NULL, offset = 0, scores = FALSE, out = NULL,
+  timeout = NULL)
 ```
 
 ## Arguments
@@ -22,7 +24,8 @@ readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 - path:
 
   Path to an MsPathFinderT `_IcTarget.tsv` / `_IcDecoy.tsv` /
-  `_IcTDA.tsv`, or a Casanovo `.mztab`.
+  `_IcTDA.tsv`, a Casanovo `.mztab`, or an mzIdentML `.mzid` /
+  `.mzid.gz`.
 
 - limit:
 
@@ -31,6 +34,13 @@ readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 - offset:
 
   Matches to skip.
+
+- scores:
+
+  Make the table long by score: one row per match and engine score,
+  adding `match_index`, `score_name` and `score_value`. `limit` and
+  `offset` still count matches. Only mzIdentML records scores; for other
+  formats the two score columns are `NA` and named in `absent_fields`.
 
 - out:
 
@@ -44,31 +54,42 @@ readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 
 An `mzlibr_match_records`. `record_count` counts the matches in the
 whole file and `returned_count` the matches returned, starting `offset`
-matches in.
+matches in; `row_count` counts the rows in `records` - more rows than
+matches with `scores = TRUE`. For mzIdentML, `skipped_count` counts the
+identification items mzLib did not turn into rows, and `skipped` lists
+each with its reason; both are `NA`/`NULL` for formats that keep no such
+list.
 
 `records` is a data.frame with `file_name_without_extension`,
 `one_based_scan_number`, `base_sequence`, `full_sequence`, `accession`,
-`is_decoy` (`NA` where the format records no target/decoy label),
-`modifications` and `modification_count`.
+`is_decoy`, `modifications`, `modification_count`, `q_value` - a
+fraction from 0 to 1 - `rank` and `pass_threshold`; with `scores = TRUE`
+also `match_index`, `score_name` and `score_value`, in whatever units
+the engine's score has. A column this format has no source for is `NA`
+in every row and is named in `absent_fields`. `rows_not_read`, the rows
+that did not become matches, is not counted for this view and is `NA`.
 
-## Nothing here is FDR-filtered, and there is nothing to filter on
+## Nothing here is FDR-filtered
 
-mzLib's `ISpectralMatch` carries identity fields only. Every one of
-these formats records an E-value or q-value somewhere;
-[`readers_read_records`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
-will give you those columns. Filter before you report.
+Every match is a row, as the file lists it: for mzIdentML that includes
+lower ranks and items that failed the engine's threshold. `q_value` is
+filled only by mzIdentML and by an MsPathFinderT file that carries a
+`QValue` column; `rank` and `pass_threshold` only by mzIdentML. Filter
+before you report - for mzIdentML, on `rank == 1` and `pass_threshold`.
 
-## Two is_decoy traps, both reported in caveats
+## Three is_decoy traps, all reported in caveats
 
 **MsPathFinderT** infers decoys from the protein \*name\* - mzLib
 reports a decoy when the name starts with `XXX`. A database whose decoys
 carry a different prefix reads entirely as targets.
 
-**Casanovo** is de novo and writes no target/decoy label at all. mzLib
-leaves the field at its default `FALSE` and never assigns it, so `FALSE`
-would mean \*unknown\*; it arrives as `NA` instead - the rule
-[`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
-already applies to MSFragger.
+**Casanovo** is de novo and writes no target/decoy label at all, so
+`is_decoy` is `NA` and in `absent_fields` - never a `FALSE` that would
+read as "target".
+
+**mzIdentML**'s `isDecoy` attribute defaults to false when a writer
+omits it, so mzLib cannot tell "target" from "not recorded"; `is_decoy`
+is `NA` and in `absent_fields` here too.
 
 ## Wraps
 
@@ -108,13 +129,13 @@ render the same ones.
   many matches. Absent means no limit; there is deliberately no default
   cap.
 
-- wire `--scores`:
+- `scores`:
 
   flag; default `FALSE`. Make the table long by score: one row per match
   and engine score, adding match_index, score_name and score_value. Only
   mzIdentML records scores (#1306); other formats keep one row per match
   with the two columns in absent_fields. offset and limit still count
-  matches. *Not an argument here: arrives with the mzLib 1.0.592 port.*
+  matches.
 
 - `out`:
 
@@ -134,10 +155,37 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string; never `NA`. The mzLib SupportedFileType that was dispatched.
 
+- `reader`:
+
+  string; never `NA`. The mzLib reader class that parsed the file.
+
+- `skipped_count`:
+
+  int; in **items**; `NA` when the format keeps no skip list (every
+  format but mzIdentML). mzIdentML items mzLib did not represent
+  (crosslinks, unresolvable modifications, substitutions);
+  record_count + skipped_count is the items in the file (#1313).
+
+- `skipped`:
+
+  object\[\]; `NA` when as skipped_count.
+  {spectrum_identification_item_id, spectrum_id, reason} per skipped
+  item.
+
 - `record_count`:
 
   int; in **matches**; never `NA`. Matches in the whole file, before the
   window.
+
+- `rows_not_read`:
+
+  int; in **rows**; `NA` when never counted for this view. Data rows
+  that did not become records.
+
+- `retention_time_unit`:
+
+  string; `NA` when the view has no time column. Always null for this
+  view.
 
 - `caveats`:
 
@@ -148,16 +196,42 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string\[\]; never `NA`. Column order.
 
+- `absent_fields`:
+
+  string\[\]; never `NA`. Columns the view defines that this file's
+  format has no column or source for; null in every row (BULK.md section
+  4). Empty when every column has a source.
+
+- `failed_fields`:
+
+  string\[\]; never `NA`. 'field: ExceptionType' for each column whose
+  read threw on some returned rows; those cells are null.
+
+- `excluded_fields`:
+
+  object\[\]; never `NA`. {field, type, reason, verb} for each field
+  with no column shape; verb names the command that carries it, or null.
+
 - `error`:
 
   object; `NA` when always, for a single path: a file that cannot be
   read fails the call instead. {kind, type, message}; non-null only in a
   files\[\] entry under on-error skip.
 
+- `scores_included`:
+
+  bool; never `NA`. Whether `--scores` made the table long by score.
+
 - `returned_count`:
 
   int; in **matches**; never `NA`. Matches returned in columns (the unit
   offset and limit count in); 0 when written to out.
+
+- `row_count`:
+
+  int; in **rows**; never `NA`. Rows in columns: more than
+  returned_count in a long table, where one record gives several rows; 0
+  when written to out.
 
 - `offset`:
 
@@ -215,81 +289,45 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   int; never `NA`. Modifications on the match.
 
-## On the wire but not projected yet
-
-The bridge sends these, and this version of mzLibR does not return them
-yet:
-
-- `reader`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `skipped_count`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `skipped`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `rows_not_read`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `retention_time_unit`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `absent_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `failed_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `excluded_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `scores_included`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `row_count`:
-
-  arrives with the mzLib 1.0.592 port.
-
 - `q_value`:
 
-  arrives with the mzLib 1.0.592 port.
+  float; in **fraction (0 to 1)**; `NA` when the format has no q-value
+  (in absent_fields) or this mzIdentML item reports none. PSM-level
+  q-value (mzIdentML MS:1002354 or a child; MsPathFinderT QValue).
 
 - `rank`:
 
-  arrives with the mzLib 1.0.592 port.
+  int; `NA` when not mzIdentML (in absent_fields). The item's rank;
+  filter on rank == 1.
 
 - `pass_threshold`:
 
-  arrives with the mzLib 1.0.592 port.
+  bool; `NA` when not mzIdentML (in absent_fields). The item's
+  passThreshold.
 
 - `match_index`:
 
-  arrives with the mzLib 1.0.592 port.
+  int; never `NA`. 0-based position of the match among the file's
+  matches. *Present only with `scores`.*
 
 - `score_name`:
 
-  arrives with the mzLib 1.0.592 port.
+  string; `NA` when the match has no scores, or the format records none
+  (in absent_fields). Engine score name as written, e.g.
+  MS-GF:SpecEValue. *Present only with `scores`.*
 
 - `score_value`:
 
-  arrives with the mzLib 1.0.592 port.
+  float; in **engine-defined (see score_name)**; `NA` when as
+  score_name. The score's value. *Present only with `scores`.*
 
 ## Errors
 
 Each is an R condition carrying the class shown and `mzlib_error`; see
 [`mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md).
-A condition that mentions `paths-stdin`, `threads` or `on-error` belongs
-to the verb's many-files form.
+A condition that mentions `paths-stdin`, `threads` or `on-error` comes
+only from
+[`readers_read_matches_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches_many.md).
 
 - `mzlib_usage_error` (usage):
 
@@ -361,7 +399,10 @@ to the verb's many-files form.
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
-any work.
+any work. For many files call
+[`readers_read_matches_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches_many.md)
+once rather than looping this function: one process, one start-up, and
+the thread count stated on the wire.
 
 ## Same verb in other bindings
 
@@ -371,7 +412,8 @@ any work.
 - Rust (mzLibRust): `mzlib::readers::read_matches_with` with
   `MatchOptions`; many files: `mzlib::readers::read_matches_many`
 
-- R (mzLibR): `readers_read_matches`
+- R (mzLibR): `readers_read_matches`; many files:
+  [`readers_read_matches_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches_many.md)
 
 ## Since
 
@@ -397,26 +439,46 @@ The spec records these as open. They are listed rather than hidden:
 
 ## See also
 
+[`readers_read_matches_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches_many.md),
 [`readers_read_records`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
 
 ## Examples
 
 ``` r
 
-matches <- readers_read_matches("Casanovo_5.0.0.mztab")
+matches <- readers_read_matches("PXD078927_msgf_1_1_0.mzid", limit = 3)
 matches
-#> <mzlibr_match_records> E:\CodeReview\pymzlib-readers-wt\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\Casanovo_5.0.0.mztab (CasanovoMzTab)
-#>   5 records in the file, 5 returned
-#>   ! There is no score, E-value or q-value in this view, so NOTHING here is FDR-filtered. Readers.ISpectralMatch carries identity fields only; every one of these formats records confidence in columns this view does not expose. read-records has them. Filter before you report.
-#>   ! is_decoy is null for this format. Casanovo is de novo and writes no target/decoy label; mzLib's record leaves the field at its default false and never assigns it (CasanovoMzTabRecord.cs:84), so false would mean 'unknown', not 'target'.
-#>   ! one_based_scan_number is the mzTab spectrum INDEX plus one, not necessarily the instrument's scan number (CasanovoMzTabFile.cs:116). When Casanovo was run on an MGF the two are unrelated, so do not join this against a raw file on scan number.
-#>   ! full_sequence and modifications are resolved by matching Casanovo's mass shifts against mzLib's modification dictionary (CasanovoMzTabFile.cs:124), not read from named annotations — Casanovo writes none. An empty value therefore means the peptide is unmodified, but a populated one is mzLib's interpretation of a mass, not the search engine's own call.
+#> <mzlibr_match_records> C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\DataFiles\PXD078927_msgf_1_1_0.mzid (MzIdentML)
+#>   12 records in the file, 3 returned
+#>   ! truncated - records were left behind
+#>   ! NOTHING here is FDR-filtered. q_value is the only confidence field this view carries, and only mzIdentML and an MsPathFinderT file with a QValue column fill it (absent_fields says when it is empty). Every one of these formats records scores this view does not expose; read-records has them. Filter before you report.
+#>   ! is_decoy is null for this format. mzIdentML's isDecoy attribute is optional and defaults to false, and mzLib reports a decoy only when every peptide evidence says so (MzIdentMLResultFile.cs:173), so false cannot be told apart from 'not stated'. read-records carries mzLib's boolean for a caller who knows the writer sets it.
+#>   ! Every SpectrumIdentificationItem is a row, not only the matches the submitter accepted: lower-ranked candidates and items that fail the threshold are here too (MzIdentMLResultFile.cs:177). Filter on rank == 1 and pass_threshold before counting identifications.
+#>   ! one_based_scan_number is parsed from the nativeID (MzIdentMLResultFile.cs:159). 'scan=N' gives N, but 'index=N', which peak-list input carries, is a zero-based position in the file and gives N + 1, not an instrument scan number. -1 means the nativeID had neither.
+#>   ! Items mzLib cannot represent as one linear match are skipped, not failed: crosslinks, modifications without a resolvable UNIMOD accession, substitutions, and two modifications on one residue (MzIdentMLResultFile.cs:123). They are not rows; skipped_count and skipped name each one and why, so record_count plus skipped_count is the number of items in the file.
+#>   ! The engine's own scores (for example MS-GF:SpecEValue) have no common name across search engines (MzIdentMLResultFile.cs:179). Pass scores=true for them as long rows, one per match and score. q_value is null on an item that reports none.
+#>   ! accession joins every protein the item's peptide evidence names with '|' (MzIdentMLRecord.cs:45), the same character a UniProt header uses inside one accession, so the cell cannot be split back into proteins reliably.
+#>   absent from this file (NA in every row): is_decoy
+matches$records[, c("one_based_scan_number", "base_sequence", "q_value", "rank")]
+#>   one_based_scan_number  base_sequence   q_value rank
+#> 1                 14316   HSNLNDATYQRT 0.0000000    1
+#> 2                 14316 KASAGQISVQPTFS 0.6588785    2
+#> 3                 14316   TRQYTADNLNSH 0.7383230    3
+
+# One row per match and engine score:
+scored <- readers_read_matches("PXD078927_msgf_1_1_0.mzid", limit = 1, scores = TRUE)
+scored$records[, c("match_index", "score_name", "score_value")]
+#>   match_index        score_name  score_value
+#> 1           0    MS-GF:RawScore 1.150000e+02
+#> 2           0 MS-GF:DeNovoScore 1.230000e+02
+#> 3           0  MS-GF:SpecEValue 3.041116e-14
+#> 4           0      MS-GF:EValue 8.393480e-12
+#> 5           0      MS-GF:QValue 0.000000e+00
+#> 6           0   MS-GF:PepQValue 0.000000e+00
+#> 7           0      IsotopeError 1.000000e+00
+
 # Casanovo writes no target/decoy label, so is_decoy is NA rather than a false FALSE.
-matches$records[, c("one_based_scan_number", "base_sequence", "is_decoy")]
-#>   one_based_scan_number   base_sequence is_decoy
-#> 1                     1      AGAHLQGGAK       NA
-#> 2                     3       RGTGVENVK       NA
-#> 3                     4 LDDPKEEDEEKEEGK       NA
-#> 4                     5     HQGVMVGMGQK       NA
-#> 5                     7         RQEFEMK       NA
+denovo <- readers_read_matches("Casanovo_5.0.0.mztab")
+denovo$absent_fields
+#> [1] "is_decoy"       "q_value"        "rank"           "pass_threshold"
 ```

@@ -22,7 +22,7 @@ expose:
 | `pride_*` | list, download, filtered download, locations, total size |
 | `peptidoform_*` | digest + fragment, census, fragments-by-series, m/z, truncation |
 | `flashlfq_*` | quantify, MBR peaks/rescued-count, peptide/protein counts |
-| `readers_*` | **identify 31 file types, read the 4 quantifiable ones** — the capability the plan did not know the bridge had; neither sibling implements it |
+| `readers_*` | **identify 36 file types, read the 4 quantifiable ones** — the capability the plan did not know the bridge had; neither sibling implements it |
 
 ## Why no dependencies — it was a correctness decision
 
@@ -85,11 +85,11 @@ FlashLFQ/IonQuant-style quant end-to-end,” not knowing Arm B existed.
 
 ## Two things done differently from the siblings, both deliberate
 
-- **`max_threads` defaults to 1**, not pyMzLib’s −1. Above one thread
-  the roll-up drops MBR intensities nondeterministically (mzLib#1111); a
-  binding that ships unreproducible-by-default is worse than one that
-  diverges from its parent in a documented way. Setting anything else
-  warns.
+- **`max_threads` defaults to 1**, not the wire’s, pyMzLib’s and
+  mzLibRust’s −1. It was chosen when multithreaded runs dropped MBR
+  intensities nondeterministically (mzLib#1111); mzLib#1155 fixed that
+  inside the pinned bridge, so the runtime warning is gone. The default
+  stays until −1 is re-measured on mzLib’s K562 pair.
 - **Docs and man pages are generated from the `#'` blocks** by
   `scripts/build-man.R` (no roxygen2 dependency), and **name parity is
   machine-checked** by `scripts/name-parity.R` against pyMzLib and the

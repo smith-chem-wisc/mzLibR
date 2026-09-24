@@ -38,9 +38,9 @@ peptidoform_fragments(accession, protease = "trypsin|P", dissociation = "ETD",
 
   The dissociation type, e.g. `"ETD"`, `"HCD"`, `"CID"`, `"ECD"`.
 
-  **`"ETD"` and `"ECD"` return the `c` and `zDot` series** (radical N-Ca
-  cleavage yields c/z-dot, not the b/y of vibrational activation). mzLib
-  PR \#1114 removed the spurious `y` series ETD used to emit.
+  \*\*`"ETD"` and `"ECD"` return the `c` and `zDot` series\*\* (radical
+  N-Ca cleavage yields c/z-dot, not the b/y of vibrational activation).
+  mzLib PR \#1114 removed the spurious `y` series ETD used to emit.
 
 - modifications:
 
@@ -119,9 +119,9 @@ residues; `missed_cleavages` in cleavage sites; `modification_count` in
 modifications; and `fixed_charges`, the formal charge the intact peptide
 carries before protonation.
 
-**`peptides` holds peptidoforms, not distinct sequences.** One row per
-sequence-and-modification-placement, so albumin at two modifications is
-**303** rows over **195** distinct sequences. Both are legitimate
+\*\*`peptides` holds peptidoforms, not distinct sequences. **One row per
+sequence-and-modification-placement, so albumin at two modifications
+is** 303 **rows over** 195\*\* distinct sequences. Both are legitimate
 answers to "how many peptides" and they are not interchangeable; quoting
 one for the other is a large error, not a rounding one. See
 [`digest_distinct_base_sequences`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_distinct_base_sequences.md).

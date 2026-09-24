@@ -36,9 +36,9 @@ Thomson high, on the most important histone modification there is.
 A peptide with a fixed charge is observable at that charge with no
 protonation at all, which is why `charge` may not be below it.
 
-Note that **fragments carry `neutral_mass` and deliberately have no
-m/z**: a c or z ion carries only the fixed charges within its own span,
-and per-fragment charge accounting does not exist on this wire.
+Note that \*\*fragments carry `neutral_mass` and deliberately have no
+m/z\*\*: a c or z ion carries only the fixed charges within its own
+span, and per-fragment charge accounting does not exist on this wire.
 
 ## Value
 

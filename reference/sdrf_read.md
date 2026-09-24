@@ -77,14 +77,18 @@ arrives exactly as written, because it cannot be told apart from a
 `"not applicable"` mean the experiment stated an absence. `NA` means the
 document has no such column. Do not collapse them.
 
-## It does not validate yet
+## Reading is not validating
 
-mzLib models SDRF's structural rules in `SdrfValidator` and its
-vocabulary-drift rules in `SdrfDriftLint`. Both have been public since
-mzLib \#1207, which the pinned bridge includes, but the bridge does not
-expose them yet. When it does, they will be projected here from mzLib
-rather than reimplemented. Until then this makes no claim about whether
-a document is correct.
+This reads whatever the file holds and makes no claim that it is
+correct. mzLib's judgements about a document are their own functions:
+[`sdrf_validate`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md)
+checks the specification's structural rules,
+[`sdrf_assess`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md)
+asks whether the sample columns describe a design at all,
+[`sdrf_samples`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md)
+merges each sample's rows with its age parsed, and
+[`sdrf_lint`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md)
+finds concepts several documents wrote inconsistently.
 
 ## Wraps
 
@@ -225,7 +229,8 @@ The spec records these as open. They are listed rather than hidden:
 [`sdrf_pool`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md),
 [`sdrf_value`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_value.md),
 [`sdrf_all`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_all.md),
-[`sdrf_records`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_records.md)
+[`sdrf_records`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_records.md),
+[`sdrf_validate`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md)
 
 ## Examples
 

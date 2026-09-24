@@ -78,6 +78,25 @@ format; `injection_time` in ms; `total_ion_current` and
 columns, one vector per scan. A precursor field is `NA` on an MS1 scan;
 the generated sections below say what `NA` means for every column.
 
+`source` is what the file records about the run (mzLib `SourceFile`):
+`instrument_model`, `instrument_model_accession` (match on this, never
+the name), `instrument_serial_number`, `acquisition_start_time` as
+ISO-8601 text, and `acquisition_start_time_is_utc`. Each is `NA` when
+the file does not record it - MGF and msalign record none - and `source`
+is `NULL` only when the reader built no description at all.
+`failed_fields` names any column whose read threw on some scans.
+`rows_not_read` is always `NA`: rows are not counted for this view.
+
+## When did acquisition start, and on which clock
+
+`acquisition_start_time` ends in `Z` only when the file fixed the
+instant, as an mzML `startTimeStamp` with an offset does; otherwise it
+is the acquisition computer's wall-clock time, and
+`acquisition_start_time_is_utc` is `FALSE`. A Thermo `.raw` is always
+local time, and ProteoWizard's mzML of the same run writes it as UTC
+assuming the \*converting\* machine's time zone - so the two can differ
+by the site's UTC offset.
+
 ## Two of the seven need Windows
 
 Bruker `.d` and timsTOF `.d` are read through vendor native libraries
@@ -208,6 +227,42 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   object; `NA` when out was not given. {path, format: "tsv", row_count}
   when out was given.
+
+- `source`:
+
+  object; `NA` when the reader built no source-file description at all
+  (inner fields are null individually when the file does not record
+  them). {instrument_model, instrument_model_accession,
+  instrument_serial_number, acquisition_start_time,
+  acquisition_start_time_is_utc} from mzLib SourceFile (#1349).
+  instrument_model is the model NAME and instrument_model_accession its
+  PSI-MS accession (mzML has both; Thermo .raw only the name, so the
+  accession is null - match on the accession, never the name).
+  acquisition_start_time is ISO-8601 text, ending in Z only when the
+  source fixed the instant (mzML startTimeStamp with an offset);
+  otherwise the acquisition PC's wall-clock time.
+  acquisition_start_time_is_utc is never null: false means local
+  instrument-PC time or absent, and is always false for Thermo .raw.
+  Each inner field is null when the file does not record it (MGF and
+  msalign record none).
+
+- `rows_not_read`:
+
+  int; in **rows**; `NA` when never counted for this verb. Always null.
+
+- `absent_fields`:
+
+  string\[\]; never `NA`. Always empty for this verb: an unrecorded scan
+  field is null per scan.
+
+- `failed_fields`:
+
+  string\[\]; never `NA`. 'field: ExceptionType' for each column whose
+  read threw on some scans; those cells are null.
+
+- `excluded_fields`:
+
+  object\[\]; never `NA`. Always empty for this verb.
 
 - `error`:
 
@@ -343,37 +398,13 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   spectrum. Peak intensities, parallel to mz. *Present only with
   `peaks`.*
 
-## On the wire but not projected yet
-
-The bridge sends these, and this version of mzLibR does not return them
-yet:
-
-- `source`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `rows_not_read`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `absent_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `failed_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
-- `excluded_fields`:
-
-  arrives with the mzLib 1.0.592 port.
-
 ## Errors
 
 Each is an R condition carrying the class shown and `mzlib_error`; see
 [`mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md).
-A condition that mentions `paths-stdin`, `threads` or `on-error` belongs
-to the verb's many-files form.
+A condition that mentions `paths-stdin`, `threads` or `on-error` comes
+only from
+[`readers_read_spectra_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra_many.md).
 
 - `mzlib_usage_error` (usage):
 
@@ -456,7 +487,10 @@ to the verb's many-files form.
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
-any work.
+any work. For many files call
+[`readers_read_spectra_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra_many.md)
+once rather than looping this function: one process, one start-up, and
+the thread count stated on the wire.
 
 ## Same verb in other bindings
 
@@ -466,7 +500,8 @@ any work.
 - Rust (mzLibRust): `mzlib::readers::read_spectra_with` with
   `SpectraOptions`; many files: `mzlib::readers::read_spectra_many`
 
-- R (mzLibR): `readers_read_spectra`
+- R (mzLibR): `readers_read_spectra`; many files:
+  [`readers_read_spectra_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra_many.md)
 
 ## Since
 
@@ -490,6 +525,7 @@ The spec records these as open. They are listed rather than hidden:
 
 ## See also
 
+[`readers_read_spectra_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra_many.md),
 [`readers_read_records`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
 
 ## Examples
@@ -498,7 +534,7 @@ The spec records these as open. They are listed rather than hidden:
 
 scans <- readers_read_spectra("sliced_ethcd.mzML", limit = 3)
 scans
-#> <mzlibr_scan_records> E:\CodeReview\pymzlib-readers-wt\code\mzLib\mzLib\Test\DataFiles\sliced_ethcd.mzML (MzML, Mzml)
+#> <mzlibr_scan_records> C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\DataFiles\sliced_ethcd.mzML (MzML, Mzml)
 #>   6 scans in the file
 #>   6 records in the file, 3 returned
 #>   ! truncated - records were left behind

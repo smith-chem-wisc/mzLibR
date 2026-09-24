@@ -23,6 +23,7 @@ Quantify a search's peptides across mzML runs with FlashLFQ"></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -62,7 +63,7 @@ Quantify a search's peptides across mzML runs with FlashLFQ"></head><body>
 
 
 <dl><dt id="arg-psms">psms<a class="anchor" aria-label="anchor" href="#arg-psms"></a></dt>
-<dd><p>Path to a PSM result file. <strong>Use a MetaMorpheus <code>.psmtsv</code> or <code>.osmtsv</code>.</strong> Every
+<dd><p>Path to a PSM result file. **Use a MetaMorpheus <code>.psmtsv</code> or <code>.osmtsv</code>.** Every
   run named in the file must have a matching mzML in <code>spectra</code>; FlashLFQ matches
   identifications to runs by base file name.</p></dd>
 
@@ -96,7 +97,7 @@ Quantify a search's peptides across mzML runs with FlashLFQ"></head><body>
 <p>MBR needs a <strong>complete, balanced design</strong> to work properly, and <code>mbr_q_value_threshold</code> is
   its FDR control - without it roughly 80% of transfers are false. Set <code>condition</code> and
   <code>biological_replicate</code> on <code>spectra</code> so FlashLFQ knows which runs are comparable.</p>
-<p><strong>Whatever you do, count transfers from <code>peaks</code>, never from <code>peptides</code>.</strong> See the return
+<p>**Whatever you do, count transfers from <code>peaks</code>, never from <code>peptides</code>.** See the return
   value.</p></dd>
 
 
@@ -125,12 +126,13 @@ Quantify a search's peptides across mzML runs with FlashLFQ"></head><body>
 
 
 <dt id="arg-max-threads">max_threads<a class="anchor" aria-label="anchor" href="#arg-max-threads"></a></dt>
-<dd><p>Worker threads. <strong>Defaults to 1 here, which differs from pyMzLib's -1, and
-  deliberately.</strong></p>
-<p>With more than one thread the peptide roll-up nondeterministically drops MBR intensities,
-  so identical inputs give different protein-level answers roughly <strong>1 run in 6</strong> - a
-  borderline protein was unresolvable in 5 of 6 repeats. Any figure produced multithreaded
-  may not reproduce (smith-chem-wisc/mzLib#1111). mzLibR warns if you set anything else.</p></dd>
+<dd><p>Worker threads, or <code>-1</code> for one per core. <strong>Defaults to 1 here, where the
+  bridge, pyMzLib and mzLibRust default to -1.</strong></p>
+<p>One thread is reproducible by construction, and it is what this package has always shipped.
+  The multithreaded nondeterminism that made it the default here (the peptide roll-up dropping
+  MBR intensities, smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
+  includes, so <code>-1</code> is expected to give the same answer faster; that has not yet been
+  re-measured on mzLib's K562 pair, which is why the default has not moved.</p></dd>
 
 
 <dt id="arg-output-directory">output_directory<a class="anchor" aria-label="anchor" href="#arg-output-directory"></a></dt>

@@ -25,6 +25,7 @@ Thermo .raw, Bruker .d and timsTOF .d."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -117,6 +118,23 @@ the boundary, unlike its result-file readers, which pass the tool's own unit thr
   <code>selected_ion_monoisotopic_guess_mz</code> in m/z. With <code>peaks = TRUE</code>, <code>mz</code> (m/z) and <code>intensity</code>
   (instrument units) are list columns, one vector per scan. A precursor field is <code>NA</code> on an MS1
   scan; the generated sections below say what <code>NA</code> means for every column.</p>
+<p><code>source</code> is what the file records about the run (mzLib <code>SourceFile</code>): <code>instrument_model</code>,
+  <code>instrument_model_accession</code> (match on this, never the name), <code>instrument_serial_number</code>,
+  <code>acquisition_start_time</code> as ISO-8601 text, and <code>acquisition_start_time_is_utc</code>. Each is <code>NA</code>
+  when the file does not record it - MGF and msalign record none - and <code>source</code> is <code>NULL</code> only
+  when the reader built no description at all. <code>failed_fields</code> names any column whose read
+  threw on some scans. <code>rows_not_read</code> is always <code>NA</code>: rows are not counted for this view.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="when-did-acquisition-start-and-on-which-clock">When did acquisition start, and on which clock<a class="anchor" aria-label="anchor" href="#when-did-acquisition-start-and-on-which-clock"></a></h2>
+
+
+
+<p><code>acquisition_start_time</code> ends in <code>Z</code> only when the file fixed the instant, as an mzML
+<code>startTimeStamp</code> with an offset does; otherwise it is the acquisition computer's wall-clock time,
+and <code>acquisition_start_time_is_utc</code> is <code>FALSE</code>. A Thermo <code>.raw</code> is always local time, and
+ProteoWizard's mzML of the same run writes it as UTC assuming the *converting* machine's time
+zone - so the two can differ by the site's UTC offset.</p>
     </div>
     <div class="section level2">
     <h2 id="two-of-the-seven-need-windows">Two of the seven need Windows<a class="anchor" aria-label="anchor" href="#two-of-the-seven-need-windows"></a></h2>
@@ -204,6 +222,21 @@ msalign files hold <strong>deconvolved neutral masses</strong>, not raw m/z - do
 
 <dt><code>output</code></dt>
 <dd><p>object; <code>NA</code> when out was not given. {path, format: "tsv", row_count} when out was given.</p></dd>
+
+<dt><code>source</code></dt>
+<dd><p>object; <code>NA</code> when the reader built no source-file description at all (inner fields are null individually when the file does not record them). {instrument_model, instrument_model_accession, instrument_serial_number, acquisition_start_time, acquisition_start_time_is_utc} from mzLib SourceFile (#1349). instrument_model is the model NAME and instrument_model_accession its PSI-MS accession (mzML has both; Thermo .raw only the name, so the accession is null - match on the accession, never the name). acquisition_start_time is ISO-8601 text, ending in Z only when the source fixed the instant (mzML startTimeStamp with an offset); otherwise the acquisition PC's wall-clock time. acquisition_start_time_is_utc is never null: false means local instrument-PC time or absent, and is always false for Thermo .raw. Each inner field is null when the file does not record it (MGF and msalign record none).</p></dd>
+
+<dt><code>rows_not_read</code></dt>
+<dd><p>int; in <strong>rows</strong>; <code>NA</code> when never counted for this verb. Always null.</p></dd>
+
+<dt><code>absent_fields</code></dt>
+<dd><p>string[]; never <code>NA</code>. Always empty for this verb: an unrecorded scan field is null per scan.</p></dd>
+
+<dt><code>failed_fields</code></dt>
+<dd><p>string[]; never <code>NA</code>. 'field: ExceptionType' for each column whose read threw on some scans; those cells are null.</p></dd>
+
+<dt><code>excluded_fields</code></dt>
+<dd><p>object[]; never <code>NA</code>. Always empty for this verb.</p></dd>
 
 <dt><code>error</code></dt>
 <dd><p>object; <code>NA</code> when always, for a single path: a file that cannot be read fails the call instead. {kind, type, message}; non-null only in a files[] entry under on-error skip.</p></dd>
@@ -294,28 +327,8 @@ msalign files hold <strong>deconvolved neutral masses</strong>, not raw m/z - do
 
 </dl></div>
     <div class="section level2">
-    <h2 id="on-the-wire-but-not-projected-yet">On the wire but not projected yet<a class="anchor" aria-label="anchor" href="#on-the-wire-but-not-projected-yet"></a></h2>
-    <p>The bridge sends these, and this version of mzLibR does not return them yet:</p>
-<dl><dt><code>source</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>rows_not_read</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>absent_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>failed_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>excluded_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-
-</dl></div>
-    <div class="section level2">
     <h2 id="errors">Errors<a class="anchor" aria-label="anchor" href="#errors"></a></h2>
-    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> belongs to the verb's many-files form.</p>
+    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> comes only from <code><a href="readers_read_spectra_many.html">readers_read_spectra_many()</a></code>.</p>
 <dl><dt><code>mzlib_usage_error</code> (usage)</dt>
 <dd><p>path missing or blank; file not found; the file is not one of the seven spectra types (the message names the views it does have)</p></dd>
 
@@ -356,14 +369,14 @@ msalign files hold <strong>deconvolved neutral masses</strong>, not raw m/z - do
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>
-    <p>Every call starts one bridge process, which costs a .NET start-up before any work.</p>
+    <p>Every call starts one bridge process, which costs a .NET start-up before any work. For many files call <code><a href="readers_read_spectra_many.html">readers_read_spectra_many()</a></code> once rather than looping this function: one process, one start-up, and the thread count stated on the wire.</p>
     </div>
     <div class="section level2">
     <h2 id="same-verb-in-other-bindings">Same verb in other bindings<a class="anchor" aria-label="anchor" href="#same-verb-in-other-bindings"></a></h2>
 
 <ul><li><p>Python (pyMzLib): <code>pymzlib.readers.read_spectra</code>; many files: <code>pymzlib.readers.read_spectra_many</code></p></li>
 <li><p>Rust (mzLibRust): <code>mzlib::readers::read_spectra_with</code> with <code>SpectraOptions</code>; many files: <code>mzlib::readers::read_spectra_many</code></p></li>
-<li><p>R (mzLibR): <code>readers_read_spectra</code></p></li>
+<li><p>R (mzLibR): <code>readers_read_spectra</code>; many files: <code><a href="readers_read_spectra_many.html">readers_read_spectra_many</a></code></p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
@@ -378,7 +391,7 @@ msalign files hold <strong>deconvolved neutral masses</strong>, not raw m/z - do
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="readers_read_records.html">readers_read_records</a></code></p></div>
+    <div class="dont-index"><p><code><a href="readers_read_spectra_many.html">readers_read_spectra_many</a></code>, <code><a href="readers_read_records.html">readers_read_records</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -386,7 +399,7 @@ msalign files hold <strong>deconvolved neutral masses</strong>, not raw m/z - do
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">scans</span> <span class="op">&lt;-</span> <span class="fu">readers_read_spectra</span><span class="op">(</span><span class="st">"sliced_ethcd.mzML"</span>, limit <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">scans</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;mzlibr_scan_records&gt; E:\CodeReview\pymzlib-readers-wt\code\mzLib\mzLib\Test\DataFiles\sliced_ethcd.mzML (MzML, Mzml)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;mzlibr_scan_records&gt; C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\DataFiles\sliced_ethcd.mzML (MzML, Mzml)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   6 scans in the file</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   6 records in the file, 3 returned</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! truncated - records were left behind</span>

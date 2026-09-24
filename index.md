@@ -34,8 +34,9 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `pride_*` | List and download from the PRIDE Archive, with mzLib’s paging and URL resolution |
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
-| `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md); identify **and read all 31** file types mzLib knows, search results included — [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md) reads any of them into that format’s own fields, while [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md), [`readers_read_features()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md), [`readers_read_matches()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches.md) and [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md) project the four cross-format views |
-| `sdrf_*` | Read SDRF-Proteomics experimental-design files with [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md), and pool several into one table with provenance with [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md). Use these rather than [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md), which joins each SDRF row into one string that cannot be split back apart |
+| `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md); identify **and read all 36** file types mzLib knows, search results included — [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md) reads any of them into that format’s own fields, while [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md), [`readers_read_features()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md), [`readers_read_matches()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches.md) and [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md) project the four cross-format views |
+| `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with [`proteins_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.md), which gene it resolves to against a pinned Ensembl release with [`proteins_resolve_genes()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.md), and whether a peptide is unique to one protein or gene with [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md) |
+| `sdrf_*` | Read SDRF-Proteomics experimental-design files with [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md), and pool several into one table with provenance with [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md); check them with [`sdrf_validate()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md), [`sdrf_assess()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md) and [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md), and get each sample’s ages in years with [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md). Use these rather than [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md), which joins each SDRF row into one string that cannot be split back apart |
 
 ## Installing
 
@@ -108,10 +109,11 @@ pinned by a test.
   different things.** `0` is “not measured in this run”; `NA` is
   “FlashLFQ could not resolve a number”. `NA` is the rare outcome (2
   proteins) and `0` the common one (847).
-- **`max_threads` defaults to 1 here, unlike pyMzLib.** Above one thread
-  the roll-up nondeterministically drops MBR intensities, so identical
-  inputs disagree roughly 1 run in 6
-  ([mzLib#1111](https://github.com/smith-chem-wisc/mzLib/issues/1111)).
+- **`max_threads` defaults to 1 here, where pyMzLib and mzLibRust use
+  -1** (every core). The multithreaded nondeterminism that set this
+  default (mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
+  includes; the default stays until -1 is re-measured. See
+  [`?flashlfq_quantify`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md).
 - **[`readers_identify()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
   does not validate contents**, and a `TRUE` from `is_quantifiable` is
   not permission — it reports what mzLib’s interface offers, not that

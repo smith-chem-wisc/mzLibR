@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -43,6 +44,7 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="mzlibr-010-unreleased">mzLibR 0.1.0 (unreleased)<a class="anchor" aria-label="anchor" href="#mzlibr-010-unreleased"></a></h2>
 <p>The first release. Versions follow each wire verb’s <code>since.mzlibr</code> in the bridge’s verb specs, which every help page’s <strong>Since</strong> section renders.</p>
+<p>This release projects mzLib 1.0.592. The verbs marked <em>needs the pyMzLib 0.2.0 bridge</em> below are new in the bridge pyMzLib 0.2.0 publishes; with an older bridge they are refused, naming the release they need.</p>
 <div class="section level3">
 <h3 id="reading-files-0-1-0">Reading files<a class="anchor" aria-label="anchor" href="#reading-files-0-1-0"></a></h3>
 <ul><li>
@@ -52,21 +54,45 @@
 <li>
 <code><a href="../reference/readers_read_results.html">readers_read_results()</a></code>, <code><a href="../reference/readers_read_features.html">readers_read_features()</a></code> and <code><a href="../reference/readers_read_matches.html">readers_read_matches()</a></code> read the three cross-format views of search results; <code><a href="../reference/readers_read_records.html">readers_read_records()</a></code> reads any recognised file into that format’s own fields.</li>
 <li>
-<code><a href="../reference/readers_retention_time_in_minutes.html">readers_retention_time_in_minutes()</a></code> converts using each file’s declared unit, and refuses when there is none.</li>
+<code><a href="../reference/readers_retention_time_in_minutes.html">readers_retention_time_in_minutes()</a></code> converts using each file’s declared unit, and refuses when there is none - for a <code>_many</code> batch, each file’s rows by that file’s unit.</li>
+<li>Many files in one call: <code><a href="../reference/readers_identify_many.html">readers_identify_many()</a></code> and a <code>_many</code> form of every reader hand the whole list to one bridge process with <code>threads</code> and <code>on_error</code> stated, and return one long <code>records</code> table plus a <code>files</code> data.frame of per-file facts, one row per input (<em>needs the pyMzLib 0.2.0 bridge</em>).</li>
+<li>Every read reports the per-file block: <code>reader</code>, <code>rows_not_read</code>, <code>retention_time_unit</code>, <code>caveats</code>, and the three ways a column can be empty kept apart - <code>absent_fields</code> (the format has no source for it, so it is <code>NA</code> in every row), <code>failed_fields</code> and <code>excluded_fields</code>.</li>
+<li>
+<code><a href="../reference/readers_read_spectra.html">readers_read_spectra()</a></code> reports the run’s <code>source</code>: instrument model and its PSI-MS accession, serial number, and acquisition start time with whether it is UTC (mzLib <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1349" class="external-link">#1349</a>).</li>
+<li>
+<code><a href="../reference/readers_read_matches.html">readers_read_matches()</a></code> reads mzIdentML (<code>.mzid</code>, <code>.mzid.gz</code>) with each match’s <code>q_value</code>, <code>rank</code> and <code>pass_threshold</code>, and with <code>scores = TRUE</code> one row per engine score; mzIdentML items mzLib does not represent are listed in <code>skipped</code> with the reason.</li>
+<li>New <code><a href="../reference/readers_read_protein_groups.html">readers_read_protein_groups()</a></code>, <code><a href="../reference/readers_read_quantified_peptides.html">readers_read_quantified_peptides()</a></code> and <code><a href="../reference/readers_read_occupancy.html">readers_read_occupancy()</a></code> read MetaMorpheus and FlashLFQ quantification tables long, one row per record per sample, and per-site PTM occupancy (mzLib <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1347" class="external-link">#1347</a>; <em>needs the pyMzLib 0.2.0 bridge</em>).</li>
+<li>
+<code><a href="../reference/mzlibr_bridge_version.html">mzlibr_bridge_version()</a></code> reports <code>verbs</code>, every command the bridge dispatches.</li>
+<li>mzLib now recognises 36 file types (Pytheas, mzIdentML and its gzipped form, and the MetaMorpheus and FlashLFQ quantification tables are new), 17 of them with no cross-format view.</li>
+<li>
+<code>limit = 0</code> is accepted by every reader, as the bridge allows: the envelope alone.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="sdrf-proteomics-0-1-0">SDRF-Proteomics<a class="anchor" aria-label="anchor" href="#sdrf-proteomics-0-1-0"></a></h3>
 <ul><li>
 <code><a href="../reference/sdrf_read.html">sdrf_read()</a></code> reads one experimental-design file and <code><a href="../reference/sdrf_pool.html">sdrf_pool()</a></code> pools several into one analysis table with provenance; <code><a href="../reference/sdrf_value.html">sdrf_value()</a></code>, <code><a href="../reference/sdrf_all.html">sdrf_all()</a></code>, <code><a href="../reference/sdrf_records.html">sdrf_records()</a></code> and the other <code>sdrf_</code> accessors read them.</li>
+<li>
+<code><a href="../reference/sdrf_validate.html">sdrf_validate()</a></code>, <code><a href="../reference/sdrf_lint.html">sdrf_lint()</a></code>, <code><a href="../reference/sdrf_assess.html">sdrf_assess()</a></code>, <code><a href="../reference/sdrf_samples.html">sdrf_samples()</a></code> and <code><a href="../reference/sdrf_parse_ages.html">sdrf_parse_ages()</a></code> ask mzLib whether an SDRF document is well-formed, whether several agree on their vocabulary, whether it describes its samples, and what its ages are in years; <code><a href="../reference/sdrf_validate_many.html">sdrf_validate_many()</a></code>, <code><a href="../reference/sdrf_assess_many.html">sdrf_assess_many()</a></code> and <code><a href="../reference/sdrf_samples_many.html">sdrf_samples_many()</a></code> read a corpus in one bridge call (mzLib <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1207" class="external-link">#1207</a>, <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1325" class="external-link">#1325</a>, <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1326" class="external-link">#1326</a>, <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1333" class="external-link">#1333</a>, <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1335" class="external-link">#1335</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="pride-peptidoforms-and-quantification-0-1-0">PRIDE, peptidoforms and quantification<a class="anchor" aria-label="anchor" href="#pride-peptidoforms-and-quantification-0-1-0"></a></h3>
 <ul><li>
 <code><a href="../reference/pride_list_files.html">pride_list_files()</a></code>, <code><a href="../reference/pride_list_ftp_files.html">pride_list_ftp_files()</a></code>, <code><a href="../reference/pride_download.html">pride_download()</a></code> and <code><a href="../reference/pride_download_files.html">pride_download_files()</a></code> list and fetch PRIDE Archive projects.</li>
 <li>
+<code><a href="../reference/pride_search.html">pride_search()</a></code> finds PRIDE projects by keyword, one row per project, with dates as <code>Date</code>.</li>
+<li>
 <code><a href="../reference/peptidoform_fragments.html">peptidoform_fragments()</a></code> digests a UniProt entry and fragments its peptidoforms.</li>
 <li>
 <code><a href="../reference/flashlfq_quantify.html">flashlfq_quantify()</a></code> runs FlashLFQ label-free quantification with match-between-runs.</li>
+<li>
+<code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code> re-runs FlashLFQ’s protein median polish from a <code>QuantifiedPeptides.tsv</code> under a new experimental design, without re-reading spectra.</li>
+<li>
+<code><a href="../reference/flashlfq_quantify.html">flashlfq_quantify()</a></code> no longer warns about mzLib#1111 when <code>max_threads</code> is not 1: mzLib#1155 fixed it inside the pinned bridge. The default stays 1 here (pyMzLib and mzLibRust use -1).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="protein-databases-0-1-0">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases-0-1-0"></a></h3>
+<ul><li>New <code><a href="../reference/proteins_read.html">proteins_read()</a></code> reads UniProt XML or FASTA databases into one row per protein - organism, NCBI taxon, gene names, length, mass - with GO terms and Ensembl gene links on request; <code><a href="../reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code> resolves proteins to stable Ensembl gene ids against a gene set you pin; <code><a href="../reference/proteins_classify_peptides.html">proteins_classify_peptides()</a></code> calls each peptide <code>Unique</code>, <code>SharedWithinGene</code>, <code>SharedAcrossGenes</code> or <code>NotInDatabase</code>, with I and L one residue. One database or many, in one bridge call (mzLib <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1336" class="external-link">#1336</a>, <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1338" class="external-link">#1338</a>, <a href="https://github.com/smith-chem-wisc/mzLibR/issues/1348" class="external-link">#1348</a>; <em>needs the pyMzLib 0.2.0 bridge</em>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="documentation-0-1-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-1-0"></a></h3>

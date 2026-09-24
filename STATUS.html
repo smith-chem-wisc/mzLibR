@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -58,7 +59,7 @@
 <td>quantify, MBR peaks/rescued-count, peptide/protein counts</td>
 </tr><tr><td><code>readers_*</code></td>
 <td>
-<strong>identify 31 file types, read the 4 quantifiable ones</strong> — the capability the plan did not know the bridge had; neither sibling implements it</td>
+<strong>identify 36 file types, read the 4 quantifiable ones</strong> — the capability the plan did not know the bridge had; neither sibling implements it</td>
 </tr></tbody></table></div>
 <div class="section level2">
 <h2 id="why-no-dependencies--it-was-a-correctness-decision">Why no dependencies — it was a correctness decision<a class="anchor" aria-label="anchor" href="#why-no-dependencies--it-was-a-correctness-decision"></a></h2>
@@ -95,7 +96,7 @@
 <div class="section level2">
 <h2 id="two-things-done-differently-from-the-siblings-both-deliberate">Two things done differently from the siblings, both deliberate<a class="anchor" aria-label="anchor" href="#two-things-done-differently-from-the-siblings-both-deliberate"></a></h2>
 <ul><li>
-<strong><code>max_threads</code> defaults to 1</strong>, not pyMzLib’s −1. Above one thread the roll-up drops MBR intensities nondeterministically (mzLib#1111); a binding that ships unreproducible-by-default is worse than one that diverges from its parent in a documented way. Setting anything else warns.</li>
+<strong><code>max_threads</code> defaults to 1</strong>, not the wire’s, pyMzLib’s and mzLibRust’s −1. It was chosen when multithreaded runs dropped MBR intensities nondeterministically (mzLib#1111); mzLib#1155 fixed that inside the pinned bridge, so the runtime warning is gone. The default stays until −1 is re-measured on mzLib’s K562 pair.</li>
 <li>
 <strong>Docs and man pages are generated from the <code>#'</code> blocks</strong> by <code>scripts/build-man.R</code> (no roxygen2 dependency), and <strong>name parity is machine-checked</strong> by <code>scripts/name-parity.R</code> against pyMzLib and the wire — it exits non-zero on any undeclared difference. <code>docs/name-parity.md</code> currently: none.</li>
 </ul></div>

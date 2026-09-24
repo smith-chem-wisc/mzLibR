@@ -25,6 +25,7 @@ without the view raises, with a message naming the views it does have."></head><
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -88,7 +89,7 @@ without the view raises, with a message naming the views it does have.</p>
 <p><code>records</code> has one row per feature: <code>mz</code> in m/z; <code>charge</code>; <code>retention_time_start</code> and
   <code>retention_time_end</code> in the unit <code>retention_time_unit</code> names - <code>"unknown"</code> for
   <code>_ms1.feature</code>, see below; <code>intensity</code>, the apex, in the instrument's intensity units; and
-  <code>number_of_isotopes</code>.</p>
+  <code>number_of_isotopes</code>. <code>rows_not_read</code> is always <code>NA</code>: one line is not one feature here.</p>
     </div>
     <div class="section level2">
     <h2 id="one-row-is-not-one-line-of-the-file-for-ms-feature">One row is not one line of the file, for <code>_ms1.feature</code><a class="anchor" aria-label="anchor" href="#one-row-is-not-one-line-of-the-file-for-ms-feature"></a></h2>
@@ -145,8 +146,14 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
 <dt><code>file_type</code></dt>
 <dd><p>string; never <code>NA</code>. The mzLib SupportedFileType that was dispatched.</p></dd>
 
+<dt><code>reader</code></dt>
+<dd><p>string; never <code>NA</code>. The mzLib reader class that parsed the file.</p></dd>
+
 <dt><code>record_count</code></dt>
 <dd><p>int; in <strong>features</strong>; never <code>NA</code>. Features in the whole file, before the window.</p></dd>
+
+<dt><code>rows_not_read</code></dt>
+<dd><p>int; in <strong>rows</strong>; <code>NA</code> when never counted: one line is not one feature (_ms1.feature rows are expanded per charge). Data rows that did not become records.</p></dd>
 
 <dt><code>retention_time_unit</code></dt>
 <dd><p>string; never <code>NA</code>. minutes for Dinosaur; unknown for _ms1.feature, whose unit changed at TopFD v1.7.0 without a format change.</p></dd>
@@ -156,6 +163,15 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
 
 <dt><code>column_names</code></dt>
 <dd><p>string[]; never <code>NA</code>. Column order.</p></dd>
+
+<dt><code>absent_fields</code></dt>
+<dd><p>string[]; never <code>NA</code>. Columns the view defines that this file's format has no column or source for; null in every row (BULK.md section 4). Empty when every column has a source.</p></dd>
+
+<dt><code>failed_fields</code></dt>
+<dd><p>string[]; never <code>NA</code>. 'field: ExceptionType' for each column whose read threw on some returned rows; those cells are null.</p></dd>
+
+<dt><code>excluded_fields</code></dt>
+<dd><p>object[]; never <code>NA</code>. {field, type, reason, verb} for each field with no column shape; verb names the command that carries it, or null.</p></dd>
 
 <dt><code>error</code></dt>
 <dd><p>object; <code>NA</code> when always, for a single path: a file that cannot be read fails the call instead. {kind, type, message}; non-null only in a files[] entry under on-error skip.</p></dd>
@@ -201,28 +217,8 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
 
 </dl></div>
     <div class="section level2">
-    <h2 id="on-the-wire-but-not-projected-yet">On the wire but not projected yet<a class="anchor" aria-label="anchor" href="#on-the-wire-but-not-projected-yet"></a></h2>
-    <p>The bridge sends these, and this version of mzLibR does not return them yet:</p>
-<dl><dt><code>reader</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>rows_not_read</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>absent_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>failed_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>excluded_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-
-</dl></div>
-    <div class="section level2">
     <h2 id="errors">Errors<a class="anchor" aria-label="anchor" href="#errors"></a></h2>
-    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> belongs to the verb's many-files form.</p>
+    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> comes only from <code><a href="readers_read_features_many.html">readers_read_features_many()</a></code>.</p>
 <dl><dt><code>mzlib_usage_error</code> (usage)</dt>
 <dd><p>path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)</p></dd>
 
@@ -259,14 +255,14 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>
-    <p>Every call starts one bridge process, which costs a .NET start-up before any work.</p>
+    <p>Every call starts one bridge process, which costs a .NET start-up before any work. For many files call <code><a href="readers_read_features_many.html">readers_read_features_many()</a></code> once rather than looping this function: one process, one start-up, and the thread count stated on the wire.</p>
     </div>
     <div class="section level2">
     <h2 id="same-verb-in-other-bindings">Same verb in other bindings<a class="anchor" aria-label="anchor" href="#same-verb-in-other-bindings"></a></h2>
 
 <ul><li><p>Python (pyMzLib): <code>pymzlib.readers.read_features</code>; many files: <code>pymzlib.readers.read_features_many</code></p></li>
 <li><p>Rust (mzLibRust): <code>mzlib::readers::read_features_with</code> with <code>ReadOptions</code>; many files: <code>mzlib::readers::read_features_many</code></p></li>
-<li><p>R (mzLibR): <code>readers_read_features</code></p></li>
+<li><p>R (mzLibR): <code>readers_read_features</code>; many files: <code><a href="readers_read_features_many.html">readers_read_features_many</a></code></p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
@@ -280,7 +276,8 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="readers_read_records.html">readers_read_records</a></code>, <code><a href="readers_retention_time_in_minutes.html">readers_retention_time_in_minutes</a></code></p></div>
+    <div class="dont-index"><p><code><a href="readers_read_features_many.html">readers_read_features_many</a></code>, <code><a href="readers_read_records.html">readers_read_records</a></code>,
+  <code><a href="readers_retention_time_in_minutes.html">readers_retention_time_in_minutes</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -288,7 +285,7 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu">readers_read_features</span><span class="op">(</span><span class="st">"Ms1Feature_TopFDv1.6.2_ms1.feature"</span>, limit <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">features</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;mzlibr_feature_records&gt; E:\CodeReview\pymzlib-readers-wt\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\Ms1Feature_TopFDv1.6.2_ms1.feature (Ms1Feature)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;mzlibr_feature_records&gt; C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\Ms1Feature_TopFDv1.6.2_ms1.feature (Ms1Feature)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   25 records in the file, 5 returned</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! truncated - records were left behind</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   retention_time_unit: unknown</span>
@@ -296,6 +293,7 @@ converting. Dinosaur reports minutes and converts without complaint.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! intensity is the per-charge APEX intensity (Ms1Feature.cs:86), not the summed intensity over the feature. The file's own Intensity column is a different number, and read-records has it.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! retention_time_start/_end are in UNKNOWN units for this format. TopFD wrote seconds through v1.6.2 and minutes from v1.7.0 without changing the file type, and mzLib normalises neither - its deconvolution parameters instead GUESS, dividing by 60 when the largest end time exceeds 500. Check the values against your gradient length before comparing them with anything.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! number_of_isotopes is null for every row of this format: the single-charge expansion mzLib builds never sets it (Ms1Feature.cs:91). Null means 'not reported', not 'no isotopes found'.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   absent from this file (NA in every row): number_of_isotopes</span>
 <span class="r-in"><span><span class="va">features</span><span class="op">$</span><span class="va">records</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          mz charge retention_time_start retention_time_end intensity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 1548.9862      7              2372.27            2401.92 912795139</span>

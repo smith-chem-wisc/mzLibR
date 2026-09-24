@@ -25,6 +25,7 @@ readers_identify first, or catch the error, which names the views the file does 
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -94,7 +95,9 @@ readers_identify first, or catch the error, which names the views the file does 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An <code>mzlibr_result_records</code>. <code>record_count</code> counts the records in the <strong>whole file</strong>
+    <p>An <code>mzlibr_result_records</code>, carrying the file's <code>reader</code>, <code>absent_fields</code>,
+  <code>failed_fields</code> and <code>excluded_fields</code> as every read does. <code>record_count</code> counts the records in
+  the <strong>whole file</strong>
   regardless of <code>limit</code> and <code>offset</code>; <code>returned_count</code> counts the records that came back,
   starting <code>offset</code> records in; <code>rows_not_read</code> counts data rows that did not become records.</p>
 <p><code>records</code> is a data.frame of the record view, one row per record, or <code>NULL</code> when <code>out</code> was
@@ -148,6 +151,9 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 <dt><code>file_type</code></dt>
 <dd><p>string; never <code>NA</code>. The mzLib SupportedFileType that was dispatched.</p></dd>
 
+<dt><code>reader</code></dt>
+<dd><p>string; never <code>NA</code>. The mzLib reader class that parsed the file.</p></dd>
+
 <dt><code>record_count</code></dt>
 <dd><p>int; in <strong>records</strong>; never <code>NA</code>. Records in the whole file, before the window.</p></dd>
 
@@ -162,6 +168,15 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 
 <dt><code>column_names</code></dt>
 <dd><p>string[]; never <code>NA</code>. Column order.</p></dd>
+
+<dt><code>absent_fields</code></dt>
+<dd><p>string[]; never <code>NA</code>. Columns the view defines that this file's format has no column or source for; null in every row (BULK.md section 4). Empty when every column has a source.</p></dd>
+
+<dt><code>failed_fields</code></dt>
+<dd><p>string[]; never <code>NA</code>. 'field: ExceptionType' for each column whose read threw on some returned rows; those cells are null.</p></dd>
+
+<dt><code>excluded_fields</code></dt>
+<dd><p>object[]; never <code>NA</code>. {field, type, reason, verb} for each field with no column shape; verb names the command that carries it, or null.</p></dd>
 
 <dt><code>error</code></dt>
 <dd><p>object; <code>NA</code> when always, for a single path: a file that cannot be read fails the call instead. {kind, type, message}; non-null only in a files[] entry under on-error skip.</p></dd>
@@ -219,25 +234,8 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 
 </dl></div>
     <div class="section level2">
-    <h2 id="on-the-wire-but-not-projected-yet">On the wire but not projected yet<a class="anchor" aria-label="anchor" href="#on-the-wire-but-not-projected-yet"></a></h2>
-    <p>The bridge sends these, and this version of mzLibR does not return them yet:</p>
-<dl><dt><code>reader</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>absent_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>failed_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-<dt><code>excluded_fields</code></dt>
-<dd><p>arrives with the mzLib 1.0.592 port.</p></dd>
-
-
-</dl></div>
-    <div class="section level2">
     <h2 id="errors">Errors<a class="anchor" aria-label="anchor" href="#errors"></a></h2>
-    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> belongs to the verb's many-files form.</p>
+    <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>. A condition that mentions <code>paths-stdin</code>, <code>threads</code> or <code>on-error</code> comes only from <code><a href="readers_read_results_many.html">readers_read_results_many()</a></code>.</p>
 <dl><dt><code>mzlib_usage_error</code> (usage)</dt>
 <dd><p>path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)</p></dd>
 
@@ -276,14 +274,14 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>
-    <p>Every call starts one bridge process, which costs a .NET start-up before any work.</p>
+    <p>Every call starts one bridge process, which costs a .NET start-up before any work. For many files call <code><a href="readers_read_results_many.html">readers_read_results_many()</a></code> once rather than looping this function: one process, one start-up, and the thread count stated on the wire.</p>
     </div>
     <div class="section level2">
     <h2 id="same-verb-in-other-bindings">Same verb in other bindings<a class="anchor" aria-label="anchor" href="#same-verb-in-other-bindings"></a></h2>
 
 <ul><li><p>Python (pyMzLib): <code>pymzlib.readers.read_results</code>; many files: <code>pymzlib.readers.read_results_many</code></p></li>
 <li><p>Rust (mzLibRust): <code>mzlib::readers::read_results_with</code> with <code>ReadOptions</code>; many files: <code>mzlib::readers::read_results_many</code></p></li>
-<li><p>R (mzLibR): <code>readers_read_results</code></p></li>
+<li><p>R (mzLibR): <code>readers_read_results</code>; many files: <code><a href="readers_read_results_many.html">readers_read_results_many</a></code></p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
@@ -296,7 +294,8 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="readers_identify.html">readers_identify</a></code>, <code><a href="readers_retention_time_in_minutes.html">readers_retention_time_in_minutes</a></code></p></div>
+    <div class="dont-index"><p><code><a href="readers_read_results_many.html">readers_read_results_many</a></code>, <code><a href="readers_identify.html">readers_identify</a></code>,
+  <code><a href="readers_retention_time_in_minutes.html">readers_retention_time_in_minutes</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -311,6 +310,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! is_decoy is null for this format: MSFragger's psm.tsv carries no target/decoy column, so mzLib cannot report decoy status (MsFraggerPsm.cs:231) and the field crosses as null. Null means 'unknown', not 'target' - do not filter this format on is_decoy == false.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! monoisotopic_mass is the THEORETICAL peptide mass (MsFraggerPsm.cs:233, CalculatedPeptideMass), not the observed precursor mass. The psmtsv formats report the theoretical mass here too, so the two are consistent - but neither is what the instrument measured.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! file_name is the full 'Spectrum File' path including its .pep.xml extension, whereas the psmtsv formats report a bare base name. The field is not a join key across formats.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   absent from this file (NA in every row): is_decoy</span>
 <span class="r-in"><span><span class="va">psms</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"base_sequence"</span>, <span class="st">"charge_state"</span>, <span class="st">"retention_time"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   base_sequence charge_state retention_time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1       KPVGAAK            2     0.03233000</span>

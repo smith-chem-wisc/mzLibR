@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -55,8 +56,9 @@
 
 
 <dl><dt id="arg-records">records<a class="anchor" aria-label="anchor" href="#arg-records"></a></dt>
-<dd><p>A <code><a href="readers_read_results.html">readers_read_results</a></code>, <code><a href="readers_read_features.html">readers_read_features</a></code> or
-  <code><a href="readers_read_spectra.html">readers_read_spectra</a></code> result.</p></dd>
+<dd><p>A <code><a href="readers_read_results.html">readers_read_results</a></code>, <code><a href="readers_read_features.html">readers_read_features</a></code>,
+  <code><a href="readers_read_spectra.html">readers_read_spectra</a></code> or <code><a href="readers_read_quantified_peptides.html">readers_read_quantified_peptides</a></code> result, or the <code>_many</code> form
+  of one, whose rows are converted by each file's own unit.</p></dd>
 
 
 <dt id="arg-column">column<a class="anchor" aria-label="anchor" href="#arg-column"></a></dt>
@@ -68,7 +70,7 @@
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Raises when the unit is <code>"unknown"</code> rather than guessing.</strong> A silently unconverted time axis
+    <p>**Raises when the unit is <code>"unknown"</code> rather than guessing.** A silently unconverted time axis
 is the specific mistake this module exists to prevent: TopPIC still writes seconds while
 MetaMorpheus and MSFragger write minutes (mzLib normalises MSFragger since PR #1116, but not
 TopPIC), and a 60x error in a retention-time comparison looks like a chromatography problem

@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -211,7 +212,7 @@
 <th>the number</th>
 </tr></thead><tbody><tr><td>
 <strong>ETD/ECD emit <code>y</code> ions with no <code>b</code> ions.</strong> No fragmentation mechanism produces that</td>
-<td>~<strong>⅓</strong> of every ETD fragment list. mzLib#1109, <strong>PR #1114 open</strong> — check whether it merged before documenting</td>
+<td>~<strong>⅓</strong> of every ETD fragment list. mzLib#1109, <strong>fixed by #1114 (merged)</strong>; the bridge pins include it</td>
 </tr><tr><td>The <code>zDot</code> series runs <strong>1..L</strong>, not 1..L−1. The extra one is <code>M − NH₂</code>, the N–Cα cleavage at residue 1 — <strong>correct and deliberate</strong>, not a bug</td>
 <td>1 per peptide; absent when the peptide starts with proline</td>
 </tr><tr><td><strong>z• is suppressed N-terminal to proline; the complementary c ion is not</strong></td>
@@ -254,8 +255,8 @@
 <td>
 <strong>140</strong> vs <strong>135</strong> strict; the 5 have both an MBR peak and a zero-intensity MSMS peak in the same run</td>
 </tr><tr><td>
-<strong><code>max_threads = -1</code> makes results non-reproducible.</strong> The roll-up nondeterministically drops MBR intensities</td>
-<td>a borderline protein was unresolvable in <strong>5 of 6</strong> runs. <strong>Default to 1 in mzLibR, or warn loudly.</strong> mzLib#1111</td>
+<del><strong><code>max_threads = -1</code> makes results non-reproducible.</strong></del> Fixed by mzLib#1155, which the pinned bridge includes</td>
+<td>was: a borderline protein unresolvable in 5 of 6 runs (mzLib#1111). mzLibR keeps its default of 1 until −1 is re-measured</td>
 </tr><tr><td>The peptide roll-up does <strong>not sum</strong> multiple peaks in a run; it reports one</td>
 <td>pivoting <code>peaks</code> yourself will not reproduce <code>QuantifiedPeptides.tsv</code> intensities</td>
 </tr><tr><td>MBR needs a <strong>complete, balanced design</strong> and <code>mbr_q_value_threshold</code> as its FDR control</td>
@@ -277,13 +278,14 @@
 <td>ETD/ECD emit <code>y</code> with no <code>b</code>
 </td>
 <td>
-<strong>PR #1114 open</strong> — 5334 tests pass</td>
+<strong>fixed</strong> by #1114 (merged)</td>
 </tr><tr><td><a href="https://github.com/smith-chem-wisc/mzLib/issues/1110" class="external-link">mzLib#1110</a></td>
 <td>z• proline-suppressed, c ions not</td>
 <td>open</td>
 </tr><tr><td><a href="https://github.com/smith-chem-wisc/mzLib/issues/1111" class="external-link">mzLib#1111</a></td>
 <td>FlashLFQ roll-up nondeterministic</td>
-<td>open</td>
+<td>
+<strong>fixed</strong> by #1155 (in the pin)</td>
 </tr><tr><td><a href="https://github.com/smith-chem-wisc/mzLib/issues/1112" class="external-link">mzLib#1112</a></td>
 <td>Glycosylation annotations dropped silently</td>
 <td>open; <strong>read the correction comment</strong>

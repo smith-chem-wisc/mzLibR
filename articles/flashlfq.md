@@ -85,6 +85,32 @@ flashlfq_mbr_rescued_peptide_count(quant)
 #> [1] 1
 ```
 
+## Re-quantify proteins under a new design
+
+[`flashlfq_median_polish()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_median_polish.md)
+reruns only the protein roll-up, from the `QuantifiedPeptides.tsv`
+FlashLFQ wrote, without re-reading any spectra. The design says which
+runs are replicates of which sample, and the result is keyed by sample:
+
+``` r
+
+polished <- flashlfq_median_polish("QuantifiedPeptides.tsv",
+  design = data.frame(file_name = c("run_3", "run_4"), condition = c("control", "treated"),
+                      biological_replicate = 0))
+polished$samples
+#>       label condition biological_replicate
+#> 1 control_1   control                    0
+#> 2 treated_1   treated                    0
+polished$proteins
+#>   protein_group gene_name     organism    sample intensity
+#> 1            P1     GENE1 Homo sapiens control_1    3005.6
+#> 2            P1     GENE1 Homo sapiens treated_1    6011.3
+#> 3            P2     GENE2 Homo sapiens control_1    2262.7
+#> 4            P2     GENE2 Homo sapiens treated_1    2368.5
+#> 5            P3     GENE3 Homo sapiens control_1        NA
+#> 6            P3     GENE3 Homo sapiens treated_1        NA
+```
+
 ## Before a real run
 
 - Use a MetaMorpheus `.psmtsv` or `.osmtsv`, and mzML runs; convert
@@ -92,6 +118,7 @@ flashlfq_mbr_rescued_peptide_count(quant)
 - Give `spectra` a `condition` and `biological_replicate` so FlashLFQ
   knows which runs are comparable; match-between-runs needs a balanced
   design.
-- Read the `max_threads` argument in
+- `max_threads` defaults to 1 here and to every core in pyMzLib and
+  mzLibRust;
   [`?flashlfq_quantify`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
-  before changing it.
+  says why.

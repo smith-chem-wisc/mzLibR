@@ -25,6 +25,7 @@ interrupted download never leaves a truncated file behind."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
   </ul></li>
@@ -81,7 +82,7 @@ interrupted download never leaves a truncated file behind.</p>
 <dt id="arg-extensions">extensions<a class="anchor" aria-label="anchor" href="#arg-extensions"></a></dt>
 <dd><p>Keep only files with these extensions, e.g. <code>c(".raw", ".mzML")</code>. <code>NULL</code>
   keeps all. Combined with <code>category</code> as AND.</p>
-<p><strong>A compressed file's extension is <code>.gz</code>, not what it is compressed from.</strong> PXD000001's
+<p>**A compressed file's extension is <code>.gz</code>, not what it is compressed from.** PXD000001's
   peak list is <code>PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz</code>, so <code>".mgf"</code> matches <strong>nothing</strong>,
   while <code>".gz"</code> over-matches to three unrelated files. To select one compressed type, combine
   <code>category = "PEAK"</code> with <code>extensions = ".gz"</code>, or skip these filters and pass the rows you

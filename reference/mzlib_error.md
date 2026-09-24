@@ -84,7 +84,7 @@ tryCatch(
   readers_read_spectra("run.mzML", limit = -1),
   mzlib_usage_error = function(e) conditionMessage(e)
 )
-#> [1] "limit must be a positive whole number, or NULL for every record; got -1."
+#> [1] "limit must be a non-negative whole number, or NULL for every record; got -1."
 
 # Every class also carries mzlib_error, so one handler can catch them all.
 old <- options(mzlibr.bridge = file.path(tempdir(), "no-such-bridge"))

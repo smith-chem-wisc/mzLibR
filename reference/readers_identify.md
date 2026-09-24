@@ -42,11 +42,11 @@ An `mzlibr_file_info`: `path`, `file_type`, `extension`, `reader`,
 — when `FALSE`, mzLib can still read the file, it simply has no uniform
 view, and quantification would fail on it.
 
-**But `TRUE` is not permission.** It reports what mzLib's \*interface\*
-offers, not that the numbers are comparable. `MsFraggerPsm` is
-quantifiable by interface and should not be quantified: among other
-things its retention times are in seconds while MetaMorpheus's are in
-minutes, and mzLib does not normalise them. See
+\*\*But `TRUE` is not permission.\*\* It reports what mzLib's
+\*interface\* offers, not that the numbers are comparable.
+`MsFraggerPsm` is quantifiable by interface and should not be
+quantified: among other things its retention times are in seconds while
+MetaMorpheus's are in minutes, and mzLib does not normalise them. See
 [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
 and the `caveats` it returns.
 
@@ -105,8 +105,9 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 Each is an R condition carrying the class shown and `mzlib_error`; see
 [`mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md).
-A condition that mentions `paths-stdin`, `threads` or `on-error` belongs
-to the verb's many-files form.
+A condition that mentions `paths-stdin`, `threads` or `on-error` comes
+only from
+[`readers_identify_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify_many.md).
 
 - `mzlib_usage_error` (usage):
 
@@ -151,7 +152,10 @@ to the verb's many-files form.
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
-any work.
+any work. For many files call
+[`readers_identify_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify_many.md)
+once rather than looping this function: one process, one start-up, and
+the thread count stated on the wire.
 
 ## Same verb in other bindings
 
@@ -161,7 +165,8 @@ any work.
 - Rust (mzLibRust): `mzlib::readers::identify`; many files:
   `mzlib::readers::identify_many`
 
-- R (mzLibR): `readers_identify`
+- R (mzLibR): `readers_identify`; many files:
+  [`readers_identify_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify_many.md)
 
 ## Since
 
@@ -183,6 +188,7 @@ The spec records these as open. They are listed rather than hidden:
 
 ## See also
 
+[`readers_identify_many`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify_many.md),
 [`readers_formats`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_formats.md),
 [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
 

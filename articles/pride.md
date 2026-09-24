@@ -3,6 +3,34 @@
 The `pride_` functions list a PRIDE Archive project’s files and download
 the ones you choose, using mzLib’s paging and URL resolution.
 
+## Find a project
+
+[`pride_search()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_search.md)
+is the discovery step: it turns a subject into the accessions every
+other function takes, with every page fetched and no accession repeated.
+
+``` r
+
+hits <- pride_search("plasmodium falciparum schizont")
+hits[, c("accession", "submission_type", "publication_date")]
+#>   accession submission_type publication_date
+#> 1 PXD070842        COMPLETE       2026-06-01
+#> 2 PXD020210        COMPLETE       2021-01-25
+#> 3 PXD020189        COMPLETE       2021-01-25
+#> 4 PXD008250         PARTIAL       2018-02-13
+#> 5 PXD001684         PARTIAL       2015-04-23
+#> 6 PXD000070        COMPLETE       2014-04-24
+hits$organisms[[1]]
+#> [1] "Homo sapiens (human)"                "Plasmodium falciparum (isolate 3d7)"
+hits$matched_fields[[1]]
+#> [1] "references" "title"
+```
+
+A hit is a search-index projection, not the project’s metadata:
+vocabulary fields arrive as display strings with no accessions, a count
+of 0 means “not reported”, and `project_file_names` is not the manifest.
+Follow the `accession`.
+
 ## List, then choose with `[`
 
 ``` r
