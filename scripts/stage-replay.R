@@ -46,7 +46,8 @@ for (missing in unique(table[!present, "fixture"])) {
   cat("not staged: ", missing, " (not in tests/fixtures yet)\n", sep = "")
 }
 table <- table[present, , drop = FALSE]
-table <- table[order(table[, "verb"], table[, "fixture"]), , drop = FALSE]
+# method = "radix" sorts in the C locale, so the table is the same on every machine.
+table <- table[order(table[, "verb"], table[, "fixture"], method = "radix"), , drop = FALSE]
 
 table_text <- c(
   "# Written by scripts/stage-replay.R from the verb specs' examples. Do not edit; re-run it.",
