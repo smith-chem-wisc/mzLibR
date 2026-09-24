@@ -269,12 +269,13 @@ test_that("a large limit is not written in scientific notation", {
 test_that("LIVE: mzLib still recognises 36 formats, four of them quantifiable", {
   # Enumerated from mzLib itself, so this is the test that notices when the installed version
   # changes what it supports - which is exactly when the numbers in ?readers_formats go stale.
-  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
+  #
+  # 36 and 17 are mzLib 1.0.592's, in the bridge pyMzLib 0.2.0 publishes, the first to list its
+  # verbs; an older bridge skips rather than failing.
+  skip_unless_bridge_has("readers read-occupancy")
   options(mzlibr.bridge = live_bridge)
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
-  # 36 and 17 are mzLib 1.0.592's, the bridge pyMzLib 0.2.0 publishes: an older bridge fails this,
-  # which is the test noticing that the installed mzLib changed what it supports.
   formats <- readers_formats()
   expect_identical(nrow(formats), 36L)
   expect_identical(sum(formats$is_quantifiable), 4L)
@@ -324,7 +325,7 @@ test_that("LIVE: reading a file with no quantifiable view names the views it doe
 
 # ---------------------------------------------------------------- exhaustive coverage
 #
-# `readers_read_results()` reaches four of the 31 file types. These four verbs reach the rest. The
+# `readers_read_results()` reaches four of the 36 file types. These four verbs reach the rest. The
 # payloads are recorded from the real bridge against real mzLib fixtures, so a wire-shape change
 # shows up here as a parse failure rather than as a fixture that agrees with an R file and with
 # nothing else.

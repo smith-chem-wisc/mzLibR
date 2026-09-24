@@ -290,19 +290,9 @@ test_that("a quantification read replays end to end, verb check included", {
 
 # ---------------------------------------------------------------- against a real bridge
 
-live_has_verb <- function(verb) {
-  if (!nzchar(live_bridge)) {
-    return(FALSE)
-  }
-  options(mzlibr.bridge = live_bridge)
-  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
-  verb %in% mzlibr_bridge_version()$verbs
-}
-
 test_that("LIVE: many paths are identified in one call, a missing one skipped", {
   # Needs the bridge pyMzLib 0.2.0 publishes; an older one has no --paths-stdin.
-  skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
-  skip_if(!live_has_verb("readers read-occupancy"), "the bridge predates pyMzLib 0.2.0")
+  skip_unless_bridge_has("readers read-occupancy")
   options(mzlibr.bridge = live_bridge)
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
