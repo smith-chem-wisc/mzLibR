@@ -4,18 +4,18 @@
 # Spectra files are read here too, not just search output: readers_read_spectra() reads .mzML,
 # Thermo .raw, Bruker .d, timsTOF .d, .mgf and msalign - scan headers always, peaks on request.
 #
-# mzLib recognises 31 file types in all - those instrument and deconvolution formats, plus the
+# mzLib recognises 36 file types in all - those instrument and deconvolution formats, plus the
 # output of a dozen search tools: MetaMorpheus, MSFragger, TopPIC, TopFD, MsPathFinderT, Crux,
 # Casanovo, FlashDeconv, Dinosaur, DIA-NN, FlashLFQ - and dispatches each to a parser it
 # maintains. This module asks it what a path is.
 #
-# The temptation is to describe mzLib as reading 31 formats into one uniform shape. It does not,
+# The temptation is to describe mzLib as reading 36 formats into one uniform shape. It does not,
 # and the whole design of this module is about not letting anyone believe it does. The formats
-# fall into disjoint families and 14 of the 31 belong to no family at all, so an empty `views` is
+# fall into disjoint families and 17 of the 36 belong to no family at all, so an empty `views` is
 # a real and common answer rather than a failure.
 
 # The view that matters most: the cross-format record projection, and the input
-# `flashlfq_quantify()` accepts. Exactly four of the 31 file types have it.
+# `flashlfq_quantify()` accepts. Exactly four of the 36 file types have it.
 READERS_QUANTIFIABLE <- "quantifiable"
 
 # ---------------------------------------------------------------- parsing
@@ -128,48 +128,8 @@ readers_parse_records_table <- function(data) {
 }
 
 readers_parse_records <- function(data) {
-  caveats <- data[["caveats"]]
-  caveats <- if (is.list(caveats) && length(caveats) > 0L) {
-    vapply(caveats, function(c) as.character(c)[1L], character(1L), USE.NAMES = FALSE)
-  } else {
-    character(0)
-  }
-
-  column_names <- data[["column_names"]]
-  column_names <- if (is.list(column_names) && length(column_names) > 0L) {
-    vapply(column_names, function(n) as.character(n)[1L], character(1L), USE.NAMES = FALSE)
-  } else {
-    character(0)
-  }
-
-  output <- data[["output"]]
-  written <- if (is.list(output)) {
-    list(
-      path = as.character(wire_field(output, "path", "character", NA_character_)),
-      format = as.character(wire_field(output, "format", "character", NA_character_)),
-      row_count = as.numeric(wire_field(output, "row_count", "numeric", NA_real_))
-    )
-  } else {
-    NULL
-  }
-
   structure(
-    list(
-      path = as.character(wire_field(data, "path", "character", NA_character_)),
-      file_type = as.character(wire_field(data, "file_type", "character", NA_character_)),
-      record_count = as.numeric(wire_field(data, "record_count", "numeric", NA_real_)),
-      returned_count = as.numeric(wire_field(data, "returned_count", "numeric", NA_real_)),
-      offset = as.numeric(wire_field(data, "offset", "numeric", 0)),
-      truncated = isTRUE(data[["truncated"]]),
-      retention_time_unit = as.character(
-        wire_field(data, "retention_time_unit", "character", "unknown")
-      ),
-      rows_not_read = as.numeric(wire_field(data, "rows_not_read", "numeric", NA_real_)),
-      caveats = caveats,
-      column_names = column_names,
-      records = readers_parse_records_table(data),
-      output = written
-    ),
+    c(readers_parse_common(data), readers_parse_block(data, "unknown")),
     class = "mzlibr_result_records"
   )
 }
@@ -187,10 +147,11 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
   args <- c("readers", verb, "--path", readers_normalise_path(path))
 
   if (!is.null(limit)) {
+    # Zero is allowed, as the bridge allows it: the envelope alone, with record_count.
     if (!is.numeric(limit) || length(limit) != 1L || is.na(limit) || limit != round(limit) ||
-      limit < 1) {
+      limit < 0) {
       stop(mzlib_usage_error(paste0(
-        "limit must be a positive whole number, or NULL for every record; got ",
+        "limit must be a non-negative whole number, or NULL for every record; got ",
         paste(deparse(limit), collapse = " "), "."
       )))
     }
@@ -228,8 +189,8 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #'
 #' @section Views, and why most formats have none:
 #'
-#' It is tempting to read "31 formats" as "31 formats in one uniform shape". They are not. The
-#' formats fall into disjoint families, and **14 of the 31 belong to none of them** — an empty
+#' It is tempting to read "36 formats" as "36 formats in one uniform shape". They are not. The
+#' formats fall into disjoint families, and **17 of the 36 belong to none of them** — an empty
 #' `views` is a real and common answer, meaning mzLib can parse the file but offers no
 #' cross-format projection of it.
 #'
@@ -285,7 +246,7 @@ readers_formats <- function(timeout = 60) {
 #' minutes, and mzLib does not normalise them. See [readers_read_results()] and the `caveats` it
 #' returns.
 #'
-#' @seealso [readers_formats()], [readers_read_results()]
+#' @seealso [readers_identify_many()], [readers_formats()], [readers_read_results()]
 #' @spec readers.identify
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
@@ -324,7 +285,9 @@ readers_identify <- function(path, timeout = 60) {
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely. A large file legitimately
 #'   takes a while.
 #'
-#' @return An `mzlibr_result_records`. `record_count` counts the records in the **whole file**
+#' @return An `mzlibr_result_records`, carrying the file's `reader`, `absent_fields`,
+#'   `failed_fields` and `excluded_fields` as every read does. `record_count` counts the records in
+#'   the **whole file**
 #'   regardless of `limit` and `offset`; `returned_count` counts the records that came back,
 #'   starting `offset` records in; `rows_not_read` counts data rows that did not become records.
 #'
@@ -346,7 +309,8 @@ readers_identify <- function(path, timeout = 60) {
 #' Relatedly, `retention_time_unit` is per format and mzLib does **not** normalise it. Convert
 #' with [readers_retention_time_in_minutes()] rather than by hand.
 #'
-#' @seealso [readers_identify()], [readers_retention_time_in_minutes()]
+#' @seealso [readers_read_results_many()], [readers_identify()],
+#'   [readers_retention_time_in_minutes()]
 #' @spec readers.read-results
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
@@ -371,8 +335,9 @@ readers_read_results <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' TopPIC), and a 60x error in a retention-time comparison looks like a chromatography problem
 #' rather than a units problem.
 #'
-#' @param records A [readers_read_results()], [readers_read_features()] or
-#'   [readers_read_spectra()] result.
+#' @param records A [readers_read_results()], [readers_read_features()],
+#'   [readers_read_spectra()] or [readers_read_quantified_peptides()] result, or the `_many` form
+#'   of one, whose rows are converted by each file's own unit.
 #' @param column Which retention-time column to convert. Defaults to `retention_time` for a record
 #'   or scan table and to `retention_time_start` for a feature table, which has two. Name the other
 #'   explicitly — `"retention_time_end"` — to convert it.
@@ -398,13 +363,17 @@ readers_read_results <- function(path, limit = NULL, offset = 0, out = NULL, tim
 readers_retention_time_in_minutes <- function(records, column = NULL) {
   known <- c(
     "mzlibr_result_records", "mzlibr_feature_records", "mzlibr_scan_records",
-    "mzlibr_native_records"
+    "mzlibr_native_records", "mzlibr_quantified_peptide_records", "mzlibr_read_batch"
   )
   if (!any(inherits(records, known, which = TRUE) > 0L)) {
     stop(mzlib_usage_error(paste0(
       "records must be a readers_read_results(), readers_read_features(), ",
-      "readers_read_spectra() or readers_read_records() result."
+      "readers_read_spectra(), readers_read_quantified_peptides() or readers_read_records() ",
+      "result, or the _many form of one."
     )))
+  }
+  if (inherits(records, "mzlibr_read_batch")) {
+    return(readers_batch_in_minutes(records, column))
   }
   # A native record table has no declared unit - its columns are the format's own - so converting
   # one would be a guess dressed as a conversion.
@@ -492,6 +461,12 @@ print.mzlibr_result_records <- function(x, ...) {
   for (caveat in x$caveats) {
     cat("  ! ", caveat, "\n", sep = "")
   }
+  # A column this file has no source for is NA in every row; say so, or it reads as missing data.
+  if (length(x$absent_fields) > 0L) {
+    cat("  absent from this file (NA in every row): ", paste(x$absent_fields, collapse = ", "), "\n",
+      sep = ""
+    )
+  }
   if (!is.null(x$output)) {
     cat("  written to ", x$output$path, " (", x$output$format, ", ",
       format(x$output$row_count), " rows)\n",
@@ -503,11 +478,11 @@ print.mzlibr_result_records <- function(x, ...) {
 
 # ---------------------------------------------------------------- exhaustive coverage
 #
-# `readers_read_results()` projects `IQuantifiableResultFile`, which four of the 31 file types
+# `readers_read_results()` projects `IQuantifiableResultFile`, which four of the 36 file types
 # implement. The four verbs below reach the rest, in two different ways because the gap has two
 # shapes.
 #
-# `readers_read_records()` reads ANY of the 31 by projecting each format's own record type, so
+# `readers_read_records()` reads ANY of the 36 by projecting each format's own record type, so
 # its columns are deliberately not uniform - a TopPIC file gives TopPIC's own 36. The other three
 # project the remaining cross-format views, and are uniform in the way `read_results` is.
 #
@@ -537,7 +512,7 @@ readers_parse_output <- function(data) {
   )
 }
 
-# The fields every read verb reports, so the four parsers cannot drift on them.
+# The fields every read verb reports, so the parsers cannot drift on them.
 readers_parse_common <- function(data) {
   list(
     path = as.character(wire_field(data, "path", "character", NA_character_)),
@@ -552,34 +527,70 @@ readers_parse_common <- function(data) {
   )
 }
 
-readers_parse_native_records <- function(data) {
-  excluded <- data[["excluded_fields"]]
-  # A data.frame rather than a list of lists: this is a table of (field, type, reason) and R users
-  # will want to filter it. Empty with the right columns when nothing was excluded, so
-  # `nrow(x$excluded_fields)` works without a NULL check.
-  excluded <- if (is.list(excluded) && length(excluded) > 0L) {
-    data.frame(
-      field = vapply(excluded, wire_field, character(1L), "field", "character", NA_character_),
-      type = vapply(excluded, wire_field, character(1L), "type", "character", NA_character_),
-      reason = vapply(excluded, wire_field, character(1L), "reason", "character", NA_character_),
-      stringsAsFactors = FALSE
-    )
-  } else {
-    data.frame(
-      field = character(0), type = character(0), reason = character(0),
-      stringsAsFactors = FALSE
-    )
-  }
+# The per-file block every one-path read reports at its top level (the bridge's BULK.md section 3),
+# under the same names a `_many` read's `files` data.frame uses, so what is learned about one file
+# reads the same for many.
+#
+# Four ways a field can have no value, kept apart because they mean different things:
+# `absent_fields` - this file's format has no source for the column, so every value in it is NA;
+# `failed_fields` - reading the column threw on some rows, which are NA; `excluded_fields` - the
+# field has no column shape and does not cross here (the `verb` column names what carries it);
+# and a nullable column's own NA, which means the value is missing for that one row.
+readers_parse_block <- function(data, retention_default = NA_character_) {
+  list(
+    reader = as.character(wire_field(data, "reader", "character", NA_character_)),
+    rows_not_read = as.numeric(wire_field(data, "rows_not_read", "numeric", NA_real_)),
+    retention_time_unit = as.character(
+      wire_field(data, "retention_time_unit", "character", retention_default)
+    ),
+    caveats = readers_parse_strings(data, "caveats"),
+    absent_fields = readers_parse_strings(data, "absent_fields"),
+    failed_fields = readers_parse_strings(data, "failed_fields"),
+    excluded_fields = wire_excluded(data[["excluded_fields"]])
+  )
+}
 
+# mzIdentML's identification items mzLib did not turn into rows, with the reason; NULL for a
+# format that keeps no such list, so a zero-row frame always means "none skipped".
+readers_parse_skipped <- function(data) {
+  if (wire_null(data[["skipped"]])) {
+    return(NULL)
+  }
+  wire_objects(data[["skipped"]], empty = c("spectrum_identification_item_id", "spectrum_id", "reason"))
+}
+
+# What a spectra file records about the run (mzLib SourceFile, #1349); NULL when the reader built
+# no description at all. A field the file does not record is NA inside it.
+readers_parse_source <- function(data) {
+  source <- data[["source"]]
+  if (!is.list(source)) {
+    return(NULL)
+  }
+  list(
+    instrument_model = as.character(wire_field(source, "instrument_model", "character", NA_character_)),
+    instrument_model_accession = as.character(
+      wire_field(source, "instrument_model_accession", "character", NA_character_)
+    ),
+    instrument_serial_number = as.character(
+      wire_field(source, "instrument_serial_number", "character", NA_character_)
+    ),
+    acquisition_start_time = as.character(
+      wire_field(source, "acquisition_start_time", "character", NA_character_)
+    ),
+    acquisition_start_time_is_utc = isTRUE(source[["acquisition_start_time_is_utc"]])
+  )
+}
+
+readers_parse_native_records <- function(data) {
   structure(
     c(
       readers_parse_common(data),
+      readers_parse_block(data),
       list(
-        reader = as.character(wire_field(data, "reader", "character", NA_character_)),
         record_type = as.character(wire_field(data, "record_type", "character", NA_character_)),
         views = readers_parse_views(data),
-        excluded_fields = excluded,
-        failed_fields = readers_parse_strings(data, "failed_fields")
+        skipped_count = as.numeric(wire_field(data, "skipped_count", "numeric", NA_real_)),
+        skipped = readers_parse_skipped(data)
       )
     ),
     class = "mzlibr_native_records"
@@ -588,15 +599,7 @@ readers_parse_native_records <- function(data) {
 
 readers_parse_feature_records <- function(data) {
   structure(
-    c(
-      readers_parse_common(data),
-      list(
-        retention_time_unit = as.character(
-          wire_field(data, "retention_time_unit", "character", "unknown")
-        ),
-        caveats = readers_parse_strings(data, "caveats")
-      )
-    ),
+    c(readers_parse_common(data), readers_parse_block(data, "unknown")),
     class = "mzlibr_feature_records"
   )
 }
@@ -605,7 +608,13 @@ readers_parse_match_records <- function(data) {
   structure(
     c(
       readers_parse_common(data),
-      list(caveats = readers_parse_strings(data, "caveats"))
+      readers_parse_block(data),
+      list(
+        row_count = as.numeric(wire_field(data, "row_count", "numeric", NA_real_)),
+        scores_included = isTRUE(data[["scores_included"]]),
+        skipped_count = as.numeric(wire_field(data, "skipped_count", "numeric", NA_real_)),
+        skipped = readers_parse_skipped(data)
+      )
     ),
     class = "mzlibr_match_records"
   )
@@ -615,25 +624,43 @@ readers_parse_scan_records <- function(data) {
   structure(
     c(
       readers_parse_common(data),
+      readers_parse_block(data, "minutes"),
       list(
-        reader = as.character(wire_field(data, "reader", "character", NA_character_)),
         scan_count = as.numeric(wire_field(data, "scan_count", "numeric", NA_real_)),
         ms_order = as.numeric(wire_field(data, "ms_order", "numeric", NA_real_)),
         peaks_included = isTRUE(data[["peaks_included"]]),
-        retention_time_unit = as.character(
-          wire_field(data, "retention_time_unit", "character", "minutes")
-        ),
-        caveats = readers_parse_strings(data, "caveats")
+        source = readers_parse_source(data)
       )
     ),
     class = "mzlibr_scan_records"
   )
 }
 
+# The three quantification tables (MetaMorpheus protein groups, FlashLFQ peptides, PTM occupancy)
+# share a shape: long, one row per record per sample, with the file's sample labels in order.
+readers_parse_quant_records <- function(data, class, retention_default = NA_character_) {
+  structure(
+    c(
+      readers_parse_common(data),
+      readers_parse_block(data, retention_default),
+      list(
+        row_count = as.numeric(wire_field(data, "row_count", "numeric", NA_real_)),
+        sample_labels = readers_parse_strings(data, "sample_labels")
+      ),
+      if (!is.null(data[["truncated_cell_count"]])) {
+        list(truncated_cell_count = as.numeric(
+          wire_field(data, "truncated_cell_count", "numeric", NA_real_)
+        ))
+      }
+    ),
+    class = class
+  )
+}
+
 #' Read any file mzLib recognises, into that format's own fields
 #'
-#' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. All 31 file
-#' types, including the 14 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+#' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. All 36 file
+#' types, including the 17 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
 #' peptide and protein tables, the FlashDeconv formats, SDRF - which no other `readers_` function
 #' can touch.
 #'
@@ -651,7 +678,11 @@ readers_parse_scan_records <- function(data) {
 #' @return An `mzlibr_native_records`. `records` is a data.frame of this format's own fields, or
 #'   `NULL` when `out` was given. `record_count` counts the records in the whole file,
 #'   `returned_count` the records returned, starting `offset` records in. `column_names`,
-#'   `record_type`, `views`, `excluded_fields` and `failed_fields` describe the table.
+#'   `record_type`, `views`, `caveats`, `absent_fields`, `excluded_fields` and `failed_fields`
+#'   describe the table. For mzIdentML, `skipped_count` counts the identification items mzLib did
+#'   not turn into rows and `skipped` lists each with its reason (`NA`/`NULL` for every other
+#'   format). `retention_time_unit` is `NA`: the columns are the format's own and declare none.
+#'   `rows_not_read` counts data rows that did not become records, where one line is one record.
 #'
 #' @section The columns are not uniform, by design:
 #'
@@ -680,11 +711,11 @@ readers_parse_scan_records <- function(data) {
 #' [readers_read_results()]. In a format's own columns `-1` is frequently a real measurement - a
 #' mass difference, a delta, TopPIC's `feature_score` - and nulling those would destroy data.
 #'
-#' @seealso [readers_identify()], [readers_read_results()]
+#' @seealso [readers_read_records_many()], [readers_identify()], [readers_read_results()]
 #' @spec readers.read-records
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
-#' prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv", limit = 3)
+#' prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv")
 #' prsms
 #' head(prsms$column_names)
 #' prsms$records[, c("one_based_scan_number", "base_sequence", "e_value")]
@@ -713,7 +744,7 @@ readers_read_records <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #'   `records` has one row per feature: `mz` in m/z; `charge`; `retention_time_start` and
 #'   `retention_time_end` in the unit `retention_time_unit` names - `"unknown"` for
 #'   `_ms1.feature`, see below; `intensity`, the apex, in the instrument's intensity units; and
-#'   `number_of_isotopes`.
+#'   `number_of_isotopes`. `rows_not_read` is always `NA`: one line is not one feature here.
 #'
 #' @section One row is not one line of the file, for `_ms1.feature`:
 #'
@@ -733,7 +764,8 @@ readers_read_records <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' launder a guess into a stated fact, so [readers_retention_time_in_minutes()] raises rather than
 #' converting. Dinosaur reports minutes and converts without complaint.
 #'
-#' @seealso [readers_read_records()], [readers_retention_time_in_minutes()]
+#' @seealso [readers_read_features_many()], [readers_read_records()],
+#'   [readers_retention_time_in_minutes()]
 #' @spec readers.read-features
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
@@ -749,51 +781,77 @@ readers_read_features <- function(path, limit = NULL, offset = 0, out = NULL, ti
 
 #' Read identifications, in the cross-format `spectral_match` view
 #'
-#' Four file types offer it: MsPathFinderT's targets, decoys and combined results, and Casanovo's
-#' `.mztab`. These are the identification formats that share no *file*-level interface, so
-#' [readers_read_results()] cannot reach them.
+#' Six file types offer it: MsPathFinderT's targets, decoys and combined results, Casanovo's
+#' `.mztab`, and mzIdentML `.mzid` and `.mzid.gz` - the format most search engines can export. These
+#' are the identification formats that share no *file*-level interface, so [readers_read_results()]
+#' cannot reach them.
 #'
-#' @param path Path to an MsPathFinderT `_IcTarget.tsv` / `_IcDecoy.tsv` / `_IcTDA.tsv`, or a
-#'   Casanovo `.mztab`.
+#' @param path Path to an MsPathFinderT `_IcTarget.tsv` / `_IcDecoy.tsv` / `_IcTDA.tsv`, a
+#'   Casanovo `.mztab`, or an mzIdentML `.mzid` / `.mzid.gz`.
 #' @param limit Maximum matches to return. `NULL`, the default, returns all of them.
 #' @param offset Matches to skip.
+#' @param scores Make the table long by score: one row per match and engine score, adding
+#'   `match_index`, `score_name` and `score_value`. `limit` and `offset` still count matches. Only
+#'   mzIdentML records scores; for other formats the two score columns are `NA` and named in
+#'   `absent_fields`.
 #' @param out Write a tab-separated table here and return only a summary.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_match_records`. `record_count` counts the matches in the whole file and
-#'   `returned_count` the matches returned, starting `offset` matches in.
+#'   `returned_count` the matches returned, starting `offset` matches in; `row_count` counts the
+#'   rows in `records` - more rows than matches with `scores = TRUE`. For mzIdentML,
+#'   `skipped_count` counts the identification items mzLib did not turn into rows, and `skipped`
+#'   lists each with its reason; both are `NA`/`NULL` for formats that keep no such list.
 #'
 #'   `records` is a data.frame with `file_name_without_extension`, `one_based_scan_number`,
-#'   `base_sequence`, `full_sequence`, `accession`, `is_decoy` (`NA` where the format records no
-#'   target/decoy label), `modifications` and `modification_count`.
+#'   `base_sequence`, `full_sequence`, `accession`, `is_decoy`, `modifications`,
+#'   `modification_count`, `q_value` - a fraction from 0 to 1 - `rank` and `pass_threshold`; with
+#'   `scores = TRUE` also `match_index`, `score_name` and `score_value`, in whatever units the
+#'   engine's score has. A column this format has no source for is `NA` in every row and is named
+#'   in `absent_fields`. `rows_not_read`, the rows that did not become matches, is not counted for
+#'   this view and is `NA`.
 #'
-#' @section Nothing here is FDR-filtered, and there is nothing to filter on:
+#' @section Nothing here is FDR-filtered:
 #'
-#' mzLib's `ISpectralMatch` carries identity fields only. Every one of these formats records an
-#' E-value or q-value somewhere; [readers_read_records()] will give you those columns. Filter
-#' before you report.
+#' Every match is a row, as the file lists it: for mzIdentML that includes lower ranks and items
+#' that failed the engine's threshold. `q_value` is filled only by mzIdentML and by an MsPathFinderT
+#' file that carries a `QValue` column; `rank` and `pass_threshold` only by mzIdentML. Filter before
+#' you report - for mzIdentML, on `rank == 1` and `pass_threshold`.
 #'
-#' @section Two is_decoy traps, both reported in caveats:
+#' @section Three is_decoy traps, all reported in caveats:
 #'
 #' **MsPathFinderT** infers decoys from the protein *name* - mzLib reports a decoy when the name
 #' starts with `XXX`. A database whose decoys carry a different prefix reads entirely as targets.
 #'
-#' **Casanovo** is de novo and writes no target/decoy label at all. mzLib leaves the field at its
-#' default `FALSE` and never assigns it, so `FALSE` would mean *unknown*; it arrives as `NA`
-#' instead - the rule [readers_read_results()] already applies to MSFragger.
+#' **Casanovo** is de novo and writes no target/decoy label at all, so `is_decoy` is `NA` and in
+#' `absent_fields` - never a `FALSE` that would read as "target".
 #'
-#' @seealso [readers_read_records()]
+#' **mzIdentML**'s `isDecoy` attribute defaults to false when a writer omits it, so mzLib cannot tell
+#' "target" from "not recorded"; `is_decoy` is `NA` and in `absent_fields` here too.
+#'
+#' @seealso [readers_read_matches_many()], [readers_read_records()]
 #' @spec readers.read-matches
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
-#' matches <- readers_read_matches("Casanovo_5.0.0.mztab")
+#' matches <- readers_read_matches("PXD078927_msgf_1_1_0.mzid", limit = 3)
 #' matches
+#' matches$records[, c("one_based_scan_number", "base_sequence", "q_value", "rank")]
+#'
+#' # One row per match and engine score:
+#' scored <- readers_read_matches("PXD078927_msgf_1_1_0.mzid", limit = 1, scores = TRUE)
+#' scored$records[, c("match_index", "score_name", "score_value")]
+#'
 #' # Casanovo writes no target/decoy label, so is_decoy is NA rather than a false FALSE.
-#' matches$records[, c("one_based_scan_number", "base_sequence", "is_decoy")]
+#' denovo <- readers_read_matches("Casanovo_5.0.0.mztab")
+#' denovo$absent_fields
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
-readers_read_matches <- function(path, limit = NULL, offset = 0, out = NULL, timeout = NULL) {
-  args <- readers_build_read_args(path, limit, offset, out, "read-matches")
+readers_read_matches <- function(path, limit = NULL, offset = 0, scores = FALSE, out = NULL,
+                                 timeout = NULL) {
+  args <- c(
+    readers_build_read_args(path, limit, offset, out, "read-matches"),
+    readers_scores_args(scores)
+  )
   readers_parse_match_records(bridge_invoke(args, timeout = timeout))
 }
 
@@ -835,13 +893,28 @@ readers_read_matches <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #'   (instrument units) are list columns, one vector per scan. A precursor field is `NA` on an MS1
 #'   scan; the generated sections below say what `NA` means for every column.
 #'
+#'   `source` is what the file records about the run (mzLib `SourceFile`): `instrument_model`,
+#'   `instrument_model_accession` (match on this, never the name), `instrument_serial_number`,
+#'   `acquisition_start_time` as ISO-8601 text, and `acquisition_start_time_is_utc`. Each is `NA`
+#'   when the file does not record it - MGF and msalign record none - and `source` is `NULL` only
+#'   when the reader built no description at all. `failed_fields` names any column whose read
+#'   threw on some scans. `rows_not_read` is always `NA`: rows are not counted for this view.
+#'
+#' @section When did acquisition start, and on which clock:
+#'
+#' `acquisition_start_time` ends in `Z` only when the file fixed the instant, as an mzML
+#' `startTimeStamp` with an offset does; otherwise it is the acquisition computer's wall-clock time,
+#' and `acquisition_start_time_is_utc` is `FALSE`. A Thermo `.raw` is always local time, and
+#' ProteoWizard's mzML of the same run writes it as UTC assuming the *converting* machine's time
+#' zone - so the two can differ by the site's UTC offset.
+#'
 #' @section Two of the seven need Windows:
 #'
 #' Bruker `.d` and timsTOF `.d` are read through vendor native libraries (`baf2sql`, `timsdata`)
 #' and are **Windows-x64 only**. Thermo `.raw` uses managed vendor assemblies and works everywhere.
 #' msalign files hold **deconvolved neutral masses**, not raw m/z - do not re-deconvolve them.
 #'
-#' @seealso [readers_read_records()]
+#' @seealso [readers_read_spectra_many()], [readers_read_records()]
 #' @spec readers.read-spectra
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
@@ -852,8 +925,16 @@ readers_read_matches <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' @export
 readers_read_spectra <- function(path, limit = NULL, offset = 0, ms_order = NULL, peaks = FALSE,
                                  out = NULL, timeout = NULL) {
-  args <- readers_build_read_args(path, limit, offset, out, "read-spectra")
+  args <- c(
+    readers_build_read_args(path, limit, offset, out, "read-spectra"),
+    readers_spectra_args(ms_order, peaks)
+  )
+  readers_parse_scan_records(bridge_invoke(args, timeout = timeout))
+}
 
+# `--ms-order` and `--peaks`, validated; shared by the one-file and many-file spectra reads.
+readers_spectra_args <- function(ms_order, peaks) {
+  args <- character(0)
   if (!is.null(ms_order)) {
     if (!is.numeric(ms_order) || length(ms_order) != 1L || is.na(ms_order) ||
       ms_order != round(ms_order) || ms_order < 1) {
@@ -864,15 +945,54 @@ readers_read_spectra <- function(path, limit = NULL, offset = 0, ms_order = NULL
     }
     args <- c(args, "--ms-order", formatC(ms_order, format = "d"))
   }
-
   if (!is.logical(peaks) || length(peaks) != 1L || is.na(peaks)) {
     stop(mzlib_usage_error("peaks must be TRUE or FALSE."))
   }
   if (isTRUE(peaks)) {
     args <- c(args, "--peaks")
   }
+  args
+}
 
-  readers_parse_scan_records(bridge_invoke(args, timeout = timeout))
+# `--scores`, validated; shared by the one-file and many-file match reads.
+readers_scores_args <- function(scores) {
+  if (!is.logical(scores) || length(scores) != 1L || is.na(scores)) {
+    stop(mzlib_usage_error("scores must be TRUE or FALSE."))
+  }
+  if (isTRUE(scores)) "--scores" else character(0)
+}
+
+# A batch converts each file's rows by that file's own unit, so a batch mixing formats comes back
+# on one axis - and raises, naming the file, when any file's unit is unknown.
+readers_batch_in_minutes <- function(batch, column) {
+  if (batch$verb %in% c("readers read-records")) {
+    stop(mzlib_usage_error(paste0(
+      "readers_read_records_many() returns each format's own columns, which carry no declared ",
+      "retention-time unit, so they cannot be converted."
+    )))
+  }
+  if (is.null(column)) {
+    column <- if (identical(batch$verb, "readers read-features")) "retention_time_start" else "retention_time"
+  }
+  if (!is.character(column) || length(column) != 1L || is.na(column) || !nzchar(column)) {
+    stop(mzlib_usage_error("column must be a single column name, or NULL for the default."))
+  }
+  if (is.null(batch$records) || !column %in% names(batch$records)) {
+    return(numeric(0))
+  }
+  values <- as.numeric(batch$records[[column]])
+  files <- batch$files
+  units <- if ("retention_time_unit" %in% names(files)) files$retention_time_unit else rep(NA, nrow(files))
+  row_units <- units[batch$records$source_index]
+  unknown <- unique(batch$records$source_path[!row_units %in% c("minutes", "seconds")])
+  if (length(unknown) > 0L) {
+    stop(mzlib_usage_error(paste0(
+      "Cannot convert ", column, " for ", paste0("'", basename(unknown), "'", collapse = ", "),
+      ": mzLib gives no basis to say what unit it is in. Inspect the values against scan numbers ",
+      "before comparing them."
+    )))
+  }
+  ifelse(row_units == "seconds", values / 60, values)
 }
 
 # ---------------------------------------------------------------- print methods
@@ -893,6 +1013,12 @@ readers_print_body <- function(x, unit_label = NULL, caveats = x$caveats) {
   }
   for (caveat in caveats) {
     cat("  ! ", caveat, "\n", sep = "")
+  }
+  # A column this file has no source for is NA in every row; say so, or it reads as missing data.
+  if (length(x$absent_fields) > 0L) {
+    cat("  absent from this file (NA in every row): ", paste(x$absent_fields, collapse = ", "), "\n",
+      sep = ""
+    )
   }
   if (!is.null(x$output)) {
     cat("  written to ", x$output$path, " (", x$output$format, ", ",
@@ -920,9 +1046,9 @@ print.mzlibr_native_records <- function(x, ...) {
     "\n",
     sep = ""
   )
-  # This verb reports no caveats: its columns are the format's own, so there is no uniform meaning
-  # for them to fail to have. What it reports instead is what could not be projected.
-  readers_print_body(x, caveats = character(0))
+  # Its caveats are about the format's own columns - that its units are the tool's, that a list
+  # crosses as one joined string - and what could not be projected follows them.
+  readers_print_body(x)
   if (nrow(x$excluded_fields) > 0L) {
     cat("  ", nrow(x$excluded_fields), " field(s) could not become columns: ",
       paste(x$excluded_fields$field, collapse = ", "), "\n",

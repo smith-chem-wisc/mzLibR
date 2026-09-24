@@ -4,18 +4,24 @@
 # shape. Most of these tests assert that the exceptions are visible.
 
 recorded_formats <- function() {
-  payload <- mz$json_parse(paste(
-    readLines(fixture_path("readers_formats.json"), warn = FALSE),
+  mz$readers_parse_formats(recorded_payload("readers_formats.json"))
+}
+
+# A recorded payload's `data`. pyMzLib's older recordings are whole envelopes and its newer ones the
+# bare `data` object; both are the contract, so the tests accept either.
+recorded_payload <- function(name) {
+  parsed <- mz$json_parse(paste(
+    readLines(fixture_path(name), warn = FALSE, encoding = "UTF-8"),
     collapse = "\n"
   ))
-  mz$readers_parse_formats(payload$data)
+  if (is.list(parsed) && !is.null(parsed$ok) && "data" %in% names(parsed)) parsed$data else parsed
 }
 
 # ---------------------------------------------------------------- formats
 
 test_that("every format mzLib recognises becomes a row", {
   formats <- recorded_formats()
-  expect_identical(nrow(formats), 31L)
+  expect_identical(nrow(formats), 36L)
   expect_true(is.data.frame(formats))
   expect_false(is.factor(formats$file_type))
 })
@@ -35,11 +41,13 @@ test_that("exactly four file types are quantifiable", {
 })
 
 test_that("most formats have no views at all, and that is a real answer", {
-  # 14 of 31. An empty views list means mzLib can parse the file but offers no cross-format
-  # projection of it - not that anything failed.
+  # 17 of 36. An empty views list means mzLib can parse the file but offers no cross-format
+  # projection of it - not that anything failed. It moved from 14 of 31 at mzLib 1.0.592, which
+  # added Pytheas and the MetaMorpheus and FlashLFQ quantification tables (read by their own
+  # verbs, not a view) and mzIdentML (which joins spectral_match).
   formats <- recorded_formats()
   viewless <- vapply(formats$views, function(v) length(v) == 0L, logical(1L))
-  expect_identical(sum(viewless), 14L)
+  expect_identical(sum(viewless), 17L)
 })
 
 test_that("the view vocabulary is the four documented families", {
@@ -243,7 +251,7 @@ test_that("limit, offset and out reach the wire in the bridge's spelling", {
 })
 
 test_that("an impossible limit or offset is refused", {
-  for (bad in list(0, -1, 1.5, "10")) {
+  for (bad in list(-1, 1.5, "10")) {
     expect_error(mz$readers_build_read_args("psm.tsv", bad, 0, NULL), class = "mzlib_usage_error")
   }
   for (bad in list(-1, 1.5, "10", NA_real_)) {
@@ -258,17 +266,19 @@ test_that("a large limit is not written in scientific notation", {
 
 # ---------------------------------------------------------------- against a real mzLib
 
-test_that("LIVE: mzLib still recognises 31 formats, four of them quantifiable", {
+test_that("LIVE: mzLib still recognises 36 formats, four of them quantifiable", {
   # Enumerated from mzLib itself, so this is the test that notices when the installed version
   # changes what it supports - which is exactly when the numbers in ?readers_formats go stale.
   skip_if(!nzchar(live_bridge), "no bridge staged (set MZLIB_BRIDGE)")
   options(mzlibr.bridge = live_bridge)
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
+  # 36 and 17 are mzLib 1.0.592's, the bridge pyMzLib 0.2.0 publishes: an older bridge fails this,
+  # which is the test noticing that the installed mzLib changed what it supports.
   formats <- readers_formats()
-  expect_identical(nrow(formats), 31L)
+  expect_identical(nrow(formats), 36L)
   expect_identical(sum(formats$is_quantifiable), 4L)
-  expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 14L)
+  expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 17L)
 })
 
 test_that("LIVE: identify dispatches on extension and does not validate contents", {
@@ -318,13 +328,6 @@ test_that("LIVE: reading a file with no quantifiable view names the views it doe
 # payloads are recorded from the real bridge against real mzLib fixtures, so a wire-shape change
 # shows up here as a parse failure rather than as a fixture that agrees with an R file and with
 # nothing else.
-
-recorded_payload <- function(name) {
-  mz$json_parse(paste(
-    readLines(fixture_path(name), warn = FALSE),
-    collapse = "\n"
-  ))$data
-}
 
 recorded_native <- function() {
   mz$readers_parse_native_records(recorded_payload("readers_records_toppic.json"))
@@ -377,11 +380,12 @@ test_that("a field that could not become a column is named with its reason", {
 })
 
 test_that("excluded_fields is a frame with the right columns even when empty", {
-  # So `nrow(x$excluded_fields)` works without a NULL check.
+  # So `nrow(x$excluded_fields)` works without a NULL check. `verb` names the bridge command that
+  # carries a field this one cannot.
   empty <- mz$readers_parse_native_records(list())
   expect_true(is.data.frame(empty$excluded_fields))
   expect_identical(nrow(empty$excluded_fields), 0L)
-  expect_identical(sort(names(empty$excluded_fields)), sort(c("field", "type", "reason")))
+  expect_identical(names(empty$excluded_fields), c("field", "type", "reason", "verb"))
 })
 
 test_that("read_records sends its own verb", {
@@ -515,10 +519,15 @@ test_that("every read verb refuses a blank path before spawning anything", {
 
 test_that("every read verb refuses a bad limit and a bad offset", {
   for (verb in c("read-records", "read-features", "read-matches", "read-spectra")) {
-    expect_error(mz$readers_build_read_args("a.tsv", 0, 0, NULL, verb), contains = "positive whole number")
-    expect_error(mz$readers_build_read_args("a.tsv", 1.5, 0, NULL, verb), contains = "positive whole number")
+    expect_error(mz$readers_build_read_args("a.tsv", -1, 0, NULL, verb), contains = "non-negative whole number")
+    expect_error(mz$readers_build_read_args("a.tsv", 1.5, 0, NULL, verb), contains = "non-negative whole number")
     expect_error(mz$readers_build_read_args("a.tsv", NULL, -1, NULL, verb), contains = "non-negative")
   }
+})
+
+test_that("a zero limit is sent, as the specs allow: the envelope alone", {
+  args <- mz$readers_build_read_args("a.tsv", 0, 0, NULL, "read-records")
+  expect_identical(args[which(args == "--limit") + 1L], "0")
 })
 
 test_that("a zero offset is not sent", {

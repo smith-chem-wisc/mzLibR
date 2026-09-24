@@ -126,9 +126,14 @@ wire_objects <- function(value, empty = character(0)) {
   as.data.frame(columns, stringsAsFactors = FALSE, optional = TRUE)
 }
 
-# The `excluded_fields` block: field, type, reason, and the verb that carries the field instead.
+# The `excluded_fields` block: field, type, reason, and the verb that carries the field instead -
+# always those four columns, so `nrow()` and `$verb` work without a NULL check.
 wire_excluded <- function(value) {
-  wire_objects(value, empty = c("field", "type", "reason", "verb"))
+  frame <- wire_objects(value, empty = c("field", "type", "reason", "verb"))
+  for (column in setdiff(c("field", "type", "reason", "verb"), names(frame))) {
+    frame[[column]] <- rep(NA_character_, nrow(frame))
+  }
+  frame[, c("field", "type", "reason", "verb", setdiff(names(frame), c("field", "type", "reason", "verb"))), drop = FALSE]
 }
 
 # A files[] entry's `error`, or NULL when the input was read.

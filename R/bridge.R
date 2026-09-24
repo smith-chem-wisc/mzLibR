@@ -350,7 +350,7 @@ bridge_invoke <- function(args, stdin = NULL, timeout = NULL, runner = bridge_ru
 #'
 #' @param runner The function used to run the bridge. Present so the transport's failure paths
 #'   can be tested; not something a caller normally sets.
-#' @return A list with `bridge`, `protocol`, `runtime` and `mzlib`.
+#' @return A list with `bridge`, `protocol`, `runtime`, `mzlib` and `verbs`.
 #'
 #'   `mzlib` is which mzLib the bridge was built against, as `1.0.0+<commit>`, and is
 #'   `NA_character_` when the bridge did not report one - either because it predates the field,
@@ -360,6 +360,12 @@ bridge_invoke <- function(args, stdin = NULL, timeout = NULL, runner = bridge_ru
 #'   It is deliberately **not** a compatibility check. `protocol` is that, and it is what this
 #'   function verifies. `mzlib` is for reporting a run, filing a bug, or tying a result to the
 #'   library that produced it.
+#'
+#'   `verbs` is every command the bridge dispatches, such as `"readers read-protein-groups"`,
+#'   taken from its own dispatch table when it was built, so it cannot list one it lacks. It is
+#'   `NA_character_` for a bridge from before pyMzLib 0.2.0, which did not report it. mzLibR checks
+#'   it before calling a command newer than the bridge it may be paired with, so an old bridge is
+#'   reported as old rather than answering "Unknown command".
 #' @spec version
 #' @examples
 #' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
@@ -389,6 +395,39 @@ mzlibr_bridge_version <- function(runner = bridge_run) {
     # An absent field projects to NA, never to "" or to a made-up placeholder. A bridge built
     # before this field existed simply does not send it, and the honest R answer to "which mzLib?"
     # in that case is "not known", which is what NA means.
-    mzlib = wire_field(data, "mzlib", "character", NA_character_)
+    mzlib = wire_field(data, "mzlib", "character", NA_character_),
+    verbs = if (is.list(data$verbs)) wire_strings(data$verbs) else NA_character_
   )
+}
+
+# ---------------------------------------------------------------- which verbs the bridge has
+
+# The `verbs` each bridge reported, keyed by the bridge's path, so the check below costs one
+# `version` call per session rather than one per read.
+MZLIB_VERBS_SEEN <- new.env(parent = emptyenv())
+
+# Raise a usage error unless the bridge in use dispatches `verb`.
+#
+# A binding and a bridge are distributed separately, so a user can pair this package with a bridge
+# older than a verb it calls. Without this, that pairing spawns a process only to be told
+# "Unknown command"; with it, the error says which bridge the verb needs (the bridge's BULK.md
+# section 5). `since` is the first pyMzLib release whose bridge has the verb, from its spec.
+#
+# A bridge that does not report `verbs` at all predates every verb that is checked.
+bridge_require_verb <- function(verb, since, runner = bridge_run) {
+  exe <- mzlibr_bridge_path()
+  if (!exists(exe, envir = MZLIB_VERBS_SEEN, inherits = FALSE)) {
+    data <- bridge_invoke("version", timeout = 60, runner = runner)
+    listed <- if (is.list(data) && is.list(data$verbs)) wire_strings(data$verbs) else NULL
+    assign(exe, list(verbs = listed), envir = MZLIB_VERBS_SEEN)
+  }
+  verbs <- get(exe, envir = MZLIB_VERBS_SEEN, inherits = FALSE)$verbs
+  if (is.null(verbs) || !verb %in% verbs) {
+    stop(mzlib_usage_error(paste0(
+      "'", verb, "' needs the bridge from pyMzLib ", since, " or later, and the bridge at '", exe,
+      "' does not have it. Point ", MZLIB_BRIDGE_ENV_VAR, " (or options(", MZLIB_BRIDGE_OPTION,
+      ")) at a newer bridge, or install one with mzlibr_install_bridge() once this package pins it."
+    )))
+  }
+  invisible(NULL)
 }

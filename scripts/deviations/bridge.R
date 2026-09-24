@@ -5,9 +5,6 @@
 # mzlibr_install_bridge(), so a user can find all three together.
 R_NAMES["version"] <- "mzlibr_bridge_version"
 
-R_DEVIATIONS[["version"]] <- list(
-  "field.verbs" = pending()
-)
 
 PARENT_ADDITIONS["mzlibr_bridge_path"] <- "transport; pyMzLib's equivalent is private (_bridge)"
 PARENT_ADDITIONS["mzlibr_bridge_version"] <-

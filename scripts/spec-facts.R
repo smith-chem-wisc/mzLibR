@@ -452,7 +452,11 @@ render_spec_sections <- function(spec, bulk = FALSE, commit = spec_source_commit
       paste0("Columns of \\code{", table, "}")
     }
     out <- c(out, rd_section(heading, c(
-      if (bulk) "The first two columns say which input each row came from; rows are grouped by input, in input order, whatever \\code{threads} is." else character(0),
+      if (bulk) paste(
+        "The first two columns say which input each row came from - \\code{source_index} is 1-based in R,",
+        "so it indexes \\code{files} directly - and rows are grouped by input, in input order, whatever",
+        "\\code{threads} is."
+      ) else character(0),
       rd_describe(vapply(columns$projected, function(f) rd_field_item(spec, f), character(1L)))
     )))
   } else if (identical(columns_raw, "per-format")) {

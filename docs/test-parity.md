@@ -25,9 +25,9 @@ properly where mzLibRust could only print.
 whole downstream family shared, and mzLibR is now the only binding besides the parent to close
 it.
 
-It was not marginal. mzLib recognises 31 result-file types, and `readers_identify()` is what
+It was not marginal. mzLib recognises 36 file types, and `readers_identify()` is what
 tells you which one a path is — including whether it is *quantifiable*, the precondition for
-`flashlfq_quantify()`. Exactly four of the 31 carry that view: MetaMorpheus `psmtsv` and
+`flashlfq_quantify()`. Exactly four of the 36 carry that view: MetaMorpheus `psmtsv` and
 `osmtsv`, `MsFraggerPsm`, and DIA-NN `DiaNnReport`. Without it, a user pointing `flashlfq_quantify()` at a PSM file
 had no supported way to ask what that file was first.
 
