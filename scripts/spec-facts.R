@@ -20,38 +20,51 @@ R_CONDITION <- c(
   correctness = "mzlib_bridge_error"
 )
 
-# Where mzLibR's function name differs from the spec's `bindings.r.name`. Every entry is reported
-# back to the bridge so the spec can be corrected; until then the lint uses this one.
-R_NAMES <- c(
-  # Transport functions carry the package prefix, like mzlibr_bridge_path() and
-  # mzlibr_install_bridge(), so a user can find all three together.
-  "version" = "mzlibr_bridge_version"
-)
+# What the tooling knows about each module's projection - where mzLibR names or places something
+# differently from the spec or from pyMzLib, and why - lives in scripts/deviations/<module>.R, one
+# file per module, so projecting a module touches that module's file and nothing shared. Each file
+# adds to these:
+#
+#   R_NAMES           verb -> mzLibR function, where it differs from the spec's `bindings.r.name`.
+#                     Every entry is reported back to the bridge so the spec can be corrected.
+#   R_TABLE           verb -> where the R object keeps the verb's table (the wire's `columns`).
+#   R_DEVIATIONS      verb -> the params and fields mzLibR projects differently, each with a reason.
+#                     **Nothing else may be skipped by the lint**, and the lint fails on an entry
+#                     that names no param or field of the spec, so the list cannot go stale.
+#   PARENT_MAP        mzLibR function -> the pyMzLib callable it mirrors (scripts/name-parity.R).
+#   PARENT_ADDITIONS  mzLibR functions with no pyMzLib counterpart, with the reason.
+#   PARENT_OMISSIONS  pyMzLib callables with no mzLibR function, with the reason.
+#   REPLAY_EXTRA      recordings an example replays that no spec lists (scripts/stage-replay.R).
+#   FIELD_CHECKS      verb -> list(fixture, parse): how name-parity.R parses the verb's recording
+#                     to check that every field the spec says the R object carries is in it.
+#
+# R_DEVIATIONS keys: the spec's `verb`, or `"<verb> (bulk)"` / `"<verb> (selection)"` for entries
+# that apply to one page only (they are consulted first). Values: `"param.<wire name>"`,
+# `"field.<wire name>"`, `"field.<table>.<wire name>"` (a field of `result.tables`) and
+# `"table.<name>"` entries, each `list(r = <the R name, or NA when it is not a named element>,
+# why = <the reason>)`, built with the helpers below. An R name may be a path such as
+# `census$sites`.
+R_NAMES <- character(0)
+R_TABLE <- character(0)
+R_DEVIATIONS <- list()
+PARENT_MAP <- character(0)
+PARENT_ADDITIONS <- character(0)
+PARENT_OMISSIONS <- character(0)
+REPLAY_EXTRA <- list()
+FIELD_CHECKS <- list()
 
-# Where the R object keeps the verb's table, when it has one. The wire's `columns` map becomes a
-# data.frame under this name.
-R_TABLE <- c(
-  "readers formats" = "(the returned data.frame itself)",
-  "readers read-results" = "records",
-  "readers read-records" = "records",
-  "readers read-features" = "records",
-  "readers read-matches" = "records",
-  "readers read-spectra" = "records",
-  "pride files" = "(the returned data.frame itself)",
-  "pride ftp-files" = "(the returned data.frame itself)",
-  "peptidoform fragments" = "peptides"
-)
-
-# A field of the verb that is still on the wire at the spec's version but that this package does
-# not return yet. Listed as such on the man page, so a page never claims a field it lacks.
+# A field the bridge sends at the spec's version that this package does not return yet. Listed as
+# such on the man page, so a page never claims a field its function lacks.
 pending <- function(why = "arrives with the mzLib 1.0.592 port") {
   list(r = NA, pending = TRUE, why = why)
 }
 
+# A param or field with no named element in R, because R carries it another way.
 not_here <- function(why) {
   list(r = NA, why = why)
 }
 
+# A param or field R carries under another name.
 as_r <- function(r, why) {
   list(r = r, why = why)
 }
@@ -59,153 +72,11 @@ as_r <- function(r, why) {
 ONE_PATH_ERROR <- not_here("always null for one path: a file that cannot be read raises instead")
 RECORDS <- as_r("records", "the table is a data.frame, so it is `records`")
 
-# Every place mzLibR deliberately projects a spec param or result field under another name, or not
-# as a named element at all. **Nothing else may be skipped by the lint**, and the lint fails on an
-# entry here that names no param or field of the spec, so this list cannot go stale silently.
-#
-# Key: the spec's `verb`, or `"<verb> (bulk)"` / `"<verb> (selection)"` for entries that apply to
-# one page only (they are consulted first). Value: a list of `"param.<wire name>"`,
-# `"field.<wire name>"`, `"field.<table>.<wire name>"` (a field of `result.tables`) and
-# `"table.<name>"` entries, each `list(r = <the R name, or NA when it is not a named element>,
-# why = <the reason>)`. An R name may be a path such as `census$sites`.
-R_DEVIATIONS <- list(
-  "version" = list(
-    "field.verbs" = pending()
-  ),
-  "readers formats" = list(
-    "field.format_count" = not_here("the result is the formats data.frame; this is nrow() of it"),
-    "field.formats" = not_here("the result is this list itself, as a data.frame, one row per format")
-  ),
-  "readers identify" = list(
-    "field.error" = ONE_PATH_ERROR
-  ),
-  "readers read-results" = list(
-    "field.columns" = RECORDS,
-    "field.reader" = pending(),
-    "field.absent_fields" = pending(),
-    "field.failed_fields" = pending(),
-    "field.excluded_fields" = pending(),
-    "field.error" = ONE_PATH_ERROR
-  ),
-  "readers read-records" = list(
-    "field.columns" = RECORDS,
-    "field.retention_time_unit" = pending(),
-    "field.caveats" = pending(),
-    "field.absent_fields" = pending(),
-    "field.skipped_count" = pending(),
-    "field.skipped" = pending(),
-    "field.rows_not_read" = pending(),
-    "field.error" = ONE_PATH_ERROR
-  ),
-  "readers read-features" = list(
-    "field.columns" = RECORDS,
-    "field.reader" = pending(),
-    "field.rows_not_read" = pending(),
-    "field.absent_fields" = pending(),
-    "field.failed_fields" = pending(),
-    "field.excluded_fields" = pending(),
-    "field.error" = ONE_PATH_ERROR
-  ),
-  "readers read-matches" = list(
-    "param.scores" = pending(),
-    "field.columns" = RECORDS,
-    "field.reader" = pending(),
-    "field.skipped_count" = pending(),
-    "field.skipped" = pending(),
-    "field.rows_not_read" = pending(),
-    "field.retention_time_unit" = pending(),
-    "field.absent_fields" = pending(),
-    "field.failed_fields" = pending(),
-    "field.excluded_fields" = pending(),
-    "field.scores_included" = pending(),
-    "field.row_count" = pending(),
-    "field.q_value" = pending(),
-    "field.rank" = pending(),
-    "field.pass_threshold" = pending(),
-    "field.match_index" = pending(),
-    "field.score_name" = pending(),
-    "field.score_value" = pending(),
-    "field.error" = ONE_PATH_ERROR
-  ),
-  "readers read-spectra" = list(
-    "field.columns" = RECORDS,
-    "field.source" = pending(),
-    "field.rows_not_read" = pending(),
-    "field.absent_fields" = pending(),
-    "field.failed_fields" = pending(),
-    "field.excluded_fields" = pending(),
-    "field.error" = ONE_PATH_ERROR
-  ),
-  # SDRF's column names repeat, so a document keeps its header as `columns` - a character vector
-  # that may hold duplicates - and its cells as `rows`, rather than as a data.frame.
-  "sdrf read" = list(
-    "field.column_names" = as_r("columns", "the header, duplicates kept, is `columns`")
-  ),
-  "sdrf pool" = list(
-    "param.stdin" = as_r("documents", "one stdin line per element of `documents`; its name is the label"),
-    "field.column_names" = as_r("columns", "the header, duplicates kept, is `columns`")
-  ),
-  "pride files" = list(
-    "field.accession" = as_r("project_accession", "stamped on every row, so a selection knows its project"),
-    "field.file_count" = not_here("the result is the files data.frame; this is nrow() of it"),
-    "field.total_size_bytes" = not_here("pride_total_size_bytes() of the result"),
-    "field.files" = not_here("the result is this list itself, as a data.frame, one row per file")
-  ),
-  "pride ftp-files" = list(
-    "field.accession" = not_here("an FTP listing is not a download selection, so no row carries it"),
-    "field.file_count" = not_here("the result is the files data.frame; this is nrow() of it"),
-    "field.approximate_total_size_bytes" = not_here("pride_approximate_total_size_bytes() of the result"),
-    "field.files" = not_here("the result is this list itself, as a data.frame, one row per file")
-  ),
-  "pride download" = list(
-    "param.dest" = as_r("destination", "spelled out"),
-    "param.ext" = as_r("extensions", "spelled out; a character vector"),
-    "param.no-overwrite" = as_r("overwrite", "stated positively: overwrite = FALSE sends --no-overwrite"),
-    "param.names-from-stdin" = not_here("pride_download_files() sends a selection, and sets this itself"),
-    "param.stdin" = not_here("pride_download_files() sends the selected file names"),
-    "field.accession" = not_here("the result is the character vector of paths"),
-    "field.destination_directory" = not_here("the result is the character vector of paths"),
-    "field.downloaded_count" = not_here("length() of the result"),
-    "field.paths" = not_here("the result is this character vector itself")
-  ),
-  "pride download (selection)" = list(
-    "param.accession" = not_here("taken from the rows' project_accession"),
-    "param.category" = not_here("a selection is already filtered, by `[`"),
-    "param.ext" = not_here("a selection is already filtered, by `[`"),
-    "param.names-from-stdin" = not_here("always set: the selection travels on stdin"),
-    "param.stdin" = as_r("files", "the file_name of each selected row, one per stdin line")
-  ),
-  "peptidoform fragments" = list(
-    "param.no-modifications" = as_r("modifications", "stated positively: modifications = FALSE sends --no-modifications"),
-    "param.max-mods" = as_r("max_modifications", "spelled out"),
-    "field.annotated_modification_sites" = as_r("census$sites", "gathered into the census; see census_explain()"),
-    "field.annotated_modifications_loaded" = as_r("census$applied", "gathered into the census; see census_explain()"),
-    "field.uniprot_annotated_features" = as_r("census$annotated", "gathered into the census; see census_explain()"),
-    "field.unresolved_modifications" = as_r("census$unresolved", "gathered into the census; see census_excluded()"),
-    "field.uniprot_features_by_type" = as_r("census$by_type", "gathered into the census, as a data.frame"),
-    "field.peptide_count" = not_here("nrow() of `peptides`"),
-    "field.modifications" = as_r("modifications", "its own long data.frame, joined to `peptides` on peptide_index"),
-    "field.fragments" = as_r("fragments", "its own long data.frame, joined to `peptides` on peptide_index")
-  ),
-  "quant flashlfq" = list(
-    "param.stdin" = as_r("spectra", "one stdin line per run, with its design columns"),
-    "param.ppm" = as_r("ppm_tolerance", "mzLib's parameter name"),
-    "param.isotope-ppm" = as_r("isotope_ppm_tolerance", "mzLib's parameter name"),
-    "param.mbr" = as_r("match_between_runs", "mzLib's parameter name"),
-    "param.mbr-ppm" = as_r("mbr_ppm_tolerance", "mzLib's parameter name"),
-    "param.mbr-q" = as_r("mbr_q_value_threshold", "mzLib's parameter name"),
-    "param.shared-peptides" = as_r("use_shared_peptides_for_protein_quant", "mzLib's parameter name"),
-    "param.bayesian" = as_r("bayesian_protein_quant", "mzLib's parameter name"),
-    "param.use-pep-q" = as_r("use_pep_q_value", "mzLib's parameter name"),
-    "param.threads" = as_r("max_threads", "mzLib's parameter name; the default differs, see its argument"),
-    "param.out" = as_r("output_directory", "mzLib's parameter name"),
-    "field.peptide_count" = not_here("flashlfq_peptide_count() of the result"),
-    "field.protein_count" = not_here("flashlfq_protein_count() of the result"),
-    "field.peptides.intensities" = as_r("intensity", "unnested: one row per peptide per run, the run in file_name"),
-    "field.peptides.detection_types" = as_r("detection_type", "unnested beside intensity"),
-    "field.proteins.intensities" = as_r("intensity", "unnested: one row per protein group per sample, the sample in file_name")
-  )
-)
+for (deviations_file in sort(list.files(file.path("scripts", "deviations"), pattern = "[.]R$",
+                                        full.names = TRUE))) {
+  source(deviations_file, local = TRUE)
+}
+rm(deviations_file)
 
 # ---------------------------------------------------------------- reading
 

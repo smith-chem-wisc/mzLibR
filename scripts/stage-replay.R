@@ -21,14 +21,8 @@ check <- identical(commandArgs(trailingOnly = TRUE), "--check")
 fixtures <- file.path("tests", "fixtures")
 dest <- file.path("inst", "replay")
 
-# Recordings an example needs that no spec lists as an example. Each says why.
-REPLAY_EXTRA <- list(
-  # pride ftp-files: the spec lists no example; this is the recording the offline tests use.
-  c(verb = "pride ftp-files", fixture = "pride_ftp_PXD000001.json"),
-  # readers read-matches: ?readers_read_matches shows Casanovo, whose missing decoy label is the
-  # point of its example; the spec's own example is mzIdentML.
-  c(verb = "readers read-matches", fixture = "readers_matches_casanovo.json")
-)
+# Recordings an example needs that no spec lists as an example come from REPLAY_EXTRA, kept per
+# module in scripts/deviations/<module>.R, each with the reason.
 
 rows <- list()
 for (spec in load_specs()) {
