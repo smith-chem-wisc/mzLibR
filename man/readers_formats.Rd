@@ -12,6 +12,8 @@ readers_formats(timeout = 60)
 
 }
 \description{
+List every file type mzLib recognises, with the extension it dispatches on, the reader class that parses it, and the cross-format views it offers.
+
 Enumerated from mzLib itself rather than from a list maintained here, so it reflects the
 installed version and cannot go stale.
 }
@@ -39,6 +41,74 @@ Note also that \code{extension} is \strong{not unique}: \code{BrukerD} and \code
 told apart by what the directory holds, and several formats share \code{.tsv}.
 
 }
+\section{Wraps}{
+Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileType}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileTypeExtensions.GetFileExtension}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileTypeExtensions.GetResultFileType}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+This verb takes no parameters.
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{format_count}}{int; in \strong{formats}; never \code{NA}. Number of entries in formats; equal to the number of SupportedFileType members. 36 at mzLib 1.0.592 (32 at 1.0.591).}
+\item{\code{formats}}{table; never \code{NA}. One entry per SupportedFileType, in enum declaration order. Enumerated from mzLib, not transcribed, so it cannot drift from what mzLib dispatches.}
+}
+}
+\section{Columns}{
+\describe{
+\item{\code{file_type}}{string; never \code{NA}. mzLib's SupportedFileType member name, e.g. "MsFraggerPsm", "psmtsv", "MzIdentMLGz".}
+\item{\code{extension}}{string; \code{NA} when mzLib has no extension mapping for this member (a broken mzLib build); the listing reports it rather than failing. The suffix mzLib dispatches on, e.g. ".mzid.gz" or "QuantifiedProteinGroups.tsv". NOT unique: both Bruker types are ".d" and several share ".tsv"; DiaNnReport and PytheasResult dispatch on content, not on this value.}
+\item{\code{reader}}{string; \code{NA} when mzLib has no reader mapping for this member (a broken mzLib build). The mzLib reader class name, e.g. "MzIdentMLResultFile".}
+\item{\code{views}}{string[]; never \code{NA}. Cross-format views this type offers, from quantifiable, ms1_features, spectra, spectral_match. Empty is a real answer: 17 of 36 types offer none and are readable only through read-records.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{Never raised by this verb.}
+\item{\code{mzlib_bridge_error} (correctness)}{Never raised by this verb.}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item Extensions are not unique and not always how dispatch works: identify a real path rather than matching on extension.
+\item An empty views list means mzLib parses the format into its own record type with no cross-format interface; read-records still reads it.
+\item At mzLib 1.0.592 the view families are: quantifiable 4, ms1_features 2, spectral_match 6, spectra 7, none 17. These counts are the pin's, not the contract's: bindings should call formats rather than repeat them in prose.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.readers.formats}
+\item Rust (mzLibRust): \code{mzlib::readers::formats}
+\item R (mzLibR): \code{readers_formats}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
 \seealso{
 \code{\link{readers_identify}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+formats <- readers_formats()
+nrow(formats)
+formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
+
+# An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.
+sum(lengths(formats$views) == 0)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

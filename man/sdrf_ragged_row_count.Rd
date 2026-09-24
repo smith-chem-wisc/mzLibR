@@ -16,3 +16,10 @@ How many rows are shorter than the header
 \value{
 The number of returned rows carrying fewer cells than there are columns.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+ragged <- sdrf_read("PXD059974.sdrf.tsv")
+sdrf_ragged_row_count(ragged)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

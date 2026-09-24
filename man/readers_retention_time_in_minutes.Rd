@@ -37,3 +37,15 @@ Whenever the unit is \code{"unknown"}, which is not hypothetical: it is the hone
 there is what mzLib's own deconvolution code does, and what this deliberately does not.
 
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+psms <- readers_read_results("FraggerPsm_FragPipev21.1_psm.tsv", limit = 2)
+psms$retention_time_unit
+readers_retention_time_in_minutes(psms)
+
+# TopFD's _ms1.feature gives no basis for a unit, so conversion refuses rather than guess.
+features <- readers_read_features("Ms1Feature_TopFDv1.6.2_ms1.feature", limit = 5)
+try(readers_retention_time_in_minutes(features))
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

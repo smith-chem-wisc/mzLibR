@@ -21,14 +21,19 @@ readers_read_matches(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 
 }
 \description{
+Read identifications through the cross-format spectral_match view - scan, sequences, accession, decoy flag, modifications and the q-value, rank and threshold a format records - optionally with each engine's scores as long rows.
+
 Four file types offer it: MsPathFinderT's targets, decoys and combined results, and Casanovo's
 \code{.mztab}. These are the identification formats that share no *file*-level interface, so
 \code{\link{readers_read_results}} cannot reach them.
 }
 \value{
-An \code{mzlibr_match_records}. \code{records} is a data.frame with \code{file_name_without_extension},
-  \code{one_based_scan_number}, \code{base_sequence}, \code{full_sequence}, \code{accession}, \code{is_decoy},
-  \code{modifications} and \code{modification_count}.
+An \code{mzlibr_match_records}. \code{record_count} counts the matches in the whole file and
+  \code{returned_count} the matches returned, starting \code{offset} matches in.
+
+  \code{records} is a data.frame with \code{file_name_without_extension}, \code{one_based_scan_number},
+  \code{base_sequence}, \code{full_sequence}, \code{accession}, \code{is_decoy} (\code{NA} where the format records no
+  target/decoy label), \code{modifications} and \code{modification_count}.
 
 }
 \section{Nothing here is FDR-filtered, and there is nothing to filter on}{
@@ -50,6 +55,131 @@ default \code{FALSE} and never assigns it, so \code{FALSE} would mean *unknown*;
 instead - the rule \code{\link{readers_read_results}} already applies to MSFragger.
 
 }
+\section{Wraps}{
+Wire verb \code{readers read-matches}. Generated from the bridge's verb spec \code{readers.read-matches.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/ISpectralMatch.cs}{\code{ISpectralMatch}} in \code{mzLib/Readers/BaseClasses/ISpectralMatch.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/ExternalResults/ResultFiles/MzIdentMLResultFile.cs}{\code{MzIdentMLResultFile.SkippedMatches}} in \code{mzLib/Readers/ExternalResults/ResultFiles/MzIdentMLResultFile.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/ExternalResults/IndividualResultRecords/MzIdentMLRecord.cs}{\code{MzIdentMLRecord.Scores}} in \code{mzLib/Readers/ExternalResults/IndividualResultRecords/MzIdentMLRecord.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{path}}{path; required. An MsPathFinderT _IcTarget/_IcDecoy/_IcTda.tsv, a Casanovo .mztab, or an mzIdentML .mzid / .mzid.gz.}
+\item{\code{offset}}{int; in \strong{matches}; default \code{0}; range \code{>= 0}. Skip this many matches. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
+\item{\code{limit}}{int; in \strong{matches}; default absent; range \code{>= 0}. Return at most this many matches. Absent means no limit; there is deliberately no default cap.}
+\item{wire \code{--scores}}{flag; default \code{FALSE}. Make the table long by score: one row per match and engine score, adding match_index, score_name and score_value. Only mzIdentML records scores (#1306); other formats keep one row per match with the two columns in absent_fields. offset and limit still count matches. \emph{Not an argument here: arrives with the mzLib 1.0.592 port.}}
+\item{\code{out}}{path; default absent. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{path}}{string; never \code{NA}. Absolute path of the input.}
+\item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType that was dispatched.}
+\item{\code{record_count}}{int; in \strong{matches}; never \code{NA}. Matches in the whole file, before the window.}
+\item{\code{caveats}}{string[]; never \code{NA}. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.}
+\item{\code{column_names}}{string[]; never \code{NA}. Column order.}
+\item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
+\item{\code{returned_count}}{int; in \strong{matches}; never \code{NA}. Matches returned in columns (the unit offset and limit count in); 0 when written to out.}
+\item{\code{offset}}{int; in \strong{matches}; never \code{NA}. The offset applied, in matches.}
+\item{\code{truncated}}{bool; never \code{NA}. True whenever records were left out by offset or limit.}
+\item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-row values, in column_names order.}
+\item{\code{output}}{object; \code{NA} when out was not given. \{path, format: "tsv", row_count\} when out was given.}
+}
+}
+\section{Columns of \code{records}}{
+\describe{
+\item{\code{file_name_without_extension}}{string; never \code{NA}. The spectra file of the match.}
+\item{\code{one_based_scan_number}}{int; never \code{NA}. Scan number; see caveats for mzIdentML index= and Casanovo.}
+\item{\code{base_sequence}}{string; never \code{NA}. Unmodified sequence.}
+\item{\code{full_sequence}}{string; never \code{NA}. Modified sequence.}
+\item{\code{accession}}{string; \code{NA} when the property threw (then in failed_fields). Protein accession(s).}
+\item{\code{is_decoy}}{bool; \code{NA} when every format but MsPathFinderT (then in absent_fields). Decoy flag.}
+\item{\code{modifications}}{string; never \code{NA}. 'position:name' pairs, ';'-joined, 1 = N-terminus.}
+\item{\code{modification_count}}{int; never \code{NA}. Modifications on the match.}
+}
+}
+\section{On the wire but not projected yet}{
+The bridge sends these, and this version of mzLibR does not return them yet:
+
+\describe{
+\item{\code{reader}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{skipped_count}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{skipped}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{retention_time_unit}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{scores_included}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{row_count}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{q_value}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{rank}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{pass_threshold}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{match_index}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{score_name}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{score_value}}{arrives with the mzLib 1.0.592 port.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)}
+\item{\code{mzlib_usage_error} (usage)}{offset, limit or out given with no value; offset or limit < 0; non-integer value; out resolves to the same file as path}
+\item{\code{mzlib_usage_error} (usage)}{the file has no spectral_match view}
+\item{\code{mzlib_bridge_error} (correctness)}{mzLib recognises the file and fails to parse it}
+\item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
+\item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item Nothing is FDR-filtered. q_value is filled only by mzIdentML and an MsPathFinderT file with a QValue column; an _IcTarget/_IcDecoy file has none and names it absent (mzLib would report 0).
+\item mzIdentML: every SpectrumIdentificationItem is a row, lower ranks and failed thresholds included (MzIdentMLResultFile.cs:177). Filter on rank == 1 and pass_threshold.
+\item mzIdentML: is_decoy is absent because the isDecoy attribute defaults to false when omitted (MzIdentMLResultFile.cs:173).
+\item mzIdentML: items mzLib cannot represent are skipped, not failed, and listed in skipped (MzIdentMLResultFile.cs:123).
+\item MsPathFinderT: is_decoy comes from an XXX protein-name prefix (MsPathFinderTResult.cs:92); accession assumes a UniProt header and lands in failed_fields otherwise.
+\item Casanovo: one_based_scan_number is the mzTab index plus one (CasanovoMzTabFile.cs:116).
+\item Many files: \code{--paths-stdin} reads the list in ONE process, \code{--threads} at a time, into one long table with source_index and source_path first. The output does not depend on \code{--threads} (a tested property); the default of 1 is a memory choice, since every reader materialises the whole file.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.readers.read_matches}; many files: \code{pymzlib.readers.read_matches_many}
+\item Rust (mzLibRust): \code{mzlib::readers::read_matches_with} with \code{MatchOptions}; many files: \code{mzlib::readers::read_matches_many}
+\item R (mzLibR): \code{readers_read_matches}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
+\item readers_matches_mzid_scores.json (\code{--scores}) is replayed through the pyMzLib conftest rather than listed here: check_verbs.py excludes present_when columns from its column check, so a \code{--scores} fixture cannot be a spec example yet.
+\item q_value, rank and pass_threshold join a view whose other columns are Readers.ISpectralMatch members; they are read from the record types that carry them. If mzLib adds them to the interface, the per-format reads go away.
+}
+}
 \seealso{
 \code{\link{readers_read_records}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+matches <- readers_read_matches("Casanovo_5.0.0.mztab")
+matches
+# Casanovo writes no target/decoy label, so is_decoy is NA rather than a false FALSE.
+matches$records[, c("one_based_scan_number", "base_sequence", "is_decoy")]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

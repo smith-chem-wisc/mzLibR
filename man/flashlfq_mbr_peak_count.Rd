@@ -22,3 +22,11 @@ unless \code{match_between_runs} was on.
 \value{
 A single count.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+  match_between_runs = TRUE)
+flashlfq_mbr_peak_count(quant)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

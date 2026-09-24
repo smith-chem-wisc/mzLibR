@@ -244,6 +244,16 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #' told apart by what the directory holds, and several formats share `.tsv`.
 #'
 #' @seealso [readers_identify()]
+#' @spec readers.formats
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' formats <- readers_formats()
+#' nrow(formats)
+#' formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
+#'
+#' # An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.
+#' sum(lengths(formats$views) == 0)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_formats <- function(timeout = 60) {
   readers_parse_formats(bridge_invoke(c("readers", "formats"), timeout = timeout))
@@ -276,6 +286,13 @@ readers_formats <- function(timeout = 60) {
 #' returns.
 #'
 #' @seealso [readers_formats()], [readers_read_results()]
+#' @spec readers.identify
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' info <- readers_identify("PXD078927_msgf_1_1_0.mzid")
+#' info
+#' info$views
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_identify <- function(path, timeout = 60) {
   args <- c("readers", "identify", "--path", readers_normalise_path(path))
@@ -307,9 +324,14 @@ readers_identify <- function(path, timeout = 60) {
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely. A large file legitimately
 #'   takes a while.
 #'
-#' @return An `mzlibr_result_records`. `records` is a data.frame of the record view, or `NULL`
-#'   when `out` was given. `record_count` counts the **whole file** regardless of `limit` and
-#'   `offset`; `returned_count` counts what came back.
+#' @return An `mzlibr_result_records`. `record_count` counts the records in the **whole file**
+#'   regardless of `limit` and `offset`; `returned_count` counts the records that came back,
+#'   starting `offset` records in; `rows_not_read` counts data rows that did not become records.
+#'
+#'   `records` is a data.frame of the record view, one row per record, or `NULL` when `out` was
+#'   given. `retention_time` is in minutes for all four formats at mzLib 1.0.592, and
+#'   `retention_time_unit` says so per file; `charge_state` is a charge; `monoisotopic_mass` is a
+#'   neutral mass in Da. `is_decoy` is `NA` where the format records no decoy label.
 #'
 #' @section Two fields to read before you trust the table:
 #'
@@ -325,6 +347,14 @@ readers_identify <- function(path, timeout = 60) {
 #' with [readers_retention_time_in_minutes()] rather than by hand.
 #'
 #' @seealso [readers_identify()], [readers_retention_time_in_minutes()]
+#' @spec readers.read-results
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' psms <- readers_read_results("FraggerPsm_FragPipev21.1_psm.tsv", limit = 2)
+#' psms
+#' psms$records[, c("base_sequence", "charge_state", "retention_time")]
+#' readers_retention_time_in_minutes(psms)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_read_results <- function(path, limit = NULL, offset = 0, out = NULL, timeout = NULL) {
   args <- readers_build_read_args(path, limit, offset, out)
@@ -354,6 +384,16 @@ readers_read_results <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' `_ms1.feature`, where seconds became minutes at v1.7.0 without the file type changing. Guessing
 #' there is what mzLib's own deconvolution code does, and what this deliberately does not.
 #'
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' psms <- readers_read_results("FraggerPsm_FragPipev21.1_psm.tsv", limit = 2)
+#' psms$retention_time_unit
+#' readers_retention_time_in_minutes(psms)
+#'
+#' # TopFD's _ms1.feature gives no basis for a unit, so conversion refuses rather than guess.
+#' features <- readers_read_features("Ms1Feature_TopFDv1.6.2_ms1.feature", limit = 5)
+#' try(readers_retention_time_in_minutes(features))
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_retention_time_in_minutes <- function(records, column = NULL) {
   known <- c(
@@ -609,7 +649,9 @@ readers_parse_scan_records <- function(data) {
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_native_records`. `records` is a data.frame of this format's own fields, or
-#'   `NULL` when `out` was given.
+#'   `NULL` when `out` was given. `record_count` counts the records in the whole file,
+#'   `returned_count` the records returned, starting `offset` records in. `column_names`,
+#'   `record_type`, `views`, `excluded_fields` and `failed_fields` describe the table.
 #'
 #' @section The columns are not uniform, by design:
 #'
@@ -639,6 +681,15 @@ readers_parse_scan_records <- function(data) {
 #' mass difference, a delta, TopPIC's `feature_score` - and nulling those would destroy data.
 #'
 #' @seealso [readers_identify()], [readers_read_results()]
+#' @spec readers.read-records
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' prsms <- readers_read_records("ToppicPrsm_TopPICv1.6.2_prsm.tsv", limit = 3)
+#' prsms
+#' head(prsms$column_names)
+#' prsms$records[, c("one_based_scan_number", "base_sequence", "e_value")]
+#' prsms$excluded_fields
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_read_records <- function(path, limit = NULL, offset = 0, out = NULL, timeout = NULL) {
   args <- readers_build_read_args(path, limit, offset, out, "read-records")
@@ -656,8 +707,13 @@ readers_read_records <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' @param out Write a tab-separated table here and return only a summary.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
-#' @return An `mzlibr_feature_records`. `records` is a data.frame with `mz`, `charge`,
-#'   `retention_time_start`, `retention_time_end`, `intensity` and `number_of_isotopes`.
+#' @return An `mzlibr_feature_records`. `record_count` counts the features in the whole file
+#'   and `returned_count` the features returned, starting `offset` features in.
+#'
+#'   `records` has one row per feature: `mz` in m/z; `charge`; `retention_time_start` and
+#'   `retention_time_end` in the unit `retention_time_unit` names - `"unknown"` for
+#'   `_ms1.feature`, see below; `intensity`, the apex, in the instrument's intensity units; and
+#'   `number_of_isotopes`.
 #'
 #' @section One row is not one line of the file, for `_ms1.feature`:
 #'
@@ -678,6 +734,13 @@ readers_read_records <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' converting. Dinosaur reports minutes and converts without complaint.
 #'
 #' @seealso [readers_read_records()], [readers_retention_time_in_minutes()]
+#' @spec readers.read-features
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' features <- readers_read_features("Ms1Feature_TopFDv1.6.2_ms1.feature", limit = 5)
+#' features
+#' features$records
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_read_features <- function(path, limit = NULL, offset = 0, out = NULL, timeout = NULL) {
   args <- readers_build_read_args(path, limit, offset, out, "read-features")
@@ -697,9 +760,12 @@ readers_read_features <- function(path, limit = NULL, offset = 0, out = NULL, ti
 #' @param out Write a tab-separated table here and return only a summary.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
-#' @return An `mzlibr_match_records`. `records` is a data.frame with `file_name_without_extension`,
-#'   `one_based_scan_number`, `base_sequence`, `full_sequence`, `accession`, `is_decoy`,
-#'   `modifications` and `modification_count`.
+#' @return An `mzlibr_match_records`. `record_count` counts the matches in the whole file and
+#'   `returned_count` the matches returned, starting `offset` matches in.
+#'
+#'   `records` is a data.frame with `file_name_without_extension`, `one_based_scan_number`,
+#'   `base_sequence`, `full_sequence`, `accession`, `is_decoy` (`NA` where the format records no
+#'   target/decoy label), `modifications` and `modification_count`.
 #'
 #' @section Nothing here is FDR-filtered, and there is nothing to filter on:
 #'
@@ -717,6 +783,14 @@ readers_read_features <- function(path, limit = NULL, offset = 0, out = NULL, ti
 #' instead - the rule [readers_read_results()] already applies to MSFragger.
 #'
 #' @seealso [readers_read_records()]
+#' @spec readers.read-matches
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' matches <- readers_read_matches("Casanovo_5.0.0.mztab")
+#' matches
+#' # Casanovo writes no target/decoy label, so is_decoy is NA rather than a false FALSE.
+#' matches$records[, c("one_based_scan_number", "base_sequence", "is_decoy")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_read_matches <- function(path, limit = NULL, offset = 0, out = NULL, timeout = NULL) {
   args <- readers_build_read_args(path, limit, offset, out, "read-matches")
@@ -747,9 +821,19 @@ readers_read_matches <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely. A large `.raw` legitimately
 #'   takes a while.
 #'
-#' @return An `mzlibr_scan_records`. `scan_count` is the file's total **before** any `ms_order`
-#'   filter, reported alongside `record_count` so a filter that matched nothing can never look like
-#'   an empty file.
+#' @return An `mzlibr_scan_records`. `scan_count` is the file's total in scans **before** any
+#'   `ms_order` filter, reported alongside `record_count` - the scans that passed it - so a filter
+#'   that matched nothing can never look like an empty file. `returned_count` is the scans that
+#'   came back, starting `offset` scans in.
+#'
+#'   `records` has one row per scan. `retention_time` is in minutes for every format;
+#'   `injection_time` in ms; `total_ion_current` and `selected_ion_intensity` in the instrument's
+#'   intensity units; `peak_count` in peaks; `compensation_voltage` in volts;
+#'   `selected_ion_charge_state_guess` a charge; and `scan_window_lower_mz`,
+#'   `scan_window_upper_mz`, `isolation_mz`, `isolation_width`, `selected_ion_mz` and
+#'   `selected_ion_monoisotopic_guess_mz` in m/z. With `peaks = TRUE`, `mz` (m/z) and `intensity`
+#'   (instrument units) are list columns, one vector per scan. A precursor field is `NA` on an MS1
+#'   scan; the generated sections below say what `NA` means for every column.
 #'
 #' @section Two of the seven need Windows:
 #'
@@ -758,6 +842,13 @@ readers_read_matches <- function(path, limit = NULL, offset = 0, out = NULL, tim
 #' msalign files hold **deconvolved neutral masses**, not raw m/z - do not re-deconvolve them.
 #'
 #' @seealso [readers_read_records()]
+#' @spec readers.read-spectra
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' scans <- readers_read_spectra("sliced_ethcd.mzML", limit = 3)
+#' scans
+#' scans$records[, c("one_based_scan_number", "ms_order", "retention_time", "peak_count")]
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 readers_read_spectra <- function(path, limit = NULL, offset = 0, ms_order = NULL, peaks = FALSE,
                                  out = NULL, timeout = NULL) {

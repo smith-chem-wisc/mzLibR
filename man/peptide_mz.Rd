@@ -37,3 +37,10 @@ not exist on this wire.
 \value{
 A numeric vector of m/z, one per row.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+peptide_mz(digest$peptides, charge = 2)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

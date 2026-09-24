@@ -23,3 +23,10 @@ The 1-based positions carrying this name, in document order; empty when the colu
 \seealso{
 \code{\link{sdrf_index_of}}
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+sdrf_indexes_of(doc, "comment[modification parameters]")
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

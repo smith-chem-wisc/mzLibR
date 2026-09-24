@@ -16,3 +16,11 @@ Which document each pooled row came from
 \value{
 The \code{comment[source document]} label of each returned row.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+pooled <- sdrf_pool(c(malaria = "PXD000070.sdrf.tsv", colon = "PXD026824.sdrf.tsv"),
+  limit = 4)
+sdrf_source_documents(pooled)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

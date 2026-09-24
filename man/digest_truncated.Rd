@@ -17,3 +17,10 @@ treating a peptide list as exhaustive.
 \value{
 \code{TRUE} if any peptide hit \code{max_isoforms}.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+digest_truncated(digest)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

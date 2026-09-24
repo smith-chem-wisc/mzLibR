@@ -36,3 +36,10 @@ specific site.
 \value{
 A single string.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+digest <- peptidoform_fragments("P02768", max_modifications = 1)
+census_explain(digest)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

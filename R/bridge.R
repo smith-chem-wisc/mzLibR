@@ -126,6 +126,9 @@ bridge_missing_message <- function(cache_path) {
 #' then a bridge downloaded by [mzlibr_install_bridge()].
 #'
 #' @return A single file path.
+#' @examples
+#' # Where mzLibR will look; an error naming three remedies when there is no bridge yet.
+#' try(mzlibr_bridge_path())
 #' @export
 mzlibr_bridge_path <- function() {
   from_option <- getOption(MZLIB_BRIDGE_OPTION, default = NULL)
@@ -357,6 +360,13 @@ bridge_invoke <- function(args, stdin = NULL, timeout = NULL, runner = bridge_ru
 #'   It is deliberately **not** a compatibility check. `protocol` is that, and it is what this
 #'   function verifies. `mzlib` is for reporting a run, filing a bug, or tying a result to the
 #'   library that produced it.
+#' @spec version
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' info <- mzlibr_bridge_version()
+#' info$protocol   # the compatibility contract
+#' info$mzlib      # which mzLib produced the results, for a methods section
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
 mzlibr_bridge_version <- function(runner = bridge_run) {
   data <- bridge_invoke("version", timeout = 60, runner = runner)

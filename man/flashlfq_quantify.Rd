@@ -41,7 +41,7 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 \item{mbr_ppm_tolerance}{Mass tolerance for match-between-runs, in ppm.}
 
-\item{mbr_q_value_threshold}{FDR threshold for accepting a transfer.}
+\item{mbr_q_value_threshold}{FDR threshold for accepting a transfer, as a q-value.}
 
 \item{use_shared_peptides_for_protein_quant}{Whether peptides shared between protein groups
   contribute to protein quantification.
@@ -69,12 +69,21 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 }
 \description{
+Quantify a search's peptides and proteins across mzML runs with FlashLFQ, returning per-run peptide and protein intensities and every chromatographic peak.
+
 Quantify a search's peptides across mzML runs with FlashLFQ
 }
 \value{
 An \code{mzlibr_quant}: \code{psm_file}, \code{identification_count}, \code{parameters},
   \code{output_directory}, and four tidy data.frames - \code{spectra_files}, \code{peptides}, \code{proteins}
   and \code{peaks}.
+
+  \code{spectra_files} has one row per run, with \code{peak_count} and \code{mbr_peak_count} in peaks.
+  \code{peptides} and \code{proteins} are long - one row per peptide or protein group per run - with
+  \code{intensity} in the instrument's intensity units. \code{peaks} has one row per chromatographic peak:
+  \code{intensity} in instrument units, \code{retention_time} of the apex in minutes, and
+  \code{num_identifications}, the identifications that explain the peak (more than one means
+  ambiguous).
 
 }
 \section{Read peaks, not the peptide roll-up}{
@@ -120,6 +129,154 @@ mzLibR never applies it on your behalf.
 and \strong{847} are 0 in both runs. "No usable number" is 849; "could not be resolved" is 2.
 
 }
+\section{Wraps}{
+Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/ResultsReading/MzLibExtensions.cs}{\code{MzLibExtensions.MakeIdentifications}} in \code{mzLib/FlashLFQ/ResultsReading/MzLibExtensions.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLfqParameters.cs}{\code{FlashLfqParameters}} in \code{mzLib/FlashLFQ/FlashLfqParameters.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLfqEngine.cs}{\code{FlashLfqEngine.Run}} in \code{mzLib/FlashLFQ/FlashLfqEngine.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.WriteResults}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/MassSpectrometry/SpectraFileInfo.cs}{\code{SpectraFileInfo}} in \code{mzLib/MassSpectrometry/SpectraFileInfo.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{psms}}{path; required. A quantifiable PSM result file mzLib can read: a MetaMorpheus .psmtsv/.osmtsv or an MSFragger psm.tsv (retention time converted to minutes by the reader since mzLib#1116). Every run it names must have an mzML on stdin, matched by base file name.}
+\item{\code{spectra} (wire \code{--stdin})}{string[]; required; range \code{>= 1 line}. The mzML runs, one per line, tab-separated: path[TAB condition[TAB biorep[TAB techrep[TAB fraction]]]]. Blank lines are ignored. Omitted fields default as MetaMorpheus does with no design: condition "", biorep = the line's 0-based index, techrep 0, fraction 0. Replicate and fraction numbers are non-negative integers. Base names must be unique.}
+\item{\code{normalize}}{flag; default \code{FALSE}. Normalize intensities across runs (FlashLFQ Normalize).}
+\item{\code{ppm_tolerance} (wire \code{--ppm})}{float; in \strong{ppm}; default \code{10}; range \code{> 0}. Mass tolerance for MS1 peak-finding (PpmTolerance), in ppm.}
+\item{\code{isotope_ppm_tolerance} (wire \code{--isotope-ppm})}{float; in \strong{ppm}; default \code{5}; range \code{> 0}. Mass tolerance for isotope-envelope matching (IsotopePpmTolerance), in ppm.}
+\item{\code{integrate}}{flag; default \code{FALSE}. Integrate peak area instead of taking the apex intensity (Integrate). FlashLFQ recommends off.}
+\item{\code{match_between_runs} (wire \code{--mbr})}{flag; default \code{FALSE}. Match-between-runs: quantify a peptide in a run where it was not identified by transferring the identification (MatchBetweenRuns). Needs a complete, balanced design.}
+\item{\code{mbr_ppm_tolerance} (wire \code{--mbr-ppm})}{float; in \strong{ppm}; default \code{10}; range \code{> 0}. Mass tolerance for MBR transfers (MbrPpmTolerance), in ppm.}
+\item{\code{mbr_q_value_threshold} (wire \code{--mbr-q})}{float; in \strong{q-value}; default \code{0.05}; range \code{0 to 1}. q-value below which an MBR transfer is accepted (MbrQValueThreshold).}
+\item{\code{use_shared_peptides_for_protein_quant} (wire \code{--shared-peptides})}{flag; default \code{FALSE}. Let peptides shared between protein groups contribute to protein quant (UseSharedPeptidesForProteinQuant).}
+\item{\code{bayesian_protein_quant} (wire \code{--bayesian})}{flag; default \code{FALSE}. Also run FlashLFQ's Bayesian protein fold-change engine (BayesianProteinQuant). Its results are not on the wire; they reach only out's BayesianProteinQuant.tsv.}
+\item{\code{use_pep_q_value} (wire \code{--use-pep-q})}{flag; default \code{FALSE}. Filter identifications on PEP q-value instead of q-value when building them (MakeIdentifications usePepQValue).}
+\item{\code{max_threads} (wire \code{--threads})}{int; in \strong{threads}; default \code{-1}; range \code{any integer; -1 means one fewer than the logical cores}. FlashLFQ MaxThreads. mzLib resolves it in the engine constructor: -1, or any value >= the core count, becomes (cores - 1); anything that leaves <= 0 becomes 1. parameters.max_threads echoes the RESOLVED value, so it depends on the machine. See caveats for what the thread count does to answers at this pin.}
+\item{\code{output_directory} (wire \code{--out})}{path; default absent. Directory (created if absent) where FlashLFQ also writes QuantifiedPeaks.tsv, QuantifiedPeptides.tsv, QuantifiedProteins.tsv and, with bayesian, BayesianProteinQuant.tsv. Absent or blank writes nothing.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{psm_file}}{string; never \code{NA}. Absolute path of the PSM file.}
+\item{\code{identification_count}}{int; in \strong{identifications}; never \code{NA}. Identifications FlashLFQ was given (after the q-value filter mzLib's converter applies).}
+\item{\code{parameters}}{object; never \code{NA}. The FlashLFQ parameters used, by mzLib name: normalize, ppm_tolerance (ppm), isotope_ppm_tolerance (ppm), integrate, match_between_runs, mbr_ppm_tolerance (ppm), mbr_q_value_threshold (q-value), use_shared_peptides_for_protein_quant, bayesian_protein_quant, max_threads (the resolved thread count).}
+\item{\code{spectra_files}}{object[]; never \code{NA}. One per stdin line, in stdin order; fields under result.tables.spectra_files.}
+\item{\code{peptide_count}}{int; in \strong{peptides}; never \code{NA}. Entries in peptides: distinct modified sequences quantified.}
+\item{\code{protein_count}}{int; in \strong{protein groups}; never \code{NA}. Entries in proteins.}
+\item{\code{peptides}}{object[]; never \code{NA}. One per modified sequence, mirroring QuantifiedPeptides.tsv; fields under result.tables.peptides.}
+\item{\code{proteins}}{object[]; never \code{NA}. One per protein group, mirroring QuantifiedProteins.tsv; fields under result.tables.proteins.}
+\item{\code{peaks}}{object[]; never \code{NA}. Every chromatographic peak, run by run in stdin order, mirroring QuantifiedPeaks.tsv; fields under result.tables.peaks. The complete surface for match-between-runs.}
+\item{\code{output_directory}}{string; \code{NA} when out was not given (or was blank): no files were written. Absolute path of out.}
+}
+}
+\section{Fields of \code{spectra_files}}{
+\describe{
+\item{\code{file_name}}{string; never \code{NA}. Run base name (no directory or extension): the key of every intensities map.}
+\item{\code{full_path}}{string; never \code{NA}. The mzML path as given on stdin.}
+\item{\code{condition}}{string; never \code{NA}. Sample-group label; "" when none was given.}
+\item{\code{biological_replicate}}{int; never \code{NA}. 0-based.}
+\item{\code{technical_replicate}}{int; never \code{NA}. 0-based.}
+\item{\code{fraction}}{int; never \code{NA}. 0-based.}
+\item{\code{peak_count}}{int; in \strong{peaks}; never \code{NA}. Chromatographic peaks quantified in this run.}
+\item{\code{mbr_peak_count}}{int; in \strong{peaks}; never \code{NA}. Of those, peaks with detection type MBR (transferred into this run). 0 unless mbr.}
+}
+}
+\section{Fields of \code{peptides}}{
+\describe{
+\item{\code{sequence}}{string; never \code{NA}. Full modified sequence as FlashLFQ renders it: the quantified identity.}
+\item{\code{base_sequence}}{string; never \code{NA}. Bare residues.}
+\item{\code{protein_groups}}{string; never \code{NA}. Protein group names, ';'-joined, distinct.}
+\item{\code{intensity} (wire \code{intensities})}{map<string,float>; in \strong{intensity (instrument units)}; never \code{NA}. Run base name -> intensity; 0 means not quantified in that run. A value is null only if FlashLFQ produced a non-finite number (the bindings read it as 0). Where a peptide has several peaks in a run this is ONE of them, not their sum.}
+\item{\code{detection_type} (wire \code{detection_types})}{map<string,string>; never \code{NA}. Run base name -> FlashLFQ DetectionType name: MSMS, MBR, MSMSIdentifiedButNotQuantified, MSMSAmbiguousPeakfinding, NotDetected, ...}
+}
+}
+\section{Fields of \code{proteins}}{
+\describe{
+\item{\code{protein_group}}{string; never \code{NA}. Protein group name.}
+\item{\code{gene_name}}{string; never \code{NA}. As the PSM file gave it; may be "".}
+\item{\code{organism}}{string; never \code{NA}. As the PSM file gave it; may be "".}
+\item{\code{intensity} (wire \code{intensities})}{map<string,float>; in \strong{intensity (instrument units)}; never \code{NA}. Run base name -> protein intensity. A value is null when median polish could not resolve one (NaN: a degenerate peptide matrix, e.g. too few peptides per run); 0 means not measured. Keyed per run even when a design groups runs into samples.}
+}
+}
+\section{Fields of \code{peaks}}{
+\describe{
+\item{\code{file_name}}{string; never \code{NA}. Run base name.}
+\item{\code{base_sequence}}{string; never \code{NA}. Of the peak's first identification; "" if it has none.}
+\item{\code{sequence}}{string; never \code{NA}. Modified sequence of the first identification; "" if none.}
+\item{\code{intensity}}{float; in \strong{intensity (instrument units)}; \code{NA} when FlashLFQ produced a non-finite intensity for the peak. Apex intensity, or the integrated area under integrate.}
+\item{\code{detection_type}}{string; never \code{NA}. DetectionType name; MBR marks a transferred peak.}
+\item{\code{retention_time}}{float; in \strong{min}; \code{NA} when the peak has no apex (or its time is non-finite). Apex retention time.}
+\item{\code{num_identifications}}{int; in \strong{identifications}; never \code{NA}. Identifications that explain the peak; > 1 means ambiguous.}
+\item{\code{protein_groups}}{string; never \code{NA}. Protein groups of all its identifications, ';'-joined, distinct.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{psms missing or blank; the PSM file not found; nothing on stdin; a stdin line with no path; a run that is not .mzML; an mzML not found; two runs sharing a base name; a design field that is not a non-negative integer}
+\item{\code{mzlib_usage_error} (usage)}{the PSM file names runs with no mzML on stdin (checked before any spectra are read; the message lists up to five); ppm, isotope-ppm, mbr-ppm or mbr-q not a number; threads not an integer}
+\item{\code{mzlib_bridge_error} (correctness)}{the PSM file is of a type mzLib cannot read as quantifiable results (MzLibException), or is malformed; an mzML fails to parse; the FlashLFQ engine fails}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item THREADS AT THIS PIN: mzLib#1111 (peptide roll-up nondeterministically dropping MBR intensities at MaxThreads -1, flipping protein groups between null and a number) is fixed by mzLib#1155, which is in the pin: PEP training rows are now built in a fixed order, and its commit reports identical peptides and proteins across runs. The bindings' 'set threads to 1 to reproduce' warnings predate the fix. The bridge project has not re-measured the K562 case at -1 on this pin; until it does, 1 remains the conservative choice for published numbers.
+\item mzML only: .raw and .d are rejected up front; convert them first.
+\item For match-between-runs read peaks, not peptides: the peptide roll-up (as in QuantifiedPeptides.tsv) reports far fewer MBR transfers than happened (K562 pair: 140 MBR peaks, 52 MBR peptide entries).
+\item Peptide intensity 0 means not quantified; protein intensity null means unquantifiable. Neither is a measured zero.
+\item Only FlashLFQ settings listed here are reachable; the rest (isotopes required, MBR RT window, donor criterion, IsoTracker, Bayesian sampling) run at mzLib's defaults.
+\item stdout carries only the envelope: the engine's console output is redirected to stderr for the run.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.flashlfq.quantify}
+\item Rust (mzLibRust): \code{mzlib::flashlfq::quantify_with} with \code{QuantifyOptions}
+\item R (mzLibR): \code{flashlfq_quantify}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item Re-measure the K562 MBR pair at threads -1 on the 23c2490e bridge (G-flashlfq-stale-caveats) before any binding deletes its #1111 warning; the caveat above states what mzLib#1155 claims, not a bridge measurement.
+\item Default divergence: the wire and pyMzLib and mzLibRust default threads to -1, mzLibR defaults max_threads to 1 and warns on anything else. The spec states the wire default; whether the bindings should agree is a cross-binding decision.
+\item flashlfq_small.json is hand-shaped (paths '/abs/...', 4 identifications), not recorded from a live bridge; a live recording would make the example executable against real files.
+\item ppm tolerances and mbr-q are not range-checked by the bridge (a negative or zero tolerance reaches FlashLFQ); the ranges above are FlashLFQ's meaningful ones, not enforced ones. An option given with no value is silently defaulted by the Arguments parser.
+\item A PSM file of an unsupported or non-quantifiable type crosses as correctness (mzLib's MzLibException from FileReader.ReadQuantifiableResultFile), though it is arguably the caller's mistake.
+\item Most wire params project under FlashLFQ names in every binding (psms, stdin -> spectra, ppm -> ppm_tolerance, isotope-ppm -> isotope_ppm_tolerance, mbr -> match_between_runs, mbr-ppm -> mbr_ppm_tolerance, mbr-q -> mbr_q_value_threshold, shared-peptides -> use_shared_peptides_for_protein_quant, bayesian -> bayesian_protein_quant, use-pep-q -> use_pep_q_value, threads -> max_threads, out -> output_directory); pyMzLib's spec lint will need PYTHON_DEVIATIONS entries for them.
+}
+}
+\references{
+\itemize{
+\item \href{https://doi.org/10.1021/acs.jproteome.7b00608}{doi:10.1021/acs.jproteome.7b00608}: FlashLFQ: the peak-finding, match-between-runs and protein quantification this verb runs (Millikin et al., J Proteome Res 2018)
+}
+}
 \seealso{
 \code{\link{flashlfq_mbr_peaks}}, \code{\link{flashlfq_mbr_rescued_peptide_count}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
+  match_between_runs = TRUE)
+quant
+quant$spectra_files[, c("file_name", "peak_count", "mbr_peak_count")]
+# Count transfers from the peaks, never from the peptide roll-up.
+flashlfq_mbr_peaks(quant)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

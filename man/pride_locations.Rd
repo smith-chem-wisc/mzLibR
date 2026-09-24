@@ -24,3 +24,10 @@ others, in the same project. Do not re-implement the search.
 \value{
 A data.frame with \code{file_name}, \code{accession}, \code{name} and \code{value}, one row per location.
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+files <- pride_list_files("PXD000001")
+head(pride_locations(files))
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

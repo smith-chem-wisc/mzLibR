@@ -14,6 +14,8 @@ readers_identify(path, timeout = 60)
 
 }
 \description{
+Say what kind of file a path is - the mzLib file type, its extension, its reader and the cross-format views it offers - without parsing its contents.
+
 Cheap by design: mzLib resolves the type and stops, so identifying a million-row file costs no
 more than identifying an empty one.
 }
@@ -40,6 +42,78 @@ minutes, and mzLib does not normalise them. See \code{\link{readers_read_results
 returns.
 
 }
+\section{Wraps}{
+Wire verb \code{readers identify}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileTypeExtensions.ParseFileType}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{path}}{path; required. Any file (or Bruker .d directory). For many paths see the caveat on \code{--paths-stdin}.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{path}}{string; never \code{NA}. Absolute path identified.}
+\item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType.}
+\item{\code{extension}}{string; \code{NA} when mzLib maps no extension to this type. The extension mzLib dispatched on.}
+\item{\code{reader}}{string; never \code{NA}. The mzLib reader class that would parse it.}
+\item{\code{views}}{string[]; never \code{NA}. The cross-format views it offers; often empty.}
+\item{\code{error}}{object; \code{NA} when always, for a single path; in a paths-stdin entry, the path was identified. \{kind, type, message\} for a path that failed under on-error skip.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{path missing, blank or not found; mzLib does not recognise the file type}
+\item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
+\item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_usage_error} (usage)}{out with paths-stdin: identify returns no table}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item Cheap but not pure: mzLib reads a bare .tsv's first line, a .mztab's first five and a .d directory's listing to dispatch them.
+\item No software field: mzLib's Software property is Unspecified for everything its factory builds; file_type already names the tool.
+\item Many paths: \code{--paths-stdin} (newline-delimited paths on stdin) with \code{--threads} N (default 1, -1 = one per core; the answer is identical at any value) and \code{--on-error} fail|skip answers \{file_count, read_count, failed_count, on_error, files\}, files[i] being path i's answer in input order with error set when it could not be identified under skip (readers_many_identify.json). There is no table and no \code{--out}.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.readers.identify}; many files: \code{pymzlib.readers.identify_many}
+\item Rust (mzLibRust): \code{mzlib::readers::identify}; many files: \code{mzlib::readers::identify_many}
+\item R (mzLibR): \code{readers_identify}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
+\item The \code{--paths-stdin} answer is not declared as result.bulk because check_verbs.py requires a record_count there (BULK.md section 2), which has no meaning for identify. Its shape is in the caveats and in readers_many_identify.json until the checker allows a table-less bulk verb.
+}
+}
 \seealso{
 \code{\link{readers_formats}}, \code{\link{readers_read_results}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+info <- readers_identify("PXD078927_msgf_1_1_0.mzid")
+info
+info$views
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

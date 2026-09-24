@@ -18,6 +18,8 @@ sdrf_read(path, limit = NULL, offset = 0, timeout = 60)
 
 }
 \description{
+Read one SDRF-Proteomics file as its header and rows of raw cells, keeping repeated column names and ragged rows exactly as written.
+
 Every other reader here answers what a search \strong{found}. SDRF answers what was \strong{searched} -
 which sample, which organism part, which replicate, which instrument settings - which is the
 half you need to compare results across experiments.
@@ -64,6 +66,84 @@ the bridge does not expose them yet. When it does, they will be projected here f
 than reimplemented. Until then this makes no claim about whether a document is correct.
 
 }
+\section{Wraps}{
+Wire verb \code{sdrf read}. Generated from the bridge's verb spec \code{sdrf.read.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfDocument.cs}{\code{SdrfDocument.LoadResults}} in \code{mzLib/Readers/Sdrf/SdrfDocument.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfHeader.cs}{\code{SdrfHeader}} in \code{mzLib/Readers/Sdrf/SdrfHeader.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfRow.cs}{\code{SdrfRow.Cells}} in \code{mzLib/Readers/Sdrf/SdrfRow.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{path}}{path; required. A .sdrf.tsv file.}
+\item{\code{offset}}{int; in \strong{rows}; default \code{0}; range \code{>= 0}. Skip this many data rows. The whole file is parsed on every call.}
+\item{\code{limit}}{int; in \strong{rows}; default absent; range \code{>= 0}. Return at most this many data rows. Absent means every row.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{path}}{string; never \code{NA}. The path as given.}
+\item{\code{columns} (wire \code{column_names})}{string[]; never \code{NA}. The header, verbatim and in order. A LIST that may repeat names (comment[modification parameters] up to eight times) and may contain empty names; a name identifies a position, not a column.}
+\item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. Data rows in the whole file, before the window.}
+\item{\code{returned_count}}{int; in \strong{rows}; never \code{NA}. Rows in rows.}
+\item{\code{offset}}{int; in \strong{rows}; never \code{NA}. The offset applied.}
+\item{\code{truncated}}{bool; never \code{NA}. True whenever rows were left out by offset or limit, including an offset past the end.}
+\item{\code{rows}}{string[][]; never \code{NA}. One list of raw cells per row, row-major. RAGGED: a row may be shorter than column_names; a missing position is absent, not empty.}
+\item{\code{caveats}}{string[]; never \code{NA}. Three static caveats, plus a count of short rows over the WHOLE document when any row is short.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{path missing or blank; offset or limit negative or not an integer}
+\item{\code{mzlib_bridge_error} (correctness)}{mzLib cannot read the file (MzLibException for an empty or missing file)}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item readers read-records also opens .sdrf.tsv, but joins each row's cells with ';' into one string that cannot be split back, because the SDRF grammar is itself ';'-delimited. Use this verb for SDRF.
+\item offset and limit window after a full parse.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.sdrf.read}
+\item Rust (mzLibRust): \code{mzlib::sdrf::read_with} with \code{ReadOptions}
+\item R (mzLibR): \code{sdrf_read}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item since.mzlibrust / since.mzlibr are null: the ports (mzLibRust#23, mzLibR#19) merged 2026-09-17 but neither repo has cut a release tag yet (checked with gh api .../tags, 2026-09-23).
+}
+}
+\references{
+\itemize{
+\item \href{https://doi.org/10.1038/s41467-021-26111-3}{doi:10.1038/s41467-021-26111-3}: SDRF-Proteomics, the format read (Dai et al., Nat Commun 12, 5854, 2021)
+}
+}
 \seealso{
 \code{\link{sdrf_pool}}, \code{\link{sdrf_value}}, \code{\link{sdrf_all}}, \code{\link{sdrf_records}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+doc
+sdrf_value(doc, "characteristics[organism]")
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

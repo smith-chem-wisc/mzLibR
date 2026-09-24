@@ -21,3 +21,12 @@ reach is \code{NA}.
 A data.frame with one row per returned row and one column per distinct name, in order
   of first appearance. Names are kept verbatim (\code{check.names = FALSE}).
 }
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+doc <- sdrf_read("PXD000070.sdrf.tsv")
+sdrf_has_repeated_columns(doc)   # TRUE: the data.frame keeps the last of each name
+records <- sdrf_records(doc)
+records[, c("source name", "characteristics[organism]")]
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+}

@@ -23,6 +23,8 @@ sdrf_pool(documents, out = NULL, limit = NULL, offset = 0, timeout = 60)
 
 }
 \description{
+Merge several SDRF documents into one analysis table, stamping each row with the document it came from.
+
 Columns are the union of every document's, ordered by SDRF's own block structure, and a name
 that repeats is carried at the highest multiplicity any single document used, so nothing is
 dropped. A cell a document did not have is filled with the reserved word \code{"not available"}, and
@@ -31,7 +33,8 @@ a \code{comment[source document]} column records which document each row came fr
 \value{
 An \code{mzlibr_pooled_sdrf}, which is also an \code{mzlibr_sdrf}: everything \code{\link{sdrf_read}}
   returns, plus \code{document_count}, \code{paths}, \code{labels}, and \code{written} (a list of \code{path} and
-  \code{row_count}, or \code{NULL} when \code{out} was not given).
+  \code{row_count}, or \code{NULL} when \code{out} was not given). \code{row_count} counts the rows of the whole
+  pooled document; \code{returned_count} the rows returned, starting \code{offset} rows in.
 
 }
 \section{Give your documents names}{
@@ -50,6 +53,90 @@ experiments may both have a \code{"Sample 1"}, so a pooled table will usually vi
 uniqueness rule. Use \code{\link{sdrf_source_documents}} as part of any key.
 
 }
+\section{Wraps}{
+Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+
+\itemize{
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs}{\code{SdrfCollection.Merge}} in \code{mzLib/Readers/Sdrf/SdrfCollection.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfDocument.cs}{\code{SdrfDocument.WriteResults}} in \code{mzLib/Readers/Sdrf/SdrfDocument.cs} at mzLib \code{23c2490e}
+}
+}
+\section{Parameters: units, ranges and defaults}{
+\describe{
+\item{\code{documents} (wire \code{--stdin})}{string[]; required; range \code{>= 1 line}. One document per line: path, optionally a TAB and a provenance label. Label every line or none; a partial set is a usage error. Blank lines are ignored.}
+\item{\code{out}}{path; default absent. Write the WHOLE merged document here as SDRF, whatever offset and limit are. The write is atomic since mzLib 1.0.592 (#1324): a temp file moved into place.}
+\item{\code{offset}}{int; in \strong{rows}; default \code{0}; range \code{>= 0}. Skip this many merged rows in the payload.}
+\item{\code{limit}}{int; in \strong{rows}; default absent; range \code{>= 0}. Return at most this many merged rows. Absent means every row.}
+}
+}
+\section{Returned fields}{
+Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
+
+\describe{
+\item{\code{document_count}}{int; in \strong{documents}; never \code{NA}. Documents pooled.}
+\item{\code{paths}}{string[]; never \code{NA}. The paths, in stdin order.}
+\item{\code{labels}}{string[]; never \code{NA}. The label stamped for each document: the one supplied, or mzLib's containing-folder/file-stem default.}
+\item{\code{columns} (wire \code{column_names})}{string[]; never \code{NA}. The union header in SDRF block order; a repeated name at the highest multiplicity any one document used; comment[source document] added.}
+\item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. Merged rows before the window.}
+\item{\code{returned_count}}{int; in \strong{rows}; never \code{NA}. Rows in rows.}
+\item{\code{offset}}{int; in \strong{rows}; never \code{NA}. The offset applied.}
+\item{\code{truncated}}{bool; never \code{NA}. True whenever rows were left out.}
+\item{\code{rows}}{string[][]; never \code{NA}. Row-major raw cells, as for sdrf read.}
+\item{\code{written}}{object; \code{NA} when out was not given. \{path, row_count\}; row_count is the whole merged document.}
+\item{\code{caveats}}{string[]; never \code{NA}. Four static caveats, plus a fifth when no labels were supplied.}
+}
+}
+\section{Errors}{
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
+
+\describe{
+\item{\code{mzlib_usage_error} (usage)}{stdin empty; a blank path; a file not found; some lines labelled and some not}
+\item{\code{mzlib_usage_error} (usage)}{offset or limit negative or not an integer}
+\item{\code{mzlib_bridge_error} (correctness)}{mzLib cannot read one of the documents}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
+}
+}
+\section{Caveats}{
+\itemize{
+\item An ANALYSIS table, not a deposit: source name + assay name + comment[label] is unique per document, not across documents. Key on comment[source document] too.
+\item Without labels, provenance depends on where the files sit, so the table is not reproducible on another machine.
+}
+}
+\section{Performance}{
+Every call starts one bridge process, which costs a .NET start-up before any work. 
+}
+\section{Same verb in other bindings}{
+\itemize{
+\item Python (pyMzLib): \code{pymzlib.sdrf.pool}
+\item Rust (mzLibRust): \code{mzlib::sdrf::pool_with} with \code{PoolOptions}
+\item R (mzLibR): \code{sdrf_pool}
+}
+}
+\section{Since}{
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item since.mzlibrust / since.mzlibr are null: ported and merged 2026-09-17 (mzLibRust#23, mzLibR#19), not yet in a tagged release.
+\item The Rust example's PoolInput::labelled constructor is written from the pool_with signature, not checked against mzLibRust's source.
+}
+}
+\references{
+\itemize{
+\item \href{https://doi.org/10.1038/s41467-021-26111-3}{doi:10.1038/s41467-021-26111-3}: SDRF-Proteomics, the format pooled (Dai et al., Nat Commun 12, 5854, 2021)
+}
+}
 \seealso{
 \code{\link{sdrf_read}}, \code{\link{sdrf_source_documents}}
+}
+\examples{
+
+\dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+pooled <- sdrf_pool(c(malaria = "PXD000070.sdrf.tsv", colon = "PXD026824.sdrf.tsv"),
+  limit = 4)
+pooled
+sdrf_source_documents(pooled)
+\dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }
