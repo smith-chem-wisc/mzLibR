@@ -32,7 +32,8 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
 | `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with `readers_read_spectra()`; identify **and read all 36** file types mzLib knows, search results included — `readers_read_records()` reads any of them into that format's own fields, while `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
-| `sdrf_*` | Read SDRF-Proteomics experimental-design files with `sdrf_read()`, and pool several into one table with provenance with `sdrf_pool()`. Use these rather than `readers_read_records()`, which joins each SDRF row into one string that cannot be split back apart |
+| `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with `proteins_read()`, which gene it resolves to against a pinned Ensembl release with `proteins_resolve_genes()`, and whether a peptide is unique to one protein or gene with `proteins_classify_peptides()` |
+| `sdrf_*` | Read SDRF-Proteomics experimental-design files with `sdrf_read()`, and pool several into one table with provenance with `sdrf_pool()`; check them with `sdrf_validate()`, `sdrf_assess()` and `sdrf_lint()`, and get each sample's ages in years with `sdrf_samples()`. Use these rather than `readers_read_records()`, which joins each SDRF row into one string that cannot be split back apart |
 
 ## Installing
 

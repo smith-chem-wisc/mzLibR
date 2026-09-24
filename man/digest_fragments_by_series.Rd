@@ -11,8 +11,8 @@ digest_fragments_by_series(digest)
 
 }
 \description{
-\strong{Prefer this to \code{nrow(digest$fragments)} whenever the ion series matter, which for ETD is
-always.} A bare total folds in the one extra full-length \code{z-dot} per peptide, which is not a
+**Prefer this to \code{nrow(digest$fragments)} whenever the ion series matter, which for ETD is
+always.** A bare total folds in the one extra full-length \code{z-dot} per peptide, which is not a
 backbone-cleavage ion between two residues.
 }
 \details{

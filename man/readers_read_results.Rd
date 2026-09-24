@@ -40,7 +40,9 @@ Only the three file types offering the \code{"quantifiable"} view can be read th
 \code{\link{readers_identify}} first, or catch the error, which names the views the file does have.
 }
 \value{
-An \code{mzlibr_result_records}. \code{record_count} counts the records in the \strong{whole file}
+An \code{mzlibr_result_records}, carrying the file's \code{reader}, \code{absent_fields},
+  \code{failed_fields} and \code{excluded_fields} as every read does. \code{record_count} counts the records in
+  the \strong{whole file}
   regardless of \code{limit} and \code{offset}; \code{returned_count} counts the records that came back,
   starting \code{offset} records in; \code{rows_not_read} counts data rows that did not become records.
 
@@ -87,11 +89,15 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \describe{
 \item{\code{path}}{string; never \code{NA}. Absolute path of the input.}
 \item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType that was dispatched.}
+\item{\code{reader}}{string; never \code{NA}. The mzLib reader class that parsed the file.}
 \item{\code{record_count}}{int; in \strong{records}; never \code{NA}. Records in the whole file, before the window.}
 \item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when the count is not meaningful for this format (only the psmtsv family and MSFragger are one line per record). Data rows that did not become records: mzLib drops a malformed line silently.}
 \item{\code{retention_time_unit}}{string; never \code{NA}. The unit of retention_time for THIS format: minutes for all four at mzLib 1.0.592, unknown when mzLib gives no basis.}
 \item{\code{caveats}}{string[]; never \code{NA}. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.}
 \item{\code{column_names}}{string[]; never \code{NA}. Column order.}
+\item{\code{absent_fields}}{string[]; never \code{NA}. Columns the view defines that this file's format has no column or source for; null in every row (BULK.md section 4). Empty when every column has a source.}
+\item{\code{failed_fields}}{string[]; never \code{NA}. 'field: ExceptionType' for each column whose read threw on some returned rows; those cells are null.}
+\item{\code{excluded_fields}}{object[]; never \code{NA}. \{field, type, reason, verb\} for each field with no column shape; verb names the command that carries it, or null.}
 \item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
 \item{\code{returned_count}}{int; in \strong{records}; never \code{NA}. Records returned in columns (the unit offset and limit count in); 0 when written to out.}
 \item{\code{offset}}{int; in \strong{records}; never \code{NA}. The offset applied, in records.}
@@ -114,18 +120,8 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{organism}}{string; never \code{NA}. ';'-joined organisms.}
 }
 }
-\section{On the wire but not projected yet}{
-The bridge sends these, and this version of mzLibR does not return them yet:
-
-\describe{
-\item{\code{reader}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
-}
-}
 \section{Errors}{
-Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} comes only from \code{\link{readers_read_results_many}()}.
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)}
@@ -149,13 +145,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 }
 \section{Performance}{
-Every call starts one bridge process, which costs a .NET start-up before any work. 
+Every call starts one bridge process, which costs a .NET start-up before any work. For many files call \code{\link{readers_read_results_many}()} once rather than looping this function: one process, one start-up, and the thread count stated on the wire.
 }
 \section{Same verb in other bindings}{
 \itemize{
 \item Python (pyMzLib): \code{pymzlib.readers.read_results}; many files: \code{pymzlib.readers.read_results_many}
 \item Rust (mzLibRust): \code{mzlib::readers::read_results_with} with \code{ReadOptions}; many files: \code{mzlib::readers::read_results_many}
-\item R (mzLibR): \code{readers_read_results}
+\item R (mzLibR): \code{readers_read_results}; many files: \code{\link{readers_read_results_many}}
 }
 }
 \section{Since}{
@@ -169,7 +165,8 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{readers_identify}}, \code{\link{readers_retention_time_in_minutes}}
+\code{\link{readers_read_results_many}}, \code{\link{readers_identify}},
+  \code{\link{readers_retention_time_in_minutes}}
 }
 \examples{
 

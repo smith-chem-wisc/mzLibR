@@ -57,13 +57,14 @@ because it cannot be told apart from a \code{comment[file uri]} cell whose pre-s
 experiment stated an absence. \code{NA} means the document has no such column. Do not collapse them.
 
 }
-\section{It does not validate yet}{
+\section{Reading is not validating}{
 
 
-mzLib models SDRF's structural rules in \code{SdrfValidator} and its vocabulary-drift rules in
-\code{SdrfDriftLint}. Both have been public since mzLib #1207, which the pinned bridge includes, but
-the bridge does not expose them yet. When it does, they will be projected here from mzLib rather
-than reimplemented. Until then this makes no claim about whether a document is correct.
+This reads whatever the file holds and makes no claim that it is correct. mzLib's judgements
+about a document are their own functions: \code{\link{sdrf_validate}} checks the specification's
+structural rules, \code{\link{sdrf_assess}} asks whether the sample columns describe a design at all,
+\code{\link{sdrf_samples}} merges each sample's rows with its age parsed, and \code{\link{sdrf_lint}} finds
+concepts several documents wrote inconsistently.
 
 }
 \section{Wraps}{
@@ -137,7 +138,7 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{sdrf_pool}}, \code{\link{sdrf_value}}, \code{\link{sdrf_all}}, \code{\link{sdrf_records}}
+\code{\link{sdrf_pool}}, \code{\link{sdrf_value}}, \code{\link{sdrf_all}}, \code{\link{sdrf_records}}, \code{\link{sdrf_validate}}
 }
 \examples{
 

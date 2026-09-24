@@ -7,8 +7,9 @@
 readers_retention_time_in_minutes(records, column = NULL)
 }
 \arguments{
-\item{records}{A \code{\link{readers_read_results}}, \code{\link{readers_read_features}} or
-  \code{\link{readers_read_spectra}} result.}
+\item{records}{A \code{\link{readers_read_results}}, \code{\link{readers_read_features}},
+  \code{\link{readers_read_spectra}} or \code{\link{readers_read_quantified_peptides}} result, or the \code{_many} form
+  of one, whose rows are converted by each file's own unit.}
 
 \item{column}{Which retention-time column to convert. Defaults to \code{retention_time} for a record
   or scan table and to \code{retention_time_start} for a feature table, which has two. Name the other
@@ -19,7 +20,7 @@ readers_retention_time_in_minutes(records, column = NULL)
 The conversion you would otherwise write by hand, using \code{retention_time_unit}.
 }
 \details{
-\strong{Raises when the unit is \code{"unknown"} rather than guessing.} A silently unconverted time axis
+**Raises when the unit is \code{"unknown"} rather than guessing.** A silently unconverted time axis
 is the specific mistake this module exists to prevent: TopPIC still writes seconds while
 MetaMorpheus and MSFragger write minutes (mzLib normalises MSFragger since PR #1116, but not
 TopPIC), and a 60x error in a retention-time comparison looks like a chromatography problem

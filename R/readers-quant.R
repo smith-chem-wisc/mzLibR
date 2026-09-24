@@ -110,14 +110,16 @@ readers_read_protein_groups <- function(path, limit = NULL, offset = 0, out = NU
 #'   `path`, `file_type`, `reader`, `record_count` in groups, `sample_labels`, `caveats`,
 #'   `absent_fields`, `failed_fields`, `excluded_fields` and, for an input that could not be read,
 #'   `error_kind`, `error_type` and `error_message`. `file_count`, `read_count` and `failed_count`
-#'   count files; `record_count` counts groups over the files read; `row_count` counts rows.
+#'   count files; `record_count` counts groups over the files read and `returned_count` the groups
+#'   returned; `row_count` counts rows.
 #'
 #' @seealso [readers_read_protein_groups()]
 #' @spec readers.read-protein-groups bulk
 #' @examples
 #' \dontrun{
 #' # Your own files: no recording of a many-file read of this table exists to replay.
-#' batch <- readers_read_protein_groups_many(c("search_1/AllQuantifiedProteinGroups.tsv", "search_2/AllQuantifiedProteinGroups.tsv"),
+#' batch <- readers_read_protein_groups_many(
+#'   c("search_1/AllQuantifiedProteinGroups.tsv", "search_2/AllQuantifiedProteinGroups.tsv"),
 #'   threads = 2, on_error = "skip")
 #' batch$files[, c("path", "record_count", "error_message")]
 #' }
@@ -203,7 +205,8 @@ readers_read_quantified_peptides <- function(path, limit = NULL, offset = 0, out
 #' @examples
 #' \dontrun{
 #' # Your own files: no recording of a many-file read of this table exists to replay.
-#' batch <- readers_read_quantified_peptides_many(c("search_1/AllQuantifiedPeptides.tsv", "search_2/AllQuantifiedPeptides.tsv"),
+#' batch <- readers_read_quantified_peptides_many(
+#'   c("search_1/AllQuantifiedPeptides.tsv", "search_2/AllQuantifiedPeptides.tsv"),
 #'   threads = 2, on_error = "skip")
 #' batch$files[, c("path", "record_count", "error_message")]
 #' }
@@ -288,7 +291,8 @@ readers_read_occupancy <- function(path, limit = NULL, offset = 0, out = NULL, t
 #' @examples
 #' \dontrun{
 #' # Your own files: no recording of a many-file read of this table exists to replay.
-#' batch <- readers_read_occupancy_many(c("search_1/AllQuantifiedProteinGroups.tsv", "search_2/AllQuantifiedProteinGroups.tsv"),
+#' batch <- readers_read_occupancy_many(
+#'   c("search_1/AllQuantifiedProteinGroups.tsv", "search_2/AllQuantifiedProteinGroups.tsv"),
 #'   threads = 2, on_error = "skip")
 #' batch$files[, c("path", "record_count", "error_message")]
 #' }

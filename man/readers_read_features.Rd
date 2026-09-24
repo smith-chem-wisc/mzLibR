@@ -32,7 +32,7 @@ An \code{mzlibr_feature_records}. \code{record_count} counts the features in the
   \code{records} has one row per feature: \code{mz} in m/z; \code{charge}; \code{retention_time_start} and
   \code{retention_time_end} in the unit \code{retention_time_unit} names - \code{"unknown"} for
   \code{_ms1.feature}, see below; \code{intensity}, the apex, in the instrument's intensity units; and
-  \code{number_of_isotopes}.
+  \code{number_of_isotopes}. \code{rows_not_read} is always \code{NA}: one line is not one feature here.
 
 }
 \section{One row is not one line of the file, for \code{_ms1.feature}}{
@@ -79,10 +79,15 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \describe{
 \item{\code{path}}{string; never \code{NA}. Absolute path of the input.}
 \item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType that was dispatched.}
+\item{\code{reader}}{string; never \code{NA}. The mzLib reader class that parsed the file.}
 \item{\code{record_count}}{int; in \strong{features}; never \code{NA}. Features in the whole file, before the window.}
+\item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when never counted: one line is not one feature (_ms1.feature rows are expanded per charge). Data rows that did not become records.}
 \item{\code{retention_time_unit}}{string; never \code{NA}. minutes for Dinosaur; unknown for _ms1.feature, whose unit changed at TopFD v1.7.0 without a format change.}
 \item{\code{caveats}}{string[]; never \code{NA}. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.}
 \item{\code{column_names}}{string[]; never \code{NA}. Column order.}
+\item{\code{absent_fields}}{string[]; never \code{NA}. Columns the view defines that this file's format has no column or source for; null in every row (BULK.md section 4). Empty when every column has a source.}
+\item{\code{failed_fields}}{string[]; never \code{NA}. 'field: ExceptionType' for each column whose read threw on some returned rows; those cells are null.}
+\item{\code{excluded_fields}}{object[]; never \code{NA}. \{field, type, reason, verb\} for each field with no column shape; verb names the command that carries it, or null.}
 \item{\code{error}}{object; \code{NA} when always, for a single path: a file that cannot be read fails the call instead. \{kind, type, message\}; non-null only in a files[] entry under on-error skip.}
 \item{\code{returned_count}}{int; in \strong{features}; never \code{NA}. Features returned in columns (the unit offset and limit count in); 0 when written to out.}
 \item{\code{offset}}{int; in \strong{features}; never \code{NA}. The offset applied, in features.}
@@ -101,19 +106,8 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{number_of_isotopes}}{int; \code{NA} when _ms1.feature: mzLib never sets it (then in absent_fields). Isotopes in the feature.}
 }
 }
-\section{On the wire but not projected yet}{
-The bridge sends these, and this version of mzLibR does not return them yet:
-
-\describe{
-\item{\code{reader}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{rows_not_read}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{absent_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{failed_fields}}{arrives with the mzLib 1.0.592 port.}
-\item{\code{excluded_fields}}{arrives with the mzLib 1.0.592 port.}
-}
-}
 \section{Errors}{
-Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} belongs to the verb's many-files form.
+Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}. A condition that mentions \code{paths-stdin}, \code{threads} or \code{on-error} comes only from \code{\link{readers_read_features_many}()}.
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{path missing or blank; file or directory not found; mzLib does not recognise the file type (the message points at readers formats)}
@@ -135,13 +129,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 }
 \section{Performance}{
-Every call starts one bridge process, which costs a .NET start-up before any work. 
+Every call starts one bridge process, which costs a .NET start-up before any work. For many files call \code{\link{readers_read_features_many}()} once rather than looping this function: one process, one start-up, and the thread count stated on the wire.
 }
 \section{Same verb in other bindings}{
 \itemize{
 \item Python (pyMzLib): \code{pymzlib.readers.read_features}; many files: \code{pymzlib.readers.read_features_many}
 \item Rust (mzLibRust): \code{mzlib::readers::read_features_with} with \code{ReadOptions}; many files: \code{mzlib::readers::read_features_many}
-\item R (mzLibR): \code{readers_read_features}
+\item R (mzLibR): \code{readers_read_features}; many files: \code{\link{readers_read_features_many}}
 }
 }
 \section{Since}{
@@ -156,7 +150,8 @@ The spec records these as open. They are listed rather than hidden:
 }
 }
 \seealso{
-\code{\link{readers_read_records}}, \code{\link{readers_retention_time_in_minutes}}
+\code{\link{readers_read_features_many}}, \code{\link{readers_read_records}},
+  \code{\link{readers_retention_time_in_minutes}}
 }
 \examples{
 

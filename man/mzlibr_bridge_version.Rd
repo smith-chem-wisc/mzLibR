@@ -19,7 +19,7 @@ agree on a wire format - in one call with no network and no arguments. It is the
 to make work and the first thing to check when something else is wrong.
 }
 \value{
-A list with \code{bridge}, \code{protocol}, \code{runtime} and \code{mzlib}.
+A list with \code{bridge}, \code{protocol}, \code{runtime}, \code{mzlib} and \code{verbs}.
 
   \code{mzlib} is which mzLib the bridge was built against, as \code{1.0.0+<commit>}, and is
   \code{NA_character_} when the bridge did not report one - either because it predates the field,
@@ -29,6 +29,12 @@ A list with \code{bridge}, \code{protocol}, \code{runtime} and \code{mzlib}.
   It is deliberately \strong{not} a compatibility check. \code{protocol} is that, and it is what this
   function verifies. \code{mzlib} is for reporting a run, filing a bug, or tying a result to the
   library that produced it.
+
+  \code{verbs} is every command the bridge dispatches, such as \code{"readers read-protein-groups"},
+  taken from its own dispatch table when it was built, so it cannot list one it lacks. It is
+  \code{NA_character_} for a bridge from before pyMzLib 0.2.0, which did not report it. mzLibR checks
+  it before calling a command newer than the bridge it may be paired with, so an old bridge is
+  reported as old rather than answering "Unknown command".
 }
 \section{Wraps}{
 Wire verb \code{version}. Generated from the bridge's verb spec \code{version.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
@@ -48,13 +54,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{protocol}}{int; never \code{NA}. The wire-format version; a binding is compatible with a bridge by this.}
 \item{\code{runtime}}{string; never \code{NA}. The bundled .NET runtime version.}
 \item{\code{mzlib}}{string; \code{NA} when the build recorded no mzLib commit. Which mzLib the bridge links, as 1.0.0+<commit>, read from the linked assembly.}
-}
-}
-\section{On the wire but not projected yet}{
-The bridge sends these, and this version of mzLibR does not return them yet:
-
-\describe{
-\item{\code{verbs}}{arrives with the mzLib 1.0.592 port.}
+\item{\code{verbs}}{string[]; never \code{NA}. Every verb this bridge dispatches, in dispatch order, GENERATED at build time from the DispatchAsync switch (BULK.md section 5). Absent from bridges before pyMzLib 0.2.0 (optional forever). A binding calling a verb its bridge does not list raises its usage error naming the release that has it, from that verb's since, instead of spawning a process.}
 }
 }
 \section{Errors}{

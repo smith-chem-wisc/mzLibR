@@ -11,9 +11,11 @@ quant flashlfq	flashlfq_small.json
 quant median-polish	median_polish_small.json
 readers formats	readers_formats.json
 readers identify	readers_identify_mzid.json
+readers identify	readers_many_identify.json
 readers read-features	readers_features_topfd.json
 readers read-matches	readers_matches_casanovo.json
 readers read-matches	readers_matches_mzid.json
+readers read-matches	readers_matches_mzid_scores.json
 readers read-occupancy	readers_occupancy.json
 readers read-protein-groups	readers_protein_groups.json
 readers read-quantified-peptides	readers_quantified_peptides.json

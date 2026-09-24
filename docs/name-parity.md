@@ -22,6 +22,7 @@ is the only renaming mzLibR is entitled to do.
 | `flashlfq_mbr_peak_count()` | `FlashLfqResults.mbr_peak_count` | 0 identical |
 | `flashlfq_mbr_peaks()` | `FlashLfqResults.mbr_peaks` | 0 identical |
 | `flashlfq_mbr_rescued_peptide_count()` | `FlashLfqResults.mbr_rescued_peptide_count` | 0 identical |
+| `flashlfq_median_polish()` | `flashlfq.median_polish` | 5 identical |
 | `flashlfq_peptide_count()` | `FlashLfqResults.peptide_count` | 0 identical |
 | `flashlfq_protein_count()` | `FlashLfqResults.protein_count` | 0 identical |
 | `flashlfq_quantify()` | `flashlfq.quantify` | 15 identical |
@@ -36,24 +37,48 @@ is the only renaming mzLibR is entitled to do.
 | `pride_list_files()` | `pride.list_files` | 3 identical |
 | `pride_list_ftp_files()` | `pride.list_ftp_files` | 2 identical |
 | `pride_locations()` | *none* | R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field |
+| `pride_search()` | `pride.search` | 3 identical |
 | `pride_total_size_bytes()` | `pride.total_size_bytes` | 1 identical |
+| `proteins_classify_peptides()` | `proteins.classify_peptides` | 5 identical |
+| `proteins_read()` | `proteins.read` | 8 identical |
+| `proteins_resolve_genes()` | `proteins.resolve_genes` | 8 identical |
 | `readers_formats()` | `readers.formats` | 1 identical |
 | `readers_identify()` | `readers.identify` | 2 identical |
+| `readers_identify_many()` | `readers.identify_many` | 4 identical |
 | `readers_read_features()` | `readers.read_features` | 5 identical |
-| `readers_read_matches()` | `readers.read_matches` | **only pyMzLib: scores** |
+| `readers_read_features_many()` | `readers.read_features_many` | 5 identical |
+| `readers_read_matches()` | `readers.read_matches` | 6 identical |
+| `readers_read_matches_many()` | `readers.read_matches_many` | 6 identical |
+| `readers_read_occupancy()` | `readers.read_occupancy` | 5 identical |
+| `readers_read_occupancy_many()` | `readers.read_occupancy_many` | 5 identical |
+| `readers_read_protein_groups()` | `readers.read_protein_groups` | 5 identical |
+| `readers_read_protein_groups_many()` | `readers.read_protein_groups_many` | 5 identical |
+| `readers_read_quantified_peptides()` | `readers.read_quantified_peptides` | 5 identical |
+| `readers_read_quantified_peptides_many()` | `readers.read_quantified_peptides_many` | 5 identical |
 | `readers_read_records()` | `readers.read_records` | 5 identical |
+| `readers_read_records_many()` | `readers.read_records_many` | 5 identical |
 | `readers_read_results()` | `readers.read_results` | 5 identical |
+| `readers_read_results_many()` | `readers.read_results_many` | 5 identical |
 | `readers_read_spectra()` | `readers.read_spectra` | 7 identical |
-| `readers_retention_time_in_minutes()` | *none* | one function with a `column` argument where pyMzLib has one property per column (ResultRecords.retention_time_in_minutes, FeatureRecords.retention_time_start_in_minutes and _end_in_minutes), because R dispatches on the object's class and Python does not |
+| `readers_read_spectra_many()` | `readers.read_spectra_many` | 7 identical |
+| `readers_retention_time_in_minutes()` | *none* | one function with a `column` argument where pyMzLib has one property per column (ResultRecords.retention_time_in_minutes, FeatureRecords.retention_time_start_in_minutes and _end_in_minutes, ReadBatch.in_minutes), because R dispatches on the object's class and Python does not |
 | `sdrf_all()` | `SdrfDocument.all` | 1 identical |
+| `sdrf_assess()` | `sdrf.assess` | 2 identical |
+| `sdrf_assess_many()` | `sdrf.assess_many` | 4 identical |
 | `sdrf_has_repeated_columns()` | `SdrfDocument.has_repeated_columns` | 0 identical |
 | `sdrf_index_of()` | `SdrfDocument.index_of` | 1 identical |
 | `sdrf_indexes_of()` | `SdrfDocument.indexes_of` | 1 identical |
+| `sdrf_lint()` | `sdrf.lint` | 2 identical |
+| `sdrf_parse_ages()` | `sdrf.parse_ages` | 2 identical |
 | `sdrf_pool()` | `sdrf.pool` | 5 identical |
 | `sdrf_ragged_row_count()` | `SdrfDocument.ragged_row_count` | 0 identical |
 | `sdrf_read()` | `sdrf.read` | 4 identical |
 | `sdrf_records()` | `SdrfDocument.records` | 0 identical |
+| `sdrf_samples()` | `sdrf.samples` | 2 identical |
+| `sdrf_samples_many()` | `sdrf.samples_many` | 4 identical |
 | `sdrf_source_documents()` | `PooledSdrf.source_documents` | 0 identical |
+| `sdrf_validate()` | `sdrf.validate` | 2 identical |
+| `sdrf_validate_many()` | `sdrf.validate_many` | 4 identical |
 | `sdrf_value()` | `SdrfDocument.value` | 1 identical |
 
 ### pyMzLib callables with no mzLibR function
@@ -69,59 +94,34 @@ is the only renaming mzLibR is entitled to do.
 | `PrideFtpFile.approximate_size_mb` | a column, `approximate_size_mb`, not a function |
 | `PrideFtpFile.extension` | a column, `extension`, not a function |
 | `PrideFtpFile.as_dict` | meaningless in R: the data.frame is already the record |
-| `PrideProjectSearchResult.matched_fields` | parity debt: `pride search` arrives with the mzLib 1.0.592 port |
-| `PrideProjectSearchResult.as_dict` | parity debt: `pride search` arrives with the mzLib 1.0.592 port |
-| `pride.search` | parity debt: `pride search` arrives with the mzLib 1.0.592 port |
+| `PrideProjectSearchResult.matched_fields` | a list column of pride_search(), `matched_fields`: the sorted names of `highlights` |
+| `PrideProjectSearchResult.as_dict` | meaningless in R: the data.frame is already the record |
+| `ProteinDatabase.taxonomy` | two columns of `proteins`: `setNames(db$proteins$ncbi_taxonomy_id, db$proteins$accession)` |
+| `ProteinDatabase.organisms` | two columns of `proteins`: `setNames(db$proteins$organism, db$proteins$accession)` |
+| `PeptideClassification.sharing_of` | two columns of `peptides`: `setNames(calls$peptides$sharing, calls$peptides$peptide)` |
 | `Peptide.intensity` | a row of the long `peptides` frame |
 | `Peptide.detection_type` | a column of the long `peptides` frame |
 | `ProteinGroup.intensity` | a row of the long `proteins` frame |
 | `Peak.is_mbr` | a column comparison, `detection_type == "MBR"` |
-| `flashlfq.median_polish` | parity debt: `quant median-polish` arrives with the mzLib 1.0.592 port |
 | `Format.is_quantifiable` | a column of readers_formats(), `is_quantifiable` |
 | `FileInfo.is_quantifiable` | an element of readers_identify(), `is_quantifiable` |
 | `ResultRecords.retention_time_in_minutes` | readers_retention_time_in_minutes() |
 | `FeatureRecords.retention_time_start_in_minutes` | readers_retention_time_in_minutes(column = "retention_time_start") |
 | `FeatureRecords.retention_time_end_in_minutes` | readers_retention_time_in_minutes(column = "retention_time_end") |
 | `ScanRecords.total_ion_current` | a column of `records`, `total_ion_current` |
-| `SpectraSource.acquired_at` | **UNACCOUNTED FOR** |
-| `FileReport.ok` | **UNACCOUNTED FOR** |
-| `ReadBatch.failed_files` | **UNACCOUNTED FOR** |
-| `ReadBatch.in_minutes` | **UNACCOUNTED FOR** |
-| `IdentifyBatch.failed_files` | **UNACCOUNTED FOR** |
-| `readers.identify_many` | **UNACCOUNTED FOR** |
-| `readers.read_results_many` | **UNACCOUNTED FOR** |
-| `readers.read_records_many` | **UNACCOUNTED FOR** |
-| `readers.read_features_many` | **UNACCOUNTED FOR** |
-| `readers.read_matches_many` | **UNACCOUNTED FOR** |
-| `readers.read_spectra_many` | **UNACCOUNTED FOR** |
-| `readers.read_protein_groups` | **UNACCOUNTED FOR** |
-| `readers.read_protein_groups_many` | **UNACCOUNTED FOR** |
-| `readers.read_quantified_peptides` | **UNACCOUNTED FOR** |
-| `readers.read_quantified_peptides_many` | **UNACCOUNTED FOR** |
-| `readers.read_occupancy` | **UNACCOUNTED FOR** |
-| `readers.read_occupancy_many` | **UNACCOUNTED FOR** |
-| `SdrfValidation.messages` | **UNACCOUNTED FOR** |
-| `SdrfValidation.errors` | **UNACCOUNTED FOR** |
-| `SdrfValidation.warnings` | **UNACCOUNTED FOR** |
-| `SdrfValidationBatch.messages` | **UNACCOUNTED FOR** |
-| `sdrf.validate` | **UNACCOUNTED FOR** |
-| `sdrf.validate_many` | **UNACCOUNTED FOR** |
-| `SdrfDrift.findings` | **UNACCOUNTED FOR** |
-| `sdrf.lint` | **UNACCOUNTED FOR** |
-| `SdrfAssessmentBatch.paths_with` | **UNACCOUNTED FOR** |
-| `sdrf.assess` | **UNACCOUNTED FOR** |
-| `sdrf.assess_many` | **UNACCOUNTED FOR** |
-| `SdrfSamples.ages` | **UNACCOUNTED FOR** |
-| `SdrfSamples.conflicts` | **UNACCOUNTED FOR** |
-| `sdrf.samples` | **UNACCOUNTED FOR** |
-| `sdrf.samples_many` | **UNACCOUNTED FOR** |
-| `sdrf.parse_ages` | **UNACCOUNTED FOR** |
-| `ProteinDatabase.taxonomy` | **UNACCOUNTED FOR** |
-| `ProteinDatabase.organisms` | **UNACCOUNTED FOR** |
-| `PeptideClassification.sharing_of` | **UNACCOUNTED FOR** |
-| `proteins.read` | **UNACCOUNTED FOR** |
-| `proteins.resolve_genes` | **UNACCOUNTED FOR** |
-| `proteins.classify_peptides` | **UNACCOUNTED FOR** |
+| `ReadBatch.in_minutes` | readers_retention_time_in_minutes() of the batch, which converts each file's rows by its unit |
+| `ReadBatch.failed_files` | a row filter on `files`: `batch$files[!is.na(batch$files$error_kind), ]` |
+| `IdentifyBatch.failed_files` | a row filter on `files`: `batch$files[!is.na(batch$files$error_kind), ]` |
+| `FileReport.ok` | a column test on `files`: `is.na(error_kind)` |
+| `SpectraSource.acquired_at` | `as.POSIXct()` of `source$acquisition_start_time`, with `tz = "UTC"` only when `acquisition_start_time_is_utc` |
+| `SdrfValidation.messages` | the findings are `records`, a data.frame; its rows are the messages |
+| `SdrfValidation.errors` | `records[records$severity == "Error", ]` |
+| `SdrfValidation.warnings` | `records[records$severity == "Warning", ]` |
+| `SdrfValidationBatch.messages` | the findings are `records`, a data.frame, with source_index and source_path |
+| `SdrfDrift.findings` | `split(records, records$finding_index)` |
+| `SdrfAssessmentBatch.paths_with` | `files$path[files$verdict %in% c(...)]` |
+| `SdrfSamples.ages` | `records[records$column_name == "characteristics[age]", ]` |
+| `SdrfSamples.conflicts` | `records[records$status == "conflicting", c("source_name", "column_name")]` |
 
 ## data.frame columns against the wire
 
@@ -263,33 +263,33 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 
 | verb | mzLibR | spec `since.mzlibr` | checked | fields checked against | verdict |
 |---|---|---|---|---|---|
-| `genes resolve` | `proteins_resolve_genes` | — | *not projected yet* | | |
+| `genes resolve` | `proteins_resolve_genes()` | — | 7 params, 8 fields with units | `genes_resolve_human.json` | ok |
 | `peptidoform fragments` | `peptidoform_fragments()` | 0.1.0 | 10 params, 12 fields with units | `peptidoform_P02768_small.json` | ok |
 | `pride download` | `pride_download()`, `pride_download_files()` | 0.1.0 | 8 params, 0 fields with units | no fixture | ok |
 | `pride files` | `pride_list_files()` | 0.1.0 | 2 params, 1 fields with units | `pride_PXD000001_files.json` | ok |
 | `pride ftp-files` | `pride_list_ftp_files()` | 0.1.0 | 1 params, 1 fields with units | `pride_ftp_PXD000001.json` | ok |
-| `pride search` | `pride_search` | — | *not projected yet* | | |
-| `proteins classify-peptides` | `proteins_classify_peptides` | — | *not projected yet* | | |
-| `proteins read` | `proteins_read` | — | *not projected yet* | | |
+| `pride search` | `pride_search()` | — | 2 params, 6 fields with units | `pride_search_plasmodium.json` | ok |
+| `proteins classify-peptides` | `proteins_classify_peptides()` | — | 4 params, 6 fields with units | `proteins_classify_peptides.json` | ok |
+| `proteins read` | `proteins_read()` | — | 7 params, 7 fields with units | `proteins_read_human.json` | ok |
 | `quant flashlfq` | `flashlfq_quantify()` | 0.1.0 | 14 params, 8 fields with units | `flashlfq_small.json` | ok |
-| `quant median-polish` | `flashlfq_median_polish` | — | *not projected yet* | | |
+| `quant median-polish` | `flashlfq_median_polish()` | — | 4 params, 3 fields with units | `median_polish_small.json` | ok |
 | `readers formats` | `readers_formats()` | 0.1.0 | 0 params, 0 fields with units | `readers_formats.json` | ok |
-| `readers identify` | `readers_identify()` | 0.1.0 | 1 params, 0 fields with units | `readers_identify_mzid.json` | ok |
-| `readers read-features` | `readers_read_features()` | 0.1.0 | 4 params, 8 fields with units | `readers_features_topfd.json` | ok |
-| `readers read-matches` | `readers_read_matches()` | 0.1.0 | 4 params, 3 fields with units | `readers_matches_casanovo.json` | ok |
-| `readers read-occupancy` | `readers_read_occupancy` | — | *not projected yet* | | |
-| `readers read-protein-groups` | `readers_read_protein_groups` | — | *not projected yet* | | |
-| `readers read-quantified-peptides` | `readers_read_quantified_peptides` | — | *not projected yet* | | |
-| `readers read-records` | `readers_read_records()` | 0.1.0 | 4 params, 3 fields with units | `readers_records_toppic.json` | ok |
-| `readers read-results` | `readers_read_results()` | 0.1.0 | 4 params, 7 fields with units | `readers_results_fragger.json` | ok |
-| `readers read-spectra` | `readers_read_spectra()` | 0.1.0 | 6 params, 19 fields with units | `readers_spectra_mzml.json` | ok |
-| `sdrf assess` | `sdrf_assess` | — | *not projected yet* | | |
-| `sdrf lint` | `sdrf_lint` | — | *not projected yet* | | |
-| `sdrf parse-age` | `sdrf_parse_ages` | — | *not projected yet* | | |
+| `readers identify` | `readers_identify()`, `readers_identify_many()` | 0.1.0 | 1 params, 0 fields with units | `readers_identify_mzid.json` | ok |
+| `readers read-features` | `readers_read_features()`, `readers_read_features_many()` | 0.1.0 | 8 params, 20 fields with units | `readers_features_topfd.json` | ok |
+| `readers read-matches` | `readers_read_matches()`, `readers_read_matches_many()` | 0.1.0 | 10 params, 16 fields with units | `readers_matches_mzid.json` | ok |
+| `readers read-occupancy` | `readers_read_occupancy()`, `readers_read_occupancy_many()` | — | 8 params, 18 fields with units | `readers_occupancy.json` | ok |
+| `readers read-protein-groups` | `readers_read_protein_groups()`, `readers_read_protein_groups_many()` | — | 8 params, 17 fields with units | `readers_protein_groups.json` | ok |
+| `readers read-quantified-peptides` | `readers_read_quantified_peptides()`, `readers_read_quantified_peptides_many()` | — | 8 params, 15 fields with units | `readers_quantified_peptides.json` | ok |
+| `readers read-records` | `readers_read_records()`, `readers_read_records_many()` | 0.1.0 | 8 params, 11 fields with units | `readers_records_mzid_gz.json` | ok |
+| `readers read-results` | `readers_read_results()`, `readers_read_results_many()` | 0.1.0 | 8 params, 16 fields with units | `readers_results_fragger.json` | ok |
+| `readers read-spectra` | `readers_read_spectra()`, `readers_read_spectra_many()` | 0.1.0 | 12 params, 41 fields with units | `readers_spectra_mzml.json` | ok |
+| `sdrf assess` | `sdrf_assess()`, `sdrf_assess_many()` | — | 4 params, 16 fields with units | `sdrf_assess_cohort.json` | ok |
+| `sdrf lint` | `sdrf_lint()` | — | 1 params, 3 fields with units | `sdrf_lint_cohort.json` | ok |
+| `sdrf parse-age` | `sdrf_parse_ages()` | — | 1 params, 5 fields with units | `sdrf_parse_age.json` | ok |
 | `sdrf pool` | `sdrf_pool()` | — | 4 params, 4 fields with units | `sdrf_pool_two.json` | ok |
 | `sdrf read` | `sdrf_read()` | — | 3 params, 3 fields with units | `sdrf_read_PXD000070.json` | ok |
-| `sdrf samples` | `sdrf_samples` | — | *not projected yet* | | |
-| `sdrf validate` | `sdrf_validate` | — | *not projected yet* | | |
+| `sdrf samples` | `sdrf_samples()`, `sdrf_samples_many()` | — | 4 params, 15 fields with units | `sdrf_samples_cohort.json` | ok |
+| `sdrf validate` | `sdrf_validate()`, `sdrf_validate_many()` | — | 4 params, 10 fields with units | `sdrf_validate_cohort.json` | ok |
 | `version` | `mzlibr_bridge_version()` | 0.1.0 | 0 params, 0 fields with units | `bridge_version.json` | ok |
 
 ### Where mzLibR's name differs from the spec's `bindings.r`
@@ -298,43 +298,5 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 
 ## Anything needing a reason
 
-- readers_read_matches: only pyMzLib: scores
-- SpectraSource.acquired_at: pyMzLib callable with no mzLibR function and no reason given
-- FileReport.ok: pyMzLib callable with no mzLibR function and no reason given
-- ReadBatch.failed_files: pyMzLib callable with no mzLibR function and no reason given
-- ReadBatch.in_minutes: pyMzLib callable with no mzLibR function and no reason given
-- IdentifyBatch.failed_files: pyMzLib callable with no mzLibR function and no reason given
-- readers.identify_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_results_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_records_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_features_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_matches_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_spectra_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_protein_groups: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_protein_groups_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_quantified_peptides: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_quantified_peptides_many: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_occupancy: pyMzLib callable with no mzLibR function and no reason given
-- readers.read_occupancy_many: pyMzLib callable with no mzLibR function and no reason given
-- SdrfValidation.messages: pyMzLib callable with no mzLibR function and no reason given
-- SdrfValidation.errors: pyMzLib callable with no mzLibR function and no reason given
-- SdrfValidation.warnings: pyMzLib callable with no mzLibR function and no reason given
-- SdrfValidationBatch.messages: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.validate: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.validate_many: pyMzLib callable with no mzLibR function and no reason given
-- SdrfDrift.findings: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.lint: pyMzLib callable with no mzLibR function and no reason given
-- SdrfAssessmentBatch.paths_with: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.assess: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.assess_many: pyMzLib callable with no mzLibR function and no reason given
-- SdrfSamples.ages: pyMzLib callable with no mzLibR function and no reason given
-- SdrfSamples.conflicts: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.samples: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.samples_many: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.parse_ages: pyMzLib callable with no mzLibR function and no reason given
-- ProteinDatabase.taxonomy: pyMzLib callable with no mzLibR function and no reason given
-- ProteinDatabase.organisms: pyMzLib callable with no mzLibR function and no reason given
-- PeptideClassification.sharing_of: pyMzLib callable with no mzLibR function and no reason given
-- proteins.read: pyMzLib callable with no mzLibR function and no reason given
-- proteins.resolve_genes: pyMzLib callable with no mzLibR function and no reason given
-- proteins.classify_peptides: pyMzLib callable with no mzLibR function and no reason given
+None. Every parameter matches its parent, every column is either a wire field or a
+declared derivation, and every help page states the units its spec gives.
