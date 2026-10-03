@@ -85,7 +85,7 @@ test_that("the condition columns travel tab-joined, and none sends no option", {
 test_that("searched files go on stdin with the flag, and out is passed through", {
   request <- mz$sdrf_build_design_request("a.sdrf.tsv", NULL, c("/data/a.raw", "b.raw"), "ExperimentalDesign.tsv")
   expect_true("--searched-files-stdin" %in% request$args)
-  expect_identical(request$stdin, "/data/a.raw\nb.raw\n")
+  expect_identical(request$stdin, "/data/a.raw\nb.raw")
   expect_identical(utils::tail(request$args, 2L), c("--out", "ExperimentalDesign.tsv"))
 })
 

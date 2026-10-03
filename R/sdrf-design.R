@@ -45,7 +45,8 @@ sdrf_build_design_request <- function(path, condition_columns, searched_files, o
   if (!is.null(searched_files)) {
     files <- sdrf_design_names(searched_files, "searched_files", "[\r\n]")
     args <- c(args, "--searched-files-stdin")
-    stdin <- paste0(paste(files, collapse = "\n"), "\n")
+    # No trailing newline: system2(input =) ends the last line itself.
+    stdin <- paste(files, collapse = "\n")
   }
   if (!is.null(out)) {
     args <- c(args, "--out", readers_normalise_path(out, "out"))
