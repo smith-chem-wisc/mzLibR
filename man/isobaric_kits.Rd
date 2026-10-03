@@ -48,7 +48,7 @@ channel (the phenylalanine immonium ion sits there); its eighth reagent is 121.
 
 }
 \section{Wraps}{
-Wire verb \code{isobaric kits}. Generated from the bridge's verb spec \code{isobaric.kits.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{isobaric kits}. Generated from the bridge's verb spec \code{isobaric.kits.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/Modifications/IsobaricMassTag.cs}{\code{IsobaricMassTag.TryGetIsobaricMassTag}} in \code{mzLib/Omics/Modifications/IsobaricMassTag.cs} at mzLib \code{0a808fec}
@@ -125,7 +125,7 @@ The spec records these as open. They are listed rather than hidden:
 }
 \references{
 \itemize{
-\item \href{https://doi.org/10.1021/acs.jproteome.1c00168}{doi:10.1021/acs.jproteome.1c00168}: the 0.003 Da reporter-ion matching tolerance mzLib uses (IsobaricMassTag.AbsoluteToleranceValue)
+\item \href{https://doi.org/10.1021/acs.jproteome.1c00168}{doi:10.1021/acs.jproteome.1c00168}: the TMTpro-18plex reagents paper (Li et al. 2021); mzLib cites it as the source of its 0.003 Da reporter-ion matching tolerance (IsobaricMassTag.AbsoluteToleranceValue, IsobaricMassTag.cs:41)
 }
 }
 \seealso{
