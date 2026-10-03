@@ -118,6 +118,11 @@ replay_mismatch <- function(data, options) {
       if (!identical(replay_base(recorded), replay_base(value))) {
         return(paste0("recorded from '", replay_base(recorded), "', not '", replay_base(value), "'"))
       }
+    } else if (is.numeric(recorded) && !is.na(suppressWarnings(as.numeric(value)))) {
+      # A number is compared as a number: 0.94999999999999996 on the wire is the recorded 0.95.
+      if (!isTRUE(all.equal(as.numeric(value), as.numeric(recorded), tolerance = 1e-12))) {
+        return(paste0("recorded with ", key, "=", replay_show(recorded), ", not ", value))
+      }
     } else if (!identical(replay_show(recorded), value)) {
       return(paste0("recorded with ", key, "=", replay_show(recorded), ", not ", value))
     }

@@ -23,12 +23,11 @@ STATS_FIT_STATUSES <- c("fitted", "too_few_observations", "rank_deficient")
 
 # ---------------------------------------------------------------- argument shaping
 
-# A number as text that parses back to exactly the same double: 15 significant digits when they
-# are enough (0.95 stays "0.95"), else 17, which always are.
+# A number as text that .NET parses back to exactly the same double: 17 significant digits always
+# suffice, and .NET's parser rounds correctly. Not "the shortest that round-trips in R": R's own
+# parser is not correctly rounded on every platform, so it cannot be the judge.
 stats_number_text <- function(x) {
-  short <- sprintf("%.15g", x)
-  long <- sprintf("%.17g", x)
-  ifelse(is.finite(x) & suppressWarnings(as.numeric(short)) == x, short, long)
+  sprintf("%.17g", x)
 }
 
 stats_one_line <- function(value, what) {

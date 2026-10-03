@@ -178,8 +178,11 @@ test_that("adjust keeps every position, and NA is not counted in m", {
 })
 
 test_that("NA and NaN cross as empty lines, and numbers survive the trip exactly", {
-  expect_identical(mz$stats_adjust_stdin(c(0.0002, NA, NaN, 0.74)), "0.0002\n\n\n0.74")
-  for (x in c(1 / 3, 0.1 + 0.2, 4.9534166563722163e-08, 1e-300)) {
+  expect_identical(mz$stats_adjust_stdin(c(0.0002, NA, NaN, 0.74)),
+                   "0.00020000000000000001\n\n\n0.73999999999999999")
+  # 17 significant digits. R's own parser is not correctly rounded everywhere (macOS arm64 misreads
+  # 1e-300), so it is the check here only at ordinary magnitudes; .NET reads every one exactly.
+  for (x in c(1 / 3, 0.1 + 0.2, 4.9534166563722163e-08)) {
     expect_identical(as.numeric(strsplit(mz$stats_adjust_stdin(x), "\n")[[1L]]), x)
   }
   expect_identical(mz$stats_adjust_stdin(NA), "")
