@@ -23,10 +23,10 @@ readers_read_records(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 \description{
 Read any file mzLib recognises into a table of that format's own record fields, naming every field that could not become a column.
 
-The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. All 36 file
-types, including the 17 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-peptide and protein tables, the FlashDeconv formats, SDRF - which no other \code{readers_} function
-can touch.
+The exhaustive verb: if \code{\link{readers_identify}} succeeds on a path, this reads it. Every file
+type, including those that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+peptide and protein tables, the FlashDeconv formats, MetaMorpheus's protein-group and peptide
+tables and their RNA counterparts, SDRF - which no other \code{readers_} function can touch.
 }
 \details{
 \strong{For SDRF, use \code{\link{sdrf_read}} instead.} This function joins each SDRF row's cells into one
@@ -76,7 +76,7 @@ mass difference, a delta, TopPIC's \code{feature_score} - and nulling those woul
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -86,7 +86,7 @@ Wire verb \code{readers read-records}. Generated from the bridge's verb spec \co
 }
 \section{Parameters: units, ranges and defaults}{
 \describe{
-\item{\code{path}}{path; required. Any of the file types readers formats lists (36 at mzLib 1.0.592), including spectra files and the Bruker .d directories.}
+\item{\code{path}}{path; required. Any of the file types readers formats lists (38 at mzLib 1.0.593), including spectra files and the Bruker .d directories.}
 \item{\code{offset}}{int; in \strong{records}; default \code{0}; range \code{>= 0}. Skip this many records. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it. For a large file use out in one call.}
 \item{\code{limit}}{int; in \strong{records}; default absent; range \code{>= 0}. Return at most this many records. Absent means no limit; there is deliberately no default cap.}
 \item{\code{out}}{path; default absent. Write the selected window as a tab-separated table here instead of returning columns (header = column_names). Must differ from path. Parent directories are created.}
@@ -177,7 +177,6 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item The three mzLib 1.0.592 fixtures (mzid_gz, mm_protein_groups, mm_peptides) exist only on pyMzLib#61 until it merges; mzLibRust and mzLibR have not copied them.
 \item absent_fields for read-records is judged only for record types mapped with CsvHelper [Name] attributes (FlashLFQ peaks, MSFragger, MsPathFinderT, TopFD, the #1347 tables, ...). psmtsv/osmtsv parse their own header dictionary, so their optional columns are not judged yet; an empty list there means no basis, not nothing absent.
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 }
 }
 \seealso{

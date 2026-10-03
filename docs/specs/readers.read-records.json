@@ -34,7 +34,7 @@
       "unit": null,
       "range": null,
       "default": null,
-      "doc": "Any of the file types readers formats lists (36 at mzLib 1.0.592), including spectra files and the Bruker .d directories."
+      "doc": "Any of the file types readers formats lists (38 at mzLib 1.0.593), including spectra files and the Bruker .d directories."
     },
     {
       "name": "offset",
@@ -438,7 +438,8 @@
     },
     "r": {
       "name": "readers_read_records",
-      "bulk": "readers_read_records_many"
+      "bulk": "readers_read_records_many",
+      "note": "source_index is 1-based in R (the wire is 0-based)."
     }
   },
   "examples": [
@@ -488,7 +489,6 @@
   ],
   "open_questions": [
     "The three mzLib 1.0.592 fixtures (mzid_gz, mm_protein_groups, mm_peptides) exist only on pyMzLib#61 until it merges; mzLibRust and mzLibR have not copied them.",
-    "absent_fields for read-records is judged only for record types mapped with CsvHelper [Name] attributes (FlashLFQ peaks, MSFragger, MsPathFinderT, TopFD, the #1347 tables, ...). psmtsv/osmtsv parse their own header dictionary, so their optional columns are not judged yet; an empty list there means no basis, not nothing absent.",
-    "The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release."
+    "absent_fields for read-records is judged only for record types mapped with CsvHelper [Name] attributes (FlashLFQ peaks, MSFragger, MsPathFinderT, TopFD, the #1347 tables, ...). psmtsv/osmtsv parse their own header dictionary, so their optional columns are not judged yet; an empty list there means no basis, not nothing absent."
   ]
 }

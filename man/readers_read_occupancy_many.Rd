@@ -38,7 +38,7 @@ An \code{mzlibr_read_batch}: \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-occupancy} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-occupancy.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-occupancy} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-occupancy.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Omics/BioPolymerGroup/ModificationOccupancyCell.cs}{\code{ModificationOccupancyCell.Parse}} in \code{mzLib/Omics/BioPolymerGroup/ModificationOccupancyCell.cs} at mzLib \code{23c2490e}
@@ -123,13 +123,12 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 \item Peptide-level occupancy: ModificationOccupancyCell also parses peptide tables' cells, but QuantifiedPeptideFromTsv at the pin exposes none, so this verb reads protein groups only.
 \item numerator and denominator are floats for both bases; a count-basis value crosses as a whole number (1, not 1.0) and bindings must read it as a float.
 }

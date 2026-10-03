@@ -4,9 +4,9 @@
   "summary": "Read a MetaMorpheus AllQuantifiedProteinGroups.tsv as one row per protein group per sample group, with each sample group's spectral count and intensity as columns.",
   "since": {
     "protocol": 1,
-    "pymzlib": null,
-    "mzlibrust": null,
-    "mzlibr": null
+    "pymzlib": "0.2.0",
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -29,7 +29,7 @@
       "unit": null,
       "range": null,
       "default": null,
-      "doc": "A MetaMorpheus AllQuantifiedProteinGroups.tsv (readers identify reports MetaMorpheusQuantifiedProteinGroups)."
+      "doc": "A MetaMorpheus protein-group table: AllQuantifiedProteinGroups.tsv, or (mzLib 1.0.593, #1365) AllProteinGroups.tsv and <file>_ProteinGroups.tsv; or an RNA search's AllQuantifiedTranscriptGroups.tsv (#1388), whose reader subclasses the protein-group one."
     },
     {
       "name": "offset",
@@ -490,6 +490,7 @@
   "caveats": [
     "The table is UNFILTERED as MetaMorpheus writes it: decoys, contaminants and groups above 1% FDR are all rows (ProteinGroupFromTsv.cs:15). Filter on q_value and decoy_contaminant_target before counting.",
     "Long format: one row per group per sample group. offset and limit count GROUPS, and returned_count counts rows.",
+    "A table MetaMorpheus wrote without label-free quantification (AllProteinGroups.tsv, <file>_ProteinGroups.tsv; readable from mzLib 1.0.593, #1365) has SpectralCount_ columns but no Intensity_ columns, so intensity is in absent_fields: no basis, not zero.",
     "sample_label is the header label verbatim; condition, replicate and channel cannot be recovered from it (ProteinGroupFromTsv.cs:103).",
     "A blank intensity is null, not zero (ProteinGroupFromTsv.cs:114). An isobaric file has one counting label and one intensity label per channel, so a row can carry only spectral_count or only intensity.",
     "No member is a leading protein: members are sorted by accession (ProteinGroupFromTsv.cs:17).",
@@ -508,7 +509,8 @@
     },
     "r": {
       "name": "readers_read_protein_groups",
-      "bulk": "readers_read_protein_groups_many"
+      "bulk": "readers_read_protein_groups_many",
+      "note": "source_index is 1-based in R (the wire is 0-based)."
     }
   },
   "examples": [
@@ -520,7 +522,6 @@
     }
   ],
   "open_questions": [
-    "The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.",
     "The group-level columns carried beside each sample (identity, q-value, decoy label) are a choice made here; coverage, masses and counts stay in read-records. Revisit if every binding ends up joining for the same field.",
     "Only the MetaMorpheus 1.1.11 fixture exists (label-free); no isobaric or 1.2+ (BioPolymer ...) header table has been read through this verb yet."
   ]

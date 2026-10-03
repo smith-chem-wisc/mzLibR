@@ -43,7 +43,7 @@ than the files. And a valid document may still say nothing about its samples: th
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf validate}. Generated from the bridge's verb spec \code{sdrf.validate.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf validate}. Generated from the bridge's verb spec \code{sdrf.validate.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfValidator.cs}{\code{SdrfValidator.Validate}} in \code{mzLib/Readers/Sdrf/SdrfValidator.cs} at mzLib \code{23c2490e}
@@ -112,15 +112,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item since.pymzlib is null until the pyMzLib release carrying feat/sdrf-1.0.592 is tagged; Rust and R are not yet ported.
-\item Bulk spellings are the cross-binding decision of 2026-09-23: a separate <verb>_many in every binding (R too, not vectorisation). Rust and R names here are intended, not yet ported.
-}
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \references{
 \itemize{

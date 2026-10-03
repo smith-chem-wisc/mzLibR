@@ -40,7 +40,7 @@ An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-matches} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-matches.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-matches} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-matches.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/ISpectralMatch.cs}{\code{ISpectralMatch}} in \code{mzLib/Readers/BaseClasses/ISpectralMatch.cs} at mzLib \code{23c2490e}
@@ -113,8 +113,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \section{Caveats}{
 \itemize{
 \item Nothing is FDR-filtered. q_value is filled only by mzIdentML and an MsPathFinderT file with a QValue column; an _IcTarget/_IcDecoy file has none and names it absent (mzLib would report 0).
-\item mzIdentML: every SpectrumIdentificationItem is a row, lower ranks and failed thresholds included (MzIdentMLResultFile.cs:177). Filter on rank == 1 and pass_threshold.
-\item mzIdentML: is_decoy is absent because the isDecoy attribute defaults to false when omitted (MzIdentMLResultFile.cs:173).
+\item mzIdentML: every SpectrumIdentificationItem is a row, lower ranks and failed thresholds included (MzIdentMLResultFile.cs:193). Filter on rank == 1 and pass_threshold.
+\item mzIdentML: is_decoy is absent because the isDecoy attribute defaults to false when omitted (MzIdentMLResultFile.cs:189).
 \item mzIdentML: items mzLib cannot represent are skipped, not failed, and listed in skipped (MzIdentMLResultFile.cs:123).
 \item MsPathFinderT: is_decoy comes from an XXX protein-name prefix (MsPathFinderTResult.cs:92); accession assumes a UniProt header and lands in failed_fields otherwise.
 \item Casanovo: one_based_scan_number is the mzTab index plus one (CasanovoMzTabFile.cs:116).
@@ -138,7 +138,6 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 \item readers_matches_mzid_scores.json (\code{--scores}) is replayed through the pyMzLib conftest rather than listed here: check_verbs.py excludes present_when columns from its column check, so a \code{--scores} fixture cannot be a spec example yet.
 \item q_value, rank and pass_threshold join a view whose other columns are Readers.ISpectralMatch members; they are read from the record types that carry them. If mzLib adds them to the interface, the per-format reads go away.
 }

@@ -38,7 +38,7 @@ A character vector of paths. These say \strong{where each file is}, not what was
   path is still returned. Do not read \code{length()} of this as work done.
 }
 \section{Wraps}{
-Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.DownloadProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -51,12 +51,12 @@ Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pri
 \section{Parameters: units, ranges and defaults}{
 \describe{
 \item{wire \code{--accession}}{string; required. The project accession, e.g. PXD000001. The bridge checks only that it is not blank. \emph{Not an argument here: taken from the rows' project_accession.}}
-\item{\code{destination} (wire \code{--dest})}{path; required. Directory to write into; created if absent. Blank is a usage error (it never falls back to the working directory).}
+\item{\code{destination} (wire \code{--dest})}{path; required. Directory to write into; created if absent, but only when a file is actually fetched (mzLib creates it after the no-overwrite skip). With zero matches, or every file skipped, no directory is created, yet destination_directory is still reported. Blank is a usage error (it never falls back to the working directory).}
 \item{wire \code{--category}}{string; default absent; range \code{a PRIDE category value, case-insensitive: RAW, PEAK, SEARCH, RESULT, OTHER, ...}. Keep only files of this category (mzLib WhereCategory). Absent keeps every category. Given but blank is a usage error, never 'everything'. ANDed with ext. \emph{Not an argument here: a selection is already filtered, by \code{[}.}}
 \item{wire \code{--ext}}{string[]; default absent; range \code{comma-separated; a leading dot is optional}. Keep only files whose name ends with one of these extensions, case-insensitive (mzLib WhereExtension), e.g. ".raw,.mzML". Absent keeps every type. Given but naming no extension (blank or only commas) is a usage error. A compressed file's extension is .gz. \emph{Not an argument here: a selection is already filtered, by \code{[}.}}
 \item{\code{overwrite} (wire \code{--no-overwrite})}{flag; default \code{FALSE}. Leave a file already present at the destination untouched and make no request for it: a cheap resume. Absent, an existing file is replaced.}
 \item{wire \code{--names-from-stdin}}{flag; default \code{FALSE}. Select exact files instead of filtering: stdin carries file names, one per line (newline-delimited; blank lines ignored; each line trimmed; exact, case-sensitive match against the manifest's file_name). Exclusive with category and ext. Stdin rather than argv because argv caps near 32 KB and any other separator could occur in a file name. A name containing a line break cannot be selected (the bindings refuse one; PRIDE has never published one). \emph{Not an argument here: always set: the selection travels on stdin.}}
-\item{\code{files} (wire \code{--stdin})}{string[]; default absent; range \code{>= 1 non-blank line when names-from-stdin is given}. Read only with names-from-stdin: the file names to fetch, one per line. Every name must be in the project's REST manifest (pride files).}
+\item{\code{files} (wire \code{--stdin})}{string[]; default absent; range \code{>= 1 non-blank line when names-from-stdin is given}. Read only with names-from-stdin: the file names to fetch, one per line. Every name must be in the project's REST manifest (pride files). A UTF-8 BOM on the first line is stripped (ReadStdinLines) from pyMzLib #67 on; the 0.2.0 bridge keeps it, so that first name fails as not in the project.}
 }
 }
 \section{Returned fields}{
@@ -75,7 +75,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{accession or dest missing or blank; category given but blank; ext given but naming no extension; names-from-stdin together with category or ext; names-from-stdin with no non-blank line on stdin}
 \item{\code{mzlib_usage_error} (usage)}{names-from-stdin naming a file the project's manifest does not contain (the message lists up to five). Raised AFTER the matching files have been downloaded: they are on disk when the error arrives.}
-\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout, a socket or TLS failure, an HTTP 408, 429 or 5xx on the manifest or a file, a body that delivered nothing for mzLib's BodyStallTimeout (2 min), or a body cut off in transit (the IOException transport shapes only)}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout, a socket or TLS failure, an HTTP 408, 429 or 5xx on the manifest or a file, a body that delivered nothing for mzLib's BodyStallTimeout (2 min), or a body cut off in transit}
 \item{\code{mzlib_bridge_error} (correctness)}{a selected file has no HTTPS location (NotSupportedException; Aspera-only); a manifest file name that is not a bare leaf name (ArgumentException: refusing to write outside dest); any other HTTP status; a local disk failure while writing (a bare IOException, e.g. a full disk, is deliberately NOT treated as an outage)}
 }
 }

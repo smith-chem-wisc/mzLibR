@@ -54,7 +54,7 @@ A data.frame with one row per file and the columns \code{file_name}, \code{file_
 
 }
 \section{Wraps}{
-Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -98,8 +98,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{accession missing or blank; page-size not an integer}
-\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, an HttpRequestException with no status but an inner cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut off in transit}
-\item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), or page-size <= 0 (mzLib's ArgumentOutOfRangeException; the bridge does not check it first)}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, an HttpRequestException with no status but an inner cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut off in transit}
+\item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), the MaxPages backstop (an HttpRequestException mzLib composes with no status and no inner exception, which ClassifyHttpFailure deliberately does not excuse as an outage), or page-size <= 0 (mzLib's ArgumentOutOfRangeException; the bridge does not check it first)}
 }
 }
 \section{Caveats}{
@@ -130,7 +130,6 @@ The spec records these as open. They are listed rather than hidden:
 \item page-size <= 0 crosses as a correctness failure (ArgumentOutOfRangeException) because the bridge, unlike pride search, does not check it before calling mzLib. Every binding rejects it first, so no binding user sees it; the wire should say usage.
 \item An absent PRIDE date crosses as 0001-01-01T00:00:00+00:00, not null (PrideArchiveFile's dates are non-nullable DateTimeOffset, and ToWireFile does not map default to null as pride search's ToWireDate does). Not observed on a real manifest; unverified whether PRIDE ever omits one.
 \item An option given with no value (e.g. \code{--page-size} followed by another option) is parsed as a flag and silently defaulted: OptionalInt does not consult WasProvided.
-\item since.mzlibrust and since.mzlibr are 0.1.0 by the convention of the other back-filled specs; neither repo has a release tag.
 }
 }
 \references{

@@ -54,7 +54,7 @@ uniqueness rule. Use \code{\link{sdrf_source_documents}} as part of any key.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs}{\code{SdrfCollection.Merge}} in \code{mzLib/Readers/Sdrf/SdrfCollection.cs} at mzLib \code{23c2490e}
@@ -113,15 +113,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not yet shipped.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item since.mzlibrust / since.mzlibr are null: ported and merged 2026-09-17 (mzLibRust#23, mzLibR#19), not yet in a tagged release.
-\item The Rust example's PoolInput::labelled constructor is written from the pool_with signature, not checked against mzLibRust's source.
-}
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \references{
 \itemize{

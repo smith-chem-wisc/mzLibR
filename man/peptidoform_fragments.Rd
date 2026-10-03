@@ -92,7 +92,7 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}
@@ -193,7 +193,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Likely a bridge bug; the doc above describes what the wire does.
+\item peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Confirmed a bridge bug (pyMzLib 005), fixed on pyMzLib main by #67 (unreleased after 0.2.0): the wire then counts the raw digest, as the doc above says. Close this once a release carries #67.
 \item The example fixture is hand-trimmed (2 peptides of a max-mods 1 digest), so its peptide_count is not what the live call returns; the envelope keys are the live ones.
 \item Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them. Enum.TryParse also accepts numeric strings, so \code{--dissociation} 3 or \code{--terminus} 7 pass as undefined members. Behaviour of mzLib on such values is unverified.
 \item The wire names max-mods and no-modifications project as max_modifications and modifications (inverted) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries for them.

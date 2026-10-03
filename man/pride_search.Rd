@@ -77,7 +77,7 @@ one page cannot be affected.
 
 }
 \section{Wraps}{
-Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride.search.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride.search.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.SearchProjectsAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -145,7 +145,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{keyword missing or blank; keyword longer than 1000 characters; page-size not an integer or <= 0 (both checked by the bridge before mzLib)}
-\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in transit}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in transit}
 \item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status; a paging contract violation (MzLibException: an identical page while total_records says more remain); the page limit (mzLib MaxPages) exceeded}
 }
 }
@@ -168,13 +168,13 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item Not yet in mzLibRust or mzLibR. The names are intended, mirroring each binding's pride conventions: Rust mzlib::pride::search (defaults) and search_with + SearchOptions \{page_size, timeout\} like list_files_with + ListOptions; R pride_search(keyword, page_size = 100, timeout = 300) like pride_list_files. The checker cannot verify them.
+\item Shape difference: mzlib::pride::search / search_with return Vec<PrideProjectSearchResult> and R pride_search() returns the hits data.frame, so neither carries the envelope's keyword or result_count (the caller has the keyword; the count is len() / nrow()). pyMzLib returns the hits list likewise. Declare it as a deviation or drop the two fields from the wire?
 \item The bindings also refuse a keyword beginning with '-' (it would be parsed as an option); the bridge cannot, since a value starting with '--' reaches it as a flag and the keyword then reads as missing.
 \item The ranking order of results is PRIDE's and is not promised stable across calls.
 }

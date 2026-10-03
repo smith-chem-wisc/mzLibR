@@ -198,9 +198,28 @@ jobs:
 
           # Prove it runs before any test blames the package for the payload.
           ./_dotnet/linux-x64/mzlib-bridge version
+      # The live tests read the same input files the recordings were made from: pyMzLib's test
+      # fixtures, at the ref the port follows (scripts/pymzlib-ref). Without them the GO, protein,
+      # SDRF and design canaries skip, and only the verbs that need no input file are checked.
+      - name: Which pyMzLib the fixtures come from
+        id: pymzlib
+        run: echo "ref=$(head -n 1 scripts/pymzlib-ref | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: smith-chem-wisc/pyMzLib
+          ref: ${{ steps.pymzlib.outputs.ref }}
+          path: .pymzlib
+          sparse-checkout: pkg/python/tests/fixtures
+      # limma and metafor, so the stats canaries also compare against them as computed here.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: bioc::limma, any::metafor
+          dependencies: '"hard"'
       - name: Install and run the full suite
         env:
           MZLIB_BRIDGE: ${{ github.workspace }}/_dotnet/linux-x64/mzlib-bridge
+          MZLIB_PROTEINS_FILES: ${{ github.workspace }}/.pymzlib/pkg/python/tests/fixtures/proteins
+          MZLIBR_SDRF_FIXTURES: ${{ github.workspace }}/.pymzlib/pkg/python/tests/fixtures
         run: |
           R CMD INSTALL .
           Rscript tests/run-tests.R

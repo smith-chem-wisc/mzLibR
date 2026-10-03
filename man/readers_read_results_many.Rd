@@ -31,7 +31,7 @@ The many-files form of \code{\link{readers_read_results}}.
 \value{
 An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-based, into \code{paths}) and
   \code{source_path}, then the columns of \code{\link{readers_read_results}}: \code{retention_time} in each file's
-  own \code{retention_time_unit} - minutes for all four formats at mzLib 1.0.592 - \code{charge_state} a
+  own \code{retention_time_unit} - minutes for all four formats today - \code{charge_state} a
   charge, \code{monoisotopic_mass} in Da. Convert times with \code{\link{readers_retention_time_in_minutes}},
   which applies each file's unit to its rows. \code{files} has one row per input: \code{record_count} in
   records, \code{rows_not_read} in rows, \code{retention_time_unit}, \code{caveats}, \code{absent_fields} and the
@@ -40,7 +40,7 @@ An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-results} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-results} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -125,13 +125,6 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
-}
 }
 \seealso{
 \code{\link{readers_read_results}}

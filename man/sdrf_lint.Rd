@@ -49,7 +49,7 @@ not advice: it is only the most common.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf lint}. Generated from the bridge's verb spec \code{sdrf.lint.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf lint}. Generated from the bridge's verb spec \code{sdrf.lint.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfDriftLint.cs}{\code{SdrfDriftLint.Analyze}} in \code{mzLib/Readers/Sdrf/SdrfDriftLint.cs} at mzLib \code{23c2490e}
@@ -114,16 +114,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item Rust and R spellings are the intended ones, mirroring pool / pool_labelled and sdrf_pool; not yet ported.
-\item documents is the first list-valued cell in a columnar table on the wire. R will need a list column; confirm mzLibR's table projection accepts one before porting.
-\item since.pymzlib is null until released.
-}
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \references{
 \itemize{

@@ -1,6 +1,7 @@
 # Quantification tables: MetaMorpheus protein groups, FlashLFQ peptides, and PTM site occupancy.
 #
-# mzLib 1.0.592 reads the tables MetaMorpheus and FlashLFQ write after quantifying (mzLib #1347).
+# mzLib reads the tables MetaMorpheus and FlashLFQ write after quantifying (mzLib #1347), and,
+# since #1388, an RNA search's transcript-group and oligonucleotide tables through the same readers.
 # Each is a wide table with one column per sample, and the bridge sends it LONG - one row per record
 # per sample, with the sample's values as columns - so nothing arrives as a dictionary and every
 # row is a plain data.frame row. `limit` and `offset` still count records (groups, peptides), not
@@ -38,8 +39,12 @@ readers_read_quant_many <- function(verb, paths, out, threads, on_error, timeout
 #' **The table is unfiltered**, as MetaMorpheus writes it: decoys, contaminants and groups above 1%
 #' FDR are all rows. Filter on `q_value` and `decoy_contaminant_target` before you count anything.
 #'
-#' @param path Path to a MetaMorpheus `AllQuantifiedProteinGroups.tsv`
-#'   ([readers_identify()] reports `MetaMorpheusQuantifiedProteinGroups`).
+#' @param path Path to a MetaMorpheus protein-group table ([readers_identify()] reports
+#'   `MetaMorpheusQuantifiedProteinGroups`): `AllQuantifiedProteinGroups.tsv`, or, since mzLib
+#'   #1365, `AllProteinGroups.tsv` and `<file>_ProteinGroups.tsv` from a search without
+#'   quantification - whose rows have no `intensity`, named in `absent_fields`. An RNA search's
+#'   `AllQuantifiedTranscriptGroups.tsv` (#1388) reads too, with the transcript group in
+#'   `protein_group_name`.
 #' @param limit Maximum protein groups to return - groups, not rows; each gives one row per sample
 #'   group. `NULL`, the default, returns all of them.
 #' @param offset Protein groups to skip - groups, not rows. A window, not a cursor: mzLib parses the
@@ -143,7 +148,9 @@ readers_read_protein_groups_many <- function(paths, out = NULL, threads = 1, on_
 #' `"NotDetected"` and so on - is what tells the two apart.
 #'
 #' @param path Path to a FlashLFQ `QuantifiedPeptides.tsv` or MetaMorpheus
-#'   `AllQuantifiedPeptides.tsv` ([readers_identify()] reports `FlashLFQQuantifiedPeptide`).
+#'   `AllQuantifiedPeptides.tsv` ([readers_identify()] reports `FlashLFQQuantifiedPeptide`), or,
+#'   since mzLib #1388, an RNA search's `AllQuantifiedOligos.tsv`, with the oligonucleotide in
+#'   `sequence`.
 #' @param limit Maximum peptides to return - peptides, not rows; each gives one row per sample.
 #'   `NULL`, the default, returns all of them.
 #' @param offset Peptides to skip - peptides, not rows.
@@ -229,7 +236,9 @@ readers_read_quantified_peptides_many <- function(paths, out = NULL, threads = 1
 #' `denominator` are exact PSM counts and `fraction` is rounded; on `basis == "intensity"` rows
 #' `fraction` is exact and the two intensities are rounded.
 #'
-#' @param path Path to a MetaMorpheus `AllQuantifiedProteinGroups.tsv`.
+#' @param path Path to any MetaMorpheus protein-group table [readers_read_protein_groups()]
+#'   reads, including an RNA search's `AllQuantifiedTranscriptGroups.tsv`, whose sites name RNA
+#'   modifications.
 #' @param limit Maximum protein groups to read - groups, not rows; a group with no modified sites
 #'   gives no rows. `NULL`, the default, reads all of them.
 #' @param offset Protein groups to skip - groups, not rows.

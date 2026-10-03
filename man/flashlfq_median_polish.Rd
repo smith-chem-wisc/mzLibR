@@ -68,7 +68,7 @@ peaks, retention times - are not available here. Use \code{\link{flashlfq_quanti
 
 }
 \section{Wraps}{
-Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.CalculateProteinResultsMedianPolish}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{23c2490e}
@@ -91,7 +91,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \describe{
 \item{\code{peptides_file}}{string; never \code{NA}. Absolute path of the peptide table.}
 \item{\code{parameters}}{object; never \code{NA}. \{use_shared_peptides_for_protein_quant\}.}
-\item{\code{samples}}{object[]; never \code{NA}. One per (condition, biological replicate), ordered by condition (ordinal) then biorep, as the engine orders them; fields under result.tables.samples. Their labels are the keys of every protein's intensities.}
+\item{\code{samples}}{object[]; never \code{NA}. One per (condition, biological replicate), ordered by condition (ordinal) then biorep. This is NOT the order of the TSV that out writes: mzLib groups conditions there in first-appearance order (see caveats); fields under result.tables.samples. Their labels are the keys of every protein's intensities.}
 \item{\code{peptide_count}}{int; in \strong{peptides}; never \code{NA}. Distinct sequences read from the table (rows with a Sequence).}
 \item{\code{protein_count}}{int; in \strong{protein groups}; never \code{NA}. Entries in proteins.}
 \item{\code{proteins}}{object[]; never \code{NA}. One per protein group, ordered by protein_group (ordinal); fields under result.columns.}
@@ -103,7 +103,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{protein_group}}{string; never \code{NA}. Protein group name; a ';'-joined Protein Groups cell is split into one group per name.}
 \item{\code{gene_name}}{string; never \code{NA}. From the table's gene column, paired to the group by position when the counts match, else the whole ';'-joined cell; "" when the table has no gene column.}
 \item{\code{organism}}{string; never \code{NA}. As gene_name, from the Organism column.}
-\item{\code{intensity} (wire \code{intensities})}{map<string,float>; in \strong{intensity (instrument units)}; never \code{NA}. Sample label -> protein intensity. A value is null when median polish could not resolve one (NaN: a degenerate peptide matrix); 0 means not measured in that sample. A sample of several runs (fractions, technical replicates) reports their sum, as FlashLFQ's own output does.}
+\item{\code{intensity} (wire \code{intensities})}{map<string,float>; in \strong{intensity (instrument units)}; never \code{NA}. Sample label -> protein intensity. A value is null when median polish could not resolve one (NaN: a degenerate peptide matrix); 0 means not measured in that sample. A sample of several runs (fractions, technical replicates) reports their sum, as FlashLFQ's own output does, EXCEPT when labels are run names (no design and one fraction): then the bridge reads the first run of the sample only.}
 }
 }
 \section{Fields of \code{samples}}{
@@ -129,6 +129,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item Protein intensity null means unquantifiable, 0 means not measured; neither is a measured zero.
 \item Runs are names, not files: nothing but the peptide table is opened, and peak-level information (MBR peaks, retention times) is not available here. Use quant flashlfq for those.
 \item With out, QuantifiedProteins.tsv labels its columns by the same rule as samples[].label at this pin (mzLib#1129 is in 23c2490e). Before #1129 the file's rule was inverted for unfractionated data; the values always agreed.
+\item Column order can differ from samples[]: QuantifiedProteins.tsv groups conditions in first-appearance order (ProteinGroup.TabSeparatedHeader has no OrderBy), while samples[] sorts them ordinally. Join on the label, never on position.
 }
 }
 \section{Performance}{
@@ -142,15 +143,15 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item Not yet in mzLibRust or mzLibR. Intended names mirror each binding's flashlfq module: Rust mzlib::flashlfq::median_polish (defaults) and median_polish_with + MedianPolishOptions \{design, use_shared_peptides, output_directory, timeout\} beside quantify_with + QuantifyOptions (the DesignEntry builder in the example is a sketch); R flashlfq_median_polish(peptides, design = NULL, use_shared_peptides = FALSE, output_directory = NULL, timeout = NULL) beside flashlfq_quantify, design as a data frame. The checker cannot verify them.
-\item The bridge's own comment in MedianPolishToWire and pyMzLib's median_polish docstring still say the TSV labels disagree until mzLib#1129 lands; it is in the pin, so both are stale. The agreement stated in the caveat is from reading ProteinGroup.cs at 23c2490e, not from a recorded \code{--out} run.
+\item The bridge's own comment in MedianPolishToWire and pyMzLib's median_polish docstring still say the TSV labels disagree until mzLib#1129 lands; it is in the pin, so both are stale (confirmed by pyMzLib 005; removed on pyMzLib main by #67, unreleased after 0.2.0). The agreement stated in the caveat is from reading ProteinGroup.cs at 23c2490e, not from a recorded \code{--out} run.
 \item median_polish_small.json is hand-shaped ('/abs/...'), not a live recording.
+\item When labels are run names, the bridge reads only a sample's first run; whether the engine zeroes that sample's other runs (so the reading loses nothing) was not traced. It matters only if several runs share a biorep with no design.
 \item The design's techrep and fraction are parsed but only fraction feeds the label rule; how FlashLFQ's median polish uses techrep is mzLib's and was not traced.
 \item The wire params peptides/shared-peptides/out project as peptides/use_shared_peptides/output_directory in pyMzLib; the spec lint will need PYTHON_DEVIATIONS entries (stdin -> design, shared-peptides -> use_shared_peptides, out -> output_directory).
 }

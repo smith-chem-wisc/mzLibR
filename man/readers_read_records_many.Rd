@@ -40,7 +40,7 @@ An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-records} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-records} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -131,7 +131,6 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item The three mzLib 1.0.592 fixtures (mzid_gz, mm_protein_groups, mm_peptides) exist only on pyMzLib#61 until it merges; mzLibRust and mzLibR have not copied them.
 \item absent_fields for read-records is judged only for record types mapped with CsvHelper [Name] attributes (FlashLFQ peaks, MSFragger, MsPathFinderT, TopFD, the #1347 tables, ...). psmtsv/osmtsv parse their own header dictionary, so their optional columns are not judged yet; an empty list there means no basis, not nothing absent.
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 }
 }
 \seealso{

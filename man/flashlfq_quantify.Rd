@@ -131,7 +131,7 @@ and \strong{847} are 0 in both runs. "No usable number" is 849; "could not be re
 
 }
 \section{Wraps}{
-Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -144,7 +144,7 @@ Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{qua
 }
 \section{Parameters: units, ranges and defaults}{
 \describe{
-\item{\code{psms}}{path; required. A quantifiable PSM result file mzLib can read: a MetaMorpheus .psmtsv/.osmtsv or an MSFragger psm.tsv (retention time converted to minutes by the reader since mzLib#1116). Every run it names must have an mzML on stdin, matched by base file name.}
+\item{\code{psms}}{path; required. A quantifiable PSM result file mzLib can read: a MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv (retention time converted to minutes by the reader since mzLib#1116), or a DIA-NN report.tsv (FileReader.ReadQuantifiableResultFile at the pin). MSFragger combined results (MsFraggerCombinedResults) implement IQuantifiableResultFile but are not reachable: the path must be a file, and GetResultFileType never maps to that class. Every run the file names must have an mzML on stdin, matched by base file name.}
 \item{\code{spectra} (wire \code{--stdin})}{string[]; required; range \code{>= 1 line}. The mzML runs, one per line, tab-separated: path[TAB condition[TAB biorep[TAB techrep[TAB fraction]]]]. Blank lines are ignored. Omitted fields default as MetaMorpheus does with no design: condition "", biorep = the line's 0-based index, techrep 0, fraction 0. Replicate and fraction numbers are non-negative integers. Base names must be unique.}
 \item{\code{normalize}}{flag; default \code{FALSE}. Normalize intensities across runs (FlashLFQ Normalize).}
 \item{\code{ppm_tolerance} (wire \code{--ppm})}{float; in \strong{ppm}; default \code{10}; range \code{> 0}. Mass tolerance for MS1 peak-finding (PpmTolerance), in ppm.}
@@ -155,7 +155,7 @@ Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{qua
 \item{\code{mbr_q_value_threshold} (wire \code{--mbr-q})}{float; in \strong{q-value}; default \code{0.05}; range \code{0 to 1}. q-value below which an MBR transfer is accepted (MbrQValueThreshold).}
 \item{\code{use_shared_peptides_for_protein_quant} (wire \code{--shared-peptides})}{flag; default \code{FALSE}. Let peptides shared between protein groups contribute to protein quant (UseSharedPeptidesForProteinQuant).}
 \item{\code{bayesian_protein_quant} (wire \code{--bayesian})}{flag; default \code{FALSE}. Also run FlashLFQ's Bayesian protein fold-change engine (BayesianProteinQuant). Its results are not on the wire; they reach only out's BayesianProteinQuant.tsv.}
-\item{\code{use_pep_q_value} (wire \code{--use-pep-q})}{flag; default \code{FALSE}. Filter identifications on PEP q-value instead of q-value when building them (MakeIdentifications usePepQValue).}
+\item{\code{use_pep_q_value} (wire \code{--use-pep-q})}{flag; default \code{FALSE}. Store each identification's PEP q-value as its q-value instead of its q-value (MakeIdentifications usePepQValue). It filters nothing here: it changes the value FlashLFQ's own q-value thresholds (e.g. MBR donor selection) later read. For a DIA-NN report the stored value is the raw PEP, not a q-value.}
 \item{\code{max_threads} (wire \code{--threads})}{int; in \strong{threads}; default \code{-1}; range \code{any integer; -1 means one fewer than the logical cores}. FlashLFQ MaxThreads. mzLib resolves it in the engine constructor: -1, or any value >= the core count, becomes (cores - 1); anything that leaves <= 0 becomes 1. parameters.max_threads echoes the RESOLVED value, so it depends on the machine. See caveats for what the thread count does to answers at this pin.}
 \item{\code{output_directory} (wire \code{--out})}{path; default absent. Directory (created if absent) where FlashLFQ also writes QuantifiedPeaks.tsv, QuantifiedPeptides.tsv, QuantifiedProteins.tsv and, with bayesian, BayesianProteinQuant.tsv. Absent or blank writes nothing.}
 }
@@ -165,7 +165,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 
 \describe{
 \item{\code{psm_file}}{string; never \code{NA}. Absolute path of the PSM file.}
-\item{\code{identification_count}}{int; in \strong{identifications}; never \code{NA}. Identifications FlashLFQ was given (after the q-value filter mzLib's converter applies).}
+\item{\code{identification_count}}{int; in \strong{identifications}; never \code{NA}. Identifications FlashLFQ was given: every record in the PSM file, unfiltered. MakeIdentifications applies no q-value filter; it skips only records whose run was not supplied, which the bridge rejects up front. Decoys are included (with useForProteinQuant false).}
 \item{\code{parameters}}{object; never \code{NA}. The FlashLFQ parameters used, by mzLib name: normalize, ppm_tolerance (ppm), isotope_ppm_tolerance (ppm), integrate, match_between_runs, mbr_ppm_tolerance (ppm), mbr_q_value_threshold (q-value), use_shared_peptides_for_protein_quant, bayesian_protein_quant, max_threads (the resolved thread count).}
 \item{\code{spectra_files}}{object[]; never \code{NA}. One per stdin line, in stdin order; fields under result.tables.spectra_files.}
 \item{\code{peptide_count}}{int; in \strong{peptides}; never \code{NA}. Entries in peptides: distinct modified sequences quantified.}
@@ -254,7 +254,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item Re-measure the K562 MBR pair at threads -1 on the 23c2490e bridge (G-flashlfq-stale-caveats) before any binding deletes its #1111 warning; the caveat above states what mzLib#1155 claims, not a bridge measurement.
+\item Re-measure the K562 MBR pair at threads -1 on the 23c2490e bridge (G-flashlfq-stale-caveats) before any binding deletes its #1111 warning; the caveat above states what mzLib#1155 claims, not a bridge measurement. pyMzLib main already dropped its warning (#67, unreleased) ahead of the re-measure.
 \item Default divergence: the wire and pyMzLib and mzLibRust default threads to -1, mzLibR defaults max_threads to 1 and warns on anything else. The spec states the wire default; whether the bindings should agree is a cross-binding decision.
 \item flashlfq_small.json is hand-shaped (paths '/abs/...', 4 identifications), not recorded from a live bridge; a live recording would make the example executable against real files.
 \item ppm tolerances and mbr-q are not range-checked by the bridge (a negative or zero tolerance reaches FlashLFQ); the ranges above are FlashLFQ's meaningful ones, not enforced ones. An option given with no value is silently defaulted by the Arguments parser.

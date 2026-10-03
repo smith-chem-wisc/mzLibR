@@ -51,7 +51,7 @@ An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-spectra} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-spectra} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs}{\code{MsDataFileReader.GetDataFile}} in \code{mzLib/Readers/MsDataFileReader.cs} at mzLib \code{23c2490e}
@@ -164,7 +164,6 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item injection_time unit 'ms' is from the mzML CV term (MS:1000927); not yet confirmed that every mzLib vendor reader (Thermo, Bruker, timsTOF, MGF) emits ms.
 \item source is read from MsDataFile.SourceFile after LoadAllStaticData; Bruker .d and timsTOF .d have not been checked for which of its fields they fill.
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 }
 }
 \seealso{

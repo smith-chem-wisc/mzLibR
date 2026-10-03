@@ -42,7 +42,7 @@ An \code{mzlibr_sdrf_ages}: \code{cell_count} cells given, \code{parsed_count} c
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf parse-age}. Generated from the bridge's verb spec \code{sdrf.parse-age.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf parse-age}. Generated from the bridge's verb spec \code{sdrf.parse-age.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfAge.cs}{\code{SdrfAge.TryParse}} in \code{mzLib/Readers/Sdrf/SdrfAge.cs} at mzLib \code{23c2490e}
@@ -103,7 +103,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
@@ -111,8 +111,6 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item The refusal reason is a bridge-side classification of TryParse's false; see sdrf.samples.yaml. An upstream TryParse(cell, out age, out reason) would retire it.
 \item Binding name is parse_ages (plural) for the verb parse-age (one cell per line). Kept because the function takes a list; revisit if a binding wants the wire name.
-\item Rust and R spellings are intended, not yet ported. R: NA_character_ in the input should map to an empty line, as Python maps None.
-\item since.pymzlib is null until released.
 }
 }
 \references{

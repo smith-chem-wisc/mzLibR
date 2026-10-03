@@ -47,7 +47,7 @@ An \code{mzlibr_result_records}, carrying the file's \code{reader}, \code{absent
   starting \code{offset} records in; \code{rows_not_read} counts data rows that did not become records.
 
   \code{records} is a data.frame of the record view, one row per record, or \code{NULL} when \code{out} was
-  given. \code{retention_time} is in minutes for all four formats at mzLib 1.0.592, and
+  given. \code{retention_time} is in minutes for all four formats today, and
   \code{retention_time_unit} says so per file; \code{charge_state} is a charge; \code{monoisotopic_mass} is a
   neutral mass in Da. \code{is_decoy} is \code{NA} where the format records no decoy label.
 
@@ -68,7 +68,7 @@ with \code{\link{readers_retention_time_in_minutes}} rather than by hand.
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -156,13 +156,6 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
-}
 }
 \seealso{
 \code{\link{readers_read_results_many}}, \code{\link{readers_identify}},
