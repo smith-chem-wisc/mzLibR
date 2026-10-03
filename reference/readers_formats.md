@@ -26,9 +26,9 @@ A data.frame with one row per format: `file_type`, `extension`,
 
 ## Views, and why most formats have none
 
-It is tempting to read "36 formats" as "36 formats in one uniform
-shape". They are not. The formats fall into disjoint families, and **17
-of the 36 belong to none of them** — an empty `views` is a real and
+It is tempting to read "mzLib reads these formats" as "in one uniform
+shape". It does not. The formats fall into disjoint families, and
+**about half belong to none of them** — an empty `views` is a real and
 common answer, meaning mzLib can parse the file but offers no
 cross-format projection of it.
 
@@ -47,7 +47,7 @@ and several formats share `.tsv`.
 ## Wraps
 
 Wire verb `readers formats`. Generated from the bridge's verb spec
-`readers.formats.yaml` (bridge commit `5db922d4cfe1`) by
+`readers.formats.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -71,8 +71,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `format_count`:
 
   int; in **formats**; never `NA`. Number of entries in formats; equal
-  to the number of SupportedFileType members. 36 at mzLib 1.0.592 (32 at
-  1.0.591).
+  to the number of SupportedFileType members. 38 at mzLib 1.0.593 (36 at
+  1.0.592, 32 at 1.0.591).
 
 - `formats`:
 
@@ -106,7 +106,7 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string\[\]; never `NA`. Cross-format views this type offers, from
   quantifiable, ms1_features, spectra, spectral_match. Empty is a real
-  answer: 17 of 36 types offer none and are readable only through
+  answer: 19 of 38 types offer none and are readable only through
   read-records.
 
 ## Errors
@@ -134,8 +134,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - An empty views list means mzLib parses the format into its own record
   type with no cross-format interface; read-records still reads it.
 
-- At mzLib 1.0.592 the view families are: quantifiable 4, ms1_features
-  2, spectral_match 6, spectra 7, none 17. These counts are the pin's,
+- At mzLib 1.0.593 the view families are: quantifiable 4, ms1_features
+  2, spectral_match 6, spectra 7, none 19. These counts are the pin's,
   not the contract's: bindings should call formats rather than repeat
   them in prose.
 
@@ -166,7 +166,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 formats <- readers_formats()
 nrow(formats)
-#> [1] 36
+#> [1] 38
 formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
 #>       file_type  extension           reader
 #> 12       psmtsv    .psmtsv   PsmFromTsvFile
@@ -176,5 +176,5 @@ formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
 
 # An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.
 sum(lengths(formats$views) == 0)
-#> [1] 17
+#> [1] 19
 ```

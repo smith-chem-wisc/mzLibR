@@ -93,7 +93,7 @@ finds concepts several documents wrote inconsistently.
 ## Wraps
 
 Wire verb `sdrf read`. Generated from the bridge's verb spec
-`sdrf.read.yaml` (bridge commit `5db922d4cfe1`) by
+`sdrf.read.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -207,16 +207,7 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not
-yet shipped.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- since.mzlibrust / since.mzlibr are null: the ports (mzLibRust#23,
-  mzLibR#19) merged 2026-09-17 but neither repo has cut a release tag
-  yet (checked with gh api .../tags, 2026-09-23).
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## References
 

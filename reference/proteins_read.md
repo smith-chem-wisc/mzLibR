@@ -110,7 +110,7 @@ by mzLib, which renames the accession (`P38936_C117Y`); the file's
 ## Wraps
 
 Wire verb `proteins read`. Generated from the bridge's verb spec
-`proteins.read.yaml` (bridge commit `5db922d4cfe1`) by
+`proteins.read.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -496,16 +496,11 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- Rust (mzlib::proteins::read_with + ProteinReadOptions, Table enum) and
-  R (proteins_read) spellings are intended, not yet implemented; the
-  checker cannot verify them.
 
 - files\[\] is always present, with `--path` too, instead of BULK.md
   §3's flattened single-file block: a new verb has no pre-existing

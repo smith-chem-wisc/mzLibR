@@ -53,7 +53,7 @@ and the `caveats` it returns.
 ## Wraps
 
 Wire verb `readers identify`. Generated from the bridge's verb spec
-`readers.identify.yaml` (bridge commit `5db922d4cfe1`) by
+`readers.identify.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -176,15 +176,14 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
-
 - The `--paths-stdin` answer is not declared as result.bulk because
-  check_verbs.py requires a record_count there (BULK.md section 2),
-  which has no meaning for identify. Its shape is in the caveats and in
-  readers_many_identify.json until the checker allows a table-less bulk
-  verb.
+  check_verbs.py requires a record_count there (BULK.md section 2), and
+  the bridge sends none: at pyMzLib v0.2.0 (pkg/bridge/Reading.cs
+  Identify) it is {file_count, read_count, failed_count, on_error,
+  files}, as are IdentifyBatch (Rust) and readers_identify_many (R). All
+  three bindings ship identify_many. Declare result.bulk once the
+  checker allows a table-less bulk verb, or add record_count (0) to the
+  wire.
 
 ## See also
 

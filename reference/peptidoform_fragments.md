@@ -129,7 +129,7 @@ one for the other is a large error, not a rounding one. See
 ## Wraps
 
 Wire verb `peptidoform fragments`. Generated from the bridge's verb spec
-`peptidoform.fragments.yaml` (bridge commit `5db922d4cfe1`) by
+`peptidoform.fragments.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -464,7 +464,9 @@ The spec records these as open. They are listed rather than hidden:
   although FragmentsAsync's own comment says it must count the raw
   digest (a truncated locus deduped below the cap then reads as
   untruncated); the correctly computed peptidesAtCap local is never
-  used. Likely a bridge bug; the doc above describes what the wire does.
+  used. Confirmed a bridge bug (pyMzLib 005), fixed on pyMzLib main by
+  \#67 (unreleased after 0.2.0): the wire then counts the raw digest, as
+  the doc above says. Close this once a release carries \#67.
 
 - The example fixture is hand-trimmed (2 peptides of a max-mods 1
   digest), so its peptide_count is not what the live call returns; the

@@ -76,7 +76,7 @@ scans over the files read; `row_count` counts the rows of `records`.
 
 Wire verb `readers read-spectra` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-spectra.yaml` (bridge commit
-`5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these facts, and
+`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`MsDataFileReader.GetDataFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs)
@@ -448,10 +448,6 @@ The spec records these as open. They are listed rather than hidden:
 - source is read from MsDataFile.SourceFile after LoadAllStaticData;
   Bruker .d and timsTOF .d have not been checked for which of its fields
   they fill.
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 ## See also
 

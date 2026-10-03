@@ -63,7 +63,7 @@ matches with `scores = TRUE`.
 
 Wire verb `readers read-matches` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-matches.yaml` (bridge commit
-`5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these facts, and
+`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`ISpectralMatch`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/ISpectralMatch.cs)
@@ -313,11 +313,11 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   has none and names it absent (mzLib would report 0).
 
 - mzIdentML: every SpectrumIdentificationItem is a row, lower ranks and
-  failed thresholds included (MzIdentMLResultFile.cs:177). Filter on
+  failed thresholds included (MzIdentMLResultFile.cs:193). Filter on
   rank == 1 and pass_threshold.
 
 - mzIdentML: is_decoy is absent because the isDecoy attribute defaults
-  to false when omitted (MzIdentMLResultFile.cs:173).
+  to false when omitted (MzIdentMLResultFile.cs:189).
 
 - mzIdentML: items mzLib cannot represent are skipped, not failed, and
   listed in skipped (MzIdentMLResultFile.cs:123).
@@ -359,10 +359,6 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 - readers_matches_mzid_scores.json (`--scores`) is replayed through the
   pyMzLib conftest rather than listed here: check_verbs.py excludes

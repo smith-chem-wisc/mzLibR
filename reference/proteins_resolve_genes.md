@@ -107,7 +107,7 @@ them for you.
 ## Wraps
 
 Wire verb `genes resolve`. Generated from the bridge's verb spec
-`genes.resolve.yaml` (bridge commit `5db922d4cfe1`) by
+`genes.resolve.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -402,16 +402,14 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
 
-- Rust and R spellings are intended, not yet implemented. The wire
-  module is 'genes' but every binding projects it in its proteins module
-  (BULK.md §6); confirm.
+- The wire module is 'genes' but every binding projects it in its
+  proteins module (BULK.md §6); confirm.
 
 - No verb writes the compact gene set (EnsemblGeneSetWriter); callers
   need mzLib or a future 'genes gene-set' verb to make one.

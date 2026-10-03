@@ -56,7 +56,7 @@ a day 1/365.25.
 ## Wraps
 
 Wire verb `sdrf parse-age`. Generated from the bridge's verb spec
-`sdrf.parse-age.yaml` (bridge commit `5db922d4cfe1`) by
+`sdrf.parse-age.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -180,8 +180,7 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
@@ -194,11 +193,6 @@ The spec records these as open. They are listed rather than hidden:
 - Binding name is parse_ages (plural) for the verb parse-age (one cell
   per line). Kept because the function takes a list; revisit if a
   binding wants the wire name.
-
-- Rust and R spellings are intended, not yet ported. R: NA_character\_
-  in the input should map to an empty line, as Python maps None.
-
-- since.pymzlib is null until released.
 
 ## References
 

@@ -98,7 +98,7 @@ and 63 days are both plausible in one study - as well as reserved words and free
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>sdrf parse-age</code>. Generated from the bridge's verb spec <code>sdrf.parse-age.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>sdrf parse-age</code>. Generated from the bridge's verb spec <code>sdrf.parse-age.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfAge.cs" class="external-link"><code>SdrfAge.TryParse</code></a> in <code>mzLib/Readers/Sdrf/SdrfAge.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
     <div class="section level2">
@@ -190,15 +190,13 @@ and 63 days are both plausible in one study - as well as reserved words and free
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
 <ul><li><p>The refusal reason is a bridge-side classification of TryParse's false; see sdrf.samples.yaml. An upstream TryParse(cell, out age, out reason) would retire it.</p></li>
 <li><p>Binding name is parse_ages (plural) for the verb parse-age (one cell per line). Kept because the function takes a list; revisit if a binding wants the wire name.</p></li>
-<li><p>Rust and R spellings are intended, not yet ported. R: NA_character_ in the input should map to an empty line, as Python maps None.</p></li>
-<li><p>since.pymzlib is null until released.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

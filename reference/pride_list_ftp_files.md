@@ -57,7 +57,7 @@ rather than returning nothing.
 ## Wraps
 
 Wire verb `pride ftp-files`. Generated from the bridge's verb spec
-`pride.ftp-files.yaml` (bridge commit `5db922d4cfe1`) by
+`pride.ftp-files.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -148,11 +148,13 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - `mzlib_service_unavailable` (service_unavailable):
 
-  the bridge's own classification (Program.ClassifyError; mzLib#1350 is
-  not merged): a timeout or cancellation, a socket failure, a request
-  that never got a response (refused connection, DNS, TLS), an HTTP 408,
-  429 or 5xx on the project lookup or on any directory listing, or a
-  body cut off in transit
+  the bridge's own classification (Program.ClassifyError; since mzLib
+  1.0.593 (#1350) PRIDE raises every transport failure as an
+  HttpRequestException carrying the cause or the status, and messages
+  name the file and host, never the URL): a timeout or cancellation, a
+  socket failure, a request that never got a response (refused
+  connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup
+  or on any directory listing, or a body cut off in transit
 
 - `mzlib_bridge_error` (correctness):
 

@@ -19,9 +19,14 @@ readers_read_protein_groups(path, limit = NULL, offset = 0, out = NULL, timeout 
 
 - path:
 
-  Path to a MetaMorpheus `AllQuantifiedProteinGroups.tsv`
+  Path to a MetaMorpheus protein-group table
   ([`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
-  reports `MetaMorpheusQuantifiedProteinGroups`).
+  reports `MetaMorpheusQuantifiedProteinGroups`):
+  `AllQuantifiedProteinGroups.tsv`, or, since mzLib \#1365,
+  `AllProteinGroups.tsv` and `<file>_ProteinGroups.tsv` from a search
+  without quantification - whose rows have no `intensity`, named in
+  `absent_fields`. An RNA search's `AllQuantifiedTranscriptGroups.tsv`
+  (#1388) reads too, with the transcript group in `protein_group_name`.
 
 - limit:
 
@@ -82,7 +87,7 @@ which reads them one row per site.
 
 Wire verb `readers read-protein-groups`. Generated from the bridge's
 verb spec `readers.read-protein-groups.yaml` (bridge commit
-`5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these facts, and
+`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`ProteinGroupFromTsvFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs)
@@ -99,8 +104,11 @@ all three bindings render the same ones.
 
 - `path`:
 
-  path; required. A MetaMorpheus AllQuantifiedProteinGroups.tsv (readers
-  identify reports MetaMorpheusQuantifiedProteinGroups).
+  path; required. A MetaMorpheus protein-group table:
+  AllQuantifiedProteinGroups.tsv, or (mzLib 1.0.593, \#1365)
+  AllProteinGroups.tsv and \<file\>\_ProteinGroups.tsv; or an RNA
+  search's AllQuantifiedTranscriptGroups.tsv (#1388), whose reader
+  subclasses the protein-group one.
 
 - `offset`:
 
@@ -334,6 +342,11 @@ only from
 - Long format: one row per group per sample group. offset and limit
   count GROUPS, and returned_count counts rows.
 
+- A table MetaMorpheus wrote without label-free quantification
+  (AllProteinGroups.tsv, \<file\>\_ProteinGroups.tsv; readable from
+  mzLib 1.0.593, \#1365) has SpectralCount\_ columns but no Intensity\_
+  columns, so intensity is in absent_fields: no basis, not zero.
+
 - sample_label is the header label verbatim; condition, replicate and
   channel cannot be recovered from it (ProteinGroupFromTsv.cs:103).
 
@@ -375,16 +388,11 @@ the thread count stated on the wire.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 - The group-level columns carried beside each sample (identity, q-value,
   decoy label) are a choice made here; coverage, masses and counts stay

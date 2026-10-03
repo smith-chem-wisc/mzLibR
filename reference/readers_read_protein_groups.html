@@ -65,8 +65,12 @@ sample group - so the per-sample values are ordinary columns and nothing arrives
 
 
 <dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
-<dd><p>Path to a MetaMorpheus <code>AllQuantifiedProteinGroups.tsv</code>
-  (<code><a href="readers_identify.html">readers_identify</a></code> reports <code>MetaMorpheusQuantifiedProteinGroups</code>).</p></dd>
+<dd><p>Path to a MetaMorpheus protein-group table (<code><a href="readers_identify.html">readers_identify</a></code> reports
+  <code>MetaMorpheusQuantifiedProteinGroups</code>): <code>AllQuantifiedProteinGroups.tsv</code>, or, since mzLib
+  #1365, <code>AllProteinGroups.tsv</code> and <code>&lt;file&gt;_ProteinGroups.tsv</code> from a search without
+  quantification - whose rows have no <code>intensity</code>, named in <code>absent_fields</code>. An RNA search's
+  <code>AllQuantifiedTranscriptGroups.tsv</code> (#1388) reads too, with the transcript group in
+  <code>protein_group_name</code>.</p></dd>
 
 
 <dt id="arg-limit">limit<a class="anchor" aria-label="anchor" href="#arg-limit"></a></dt>
@@ -125,7 +129,7 @@ labels to your design yourself.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers read-protein-groups</code>. Generated from the bridge's verb spec <code>readers.read-protein-groups.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers read-protein-groups</code>. Generated from the bridge's verb spec <code>readers.read-protein-groups.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs" class="external-link"><code>ProteinGroupFromTsvFile.LoadResults</code></a> in <code>mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/IndividualResultRecords/ProteinGroupFromTsv.cs" class="external-link"><code>ProteinGroupFromTsv.SampleGroups</code></a> in <code>mzLib/Readers/InternalResults/IndividualResultRecords/ProteinGroupFromTsv.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -133,7 +137,7 @@ labels to your design yourself.</p>
     <h2 id="parameters-units-ranges-and-defaults">Parameters: units, ranges and defaults<a class="anchor" aria-label="anchor" href="#parameters-units-ranges-and-defaults"></a></h2>
 
 <dl><dt><code>path</code></dt>
-<dd><p>path; required. A MetaMorpheus AllQuantifiedProteinGroups.tsv (readers identify reports MetaMorpheusQuantifiedProteinGroups).</p></dd>
+<dd><p>path; required. A MetaMorpheus protein-group table: AllQuantifiedProteinGroups.tsv, or (mzLib 1.0.593, #1365) AllProteinGroups.tsv and &lt;file&gt;_ProteinGroups.tsv; or an RNA search's AllQuantifiedTranscriptGroups.tsv (#1388), whose reader subclasses the protein-group one.</p></dd>
 
 <dt><code>offset</code></dt>
 <dd><p>int; in <strong>groups</strong>; default <code>0</code>; range <code>&gt;= 0</code>. Skip this many protein groups (each gives one row per sample group). A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.</p></dd>
@@ -280,6 +284,7 @@ labels to your design yourself.</p>
 
 <ul><li><p>The table is UNFILTERED as MetaMorpheus writes it: decoys, contaminants and groups above 1% FDR are all rows (ProteinGroupFromTsv.cs:15). Filter on q_value and decoy_contaminant_target before counting.</p></li>
 <li><p>Long format: one row per group per sample group. offset and limit count GROUPS, and returned_count counts rows.</p></li>
+<li><p>A table MetaMorpheus wrote without label-free quantification (AllProteinGroups.tsv, &lt;file&gt;_ProteinGroups.tsv; readable from mzLib 1.0.593, #1365) has SpectralCount_ columns but no Intensity_ columns, so intensity is in absent_fields: no basis, not zero.</p></li>
 <li><p>sample_label is the header label verbatim; condition, replicate and channel cannot be recovered from it (ProteinGroupFromTsv.cs:103).</p></li>
 <li><p>A blank intensity is null, not zero (ProteinGroupFromTsv.cs:114). An isobaric file has one counting label and one intensity label per channel, so a row can carry only spectral_count or only intensity.</p></li>
 <li><p>No member is a leading protein: members are sorted by accession (ProteinGroupFromTsv.cs:17).</p></li>
@@ -299,13 +304,12 @@ labels to your design yourself.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.</p></li>
-<li><p>The group-level columns carried beside each sample (identity, q-value, decoy label) are a choice made here; coverage, masses and counts stay in read-records. Revisit if every binding ends up joining for the same field.</p></li>
+<ul><li><p>The group-level columns carried beside each sample (identity, q-value, decoy label) are a choice made here; coverage, masses and counts stay in read-records. Revisit if every binding ends up joining for the same field.</p></li>
 <li><p>Only the MetaMorpheus 1.1.11 fixture exists (label-free); no isobaric or 1.2+ (BioPolymer ...) header table has been read through this verb yet.</p></li>
 </ul></div>
     <div class="section level2">

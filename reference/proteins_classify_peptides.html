@@ -119,7 +119,7 @@ peptides it contains as unique, so any failure raises.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>proteins classify-peptides</code>. Generated from the bridge's verb spec <code>proteins.classify-peptides.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>proteins classify-peptides</code>. Generated from the bridge's verb spec <code>proteins.classify-peptides.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/PeptideUniqueness.cs" class="external-link"><code>PeptideUniquenessClassifier.Classify</code></a> in <code>mzLib/Proteomics/Protein/PeptideUniqueness.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/PeptideUniqueness.cs" class="external-link"><code>PeptideUniquenessClassifier.DefaultGeneKeys</code></a> in <code>mzLib/Proteomics/Protein/PeptideUniqueness.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs" class="external-link"><code>ProteinDbLoader.LoadProteinXML</code></a> in <code>mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -238,13 +238,12 @@ peptides it contains as unique, so any failure raises.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>Rust and R spellings are intended, not yet implemented.</p></li>
-<li><p>The gene-key function is mzLib's DefaultGeneKeys and is not selectable on the wire.</p></li>
+<ul><li><p>The gene-key function is mzLib's DefaultGeneKeys and is not selectable on the wire.</p></li>
 <li><p>The peptides param travels on stdin, not as an option; the spec format has no stdin field yet, so its doc says so.</p></li>
 </ul></div>
     <div class="section level2">

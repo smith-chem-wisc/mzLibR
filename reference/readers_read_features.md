@@ -77,7 +77,7 @@ without complaint.
 ## Wraps
 
 Wire verb `readers read-features`. Generated from the bridge's verb spec
-`readers.read-features.yaml` (bridge commit `5db922d4cfe1`) by
+`readers.read-features.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -325,10 +325,6 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 - retention_time_start/\_end declare their unit as the envelope's
   retention_time_unit, not a fixed unit, because it genuinely varies per

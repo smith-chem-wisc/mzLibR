@@ -105,7 +105,7 @@ budgeting a download, proving you analysed everything - cross-check the FTP dire
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride files</code>. Generated from the bridge's verb spec <code>pride.files.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride files</code>. Generated from the bridge's verb spec <code>pride.files.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.GetProjectFilesAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveFile.cs" class="external-link"><code>PrideArchiveFile</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveFile.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs" class="external-link"><code>PrideArchiveExtensions.TotalSizeBytes</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -181,10 +181,10 @@ budgeting a download, proving you analysed everything - cross-check the FTP dire
 <dd><p>accession missing or blank; page-size not an integer</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
-<dd><p>the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, an HttpRequestException with no status but an inner cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut off in transit</p></dd>
+<dd><p>the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, an HttpRequestException with no status but an inner cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut off in transit</p></dd>
 
 <dt><code>mzlib_bridge_error</code> (correctness)</dt>
-<dd><p>any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), or page-size &lt;= 0 (mzLib's ArgumentOutOfRangeException; the bridge does not check it first)</p></dd>
+<dd><p>any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), the MaxPages backstop (an HttpRequestException mzLib composes with no status and no inner exception, which ClassifyHttpFailure deliberately does not excuse as an outage), or page-size &lt;= 0 (mzLib's ArgumentOutOfRangeException; the bridge does not check it first)</p></dd>
 
 
 </dl></div>
@@ -217,7 +217,6 @@ budgeting a download, proving you analysed everything - cross-check the FTP dire
 <ul><li><p>page-size &lt;= 0 crosses as a correctness failure (ArgumentOutOfRangeException) because the bridge, unlike pride search, does not check it before calling mzLib. Every binding rejects it first, so no binding user sees it; the wire should say usage.</p></li>
 <li><p>An absent PRIDE date crosses as 0001-01-01T00:00:00+00:00, not null (PrideArchiveFile's dates are non-nullable DateTimeOffset, and ToWireFile does not map default to null as pride search's ToWireDate does). Not observed on a real manifest; unverified whether PRIDE ever omits one.</p></li>
 <li><p>An option given with no value (e.g. <code>--page-size</code> followed by another option) is parsed as a flag and silently defaulted: OptionalInt does not consult WasProvided.</p></li>
-<li><p>since.mzlibrust and since.mzlibr are 0.1.0 by the convention of the other back-filled specs; neither repo has a release tag.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

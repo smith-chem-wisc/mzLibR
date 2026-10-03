@@ -94,7 +94,7 @@ is `NA` and in `absent_fields` here too.
 ## Wraps
 
 Wire verb `readers read-matches`. Generated from the bridge's verb spec
-`readers.read-matches.yaml` (bridge commit `5db922d4cfe1`) by
+`readers.read-matches.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -374,11 +374,11 @@ only from
   has none and names it absent (mzLib would report 0).
 
 - mzIdentML: every SpectrumIdentificationItem is a row, lower ranks and
-  failed thresholds included (MzIdentMLResultFile.cs:177). Filter on
+  failed thresholds included (MzIdentMLResultFile.cs:193). Filter on
   rank == 1 and pass_threshold.
 
 - mzIdentML: is_decoy is absent because the isDecoy attribute defaults
-  to false when omitted (MzIdentMLResultFile.cs:173).
+  to false when omitted (MzIdentMLResultFile.cs:189).
 
 - mzIdentML: items mzLib cannot represent are skipped, not failed, and
   listed in skipped (MzIdentMLResultFile.cs:123).
@@ -423,10 +423,6 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
-
 - readers_matches_mzid_scores.json (`--scores`) is replayed through the
   pyMzLib conftest rather than listed here: check_verbs.py excludes
   present_when columns from its column check, so a `--scores` fixture
@@ -452,11 +448,11 @@ matches
 #>   12 records in the file, 3 returned
 #>   ! truncated - records were left behind
 #>   ! NOTHING here is FDR-filtered. q_value is the only confidence field this view carries, and only mzIdentML and an MsPathFinderT file with a QValue column fill it (absent_fields says when it is empty). Every one of these formats records scores this view does not expose; read-records has them. Filter before you report.
-#>   ! is_decoy is null for this format. mzIdentML's isDecoy attribute is optional and defaults to false, and mzLib reports a decoy only when every peptide evidence says so (MzIdentMLResultFile.cs:173), so false cannot be told apart from 'not stated'. read-records carries mzLib's boolean for a caller who knows the writer sets it.
-#>   ! Every SpectrumIdentificationItem is a row, not only the matches the submitter accepted: lower-ranked candidates and items that fail the threshold are here too (MzIdentMLResultFile.cs:177). Filter on rank == 1 and pass_threshold before counting identifications.
-#>   ! one_based_scan_number is parsed from the nativeID (MzIdentMLResultFile.cs:159). 'scan=N' gives N, but 'index=N', which peak-list input carries, is a zero-based position in the file and gives N + 1, not an instrument scan number. -1 means the nativeID had neither.
+#>   ! is_decoy is null for this format. mzIdentML's isDecoy attribute is optional and defaults to false, and mzLib reports a decoy only when every peptide evidence says so (MzIdentMLResultFile.cs:189), so false cannot be told apart from 'not stated'. read-records carries mzLib's boolean for a caller who knows the writer sets it.
+#>   ! Every SpectrumIdentificationItem is a row, not only the matches the submitter accepted: lower-ranked candidates and items that fail the threshold are here too (MzIdentMLResultFile.cs:193). Filter on rank == 1 and pass_threshold before counting identifications.
+#>   ! one_based_scan_number is parsed from the nativeID (MzIdentMLResultFile.cs:175). 'scan=N' gives N, but 'index=N', which peak-list input carries, is a zero-based position in the file and gives N + 1, not an instrument scan number. -1 means the nativeID had neither.
 #>   ! Items mzLib cannot represent as one linear match are skipped, not failed: crosslinks, modifications without a resolvable UNIMOD accession, substitutions, and two modifications on one residue (MzIdentMLResultFile.cs:123). They are not rows; skipped_count and skipped name each one and why, so record_count plus skipped_count is the number of items in the file.
-#>   ! The engine's own scores (for example MS-GF:SpecEValue) have no common name across search engines (MzIdentMLResultFile.cs:179). Pass scores=true for them as long rows, one per match and score. q_value is null on an item that reports none.
+#>   ! The engine's own scores (for example MS-GF:SpecEValue) have no common name across search engines (MzIdentMLResultFile.cs:195). Pass scores=true for them as long rows, one per match and score. q_value is null on an item that reports none.
 #>   ! accession joins every protein the item's peptide evidence names with '|' (MzIdentMLRecord.cs:45), the same character a UniProt header uses inside one accession, so the cell cannot be split back into proteins reliably.
 #>   absent from this file (NA in every row): is_decoy
 matches$records[, c("one_based_scan_number", "base_sequence", "q_value", "rank")]

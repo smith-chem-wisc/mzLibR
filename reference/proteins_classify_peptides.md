@@ -85,7 +85,7 @@ raises.
 ## Wraps
 
 Wire verb `proteins classify-peptides`. Generated from the bridge's verb
-spec `proteins.classify-peptides.yaml` (bridge commit `5db922d4cfe1`) by
+spec `proteins.classify-peptides.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -271,14 +271,11 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- Rust and R spellings are intended, not yet implemented.
 
 - The gene-key function is mzLib's DefaultGeneKeys and is not selectable
   on the wire.

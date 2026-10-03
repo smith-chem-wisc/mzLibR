@@ -174,7 +174,7 @@ is 849; "could not be resolved" is 2.
 ## Wraps
 
 Wire verb `quant flashlfq`. Generated from the bridge's verb spec
-`quant.flashlfq.yaml` (bridge commit `5db922d4cfe1`) by
+`quant.flashlfq.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -202,9 +202,13 @@ render the same ones.
 - `psms`:
 
   path; required. A quantifiable PSM result file mzLib can read: a
-  MetaMorpheus .psmtsv/.osmtsv or an MSFragger psm.tsv (retention time
-  converted to minutes by the reader since mzLib#1116). Every run it
-  names must have an mzML on stdin, matched by base file name.
+  MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv (retention time
+  converted to minutes by the reader since mzLib#1116), or a DIA-NN
+  report.tsv (FileReader.ReadQuantifiableResultFile at the pin).
+  MSFragger combined results (MsFraggerCombinedResults) implement
+  IQuantifiableResultFile but are not reachable: the path must be a
+  file, and GetResultFileType never maps to that class. Every run the
+  file names must have an mzML on stdin, matched by base file name.
 
 - `spectra` (wire `--stdin`):
 
@@ -264,8 +268,11 @@ render the same ones.
 
 - `use_pep_q_value` (wire `--use-pep-q`):
 
-  flag; default `FALSE`. Filter identifications on PEP q-value instead
-  of q-value when building them (MakeIdentifications usePepQValue).
+  flag; default `FALSE`. Store each identification's PEP q-value as its
+  q-value instead of its q-value (MakeIdentifications usePepQValue). It
+  filters nothing here: it changes the value FlashLFQ's own q-value
+  thresholds (e.g. MBR donor selection) later read. For a DIA-NN report
+  the stored value is the raw PEP, not a q-value.
 
 - `max_threads` (wire `--threads`):
 
@@ -295,7 +302,10 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `identification_count`:
 
   int; in **identifications**; never `NA`. Identifications FlashLFQ was
-  given (after the q-value filter mzLib's converter applies).
+  given: every record in the PSM file, unfiltered. MakeIdentifications
+  applies no q-value filter; it skips only records whose run was not
+  supplied, which the bridge rejects up front. Decoys are included (with
+  useForProteinQuant false).
 
 - `parameters`:
 
@@ -550,7 +560,8 @@ The spec records these as open. They are listed rather than hidden:
 - Re-measure the K562 MBR pair at threads -1 on the 23c2490e bridge
   (G-flashlfq-stale-caveats) before any binding deletes its \#1111
   warning; the caveat above states what mzLib#1155 claims, not a bridge
-  measurement.
+  measurement. pyMzLib main already dropped its warning (#67,
+  unreleased) ahead of the re-measure.
 
 - Default divergence: the wire and pyMzLib and mzLibRust default threads
   to -1, mzLibR defaults max_threads to 1 and warns on anything else.

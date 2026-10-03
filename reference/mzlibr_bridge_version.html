@@ -88,7 +88,7 @@ to make work and the first thing to check when something else is wrong.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>version</code>. Generated from the bridge's verb spec <code>version.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>version</code>. Generated from the bridge's verb spec <code>version.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj" class="external-link"><code>AssemblyInformationalVersionAttribute</code></a> in <code>mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
     <div class="section level2">
@@ -148,7 +148,7 @@ to make work and the first thing to check when something else is wrong.</p>
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
 <ul><li><p>The Unknown-command message and verbs share one generated list (Program.Verbs, from the DeriveVerbList MSBuild task); check_verbs.py still parses the switch itself. Both read the same pattern, so they cannot disagree unless the switch stops being one arm per line.</p></li>
-<li><p>pyMzLib returns version as a plain dict, typed as the TypedDict pymzlib.BridgeVersion so its keys are documented and linted; Rust and R spellings are the intended ones.</p></li>
+<li><p>pyMzLib returns version as a plain dict, typed as the TypedDict pymzlib.BridgeVersion so its keys are documented and linted; Rust returns the struct mzlib::BridgeVersion, R a named list.</p></li>
 </ul></div>
 
     <div class="section level2">

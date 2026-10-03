@@ -67,7 +67,9 @@ type as columns.</p>
 
 <dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>Path to a FlashLFQ <code>QuantifiedPeptides.tsv</code> or MetaMorpheus
-  <code>AllQuantifiedPeptides.tsv</code> (<code><a href="readers_identify.html">readers_identify</a></code> reports <code>FlashLFQQuantifiedPeptide</code>).</p></dd>
+  <code>AllQuantifiedPeptides.tsv</code> (<code><a href="readers_identify.html">readers_identify</a></code> reports <code>FlashLFQQuantifiedPeptide</code>), or,
+  since mzLib #1388, an RNA search's <code>AllQuantifiedOligos.tsv</code>, with the oligonucleotide in
+  <code>sequence</code>.</p></dd>
 
 
 <dt id="arg-limit">limit<a class="anchor" aria-label="anchor" href="#arg-limit"></a></dt>
@@ -108,7 +110,7 @@ quantify in a sample, and mzLib reads it as 0; <code>detection_type</code> - <co
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers read-quantified-peptides</code>. Generated from the bridge's verb spec <code>readers.read-quantified-peptides.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers read-quantified-peptides</code>. Generated from the bridge's verb spec <code>readers.read-quantified-peptides.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs" class="external-link"><code>QuantifiedPeptideFile.LoadResults</code></a> in <code>mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/IndividualResultRecords/QuantifiedPeptideFromTsv.cs" class="external-link"><code>QuantifiedPeptideFromTsv.Samples</code></a> in <code>mzLib/Readers/InternalResults/IndividualResultRecords/QuantifiedPeptideFromTsv.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -116,7 +118,7 @@ quantify in a sample, and mzLib reads it as 0; <code>detection_type</code> - <co
     <h2 id="parameters-units-ranges-and-defaults">Parameters: units, ranges and defaults<a class="anchor" aria-label="anchor" href="#parameters-units-ranges-and-defaults"></a></h2>
 
 <dl><dt><code>path</code></dt>
-<dd><p>path; required. A FlashLFQ QuantifiedPeptides.tsv or MetaMorpheus AllQuantifiedPeptides.tsv (readers identify reports FlashLFQQuantifiedPeptide).</p></dd>
+<dd><p>path; required. A FlashLFQ QuantifiedPeptides.tsv or MetaMorpheus AllQuantifiedPeptides.tsv (readers identify reports FlashLFQQuantifiedPeptide), or an RNA search's AllQuantifiedOligos.tsv (mzLib 1.0.593, #1388: FlashLFQQuantifiedOligo, whose reader subclasses the peptide one; sequence then holds an oligonucleotide).</p></dd>
 
 <dt><code>offset</code></dt>
 <dd><p>int; in <strong>peptides</strong>; default <code>0</code>; range <code>&gt;= 0</code>. Skip this many peptides (each gives one row per sample). A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.</p></dd>
@@ -276,13 +278,12 @@ quantify in a sample, and mzLib reads it as 0; <code>detection_type</code> - <co
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.</p></li>
-<li><p>quant median-polish still parses QuantifiedPeptides.tsv with a private reader (Quantification.cs); switching it to mzLib's QuantifiedPeptideFile is out of this verb's scope.</p></li>
+<ul><li><p>quant median-polish still parses QuantifiedPeptides.tsv with a private reader (Quantification.cs); switching it to mzLib's QuantifiedPeptideFile is out of this verb's scope.</p></li>
 <li><p>No IsoTracker fixture exists, so retention_time and peak_order have only been seen absent.</p></li>
 </ul></div>
     <div class="section level2">

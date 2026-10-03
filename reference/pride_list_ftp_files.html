@@ -94,7 +94,7 @@ directly from its <code>url</code> with an ordinary HTTPS client (e.g. <code>dow
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride ftp-files</code>. Generated from the bridge's verb spec <code>pride.ftp-files.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride ftp-files</code>. Generated from the bridge's verb spec <code>pride.ftp-files.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.GetProjectFilesFromFtpAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.GetProjectAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideFtpFile.cs" class="external-link"><code>PrideFtpFile</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideFtpFile.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -149,7 +149,7 @@ directly from its <code>url</code> with an ordinary HTTPS client (e.g. <code>dow
 <dd><p>accession missing or blank</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
-<dd><p>the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup or on any directory listing, or a body cut off in transit</p></dd>
+<dd><p>the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup or on any directory listing, or a body cut off in transit</p></dd>
 
 <dt><code>mzlib_bridge_error</code> (correctness)</dt>
 <dd><p>no project has that accession, or it has no publication date to locate its directory (MzLibException; the bindings re-map it to their not-found error); a directory listing answering any other status; nesting deeper than 64 levels (MzLibException: the listing may be cyclic)</p></dd>

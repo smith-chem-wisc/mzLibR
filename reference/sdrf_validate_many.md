@@ -56,7 +56,7 @@ are `NA` for a document that was read. A document that was not read has
 ## Wraps
 
 Wire verb `sdrf validate` with `--paths-stdin`. Generated from the
-bridge's verb spec `sdrf.validate.yaml` (bridge commit `5db922d4cfe1`)
+bridge's verb spec `sdrf.validate.yaml` (bridge commit `c0cc92372aad`)
 by `scripts/build-man.R`; the spec owns these facts, and all three
 bindings render the same ones.
 
@@ -246,19 +246,7 @@ reason it exists: never loop the one-path function over many files.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- since.pymzlib is null until the pyMzLib release carrying
-  feat/sdrf-1.0.592 is tagged; Rust and R are not yet ported.
-
-- Bulk spellings are the cross-binding decision of 2026-09-23: a
-  separate \<verb\>\_many in every binding (R too, not vectorisation).
-  Rust and R names here are intended, not yet ported.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## References
 

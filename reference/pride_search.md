@@ -96,7 +96,7 @@ affected.
 ## Wraps
 
 Wire verb `pride search`. Generated from the bridge's verb spec
-`pride.search.yaml` (bridge commit `5db922d4cfe1`) by
+`pride.search.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -329,10 +329,13 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - `mzlib_service_unavailable` (service_unavailable):
 
-  the bridge's own classification (Program.ClassifyError; mzLib#1350 is
-  not merged): a timeout or cancellation, a socket failure, a request
-  that never got a response (refused connection, DNS, TLS), an HTTP 408,
-  429 or 5xx, or a body cut off in transit
+  the bridge's own classification (Program.ClassifyError; since mzLib
+  1.0.593 (#1350) PRIDE raises every transport failure as an
+  HttpRequestException carrying the cause or the status, and messages
+  name the file and host, never the URL): a timeout or cancellation, a
+  socket failure, a request that never got a response (refused
+  connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in
+  transit
 
 - `mzlib_bridge_error` (correctness):
 
@@ -375,19 +378,18 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not
-yet shipped.
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
 
-- Not yet in mzLibRust or mzLibR. The names are intended, mirroring each
-  binding's pride conventions: Rust mzlib::pride::search (defaults) and
-  search_with + SearchOptions {page_size, timeout} like
-  list_files_with + ListOptions; R pride_search(keyword, page_size =
-  100, timeout = 300) like pride_list_files. The checker cannot verify
-  them.
+- Shape difference: mzlib::pride::search / search_with return
+  Vec\<PrideProjectSearchResult\> and R pride_search() returns the hits
+  data.frame, so neither carries the envelope's keyword or result_count
+  (the caller has the keyword; the count is len() / nrow()). pyMzLib
+  returns the hits list likewise. Declare it as a deviation or drop the
+  two fields from the wire?
 
 - The bindings also refuse a keyword beginning with '-' (it would be
   parsed as an option); the bridge cannot, since a value starting with

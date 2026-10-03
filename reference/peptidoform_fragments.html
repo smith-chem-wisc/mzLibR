@@ -153,7 +153,7 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>peptidoform fragments</code>. Generated from the bridge's verb spec <code>peptidoform.fragments.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>peptidoform fragments</code>. Generated from the bridge's verb spec <code>peptidoform.fragments.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs" class="external-link"><code>ProteinDbLoader.LoadProteinXML</code></a> in <code>mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Loaders.cs" class="external-link"><code>Loaders.LoadUniprot</code></a> in <code>mzLib/UsefulProteomicsDatabases/Loaders.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/Protein.cs" class="external-link"><code>Protein.Digest</code></a> in <code>mzLib/Proteomics/Protein/Protein.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -338,7 +338,7 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Likely a bridge bug; the doc above describes what the wire does.</p></li>
+<ul><li><p>peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Confirmed a bridge bug (pyMzLib 005), fixed on pyMzLib main by #67 (unreleased after 0.2.0): the wire then counts the raw digest, as the doc above says. Close this once a release carries #67.</p></li>
 <li><p>The example fixture is hand-trimmed (2 peptides of a max-mods 1 digest), so its peptide_count is not what the live call returns; the envelope keys are the live ones.</p></li>
 <li><p>Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them. Enum.TryParse also accepts numeric strings, so <code>--dissociation</code> 3 or <code>--terminus</code> 7 pass as undefined members. Behaviour of mzLib on such values is unverified.</p></li>
 <li><p>The wire names max-mods and no-modifications project as max_modifications and modifications (inverted) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries for them.</p></li>

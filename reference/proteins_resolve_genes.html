@@ -150,7 +150,7 @@ joins several genes, and nothing chooses among them for you.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>genes resolve</code>. Generated from the bridge's verb spec <code>genes.resolve.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>genes resolve</code>. Generated from the bridge's verb spec <code>genes.resolve.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneResolver.cs" class="external-link"><code>EnsemblGeneResolver.Resolve</code></a> in <code>mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneResolver.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneResolver.cs" class="external-link"><code>GeneResolutionTsv.Schema</code></a> in <code>mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneResolver.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneSet.cs" class="external-link"><code>EnsemblGeneSet.LoadGtf</code></a> in <code>mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneSet.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -331,12 +331,12 @@ joins several genes, and nothing chooses among them for you.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>Rust and R spellings are intended, not yet implemented. The wire module is 'genes' but every binding projects it in its proteins module (BULK.md §6); confirm.</p></li>
+<ul><li><p>The wire module is 'genes' but every binding projects it in its proteins module (BULK.md §6); confirm.</p></li>
 <li><p>No verb writes the compact gene set (EnsemblGeneSetWriter); callers need mzLib or a future 'genes gene-set' verb to make one.</p></li>
 <li><p>The example gene set is a hand-built three-gene GTF in Ensembl's layout; O43653 is off_primary_only only because PSCA is left out of it.</p></li>
 </ul></div>

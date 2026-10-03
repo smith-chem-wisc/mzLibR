@@ -89,7 +89,7 @@ at a time, and answers in input order.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers identify</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.identify.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers identify</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.identify.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs" class="external-link"><code>FileReader.ReadResultFile</code></a> in <code>mzLib/Readers/FileReader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.ParseFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -165,8 +165,7 @@ at a time, and answers in input order.</p>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.</p></li>
-<li><p>The <code>--paths-stdin</code> answer is not declared as result.bulk because check_verbs.py requires a record_count there (BULK.md section 2), which has no meaning for identify. Its shape is in the caveats and in readers_many_identify.json until the checker allows a table-less bulk verb.</p></li>
+<ul><li><p>The <code>--paths-stdin</code> answer is not declared as result.bulk because check_verbs.py requires a record_count there (BULK.md section 2), and the bridge sends none: at pyMzLib v0.2.0 (pkg/bridge/Reading.cs Identify) it is {file_count, read_count, failed_count, on_error, files}, as are IdentifyBatch (Rust) and readers_identify_many (R). All three bindings ship identify_many. Declare result.bulk once the checker allows a table-less bulk verb, or add record_count (0) to the wire.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

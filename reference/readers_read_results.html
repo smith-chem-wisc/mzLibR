@@ -101,7 +101,7 @@ readers_identify first, or catch the error, which names the views the file does 
   regardless of <code>limit</code> and <code>offset</code>; <code>returned_count</code> counts the records that came back,
   starting <code>offset</code> records in; <code>rows_not_read</code> counts data rows that did not become records.</p>
 <p><code>records</code> is a data.frame of the record view, one row per record, or <code>NULL</code> when <code>out</code> was
-  given. <code>retention_time</code> is in minutes for all four formats at mzLib 1.0.592, and
+  given. <code>retention_time</code> is in minutes for all four formats today, and
   <code>retention_time_unit</code> says so per file; <code>charge_state</code> is a charge; <code>monoisotopic_mass</code> is a
   neutral mass in Da. <code>is_decoy</code> is <code>NA</code> where the format records no decoy label.</p>
     </div>
@@ -121,7 +121,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers read-results</code>. Generated from the bridge's verb spec <code>readers.read-results.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers read-results</code>. Generated from the bridge's verb spec <code>readers.read-results.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs" class="external-link"><code>FileReader.ReadQuantifiableResultFile</code></a> in <code>mzLib/Readers/FileReader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/IQuantifiableRecord.cs" class="external-link"><code>IQuantifiableRecord</code></a> in <code>mzLib/Readers/BaseClasses/IQuantifiableRecord.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -287,11 +287,6 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
     <p>Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
-    <div class="section level2">
-    <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
-    <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.</p></li>
-</ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="readers_read_results_many.html">readers_read_results_many</a></code>, <code><a href="readers_identify.html">readers_identify</a></code>,

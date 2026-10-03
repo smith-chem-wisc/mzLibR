@@ -23,7 +23,9 @@ readers_read_quantified_peptides(path, limit = NULL, offset = 0, out = NULL,
   Path to a FlashLFQ `QuantifiedPeptides.tsv` or MetaMorpheus
   `AllQuantifiedPeptides.tsv`
   ([`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
-  reports `FlashLFQQuantifiedPeptide`).
+  reports `FlashLFQQuantifiedPeptide`), or, since mzLib \#1388, an RNA
+  search's `AllQuantifiedOligos.tsv`, with the oligonucleotide in
+  `sequence`.
 
 - limit:
 
@@ -69,7 +71,7 @@ IsoTracker. For any other file `retention_time` and `peak_order` are
 
 Wire verb `readers read-quantified-peptides`. Generated from the
 bridge's verb spec `readers.read-quantified-peptides.yaml` (bridge
-commit `5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these
+commit `c0cc92372aad`) by `scripts/build-man.R`; the spec owns these
 facts, and all three bindings render the same ones.
 
 - [`QuantifiedPeptideFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs)
@@ -88,7 +90,9 @@ facts, and all three bindings render the same ones.
 
   path; required. A FlashLFQ QuantifiedPeptides.tsv or MetaMorpheus
   AllQuantifiedPeptides.tsv (readers identify reports
-  FlashLFQQuantifiedPeptide).
+  FlashLFQQuantifiedPeptide), or an RNA search's AllQuantifiedOligos.tsv
+  (mzLib 1.0.593, \#1388: FlashLFQQuantifiedOligo, whose reader
+  subclasses the peptide one; sequence then holds an oligonucleotide).
 
 - `offset`:
 
@@ -345,16 +349,11 @@ the thread count stated on the wire.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 - quant median-polish still parses QuantifiedPeptides.tsv with a private
   reader (Quantification.cs); switching it to mzLib's

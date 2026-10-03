@@ -16,7 +16,7 @@ function reads it.
 
 formats <- readers_formats()
 nrow(formats)
-#> [1] 36
+#> [1] 38
 formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
 #>       file_type  extension           reader
 #> 12       psmtsv    .psmtsv   PsmFromTsvFile
@@ -37,7 +37,7 @@ table(vapply(formats$views, function(v) if (length(v)) paste(v, collapse = "+") 
              character(1)))
 #> 
 #>         (none)   ms1_features   quantifiable        spectra spectral_match 
-#>             17              2              4              7              6
+#>             19              2              4              7              6
 ```
 
 For one file,
@@ -208,7 +208,7 @@ have.
 
 ## Quantification tables
 
-mzLib 1.0.592 reads the tables MetaMorpheus and FlashLFQ write after
+mzLib reads the tables MetaMorpheus and FlashLFQ write after
 quantifying. Each is wide on disk, one column per sample, and arrives
 long: one row per record per sample. `limit` and `offset` count records,
 so one group’s samples are never split.
@@ -267,6 +267,25 @@ head(sites$records[sites$records$basis == "count",
 #> 9            4
 #> 11           1
 ```
+
+### RNA searches, and searches without quantification
+
+The same three functions read two kinds of table they used to refuse:
+
+- **An RNA search** writes `AllQuantifiedTranscriptGroups.tsv` and
+  `AllQuantifiedOligos.tsv` (mzLib \#1388). They are their own file
+  types, but mzLib reads them with subclasses of the protein-group and
+  peptide readers, so the columns keep their protein names:
+  `protein_group_name` holds the transcript group, `sequence` the
+  oligonucleotide, and
+  [`readers_read_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_occupancy.md)
+  returns RNA modifications such as `2'-O-methyluridine on U`.
+- **A search with label-free quantification off** writes
+  `AllProteinGroups.tsv`, and each file’s `<file>_ProteinGroups.tsv`
+  (mzLib \#1365). MetaMorpheus writes `Intensity_` columns only when it
+  quantified, so these rows have `spectral_count` and no `intensity`:
+  the field is named in `absent_fields`, which means *no basis*, not
+  zero.
 
 ## Many files in one call
 

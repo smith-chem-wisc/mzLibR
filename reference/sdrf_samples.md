@@ -58,7 +58,7 @@ as well.
 ## Wraps
 
 Wire verb `sdrf samples`. Generated from the bridge's verb spec
-`sdrf.samples.yaml` (bridge commit `5db922d4cfe1`) by
+`sdrf.samples.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -254,8 +254,7 @@ the thread count stated on the wire.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
@@ -270,12 +269,6 @@ The spec records these as open. They are listed rather than hidden:
   BySourceName's own dictionary comparer because the dictionary's
   enumeration order is not contractual; an ordered return from mzLib
   would remove that step.
-
-- since.pymzlib is null until released; Rust and R are not yet ported.
-
-- Bulk spellings are the cross-binding decision of 2026-09-23: a
-  separate \<verb\>\_many in every binding (R too, not vectorisation).
-  Rust and R names here are intended, not yet ported.
 
 ## References
 

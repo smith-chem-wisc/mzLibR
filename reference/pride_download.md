@@ -80,7 +80,7 @@ A character vector of the paths where the files now are.
 ## Wraps
 
 Wire verb `pride download`. Generated from the bridge's verb spec
-`pride.download.yaml` (bridge commit `5db922d4cfe1`) by
+`pride.download.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -113,8 +113,11 @@ render the same ones.
 
 - `destination` (wire `--dest`):
 
-  path; required. Directory to write into; created if absent. Blank is a
-  usage error (it never falls back to the working directory).
+  path; required. Directory to write into; created if absent, but only
+  when a file is actually fetched (mzLib creates it after the
+  no-overwrite skip). With zero matches, or every file skipped, no
+  directory is created, yet destination_directory is still reported.
+  Blank is a usage error (it never falls back to the working directory).
 
 - `category`:
 
@@ -156,8 +159,11 @@ render the same ones.
   string\[\]; default absent; range
   `>= 1 non-blank line when names-from-stdin is given`. Read only with
   names-from-stdin: the file names to fetch, one per line. Every name
-  must be in the project's REST manifest (pride files). *Not an argument
-  here: pride_download_files() sends the selected file names.*
+  must be in the project's REST manifest (pride files). A UTF-8 BOM on
+  the first line is stripped (ReadStdinLines) from pyMzLib \#67 on; the
+  0.2.0 bridge keeps it, so that first name fails as not in the project.
+  *Not an argument here: pride_download_files() sends the selected file
+  names.*
 
 ## Returned fields
 
@@ -202,11 +208,13 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - `mzlib_service_unavailable` (service_unavailable):
 
-  the bridge's own classification (Program.ClassifyError; mzLib#1350 is
-  not merged): a timeout, a socket or TLS failure, an HTTP 408, 429 or
-  5xx on the manifest or a file, a body that delivered nothing for
-  mzLib's BodyStallTimeout (2 min), or a body cut off in transit (the
-  IOException transport shapes only)
+  the bridge's own classification (Program.ClassifyError; since mzLib
+  1.0.593 (#1350) PRIDE raises every transport failure as an
+  HttpRequestException carrying the cause or the status, and messages
+  name the file and host, never the URL): a timeout, a socket or TLS
+  failure, an HTTP 408, 429 or 5xx on the manifest or a file, a body
+  that delivered nothing for mzLib's BodyStallTimeout (2 min), or a body
+  cut off in transit
 
 - `mzlib_bridge_error` (correctness):
 

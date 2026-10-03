@@ -137,7 +137,7 @@ one page cannot be affected.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride search</code>. Generated from the bridge's verb spec <code>pride.search.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride search</code>. Generated from the bridge's verb spec <code>pride.search.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.SearchProjectsAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.MaxKeywordLength</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideProjectSearchResult.cs" class="external-link"><code>PrideProjectSearchResult</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideProjectSearchResult.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -285,7 +285,7 @@ one page cannot be affected.</p>
 <dd><p>keyword missing or blank; keyword longer than 1000 characters; page-size not an integer or &lt;= 0 (both checked by the bridge before mzLib)</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
-<dd><p>the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in transit</p></dd>
+<dd><p>the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in transit</p></dd>
 
 <dt><code>mzlib_bridge_error</code> (correctness)</dt>
 <dd><p>any other HTTP status; a paging contract violation (MzLibException: an identical page while total_records says more remain); the page limit (mzLib MaxPages) exceeded</p></dd>
@@ -313,12 +313,12 @@ one page cannot be affected.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>Not yet in mzLibRust or mzLibR. The names are intended, mirroring each binding's pride conventions: Rust mzlib::pride::search (defaults) and search_with + SearchOptions {page_size, timeout} like list_files_with + ListOptions; R pride_search(keyword, page_size = 100, timeout = 300) like pride_list_files. The checker cannot verify them.</p></li>
+<ul><li><p>Shape difference: mzlib::pride::search / search_with return Vec&lt;PrideProjectSearchResult&gt; and R pride_search() returns the hits data.frame, so neither carries the envelope's keyword or result_count (the caller has the keyword; the count is len() / nrow()). pyMzLib returns the hits list likewise. Declare it as a deviation or drop the two fields from the wire?</p></li>
 <li><p>The bindings also refuse a keyword beginning with '-' (it would be parsed as an option); the bridge cannot, since a value starting with '–' reaches it as a flag and the keyword then reads as missing.</p></li>
 <li><p>The ranking order of results is PRIDE's and is not promised stable across calls.</p></li>
 </ul></div>

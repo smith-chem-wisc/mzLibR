@@ -91,7 +91,7 @@ for those.
 ## Wraps
 
 Wire verb `quant median-polish`. Generated from the bridge's verb spec
-`quant.median-polish.yaml` (bridge commit `5db922d4cfe1`) by
+`quant.median-polish.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -157,9 +157,11 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `samples`:
 
   object\[\]; never `NA`. One per (condition, biological replicate),
-  ordered by condition (ordinal) then biorep, as the engine orders them;
-  fields under result.tables.samples. Their labels are the keys of every
-  protein's intensities.
+  ordered by condition (ordinal) then biorep. This is NOT the order of
+  the TSV that out writes: mzLib groups conditions there in
+  first-appearance order (see caveats); fields under
+  result.tables.samples. Their labels are the keys of every protein's
+  intensities.
 
 - `peptide_count`:
 
@@ -204,7 +206,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   could not resolve one (NaN: a degenerate peptide matrix); 0 means not
   measured in that sample. A sample of several runs (fractions,
   technical replicates) reports their sum, as FlashLFQ's own output
-  does.
+  does, EXCEPT when labels are run names (no design and one fraction):
+  then the bridge reads the first run of the sample only.
 
 ## Fields of `samples`
 
@@ -269,6 +272,11 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   \#1129 the file's rule was inverted for unfractionated data; the
   values always agreed.
 
+- Column order can differ from samples\[\]: QuantifiedProteins.tsv
+  groups conditions in first-appearance order
+  (ProteinGroup.TabSeparatedHeader has no OrderBy), while samples\[\]
+  sorts them ordinally. Join on the label, never on position.
+
 ## Performance
 
 Every call starts one bridge process, which costs a .NET start-up before
@@ -285,31 +293,26 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib 0.1.0; mzLibRust not yet shipped; mzLibR not
-yet shipped.
+Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
 
-- Not yet in mzLibRust or mzLibR. Intended names mirror each binding's
-  flashlfq module: Rust mzlib::flashlfq::median_polish (defaults) and
-  median_polish_with + MedianPolishOptions {design, use_shared_peptides,
-  output_directory, timeout} beside quantify_with + QuantifyOptions (the
-  DesignEntry builder in the example is a sketch); R
-  flashlfq_median_polish(peptides, design = NULL, use_shared_peptides =
-  FALSE, output_directory = NULL, timeout = NULL) beside
-  flashlfq_quantify, design as a data frame. The checker cannot verify
-  them.
-
 - The bridge's own comment in MedianPolishToWire and pyMzLib's
   median_polish docstring still say the TSV labels disagree until
-  mzLib#1129 lands; it is in the pin, so both are stale. The agreement
-  stated in the caveat is from reading ProteinGroup.cs at 23c2490e, not
-  from a recorded `--out` run.
+  mzLib#1129 lands; it is in the pin, so both are stale (confirmed by
+  pyMzLib 005; removed on pyMzLib main by \#67, unreleased after 0.2.0).
+  The agreement stated in the caveat is from reading ProteinGroup.cs at
+  23c2490e, not from a recorded `--out` run.
 
 - median_polish_small.json is hand-shaped ('/abs/...'), not a live
   recording.
+
+- When labels are run names, the bridge reads only a sample's first run;
+  whether the engine zeroes that sample's other runs (so the reading
+  loses nothing) was not traced. It matters only if several runs share a
+  biorep with no design.
 
 - The design's techrep and fraction are parsed but only fraction feeds
   the label rule; how FlashLFQ's median polish uses techrep is mzLib's

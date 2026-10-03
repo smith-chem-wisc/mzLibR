@@ -154,7 +154,7 @@ has those variants applied by mzLib, which renames the accession (<code>P38936_C
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>proteins read</code>. Generated from the bridge's verb spec <code>proteins.read.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>proteins read</code>. Generated from the bridge's verb spec <code>proteins.read.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs" class="external-link"><code>ProteinDbLoader.LoadProteinXML</code></a> in <code>mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs" class="external-link"><code>ProteinDbLoader.LoadProteinFasta</code></a> in <code>mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/Protein.cs" class="external-link"><code>Protein.NcbiTaxonomyId</code></a> in <code>mzLib/Proteomics/Protein/Protein.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -388,13 +388,12 @@ has those variants applied by mzLib, which renames the accession (<code>P38936_C
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>Rust (mzlib::proteins::read_with + ProteinReadOptions, Table enum) and R (proteins_read) spellings are intended, not yet implemented; the checker cannot verify them.</p></li>
-<li><p>files[] is always present, with <code>--path</code> too, instead of BULK.md §3's flattened single-file block: a new verb has no pre-existing single-file shape to preserve, and one shape is simpler for every binding. Confirm or amend BULK.md.</p></li>
+<ul><li><p>files[] is always present, with <code>--path</code> too, instead of BULK.md §3's flattened single-file block: a new verb has no pre-existing single-file shape to preserve, and one shape is simpler for every binding. Confirm or amend BULK.md.</p></li>
 <li><p>Two lists sharing stdin, separated by a line holding only '–', is new wire grammar (also used by proteins classify-peptides). It belongs in CONTRACT.md or BULK.md if adopted.</p></li>
 <li><p>result.tables (go_terms, ensembl_genes) is not validated by tools/check_verbs.py, which checks only 'columns'; the pyMzLib tests pin them.</p></li>
 <li><p>No <code>--out</code> TSV mode yet (BULK.md §2 mentions one): multi-table output is JSON only, since three tables would need three files.</p></li>

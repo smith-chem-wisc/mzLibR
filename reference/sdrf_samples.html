@@ -108,7 +108,7 @@ so across documents key a sample on the document as well.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>sdrf samples</code>. Generated from the bridge's verb spec <code>sdrf.samples.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>sdrf samples</code>. Generated from the bridge's verb spec <code>sdrf.samples.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfSampleBlock.cs" class="external-link"><code>SdrfSampleBlock.BySourceName</code></a> in <code>mzLib/Readers/Sdrf/SdrfSampleBlock.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfAge.cs" class="external-link"><code>SdrfAge.TryParse</code></a> in <code>mzLib/Readers/Sdrf/SdrfAge.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -237,15 +237,13 @@ so across documents key a sample on the document as well.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
-    <p>Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
+    <p>Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
 <ul><li><p>The refusal classification (empty, reserved_word, no_unit, unreadable) is bridge-side. It uses mzLib's own SdrfValidator.ReservedWords, but a TryParse overload returning the reason would move it upstream where it belongs; propose to mzLib.</p></li>
 <li><p>Sample order is first appearance in the document, recovered through BySourceName's own dictionary comparer because the dictionary's enumeration order is not contractual; an ordered return from mzLib would remove that step.</p></li>
-<li><p>since.pymzlib is null until released; Rust and R are not yet ported.</p></li>
-<li><p>Bulk spellings are the cross-binding decision of 2026-09-23: a separate &lt;verb&gt;_many in every binding (R too, not vectorisation). Rust and R names here are intended, not yet ported.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

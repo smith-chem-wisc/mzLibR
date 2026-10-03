@@ -96,7 +96,7 @@ pride_download_files(small, "downloads")
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride download</code>. Generated from the bridge's verb spec <code>pride.download.yaml</code> (bridge commit <code>5db922d4cfe1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride download</code>. Generated from the bridge's verb spec <code>pride.download.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.DownloadProjectFilesAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.DownloadFileAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs" class="external-link"><code>PrideArchiveExtensions.WhereCategory</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -110,7 +110,7 @@ pride_download_files(small, "downloads")
 <dd><p>string; required. The project accession, e.g. PXD000001. The bridge checks only that it is not blank. <em>Not an argument here: taken from the rows' project_accession.</em></p></dd>
 
 <dt><code>destination</code> (wire <code>--dest</code>)</dt>
-<dd><p>path; required. Directory to write into; created if absent. Blank is a usage error (it never falls back to the working directory).</p></dd>
+<dd><p>path; required. Directory to write into; created if absent, but only when a file is actually fetched (mzLib creates it after the no-overwrite skip). With zero matches, or every file skipped, no directory is created, yet destination_directory is still reported. Blank is a usage error (it never falls back to the working directory).</p></dd>
 
 <dt>wire <code>--category</code></dt>
 <dd><p>string; default absent; range <code>a PRIDE category value, case-insensitive: RAW, PEAK, SEARCH, RESULT, OTHER, ...</code>. Keep only files of this category (mzLib WhereCategory). Absent keeps every category. Given but blank is a usage error, never 'everything'. ANDed with ext. <em>Not an argument here: a selection is already filtered, by <code>[</code>.</em></p></dd>
@@ -125,7 +125,7 @@ pride_download_files(small, "downloads")
 <dd><p>flag; default <code>FALSE</code>. Select exact files instead of filtering: stdin carries file names, one per line (newline-delimited; blank lines ignored; each line trimmed; exact, case-sensitive match against the manifest's file_name). Exclusive with category and ext. Stdin rather than argv because argv caps near 32 KB and any other separator could occur in a file name. A name containing a line break cannot be selected (the bindings refuse one; PRIDE has never published one). <em>Not an argument here: always set: the selection travels on stdin.</em></p></dd>
 
 <dt><code>files</code> (wire <code>--stdin</code>)</dt>
-<dd><p>string[]; default absent; range <code>&gt;= 1 non-blank line when names-from-stdin is given</code>. Read only with names-from-stdin: the file names to fetch, one per line. Every name must be in the project's REST manifest (pride files).</p></dd>
+<dd><p>string[]; default absent; range <code>&gt;= 1 non-blank line when names-from-stdin is given</code>. Read only with names-from-stdin: the file names to fetch, one per line. Every name must be in the project's REST manifest (pride files). A UTF-8 BOM on the first line is stripped (ReadStdinLines) from pyMzLib #67 on; the 0.2.0 bridge keeps it, so that first name fails as not in the project.</p></dd>
 
 
 </dl></div>
@@ -156,7 +156,7 @@ pride_download_files(small, "downloads")
 <dd><p>names-from-stdin naming a file the project's manifest does not contain (the message lists up to five). Raised AFTER the matching files have been downloaded: they are on disk when the error arrives.</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
-<dd><p>the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout, a socket or TLS failure, an HTTP 408, 429 or 5xx on the manifest or a file, a body that delivered nothing for mzLib's BodyStallTimeout (2 min), or a body cut off in transit (the IOException transport shapes only)</p></dd>
+<dd><p>the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout, a socket or TLS failure, an HTTP 408, 429 or 5xx on the manifest or a file, a body that delivered nothing for mzLib's BodyStallTimeout (2 min), or a body cut off in transit</p></dd>
 
 <dt><code>mzlib_bridge_error</code> (correctness)</dt>
 <dd><p>a selected file has no HTTPS location (NotSupportedException; Aspera-only); a manifest file name that is not a bare leaf name (ArgumentException: refusing to write outside dest); any other HTTP status; a local disk failure while writing (a bare IOException, e.g. a full disk, is deliberately NOT treated as an outage)</p></dd>

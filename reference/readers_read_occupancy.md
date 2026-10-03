@@ -19,7 +19,10 @@ readers_read_occupancy(path, limit = NULL, offset = 0, out = NULL, timeout = NUL
 
 - path:
 
-  Path to a MetaMorpheus `AllQuantifiedProteinGroups.tsv`.
+  Path to any MetaMorpheus protein-group table
+  [`readers_read_protein_groups`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_protein_groups.md)
+  reads, including an RNA search's `AllQuantifiedTranscriptGroups.tsv`,
+  whose sites name RNA modifications.
 
 - limit:
 
@@ -68,7 +71,7 @@ An entity with no modified sites is dropped from the cell, so
 ## Wraps
 
 Wire verb `readers read-occupancy`. Generated from the bridge's verb
-spec `readers.read-occupancy.yaml` (bridge commit `5db922d4cfe1`) by
+spec `readers.read-occupancy.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -85,7 +88,10 @@ render the same ones.
 
 - `path`:
 
-  path; required. A MetaMorpheus AllQuantifiedProteinGroups.tsv.
+  path; required. A MetaMorpheus protein-group table (any name readers
+  read-protein-groups accepts), including an RNA search's
+  AllQuantifiedTranscriptGroups.tsv (mzLib 1.0.593, \#1388), whose
+  occupancy cells name RNA modifications.
 
 - `offset`:
 
@@ -358,16 +364,11 @@ the thread count stated on the wire.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 - Peptide-level occupancy: ModificationOccupancyCell also parses peptide
   tables' cells, but QuantifiedPeptideFromTsv at the pin exposes none,

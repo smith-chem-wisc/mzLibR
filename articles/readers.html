@@ -85,7 +85,7 @@ which you have, and which function reads it.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_formats.html">readers_formats</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">formats</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 36</span></span>
+<span><span class="co">#&gt; [1] 38</span></span>
 <span><span class="va">formats</span><span class="op">[</span><span class="va">formats</span><span class="op">$</span><span class="va">is_quantifiable</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_type"</span>, <span class="st">"extension"</span>, <span class="st">"reader"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;       file_type  extension           reader</span></span>
 <span><span class="co">#&gt; 12       psmtsv    .psmtsv   PsmFromTsvFile</span></span>
@@ -101,7 +101,7 @@ can parse the file, but no function other than
 <span>             <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;         (none)   ms1_features   quantifiable        spectra spectral_match </span></span>
-<span><span class="co">#&gt;             17              2              4              7              6</span></span></code></pre></div>
+<span><span class="co">#&gt;             19              2              4              7              6</span></span></code></pre></div>
 <p>For one file, <code><a href="../reference/readers_identify.html">readers_identify()</a></code> resolves the type
 without parsing the contents:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -277,7 +277,7 @@ format does not have.</p>
 <div class="section level2">
 <h2 id="quantification-tables">Quantification tables<a class="anchor" aria-label="anchor" href="#quantification-tables"></a>
 </h2>
-<p>mzLib 1.0.592 reads the tables MetaMorpheus and FlashLFQ write after
+<p>mzLib reads the tables MetaMorpheus and FlashLFQ write after
 quantifying. Each is wide on disk, one column per sample, and arrives
 long: one row per record per sample. <code>limit</code> and
 <code>offset</code> count records, so one group’s samples are never
@@ -329,6 +329,32 @@ one row per group, sample, basis and site:</p>
 <span><span class="co">#&gt; 7            4</span></span>
 <span><span class="co">#&gt; 9            4</span></span>
 <span><span class="co">#&gt; 11           1</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="rna-searches-and-searches-without-quantification">RNA searches, and searches without quantification<a class="anchor" aria-label="anchor" href="#rna-searches-and-searches-without-quantification"></a>
+</h3>
+<p>The same three functions read two kinds of table they used to
+refuse:</p>
+<ul>
+<li>
+<strong>An RNA search</strong> writes
+<code>AllQuantifiedTranscriptGroups.tsv</code> and
+<code>AllQuantifiedOligos.tsv</code> (mzLib #1388). They are their own
+file types, but mzLib reads them with subclasses of the protein-group
+and peptide readers, so the columns keep their protein names:
+<code>protein_group_name</code> holds the transcript group,
+<code>sequence</code> the oligonucleotide, and
+<code><a href="../reference/readers_read_occupancy.html">readers_read_occupancy()</a></code> returns RNA modifications such as
+<code>2'-O-methyluridine on U</code>.</li>
+<li>
+<strong>A search with label-free quantification off</strong> writes
+<code>AllProteinGroups.tsv</code>, and each file’s
+<code>&lt;file&gt;_ProteinGroups.tsv</code> (mzLib #1365). MetaMorpheus
+writes <code>Intensity_</code> columns only when it quantified, so these
+rows have <code>spectral_count</code> and no <code>intensity</code>: the
+field is named in <code>absent_fields</code>, which means <em>no
+basis</em>, not zero.</li>
+</ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="many-files-in-one-call">Many files in one call<a class="anchor" aria-label="anchor" href="#many-files-in-one-call"></a>

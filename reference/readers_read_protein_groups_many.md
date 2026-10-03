@@ -65,7 +65,7 @@ groups over the files read and `returned_count` the groups returned;
 
 Wire verb `readers read-protein-groups` with `--paths-stdin`. Generated
 from the bridge's verb spec `readers.read-protein-groups.yaml` (bridge
-commit `5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these
+commit `c0cc92372aad`) by `scripts/build-man.R`; the spec owns these
 facts, and all three bindings render the same ones.
 
 - [`ProteinGroupFromTsvFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs)
@@ -294,6 +294,11 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - Long format: one row per group per sample group. offset and limit
   count GROUPS, and returned_count counts rows.
 
+- A table MetaMorpheus wrote without label-free quantification
+  (AllProteinGroups.tsv, \<file\>\_ProteinGroups.tsv; readable from
+  mzLib 1.0.593, \#1365) has SpectralCount\_ columns but no Intensity\_
+  columns, so intensity is in absent_fields: no basis, not zero.
+
 - sample_label is the header label verbatim; condition, replicate and
   channel cannot be recovered from it (ProteinGroupFromTsv.cs:103).
 
@@ -333,16 +338,11 @@ reason it exists: never loop the one-path function over many files.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 - The group-level columns carried beside each sample (identity, q-value,
   decoy label) are a choice made here; coverage, masses and counts stay

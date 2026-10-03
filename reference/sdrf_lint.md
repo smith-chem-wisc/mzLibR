@@ -65,7 +65,7 @@ The majority spelling is not advice: it is only the most common.
 ## Wraps
 
 Wire verb `sdrf lint`. Generated from the bridge's verb spec
-`sdrf.lint.yaml` (bridge commit `5db922d4cfe1`) by
+`sdrf.lint.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -211,21 +211,7 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped;
-mzLibR not yet shipped.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- Rust and R spellings are the intended ones, mirroring pool /
-  pool_labelled and sdrf_pool; not yet ported.
-
-- documents is the first list-valued cell in a columnar table on the
-  wire. R will need a list column; confirm mzLibR's table projection
-  accepts one before porting.
-
-- since.pymzlib is null until released.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## References
 

@@ -6,9 +6,52 @@ The first release. Versions follow each wire verb’s `since.mzlibr` in
 the bridge’s verb specs, which every help page’s **Since** section
 renders.
 
-This release projects mzLib 1.0.592. The verbs marked *needs the pyMzLib
-0.2.0 bridge* below are new in the bridge pyMzLib 0.2.0 publishes; with
-an older bridge they are refused, naming the release they need.
+This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib
+0.2.0 bridge* or *needs the pyMzLib 0.3.0 bridge* below are new in the
+bridge that release publishes; with an older bridge they are refused,
+naming the release they need.
+[`mzlibr_install_bridge()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.md)
+installs the bridge pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`),
+verified against that release’s SHA256SUMS.
+
+### mzLib 1.0.593
+
+- [`readers_read_protein_groups()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_protein_groups.md),
+  [`readers_read_quantified_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_quantified_peptides.md)
+  and
+  [`readers_read_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_occupancy.md)
+  read an RNA search’s `AllQuantifiedTranscriptGroups.tsv` and
+  `AllQuantifiedOligos.tsv` (mzLib
+  [\#1388](https://github.com/smith-chem-wisc/mzLibR/issues/1388)).
+  mzLib reads them with subclasses of the protein-group and peptide
+  readers, so the columns keep their protein names: `protein_group_name`
+  is the transcript group, `sequence` the oligonucleotide, and occupancy
+  names RNA modifications.
+- MetaMorpheus protein-group tables written without quantification now
+  read (mzLib
+  [\#1365](https://github.com/smith-chem-wisc/mzLibR/issues/1365)):
+  `AllProteinGroups.tsv` and each file’s `<file>_ProteinGroups.tsv`
+  failed with `Tsv file type not supported`, and now read as
+  `MetaMorpheusQuantifiedProteinGroups`, with `intensity` in
+  `absent_fields`.
+- Four shipped modifications now write their Unimod accession in
+  `pro_forma` (mzLib
+  [\#1328](https://github.com/smith-chem-wisc/mzLibR/issues/1328)):
+  `GG (Ubiquitination Site)` as `[UNIMOD:121]`, both `Myristoylation`
+  entries as `[UNIMOD:45]` and `EQIGG` as `[UNIMOD:846]`, instead of by
+  name. Masses are unchanged.
+- A read fault on an existing `.mzid` is an `mzlib_bridge_error` naming
+  the file (mzLib
+  [\#1362](https://github.com/smith-chem-wisc/mzLibR/issues/1362)),
+  where it was an `IOException`. A missing file is still an
+  `mzlib_usage_error`.
+- PRIDE download errors name the file and the host, never the URL (mzLib
+  [\#1350](https://github.com/smith-chem-wisc/mzLibR/issues/1350)), so a
+  reviewer token in a query string cannot reach a log. They are still
+  `mzlib_service_unavailable`.
+- The help pages no longer state how many file types mzLib recognises:
+  [`readers_formats()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_formats.md)
+  asks mzLib, and a number written down goes stale at the next release.
 
 ### Reading files
 
@@ -60,9 +103,8 @@ an older bridge they are refused, naming the release they need.
   *needs the pyMzLib 0.2.0 bridge*).
 - [`mzlibr_bridge_version()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_bridge_version.md)
   reports `verbs`, every command the bridge dispatches.
-- mzLib now recognises 36 file types (Pytheas, mzIdentML and its gzipped
-  form, and the MetaMorpheus and FlashLFQ quantification tables are
-  new), 17 of them with no cross-format view.
+- mzLib now recognises Pytheas, mzIdentML and its gzipped form, and the
+  MetaMorpheus and FlashLFQ quantification tables.
 - `limit = 0` is accepted by every reader, as the bridge allows: the
   envelope alone.
 

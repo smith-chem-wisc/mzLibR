@@ -47,8 +47,8 @@ An `mzlibr_read_batch`. `records` begins with `source_index` (1-based,
 into `paths`) and `source_path`, then the columns of
 [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md):
 `retention_time` in each file's own `retention_time_unit` - minutes for
-all four formats at mzLib 1.0.592 - `charge_state` a charge,
-`monoisotopic_mass` in Da. Convert times with
+all four formats today - `charge_state` a charge, `monoisotopic_mass` in
+Da. Convert times with
 [`readers_retention_time_in_minutes`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_retention_time_in_minutes.md),
 which applies each file's unit to its rows. `files` has one row per
 input: `record_count` in records, `rows_not_read` in rows,
@@ -61,7 +61,7 @@ input: `record_count` in records, `rows_not_read` in rows,
 
 Wire verb `readers read-results` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-results.yaml` (bridge commit
-`5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these facts, and
+`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadQuantifiableResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)
@@ -310,14 +310,6 @@ reason it exists: never loop the one-path function over many files.
 ## Since
 
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 ## See also
 

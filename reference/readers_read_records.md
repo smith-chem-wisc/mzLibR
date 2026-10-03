@@ -5,10 +5,11 @@ fields, naming every field that could not become a column.
 
 The exhaustive verb: if
 [`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
-succeeds on a path, this reads it. All 36 file types, including the 17
-that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-peptide and protein tables, the FlashDeconv formats, SDRF - which no
-other `readers_` function can touch.
+succeeds on a path, this reads it. Every file type, including those that
+belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+peptide and protein tables, the FlashDeconv formats, MetaMorpheus's
+protein-group and peptide tables and their RNA counterparts, SDRF -
+which no other `readers_` function can touch.
 
 ## Usage
 
@@ -105,7 +106,7 @@ destroy data.
 ## Wraps
 
 Wire verb `readers read-records`. Generated from the bridge's verb spec
-`readers.read-records.yaml` (bridge commit `5db922d4cfe1`) by
+`readers.read-records.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -123,8 +124,8 @@ render the same ones.
 
 - `path`:
 
-  path; required. Any of the file types readers formats lists (36 at
-  mzLib 1.0.592), including spectra files and the Bruker .d directories.
+  path; required. Any of the file types readers formats lists (38 at
+  mzLib 1.0.593), including spectra files and the Bruker .d directories.
 
 - `offset`:
 
@@ -432,10 +433,6 @@ The spec records these as open. They are listed rather than hidden:
   MsPathFinderT, TopFD, the \#1347 tables, ...). psmtsv/osmtsv parse
   their own header dictionary, so their optional columns are not judged
   yet; an empty list there means no basis, not nothing absent.
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 ## See also
 

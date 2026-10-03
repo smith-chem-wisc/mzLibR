@@ -68,7 +68,7 @@ sum as an upper bound on transfer, and see
 ## Wraps
 
 Wire verb `pride files`. Generated from the bridge's verb spec
-`pride.files.yaml` (bridge commit `5db922d4cfe1`) by
+`pride.files.yaml` (bridge commit `c0cc92372aad`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -195,18 +195,23 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - `mzlib_service_unavailable` (service_unavailable):
 
-  the bridge's own classification (Program.ClassifyError; mzLib#1350 is
-  not merged): a timeout or cancellation, a socket failure, an
-  HttpRequestException with no status but an inner cause (refused
-  connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut
-  off in transit
+  the bridge's own classification (Program.ClassifyError; since mzLib
+  1.0.593 (#1350) PRIDE raises every transport failure as an
+  HttpRequestException carrying the cause or the status, and messages
+  name the file and host, never the URL): a timeout or cancellation, a
+  socket failure, an HttpRequestException with no status but an inner
+  cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a
+  response body cut off in transit
 
 - `mzlib_bridge_error` (correctness):
 
   any other HTTP status (e.g. 404), a paging contract violation
   (MzLibException: an identical page while total_records says more
-  remain), or page-size \<= 0 (mzLib's ArgumentOutOfRangeException; the
-  bridge does not check it first)
+  remain), the MaxPages backstop (an HttpRequestException mzLib composes
+  with no status and no inner exception, which ClassifyHttpFailure
+  deliberately does not excuse as an outage), or page-size \<= 0
+  (mzLib's ArgumentOutOfRangeException; the bridge does not check it
+  first)
 
 ## Caveats
 
@@ -262,9 +267,6 @@ The spec records these as open. They are listed rather than hidden:
 - An option given with no value (e.g. `--page-size` followed by another
   option) is parsed as a flag and silently defaulted: OptionalInt does
   not consult WasProvided.
-
-- since.mzlibrust and since.mzlibr are 0.1.0 by the convention of the
-  other back-filled specs; neither repo has a release tag.
 
 ## References
 

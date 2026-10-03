@@ -57,7 +57,7 @@ records; `row_count` counts the rows of `records`.
 
 Wire verb `readers read-records` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-records.yaml` (bridge commit
-`5db922d4cfe1`) by `scripts/build-man.R`; the spec owns these facts, and
+`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)
@@ -320,10 +320,6 @@ The spec records these as open. They are listed rather than hidden:
   MsPathFinderT, TopFD, the \#1347 tables, ...). psmtsv/osmtsv parse
   their own header dictionary, so their optional columns are not judged
   yet; an empty list there means no basis, not nothing absent.
-
-- The \_many spellings (py, rust, r) follow the 2026-09-23 cross-binding
-  decision; Rust and R names here are intended, not yet ported, and
-  since.pymzlib stays null until release.
 
 ## See also
 
