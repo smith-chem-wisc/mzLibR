@@ -343,6 +343,42 @@ test_that("stdin reaches the runner unchanged", {
   expect_identical(runner$seen$stdin, payload)
 })
 
+test_that("with no payload the bridge reads end of file, not R's own stdin", {
+  # A terminal never closes R's stdin. If the bridge inherited it, a verb that reads stdin with
+  # nothing sent - `median_polish()` with no design - would wait forever (pyMzLib #73).
+  #
+  # The stand-in bridge is Rscript reading its stdin to the end. It runs inside a child R whose
+  # stdin is a pipe this test holds open and never writes to, so the stand-in returns only if
+  # `bridge_run()` gave it a stdin of its own.
+  rscript <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+  marker <- tempfile("mzlibr-stdin-done-")
+  child <- tempfile("mzlibr-stdin-child-", fileext = ".R")
+  on.exit(unlink(c(marker, child)), add = TRUE)
+  writeLines(c(
+    "mz <- asNamespace('mzLibR')",
+    sprintf("rscript <- %s", deparse(rscript)),
+    "mz$bridge_run(rscript, c('-e', 'invisible(readLines(file(\"stdin\")))'), timeout = 120)",
+    sprintf("writeLines('done', %s)", deparse(marker))
+  ), child)
+
+  # `pipe()` runs its command through `cmd /c` on Windows, which mangles a command that starts
+  # and ends with a quote. Short path names have no spaces, so nothing needs quoting there.
+  command <- if (.Platform$OS.type == "windows") {
+    paste(utils::shortPathName(rscript), utils::shortPathName(child))
+  } else {
+    paste(shQuote(rscript), shQuote(child))
+  }
+  held_open <- pipe(command, open = "w")
+  deadline <- Sys.time() + 60
+  while (!file.exists(marker) && Sys.time() < deadline) {
+    Sys.sleep(0.25)
+  }
+  returned <- file.exists(marker)
+  close(held_open)
+
+  expect_true(returned, info = "the bridge waited on stdin it was never sent")
+})
+
 test_that("arguments are quoted for the shell that will parse them", {
   # `system2()` quotes the command and not the arguments, so a path with a space would arrive
   # at the bridge in pieces. On Windows that is the normal case, not an edge case.

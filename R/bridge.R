@@ -217,6 +217,15 @@ bridge_run <- function(exe, args, stdin = NULL, timeout = NULL) {
   # and turned into a typed condition below, so a timeout does not arrive as console noise
   # alongside whatever the caller does next.
   timed_out <- FALSE
+
+  # With no payload the bridge still gets a stdin of its own: an empty file, so it reads end of
+  # file at once. `input = NULL` would leave `stdin = ""` in charge, which hands the bridge R's
+  # own stdin; a terminal never closes that, so a verb that reads stdin waits forever.
+  # `median_polish()` with no design did exactly that. pyMzLib #73 fixed the same hole.
+  if (is.null(stdin)) {
+    stdin <- character(0)
+  }
+
   status <- withCallingHandlers(
     tryCatch(
       system2(
