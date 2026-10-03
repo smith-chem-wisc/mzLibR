@@ -449,7 +449,7 @@
     "rust": {
       "name": "mzlib::stats::fit_with",
       "options": "FitOptions",
-      "note": "planned; not yet shipped"
+      "note": "in mzLibR #29, not yet released"
     },
     "r": {
       "name": "stats_fit",

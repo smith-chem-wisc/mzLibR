@@ -131,7 +131,7 @@ and \strong{847} are 0 in both runs. "No usable number" is 849; "could not be re
 
 }
 \section{Wraps}{
-Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}

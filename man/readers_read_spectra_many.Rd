@@ -51,7 +51,7 @@ An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-spectra} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-spectra} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs}{\code{MsDataFileReader.GetDataFile}} in \code{mzLib/Readers/MsDataFileReader.cs} at mzLib \code{23c2490e}

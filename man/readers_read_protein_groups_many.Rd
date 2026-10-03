@@ -43,7 +43,7 @@ An \code{mzlibr_read_batch}. \code{records} is the long table: \code{source_inde
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-protein-groups} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-protein-groups} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs}{\code{ProteinGroupFromTsvFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs} at mzLib \code{23c2490e}

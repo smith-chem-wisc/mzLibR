@@ -28,7 +28,7 @@
   "cite": [
     {
       "doi": "10.1021/acs.jproteome.1c00168",
-      "for": "the 0.003 Da reporter-ion matching tolerance mzLib uses (IsobaricMassTag.AbsoluteToleranceValue)"
+      "for": "the TMTpro-18plex reagents paper (Li et al. 2021); mzLib cites it as the source of its 0.003 Da reporter-ion matching tolerance (IsobaricMassTag.AbsoluteToleranceValue, IsobaricMassTag.cs:41)"
     }
   ],
   "params": [

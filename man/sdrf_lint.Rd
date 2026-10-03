@@ -49,7 +49,7 @@ not advice: it is only the most common.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf lint}. Generated from the bridge's verb spec \code{sdrf.lint.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf lint}. Generated from the bridge's verb spec \code{sdrf.lint.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfDriftLint.cs}{\code{SdrfDriftLint.Analyze}} in \code{mzLib/Readers/Sdrf/SdrfDriftLint.cs} at mzLib \code{23c2490e}

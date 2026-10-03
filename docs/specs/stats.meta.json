@@ -241,7 +241,7 @@
     },
     "r": {
       "name": "stats_meta",
-      "note": "planned; not yet shipped. Takes a data.frame with feature, estimate and standard_error columns."
+      "note": "in mzLibR #29, not yet released. Takes a data.frame with feature, estimate and standard_error columns."
     }
   },
   "examples": [

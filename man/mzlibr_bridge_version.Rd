@@ -37,7 +37,7 @@ A list with \code{bridge}, \code{protocol}, \code{runtime}, \code{mzlib} and \co
   reported as old rather than answering "Unknown command".
 }
 \section{Wraps}{
-Wire verb \code{version}. Generated from the bridge's verb spec \code{version.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{version}. Generated from the bridge's verb spec \code{version.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj}{\code{AssemblyInformationalVersionAttribute}} in \code{mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj} at mzLib \code{23c2490e}

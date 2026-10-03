@@ -76,7 +76,7 @@ mass difference, a delta, TopPIC's \code{feature_score} - and nulling those woul
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
