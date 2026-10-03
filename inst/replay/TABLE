@@ -49,4 +49,8 @@ sdrf samples	sdrf_samples_cohort.json
 sdrf validate	sdrf_validate_bulk.json
 sdrf validate	sdrf_validate_cohort.json
 sdrf validate	sdrf_validate_skeleton.json
+stats adjust	stats_adjust.json
+stats fit	stats_fit_limma.json
+stats fit	stats_fit_malat.json
+stats meta	stats_meta_metafor.json
 version	bridge_version.json

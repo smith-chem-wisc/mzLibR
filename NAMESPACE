@@ -102,6 +102,13 @@ S3method(print, mzlibr_sdrf_design)
 export(isobaric_kits)
 S3method(print, mzlibr_isobaric_kits)
 
+export(stats_adjust)
+export(stats_fit)
+export(stats_meta)
+S3method(print, mzlibr_moderated_fit)
+S3method(print, mzlibr_adjusted)
+S3method(print, mzlibr_meta_analysis)
+
 export(proteins_annotate_go)
 export(proteins_classify_peptides)
 export(proteins_read)

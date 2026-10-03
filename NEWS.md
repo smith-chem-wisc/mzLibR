@@ -98,6 +98,23 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   bridge nothing on stdin now gives it an empty stdin rather than R's own, which a terminal never
   closes. Every verb goes through the same transport, so none can wait on it (pyMzLib #73).
 
+## Differential abundance
+
+* New `stats_fit()` fits one linear model per feature of a feature-by-sample table and tests each
+  named coefficient with limma's empirical-Bayes moderated t, Benjamini-Hochberg adjusted:
+  `lmFit()` then `eBayes(legacy = TRUE)`, computed by mzLib's `LinearModel` and `EmpiricalBayes`.
+  A feature that cannot be fitted is reported with its reason, never dropped, and
+  `residual_df_differ` says when default limma would use a different prior estimator.
+* New `stats_adjust()` Benjamini-Hochberg adjusts p-values from anywhere, keeping every position;
+  `NA` is untested and not counted in m.
+* New `stats_meta()` pools one estimate per study into a DerSimonian-Laird random-effects estimate
+  per feature, with direction agreement and leave-one-out sensitivity.
+* The tests hold all three to limma, metafor and `stats::p.adjust()` to 1e-8 relative - against
+  their recorded output always, and against limma and metafor run in the test when they are
+  installed (both are now in `Suggests`). The reference tables ship in `extdata/stats/` so the
+  examples and the new article read real files (mzLib #1341, #1357; *needs the pyMzLib 0.3.0
+  bridge*).
+
 ## Protein databases
 
 * New `proteins_read()` reads UniProt XML or FASTA databases into one row per protein - organism,

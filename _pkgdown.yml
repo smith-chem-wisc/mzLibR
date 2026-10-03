@@ -64,6 +64,12 @@ reference:
     desc: Label-free quantification with FlashLFQ.
     contents:
       - starts_with("flashlfq_")
+  - title: Differential abundance
+    desc: >
+      limma's moderated t-test, Benjamini-Hochberg adjustment and random-effects meta-analysis,
+      computed by mzLib.
+    contents:
+      - starts_with("stats_")
   - title: The bridge
     desc: Installing and locating the bridge every function runs, and asking it what it is.
     contents:
@@ -86,3 +92,4 @@ articles:
       - articles/proteins
       - articles/peptidoforms
       - articles/flashlfq
+      - articles/stats

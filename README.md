@@ -35,6 +35,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with `proteins_read()`, which gene it resolves to against a pinned Ensembl release with `proteins_resolve_genes()`, whether a peptide is unique to one protein or gene with `proteins_classify_peptides()`, and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with `proteins_annotate_go()` |
 | `sdrf_*` | Read SDRF-Proteomics experimental-design files with `sdrf_read()`, and pool several into one table with provenance with `sdrf_pool()`; check them with `sdrf_validate()`, `sdrf_assess()` and `sdrf_lint()`, get each sample's ages in years with `sdrf_samples()`, and read the label-free design a quantification takes, or every reason there is none, with `sdrf_design()`. Use these rather than `readers_read_records()`, which joins each SDRF row into one string that cannot be split back apart |
 | `isobaric_*` | TMT, TMTpro, iTRAQ and DiLeu kits with every channel's label and theoretical reporter-ion m/z, from mzLib's own table, with `isobaric_kits()` |
+| `stats_*` | limma's moderated t-test (`lmFit` + `eBayes(legacy = TRUE)`) with `stats_fit()`, Benjamini-Hochberg with `stats_adjust()` and DerSimonian-Laird random-effects meta-analysis with `stats_meta()`, computed by mzLib and held to limma and metafor to 1e-8 |
 
 ## Installing
 
@@ -58,7 +59,9 @@ LGPL section 4 requires mzLibR to permit.
 
 ## No dependencies, and why that made it better
 
-mzLibR imports nothing but base R. `jsonlite` and `processx` would have been the obvious floor,
+mzLibR imports nothing but base R. (`limma` and `metafor` are suggested, for the tests alone: when
+they are installed, the tests hold `stats_fit()` and `stats_meta()` to them.) `jsonlite` and
+`processx` would have been the obvious floor,
 and dropping them was a correctness decision more than a portability one:
 
 - **`jsonlite` auto-simplifies, and JSON `null` becomes R `NULL`.** A `NULL` assigned into a list

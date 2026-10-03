@@ -101,6 +101,15 @@ replay_mismatch <- function(data, options) {
       }
       next
     }
+    # An input file option is echoed back as <name>_file (--responses -> responses_file): hold the
+    # call's file to the recording's, by file name.
+    echoed <- data[[paste0(key, "_file")]]
+    if (!key %in% names(data) && is.character(echoed) && length(echoed) == 1L) {
+      if (!identical(replay_base(echoed), replay_base(value))) {
+        return(paste0("recorded from '", replay_base(echoed), "', not '", replay_base(value), "'"))
+      }
+      next
+    }
     recorded <- data[[key]]
     if (is.null(recorded) || !replay_scalar(recorded)) {
       next
