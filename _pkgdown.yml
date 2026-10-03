@@ -2,7 +2,8 @@
 #
 # Built by .github/workflows/pkgdown.yml on every pull request (so a broken page fails the PR) and
 # deployed from main. Every help-page example and every article runs while it builds, against the
-# recorded-response bridge in R/replay.R, so what the site shows is what the code printed.
+# recorded-response bridge in R/replay.R, so what the site shows is what the code printed. The
+# articles are the package's vignettes, so R CMD check runs them too, on every platform.
 #
 # Written to _site/, not pkgdown's default docs/, which holds this repository's own markdown.
 url: https://smith-chem-wisc.github.io/mzLibR/
@@ -85,11 +86,11 @@ articles:
   - title: Modules
     navbar: ~
     contents:
-      - articles/readers
-      - articles/sdrf
-      - articles/isobaric
-      - articles/pride
-      - articles/proteins
-      - articles/peptidoforms
-      - articles/flashlfq
-      - articles/stats
+      - readers
+      - sdrf
+      - isobaric
+      - pride
+      - proteins
+      - peptidoforms
+      - flashlfq
+      - stats

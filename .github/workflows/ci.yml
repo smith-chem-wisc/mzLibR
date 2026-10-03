@@ -41,13 +41,17 @@ jobs:
       _R_CHECK_FORCE_SUGGESTS_: false
     steps:
       - uses: actions/checkout@v4
+      # The articles are vignettes, built by R CMD build and re-run by R CMD check against the
+      # replay bridge, so every platform runs every article. rmarkdown needs pandoc for that.
+      - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.r }}
           use-public-rspm: true
       # check-r-package runs rcmdcheck::rcmdcheck(), which must be installed first. Without this
       # step every R CMD check job failed at setup with "there is no package called 'rcmdcheck'".
-      # The package itself has no runtime deps, so this installs only the check tooling.
+      # The package itself has no runtime deps, so this installs the check tooling and the Suggests:
+      # knitr and rmarkdown for the vignettes, limma and metafor for the tests that compare to them.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
@@ -66,6 +70,11 @@ jobs:
   #   man/                every help page, from the #' blocks and the specs (scripts/build-man.R)
   #   docs/name-parity.md names against pyMzLib, columns against the wire, and help text against
   #                       the specs' units (scripts/name-parity.R), which also fails on any finding
+  #   vignettes/*.Rmd     each article's "What to cite" block, from the specs (scripts/render-cite.R)
+  #
+  # and the articles and help text are linted (scripts/docs-lint.R): each article opens with its
+  # question table and ends with what to cite, every chunk runs or says why not, and no prose
+  # states a count of formats or verbs, or an mzLib version.
   #
   # Each is regenerated here and compared with git; a difference fails the job with the command
   # that fixes it. See docs/reference-facts.md.
@@ -106,6 +115,10 @@ jobs:
             git diff -- man/ | head -n 80
             exit 1
           fi
+      - name: Each article's citations match its specs
+        run: Rscript scripts/render-cite.R --check
+      - name: The articles and help text keep the docs' promises
+        run: Rscript scripts/docs-lint.R
       - name: Name parity, and help text against the specs
         run: |
           status=0

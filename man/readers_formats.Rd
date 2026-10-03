@@ -31,7 +31,7 @@ formats fall into disjoint families, and \strong{about half belong to none of th
 cross-format projection of it.
 
 - \code{"quantifiable"} — the cross-format record view, and the input \code{\link{flashlfq_quantify}}
-  accepts. \strong{Exactly four file types have it}: MetaMorpheus \code{psmtsv} and \code{osmtsv},
+  accepts. \strong{Few file types have it}: MetaMorpheus \code{psmtsv} and \code{osmtsv},
   \code{MsFraggerPsm}, and DIA-NN \code{DiaNnReport}.
 - \code{"ms1_features"} — deconvolved MS1 features (TopFD \code{_ms1.feature}, Dinosaur).
 - \code{"spectra"} — the file is spectra, not results.

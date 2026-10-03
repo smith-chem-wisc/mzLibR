@@ -35,7 +35,7 @@ readers_read_spectra(path, limit = NULL, offset = 0, ms_order = NULL, peaks = FA
 \description{
 Read the scans of a spectra file: every scan's header always, and its peak arrays only on request.
 
-Seven file types offer the \code{spectra} view: \code{.mzML}, \code{.mgf}, \code{_ms1.msalign}, \code{_ms2.msalign},
+The \code{spectra} view is offered by \code{.mzML}, \code{.mgf}, \code{_ms1.msalign}, \code{_ms2.msalign},
 Thermo \code{.raw}, Bruker \code{.d} and timsTOF \code{.d}.
 }
 \details{

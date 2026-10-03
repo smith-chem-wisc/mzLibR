@@ -28,8 +28,8 @@ Paging is handled for you: however many pages the project spans, you get one dat
 
 
 \strong{This is what PRIDE's REST API publishes, which is not always everything in the project.}
-For PXD000001 the API returns \strong{8} files while the FTP tree holds \strong{13} - and the five it
-omits include the two largest, a 450 MB \code{.mzML} and the matching 472 MB \code{.mzXML}, which are
+For PXD000001 the API returns \strong{8} files while the FTP tree holds \strong{14} (a live listing,
+2026-10) - and the ones it omits include the two largest, a 450 MB \code{.mzML} and the matching 472 MB \code{.mzXML}, which are
 exactly the modern open-format conversions most people want. The omission is PRIDE's, not
 mzLib's.
 

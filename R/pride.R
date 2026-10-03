@@ -449,8 +449,8 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #' @section What this manifest is, and is not:
 #'
 #' **This is what PRIDE's REST API publishes, which is not always everything in the project.**
-#' For PXD000001 the API returns **8** files while the FTP tree holds **13** - and the five it
-#' omits include the two largest, a 450 MB `.mzML` and the matching 472 MB `.mzXML`, which are
+#' For PXD000001 the API returns **8** files while the FTP tree holds **14** (a live listing,
+#' 2026-10) - and the ones it omits include the two largest, a 450 MB `.mzML` and the matching 472 MB `.mzXML`, which are
 #' exactly the modern open-format conversions most people want. The omission is PRIDE's, not
 #' mzLib's.
 #'
@@ -497,7 +497,7 @@ pride_list_files <- function(accession, page_size = 100, timeout = 300) {
 #' The complete file list of a PRIDE Archive project, from its FTP directory tree
 #'
 #' The authoritative counterpart to [pride_list_files()]. Where that returns PRIDE's REST manifest -
-#' knowingly incomplete for some projects, omitting for PXD000001 the two largest of 13 files - this
+#' knowingly incomplete for some projects, omitting for PXD000001 its two largest files - this
 #' walks the project's FTP directory (subdirectories included) and returns everything the project
 #' holds (mzLib #1121). Reach for it whenever completeness or a true project size matters.
 #'

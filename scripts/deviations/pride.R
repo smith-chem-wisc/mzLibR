@@ -65,8 +65,11 @@ PARENT_OMISSIONS[c(
 )
 
 # pride ftp-files: the spec lists no example; this is the recording the offline tests use.
-REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "pride ftp-files", fixture = "pride_ftp_PXD000001.json")
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "pride ftp-files", fixture = "pride_PXD000001_ftp_files.json")
 
 FIELD_CHECKS[["pride files"]] <- list("pride_PXD000001_files.json", function(d) mz$pride_parse_manifest(d, "PXD000001"))
 FIELD_CHECKS[["pride ftp-files"]] <- list("pride_ftp_PXD000001.json", function(d) mz$pride_parse_ftp_files(d, "PXD000001"))
 FIELD_CHECKS[["pride search"]] <- list("pride_search_plasmodium.json", function(d) mz$pride_parse_search(d))
+
+# Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "pride files", fixture = "pride_PXD999999999_files.json")

@@ -106,3 +106,8 @@ FIELD_CHECKS[["readers read-occupancy"]] <- list(
   "readers_occupancy.json",
   function(d) mz$readers_parse_quant_records(d, "mzlibr_occupancy_records")
 )
+
+# Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "readers identify", fixture = "readers_identify_fragger.json")
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "readers read-protein-groups", fixture = "readers_protein_groups_rna.json")
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "readers read-spectra", fixture = "readers_spectra_peaks.json")
