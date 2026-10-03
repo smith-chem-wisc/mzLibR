@@ -85,11 +85,41 @@ replay_show <- function(value) {
   if (is.logical(value)) tolower(as.character(value)) else format(value)
 }
 
+# Wire options a verb echoes under another name, so a recording made with one value cannot answer
+# a call with another (peptidoform fragments echoes --max-mods as max_modifications).
+REPLAY_ECHOED_AS <- c(
+  "max-mods" = "max_modifications",
+  "max-isoforms" = "max_modification_isoforms",
+  "psms" = "psm_file",
+  "peptides" = "peptides_file"
+)
+
+# Verbs whose input travels on stdin and is echoed in the recording, so a recording answers only a
+# call that sent the same input. Read only for these: other verbs may be given a terminal's stdin.
+REPLAY_STDIN_ECHO <- "quant flashlfq"
+
+# For quant flashlfq: the call's mzML runs must be the recording's runs, by file name.
+replay_stdin_mismatch <- function(data, stdin) {
+  lines <- stdin[nzchar(trimws(stdin))]
+  sent <- sort(unique(vapply(lines, function(l) replay_base(trimws(strsplit(l, "\t", fixed = TRUE)[[1L]][1L])),
+    character(1L), USE.NAMES = FALSE)))
+  files <- data[["spectra_files"]]
+  recorded <- if (is.list(files)) {
+    sort(unique(vapply(files, function(f) replay_base(as.character(f[["full_path"]])), character(1L))))
+  } else {
+    character(0)
+  }
+  if (!identical(sent, recorded)) {
+    return(paste0("recorded for runs ", paste(recorded, collapse = ", "), ", not ", paste(sent, collapse = ", ")))
+  }
+  ""
+}
+
 # Why this recording cannot be the answer to these options, or "" when it can.
 replay_mismatch <- function(data, options) {
   for (name in names(options)) {
     value <- options[[name]]
-    key <- gsub("-", "_", name, fixed = TRUE)
+    key <- if (name %in% names(REPLAY_ECHOED_AS)) REPLAY_ECHOED_AS[[name]] else gsub("-", "_", name, fixed = TRUE)
     if (name %in% c("limit", "offset", "out")) {
       next
     }
@@ -131,8 +161,10 @@ replay_mismatch <- function(data, options) {
   # BULK.md: a --paths-stdin call has its own envelope (files[], read_count, ...). Neither shape
   # answers for the other, or a one-path example would "fit" a bulk recording that has no path.
   # pride files also has a `files` list - of PRIDE files, which carry no `path` - so it is not bulk.
+  # An empty list says nothing either way (PRIDE's answer for an unknown accession is files = []),
+  # so it counts as bulk only when BULK.md's read_count says so.
   files <- data[["files"]]
-  bulk_recording <- is.list(files) && length(files) > 0L &&
+  bulk_recording <- is.list(files) && (length(files) > 0L || "read_count" %in% names(data)) &&
     all(vapply(files, function(f) is.list(f) && !is.null(f[["path"]]), logical(1L))) &&
     is.null(data[["path"]])
   if (!is.null(options[["paths-stdin"]]) != bulk_recording) {
@@ -144,6 +176,13 @@ replay_mismatch <- function(data, options) {
   # wrote nothing.
   if ("written" %in% names(data) && !is.null(options[["out"]]) != is.list(data[["written"]])) {
     return(if (is.list(data[["written"]])) "a recording that wrote out=" else "a recording without out=")
+  }
+
+  # proteins read: a filtered read (--accessions-stdin) and an unfiltered one never stand in for
+  # each other, or an example would print rows its filter did not select.
+  if ("accession_filter_count" %in% names(data) &&
+    !is.null(options[["accessions-stdin"]]) != replay_scalar(data[["accession_filter_count"]])) {
+    return("a recording with the other accession filter (filtered vs unfiltered)")
   }
 
   # A filter the recording applied that the call did not ask for.
@@ -221,7 +260,7 @@ replay_describe_options <- function(options) {
 }
 
 # The envelope, as JSON text, that the stand-in bridge prints for `argv`.
-replay_answer <- function(argv, dir = replay_dir()) {
+replay_answer <- function(argv, dir = replay_dir(), stdin = character(0)) {
   call <- replay_parse_argv(argv)
   candidates <- replay_read_table(dir)[[call$verb]]
   if (length(candidates) == 0L) {
@@ -237,6 +276,9 @@ replay_answer <- function(argv, dir = replay_dir()) {
     enveloped <- is.list(parsed) && !is.null(parsed[["ok"]]) && "data" %in% names(parsed)
     data <- if (enveloped) parsed[["data"]] else parsed
     why <- if (is.list(data) && !is.null(names(data))) replay_mismatch(data, call$options) else ""
+    if (!nzchar(why) && call$verb %in% REPLAY_STDIN_ECHO && is.list(data)) {
+      why <- replay_stdin_mismatch(data, stdin)
+    }
     if (nzchar(why)) {
       reasons <- c(reasons, paste0(fixture, ": ", why))
     } else {
@@ -266,7 +308,15 @@ replay_answer <- function(argv, dir = replay_dir()) {
 
 # The body of the stand-in executable: answer this process's arguments and exit as the bridge would.
 replay_main <- function(dir = replay_dir()) {
-  answer <- replay_answer(commandArgs(trailingOnly = TRUE), dir)
+  argv <- commandArgs(trailingOnly = TRUE)
+  stdin <- if (replay_parse_argv(argv)$verb %in% REPLAY_STDIN_ECHO) {
+    connection <- file("stdin")
+    on.exit(close(connection), add = TRUE)
+    readLines(connection, warn = FALSE)
+  } else {
+    character(0)
+  }
+  answer <- replay_answer(argv, dir, stdin)
   cat(answer, "\n", sep = "")
   quit(save = "no", status = if (startsWith(answer, "{\"ok\":false")) 2L else 0L)
 }

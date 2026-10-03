@@ -117,3 +117,7 @@ PARENT_MAP[c("sdrf_design", "sdrf_design_spectra", "sdrf_design_run_design")] <-
 PARENT_OMISSIONS["SdrfDesign.files"] <- "the runs are `records`, a data.frame; its rows are the files"
 
 FIELD_CHECKS[["sdrf design"]] <- list("sdrf_design_PXD067622.json", function(d) mz$sdrf_parse_design(d))
+
+# Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "sdrf assess", fixture = "sdrf_assess_PXD000070.json")
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "sdrf assess", fixture = "sdrf_assess_skeleton.json")

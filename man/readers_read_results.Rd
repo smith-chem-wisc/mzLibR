@@ -36,7 +36,7 @@ readers_read_results(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 \description{
 Read a result file through the cross-format quantifiable view: sequence, retention time, charge, theoretical mass, decoy flag and protein groups, the same columns for every format that offers it.
 
-Only the three file types offering the \code{"quantifiable"} view can be read this way — check
+Only the file types offering the \code{"quantifiable"} view can be read this way — check
 \code{\link{readers_identify}} first, or catch the error, which names the views the file does have.
 }
 \value{
@@ -47,7 +47,7 @@ An \code{mzlibr_result_records}, carrying the file's \code{reader}, \code{absent
   starting \code{offset} records in; \code{rows_not_read} counts data rows that did not become records.
 
   \code{records} is a data.frame of the record view, one row per record, or \code{NULL} when \code{out} was
-  given. \code{retention_time} is in minutes for all four formats today, and
+  given. \code{retention_time} is in minutes for every quantifiable format today, and
   \code{retention_time_unit} says so per file; \code{charge_state} is a charge; \code{monoisotopic_mass} is a
   neutral mass in Da. \code{is_decoy} is \code{NA} where the format records no decoy label.
 

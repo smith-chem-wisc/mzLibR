@@ -59,3 +59,6 @@ PARENT_MAP[c("proteins_annotate_go", "proteins_update_go")] <- c("proteins.annot
 
 FIELD_CHECKS[["proteins annotate-go"]] <- list("proteins_annotate_go_pxd036557.json", function(d) mz$proteins_parse_go_annotations(d))
 FIELD_CHECKS[["proteins update-go"]] <- list("proteins_update_go.json", function(d) mz$proteins_parse_go_update(d))
+
+# Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "proteins read", fixture = "proteins_read_accessions.json")

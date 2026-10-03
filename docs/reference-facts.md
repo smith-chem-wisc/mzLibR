@@ -119,7 +119,28 @@ Rscript scripts/stage-replay.R
 ```
 
 An example that needs the network goes in `\donttest{}` and only runs when a bridge is configured.
-The pkgdown articles in `vignettes/articles/` replay the same way, in a hidden setup chunk.
+
+## Articles that run
+
+The articles are the package's vignettes, `vignettes/*.Rmd`, and replay the same way, in a hidden
+setup chunk. `R CMD build` builds them and `R CMD check` runs every chunk again, on every platform
+in CI, so an article that errors fails the pull request. The pkgdown site shows the same pages.
+
+Each article keeps four promises, which `scripts/docs-lint.R` checks:
+
+- it opens with a `| question | function | mzLib |` table, so a reader finds the call for their
+  question before the prose;
+- every chunk runs; one that cannot (it downloads, say) has `eval = FALSE` and opens with
+  `# Not run: <reason>`;
+- it ends with **What to cite**, a block `scripts/render-cite.R` renders from the specs' `cite`
+  entries, so a DOI is typed once, in the bridge;
+- its prose states no count of formats or verbs and no mzLib version. Those go stale at the next
+  release: show a count as executed output, and put a version in NEWS.md. The same rule covers
+  the README and the `#'` help text.
+
+Real-data examples replay recordings made from the real bridge on mzLib's own test data, copied
+byte for byte from pyMzLib's fixtures and staged through `REPLAY_EXTRA`. Reference tables a
+reader opens directly (limma's and metafor's output, say) ship in `inst/extdata/`.
 
 ## In CI
 
@@ -130,6 +151,9 @@ The pkgdown articles in `vignettes/articles/` replay the same way, in a hidden s
 | `ci.yml` `docs` | `build-man.R`, then `git diff --exit-code man/` | a help page is stale |
 | `ci.yml` `docs` | `name-parity.R`, then `git diff --exit-code docs/name-parity.md` | any finding above, or a stale page |
 | `ci.yml` `check` | `R CMD check --as-cran` on three OSes and oldrel | an example errors |
+| `ci.yml` `docs` | `render-cite.R --check` | an article's citations no longer match its specs |
+| `ci.yml` `docs` | `docs-lint.R` | an article loses its question table, cite block or a runnable chunk, or prose states a count or version |
+| `ci.yml` `check` | `R CMD check --as-cran`, vignettes built and re-run | an article errors |
 | `pkgdown.yml` | `pkgdown::build_site_github_pages()` | an article or example errors |
 
 ## When you project a new verb
@@ -140,4 +164,6 @@ The pkgdown articles in `vignettes/articles/` replay the same way, in a hidden s
    Declare any deviation in `scripts/spec-facts.R`.
 4. `R CMD INSTALL .`, then `stage-replay.R`, `build-man.R` and `name-parity.R`, until the last is
    clean. Commit what they write.
-5. Add the verb to `NEWS.md`, and report the R spelling and `since` version back to the bridge.
+5. Teach the verb in its module's article: a row in the question table, a chunk that runs on real
+   data, then `render-cite.R` and `docs-lint.R`.
+6. Add the verb to `NEWS.md`, and report the R spelling and `since` version back to the bridge.

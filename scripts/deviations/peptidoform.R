@@ -32,3 +32,6 @@ PARENT_OMISSIONS[c("Peptide.is_modified", "Digest.fragment_count")] <- c(
 )
 
 FIELD_CHECKS[["peptidoform fragments"]] <- list("peptidoform_P02768_small.json", function(d) mz$peptidoform_parse(d))
+
+# Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "peptidoform fragments", fixture = "peptidoform_P02768.json")

@@ -195,7 +195,7 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #' cross-format projection of it.
 #'
 #' - `"quantifiable"` — the cross-format record view, and the input [flashlfq_quantify()]
-#'   accepts. **Exactly four file types have it**: MetaMorpheus `psmtsv` and `osmtsv`,
+#'   accepts. **Few file types have it**: MetaMorpheus `psmtsv` and `osmtsv`,
 #'   `MsFraggerPsm`, and DIA-NN `DiaNnReport`.
 #' - `"ms1_features"` — deconvolved MS1 features (TopFD `_ms1.feature`, Dinosaur).
 #' - `"spectra"` — the file is spectra, not results.
@@ -262,7 +262,7 @@ readers_identify <- function(path, timeout = 60) {
 
 #' Read a result file into the uniform record view
 #'
-#' Only the three file types offering the `"quantifiable"` view can be read this way — check
+#' Only the file types offering the `"quantifiable"` view can be read this way — check
 #' [readers_identify()] first, or catch the error, which names the views the file does have.
 #'
 #' @param path Path to a MetaMorpheus `.psmtsv` / `.osmtsv` or an MSFragger `psm.tsv`.
@@ -292,7 +292,7 @@ readers_identify <- function(path, timeout = 60) {
 #'   starting `offset` records in; `rows_not_read` counts data rows that did not become records.
 #'
 #'   `records` is a data.frame of the record view, one row per record, or `NULL` when `out` was
-#'   given. `retention_time` is in minutes for all four formats today, and
+#'   given. `retention_time` is in minutes for every quantifiable format today, and
 #'   `retention_time_unit` says so per file; `charge_state` is a charge; `monoisotopic_mass` is a
 #'   neutral mass in Da. `is_decoy` is `NA` where the format records no decoy label.
 #'
@@ -729,7 +729,7 @@ readers_read_records <- function(path, limit = NULL, offset = 0, out = NULL, tim
 
 #' Read deconvolved MS1 features, in the cross-format `ms1_features` view
 #'
-#' Two file types offer it: TopFD/FLASHDeconv `_ms1.feature` and Dinosaur `.feature.tsv`. A file
+#' TopFD/FLASHDeconv `_ms1.feature` and Dinosaur `.feature.tsv` offer it. A file
 #' without the view raises, with a message naming the views it does have.
 #'
 #' @param path Path to an `_ms1.feature` or Dinosaur `.feature.tsv`.
@@ -781,7 +781,7 @@ readers_read_features <- function(path, limit = NULL, offset = 0, out = NULL, ti
 
 #' Read identifications, in the cross-format `spectral_match` view
 #'
-#' Six file types offer it: MsPathFinderT's targets, decoys and combined results, Casanovo's
+#' It is offered by MsPathFinderT's targets, decoys and combined results, Casanovo's
 #' `.mztab`, and mzIdentML `.mzid` and `.mzid.gz` - the format most search engines can export. These
 #' are the identification formats that share no *file*-level interface, so [readers_read_results()]
 #' cannot reach them.
@@ -857,7 +857,7 @@ readers_read_matches <- function(path, limit = NULL, offset = 0, scores = FALSE,
 
 #' Read the scans of a spectra file: headers always, peaks on request
 #'
-#' Seven file types offer the `spectra` view: `.mzML`, `.mgf`, `_ms1.msalign`, `_ms2.msalign`,
+#' The `spectra` view is offered by `.mzML`, `.mgf`, `_ms1.msalign`, `_ms2.msalign`,
 #' Thermo `.raw`, Bruker `.d` and timsTOF `.d`.
 #'
 #' Retention times here **are** in minutes for every format - mzLib's spectra readers convert at

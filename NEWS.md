@@ -144,3 +144,17 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   network.
 * New `?mzlib_error` documents the condition classes and how to handle each.
 * A pkgdown site, with an article for each module.
+* The articles are now vignettes, so `R CMD check` builds and runs every one of them, on every
+  platform, against the replay bridge. Each opens with a question -> function -> mzLib table,
+  ends with what to cite (rendered from the specs' DOIs, each checked to resolve), and states no
+  count of formats or verbs and no mzLib version in its prose; `scripts/docs-lint.R` holds all of
+  that in CI.
+* The articles teach on real data recorded from the real bridge: a FlashLFQ run with
+  match-between-runs on mzLib's K562 pair (and median polish reproducing its protein intensities
+  for every group), the whole albumin digest, PXD000001's live FTP listing, an RNA search's
+  transcript groups, and the MALAT1 dilution series for `stats_fit()`.
+* Corrected from those runs: the K562 peptide roll-up shows 21 of the 140 MBR transfers, not 52;
+  `use_pep_q_value` filters nothing, it changes the q-value FlashLFQ carries; PXD000001's FTP
+  tree now holds 14 files.
+* `knitr` and `rmarkdown` join `Suggests`, for the vignettes. The package still imports nothing
+  but base R.

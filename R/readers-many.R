@@ -72,7 +72,7 @@ readers_identify_many <- function(paths, threads = 1, on_error = "fail", timeout
 #'
 #' @return An `mzlibr_read_batch`. `records` begins with `source_index` (1-based, into `paths`) and
 #'   `source_path`, then the columns of [readers_read_results()]: `retention_time` in each file's
-#'   own `retention_time_unit` - minutes for all four formats today - `charge_state` a
+#'   own `retention_time_unit` - minutes for every quantifiable format today - `charge_state` a
 #'   charge, `monoisotopic_mass` in Da. Convert times with [readers_retention_time_in_minutes()],
 #'   which applies each file's unit to its rows. `files` has one row per input: `record_count` in
 #'   records, `rows_not_read` in rows, `retention_time_unit`, `caveats`, `absent_fields` and the
