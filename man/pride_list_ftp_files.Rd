@@ -37,7 +37,7 @@ A data.frame with one row per file and columns \code{relative_path}, \code{file_
   resolves the project before walking, so a typo fails loudly rather than returning nothing.
 }
 \section{Wraps}{
-Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesFromFtpAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -74,7 +74,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{accession missing or blank}
-\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; mzLib#1350 is not merged): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup or on any directory listing, or a body cut off in transit}
+\item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup or on any directory listing, or a body cut off in transit}
 \item{\code{mzlib_bridge_error} (correctness)}{no project has that accession, or it has no publication date to locate its directory (MzLibException; the bindings re-map it to their not-found error); a directory listing answering any other status; nesting deeper than 64 levels (MzLibException: the listing may be cyclic)}
 }
 }

@@ -21,7 +21,8 @@ recorded_payload <- function(name) {
 
 test_that("every format mzLib recognises becomes a row", {
   formats <- recorded_formats()
-  expect_identical(nrow(formats), 36L)
+  # 36 -> 38 with mzLib 1.0.593 (#1388's RNA transcript-group and quantified-oligo tables).
+  expect_identical(nrow(formats), 38L)
   expect_true(is.data.frame(formats))
   expect_false(is.factor(formats$file_type))
 })
@@ -41,13 +42,15 @@ test_that("exactly four file types are quantifiable", {
 })
 
 test_that("most formats have no views at all, and that is a real answer", {
-  # 17 of 36. An empty views list means mzLib can parse the file but offers no cross-format
+  # 19 of 38. An empty views list means mzLib can parse the file but offers no cross-format
   # projection of it - not that anything failed. It moved from 14 of 31 at mzLib 1.0.592, which
   # added Pytheas and the MetaMorpheus and FlashLFQ quantification tables (read by their own
-  # verbs, not a view) and mzIdentML (which joins spectral_match).
+  # verbs, not a view) and mzIdentML (which joins spectral_match), and from 17 of 36 at mzLib
+  # 1.0.593, whose RNA transcript-group and quantified-oligo tables (#1388) subclass those two
+  # readers and add no shared interface.
   formats <- recorded_formats()
   viewless <- vapply(formats$views, function(v) length(v) == 0L, logical(1L))
-  expect_identical(sum(viewless), 17L)
+  expect_identical(sum(viewless), 19L)
 })
 
 test_that("the view vocabulary is the four documented families", {
@@ -266,20 +269,20 @@ test_that("a large limit is not written in scientific notation", {
 
 # ---------------------------------------------------------------- against a real mzLib
 
-test_that("LIVE: mzLib still recognises 36 formats, four of them quantifiable", {
+test_that("LIVE: mzLib still recognises 38 formats, four of them quantifiable", {
   # Enumerated from mzLib itself, so this is the test that notices when the installed version
-  # changes what it supports - which is exactly when the numbers in ?readers_formats go stale.
+  # changes what it supports.
   #
-  # 36 and 17 are mzLib 1.0.592's, in the bridge pyMzLib 0.2.0 publishes, the first to list its
-  # verbs; an older bridge skips rather than failing.
-  skip_unless_bridge_has("readers read-occupancy")
+  # 38 and 19 are mzLib 1.0.593's. Its bridge is the first to dispatch `sdrf design`, so that is
+  # what tells it apart; an older bridge skips rather than failing.
+  skip_unless_bridge_has("sdrf design")
   options(mzlibr.bridge = live_bridge)
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
   formats <- readers_formats()
-  expect_identical(nrow(formats), 36L)
+  expect_identical(nrow(formats), 38L)
   expect_identical(sum(formats$is_quantifiable), 4L)
-  expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 17L)
+  expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 19L)
 })
 
 test_that("LIVE: identify dispatches on extension and does not validate contents", {

@@ -4,18 +4,18 @@
 # Spectra files are read here too, not just search output: readers_read_spectra() reads .mzML,
 # Thermo .raw, Bruker .d, timsTOF .d, .mgf and msalign - scan headers always, peaks on request.
 #
-# mzLib recognises 36 file types in all - those instrument and deconvolution formats, plus the
-# output of a dozen search tools: MetaMorpheus, MSFragger, TopPIC, TopFD, MsPathFinderT, Crux,
-# Casanovo, FlashDeconv, Dinosaur, DIA-NN, FlashLFQ - and dispatches each to a parser it
-# maintains. This module asks it what a path is.
+# mzLib recognises those instrument and deconvolution formats, plus the output of a dozen search
+# tools: MetaMorpheus, MSFragger, TopPIC, TopFD, MsPathFinderT, Crux, Casanovo, FlashDeconv,
+# Dinosaur, DIA-NN, FlashLFQ - and dispatches each to a parser it maintains.
+# readers_formats() lists them, from mzLib itself; no count is written here, because it rots. This module asks it what a path is.
 #
-# The temptation is to describe mzLib as reading 36 formats into one uniform shape. It does not,
+# The temptation is to describe mzLib as reading every format into one uniform shape. It does not,
 # and the whole design of this module is about not letting anyone believe it does. The formats
-# fall into disjoint families and 17 of the 36 belong to no family at all, so an empty `views` is
+# fall into disjoint families and about half belong to no family at all, so an empty `views` is
 # a real and common answer rather than a failure.
 
 # The view that matters most: the cross-format record projection, and the input
-# `flashlfq_quantify()` accepts. Exactly four of the 36 file types have it.
+# `flashlfq_quantify()` accepts. Exactly four file types have it.
 READERS_QUANTIFIABLE <- "quantifiable"
 
 # ---------------------------------------------------------------- parsing
@@ -189,8 +189,8 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #'
 #' @section Views, and why most formats have none:
 #'
-#' It is tempting to read "36 formats" as "36 formats in one uniform shape". They are not. The
-#' formats fall into disjoint families, and **17 of the 36 belong to none of them** — an empty
+#' It is tempting to read "mzLib reads these formats" as "in one uniform shape". It does not. The
+#' formats fall into disjoint families, and **about half belong to none of them** — an empty
 #' `views` is a real and common answer, meaning mzLib can parse the file but offers no
 #' cross-format projection of it.
 #'
@@ -292,7 +292,7 @@ readers_identify <- function(path, timeout = 60) {
 #'   starting `offset` records in; `rows_not_read` counts data rows that did not become records.
 #'
 #'   `records` is a data.frame of the record view, one row per record, or `NULL` when `out` was
-#'   given. `retention_time` is in minutes for all four formats at mzLib 1.0.592, and
+#'   given. `retention_time` is in minutes for all four formats today, and
 #'   `retention_time_unit` says so per file; `charge_state` is a charge; `monoisotopic_mass` is a
 #'   neutral mass in Da. `is_decoy` is `NA` where the format records no decoy label.
 #'
@@ -478,11 +478,11 @@ print.mzlibr_result_records <- function(x, ...) {
 
 # ---------------------------------------------------------------- exhaustive coverage
 #
-# `readers_read_results()` projects `IQuantifiableResultFile`, which four of the 36 file types
+# `readers_read_results()` projects `IQuantifiableResultFile`, which four of the file types
 # implement. The four verbs below reach the rest, in two different ways because the gap has two
 # shapes.
 #
-# `readers_read_records()` reads ANY of the 36 by projecting each format's own record type, so
+# `readers_read_records()` reads ANY of them by projecting each format's own record type, so
 # its columns are deliberately not uniform - a TopPIC file gives TopPIC's own 36. The other three
 # project the remaining cross-format views, and are uniform in the way `read_results` is.
 #
@@ -659,10 +659,10 @@ readers_parse_quant_records <- function(data, class, retention_default = NA_char
 
 #' Read any file mzLib recognises, into that format's own fields
 #'
-#' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. All 36 file
-#' types, including the 17 that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
-#' peptide and protein tables, the FlashDeconv formats, SDRF - which no other `readers_` function
-#' can touch.
+#' The exhaustive verb: if [readers_identify()] succeeds on a path, this reads it. Every file
+#' type, including those that belong to no cross-format view at all - TopPIC, Crux, MSFragger's
+#' peptide and protein tables, the FlashDeconv formats, MetaMorpheus's protein-group and peptide
+#' tables and their RNA counterparts, SDRF - which no other `readers_` function can touch.
 #'
 #' **For SDRF, use [sdrf_read()] instead.** This function joins each SDRF row's cells into one
 #' semicolon-separated string, and SDRF's `NT=...;AC=...` grammar puts semicolons inside cells, so

@@ -63,7 +63,7 @@ peptides it contains as unique, so any failure raises.
 
 }
 \section{Wraps}{
-Wire verb \code{proteins classify-peptides}. Generated from the bridge's verb spec \code{proteins.classify-peptides.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins classify-peptides}. Generated from the bridge's verb spec \code{proteins.classify-peptides.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/PeptideUniqueness.cs}{\code{PeptideUniquenessClassifier.Classify}} in \code{mzLib/Proteomics/Protein/PeptideUniqueness.cs} at mzLib \code{23c2490e}
@@ -135,13 +135,12 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item Rust and R spellings are intended, not yet implemented.
 \item The gene-key function is mzLib's DefaultGeneKeys and is not selectable on the wire.
 \item The peptides param travels on stdin, not as an option; the spec format has no stdin field yet, so its doc says so.
 }

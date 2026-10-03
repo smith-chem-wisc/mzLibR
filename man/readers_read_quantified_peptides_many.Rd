@@ -38,7 +38,7 @@ An \code{mzlibr_read_batch}: \code{records}, the long table, begins with \code{s
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-quantified-peptides} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-quantified-peptides.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-quantified-peptides} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-quantified-peptides.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs}{\code{QuantifiedPeptideFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs} at mzLib \code{23c2490e}
@@ -120,13 +120,12 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 \item quant median-polish still parses QuantifiedPeptides.tsv with a private reader (Quantification.cs); switching it to mzLib's QuantifiedPeptideFile is out of this verb's scope.
 \item No IsoTracker fixture exists, so retention_time and peak_order have only been seen absent.
 }

@@ -84,7 +84,7 @@ has those variants applied by mzLib, which renames the accession (\code{P38936_C
 
 }
 \section{Wraps}{
-Wire verb \code{proteins read}. Generated from the bridge's verb spec \code{proteins.read.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins read}. Generated from the bridge's verb spec \code{proteins.read.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}
@@ -201,13 +201,12 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item Rust (mzlib::proteins::read_with + ProteinReadOptions, Table enum) and R (proteins_read) spellings are intended, not yet implemented; the checker cannot verify them.
 \item files[] is always present, with \code{--path} too, instead of BULK.md §3's flattened single-file block: a new verb has no pre-existing single-file shape to preserve, and one shape is simpler for every binding. Confirm or amend BULK.md.
 \item Two lists sharing stdin, separated by a line holding only '--', is new wire grammar (also used by proteins classify-peptides). It belongs in CONTRACT.md or BULK.md if adopted.
 \item result.tables (go_terms, ensembl_genes) is not validated by tools/check_verbs.py, which checks only 'columns'; the pyMzLib tests pin them.

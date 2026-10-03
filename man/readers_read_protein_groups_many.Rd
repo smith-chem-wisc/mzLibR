@@ -43,7 +43,7 @@ An \code{mzlibr_read_batch}. \code{records} is the long table: \code{source_inde
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-protein-groups} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-protein-groups} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs}{\code{ProteinGroupFromTsvFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs} at mzLib \code{23c2490e}
@@ -111,6 +111,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \itemize{
 \item The table is UNFILTERED as MetaMorpheus writes it: decoys, contaminants and groups above 1\% FDR are all rows (ProteinGroupFromTsv.cs:15). Filter on q_value and decoy_contaminant_target before counting.
 \item Long format: one row per group per sample group. offset and limit count GROUPS, and returned_count counts rows.
+\item A table MetaMorpheus wrote without label-free quantification (AllProteinGroups.tsv, <file>_ProteinGroups.tsv; readable from mzLib 1.0.593, #1365) has SpectralCount_ columns but no Intensity_ columns, so intensity is in absent_fields: no basis, not zero.
 \item sample_label is the header label verbatim; condition, replicate and channel cannot be recovered from it (ProteinGroupFromTsv.cs:103).
 \item A blank intensity is null, not zero (ProteinGroupFromTsv.cs:114). An isobaric file has one counting label and one intensity label per channel, so a row can carry only spectral_count or only intensity.
 \item No member is a leading protein: members are sorted by accession (ProteinGroupFromTsv.cs:17).
@@ -129,13 +130,12 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 \item The group-level columns carried beside each sample (identity, q-value, decoy label) are a choice made here; coverage, masses and counts stay in read-records. Revisit if every binding ends up joining for the same field.
 \item Only the MetaMorpheus 1.1.11 fixture exists (label-free); no isobaric or 1.2+ (BioPolymer ...) header table has been read through this verb yet.
 }

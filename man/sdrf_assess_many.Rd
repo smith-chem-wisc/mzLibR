@@ -39,7 +39,7 @@ An \code{mzlibr_sdrf_assessment_batch}: \code{file_count} documents given, \code
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf assess} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{sdrf.assess.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf assess} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{sdrf.assess.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfSampleInformativeness.cs}{\code{SdrfSampleInformativeness.Assess}} in \code{mzLib/Readers/Sdrf/SdrfSampleInformativeness.cs} at mzLib \code{23c2490e}
@@ -110,15 +110,13 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
 \item fill_rate is a C# double that serialises 1.0 as 1; bindings must read it as a float.
-\item since.pymzlib is null until released; Rust and R are not yet ported.
-\item Bulk spellings are the cross-binding decision of 2026-09-23: a separate <verb>_many in every binding (R too, not vectorisation). Rust and R names here are intended, not yet ported.
 }
 }
 \references{

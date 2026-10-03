@@ -9,7 +9,9 @@ readers_read_quantified_peptides(path, limit = NULL, offset = 0, out = NULL,
 }
 \arguments{
 \item{path}{Path to a FlashLFQ \code{QuantifiedPeptides.tsv} or MetaMorpheus
-  \code{AllQuantifiedPeptides.tsv} (\code{\link{readers_identify}} reports \code{FlashLFQQuantifiedPeptide}).}
+  \code{AllQuantifiedPeptides.tsv} (\code{\link{readers_identify}} reports \code{FlashLFQQuantifiedPeptide}), or,
+  since mzLib #1388, an RNA search's \code{AllQuantifiedOligos.tsv}, with the oligonucleotide in
+  \code{sequence}.}
 
 \item{limit}{Maximum peptides to return - peptides, not rows; each gives one row per sample.
   \code{NULL}, the default, returns all of them.}
@@ -48,7 +50,7 @@ An \code{mzlibr_quantified_peptide_records}. \code{record_count} counts the pept
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-quantified-peptides}. Generated from the bridge's verb spec \code{readers.read-quantified-peptides.yaml} (bridge commit \code{5db922d4cfe1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-quantified-peptides}. Generated from the bridge's verb spec \code{readers.read-quantified-peptides.yaml} (bridge commit \code{766de5614f52}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs}{\code{QuantifiedPeptideFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs} at mzLib \code{23c2490e}
@@ -57,7 +59,7 @@ Wire verb \code{readers read-quantified-peptides}. Generated from the bridge's v
 }
 \section{Parameters: units, ranges and defaults}{
 \describe{
-\item{\code{path}}{path; required. A FlashLFQ QuantifiedPeptides.tsv or MetaMorpheus AllQuantifiedPeptides.tsv (readers identify reports FlashLFQQuantifiedPeptide).}
+\item{\code{path}}{path; required. A FlashLFQ QuantifiedPeptides.tsv or MetaMorpheus AllQuantifiedPeptides.tsv (readers identify reports FlashLFQQuantifiedPeptide), or an RNA search's AllQuantifiedOligos.tsv (mzLib 1.0.593, #1388: FlashLFQQuantifiedOligo, whose reader subclasses the peptide one; sequence then holds an oligonucleotide).}
 \item{\code{offset}}{int; in \strong{peptides}; default \code{0}; range \code{>= 0}. Skip this many peptides (each gives one row per sample). A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
 \item{\code{limit}}{int; in \strong{peptides}; default absent; range \code{>= 0}. Return at most this many peptides (each gives one row per sample). Absent means no limit; there is deliberately no default cap.}
 \item{\code{out}}{path; default absent. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created.}
@@ -135,13 +137,12 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib not yet shipped; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The _many spellings (py, rust, r) follow the 2026-09-23 cross-binding decision; Rust and R names here are intended, not yet ported, and since.pymzlib stays null until release.
 \item quant median-polish still parses QuantifiedPeptides.tsv with a private reader (Quantification.cs); switching it to mzLib's QuantifiedPeptideFile is out of this verb's scope.
 \item No IsoTracker fixture exists, so retention_time and peak_order have only been seen absent.
 }

@@ -3,9 +3,31 @@
 The first release. Versions follow each wire verb's `since.mzlibr` in the bridge's verb specs,
 which every help page's **Since** section renders.
 
-This release projects mzLib 1.0.592. The verbs marked *needs the pyMzLib 0.2.0 bridge* below are
-new in the bridge pyMzLib 0.2.0 publishes; with an older bridge they are refused, naming the
-release they need.
+This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib 0.2.0 bridge* or *needs
+the pyMzLib 0.3.0 bridge* below are new in the bridge that release publishes; with an older bridge
+they are refused, naming the release they need. Until pyMzLib 0.3.0 is published,
+`mzlibr_install_bridge()` still installs the 0.2.0 bridge (mzLib 1.0.592).
+
+## mzLib 1.0.593
+
+* `readers_read_protein_groups()`, `readers_read_quantified_peptides()` and
+  `readers_read_occupancy()` read an RNA search's `AllQuantifiedTranscriptGroups.tsv` and
+  `AllQuantifiedOligos.tsv` (mzLib #1388). mzLib reads them with subclasses of the protein-group
+  and peptide readers, so the columns keep their protein names: `protein_group_name` is the
+  transcript group, `sequence` the oligonucleotide, and occupancy names RNA modifications.
+* MetaMorpheus protein-group tables written without quantification now read (mzLib #1365):
+  `AllProteinGroups.tsv` and each file's `<file>_ProteinGroups.tsv` failed with `Tsv file type not
+  supported`, and now read as `MetaMorpheusQuantifiedProteinGroups`, with `intensity` in
+  `absent_fields`.
+* Four shipped modifications now write their Unimod accession in `pro_forma` (mzLib #1328):
+  `GG (Ubiquitination Site)` as `[UNIMOD:121]`, both `Myristoylation` entries as `[UNIMOD:45]` and
+  `EQIGG` as `[UNIMOD:846]`, instead of by name. Masses are unchanged.
+* A read fault on an existing `.mzid` is an `mzlib_bridge_error` naming the file (mzLib #1362),
+  where it was an `IOException`. A missing file is still an `mzlib_usage_error`.
+* PRIDE download errors name the file and the host, never the URL (mzLib #1350), so a reviewer
+  token in a query string cannot reach a log. They are still `mzlib_service_unavailable`.
+* The help pages no longer state how many file types mzLib recognises: `readers_formats()` asks
+  mzLib, and a number written down goes stale at the next release.
 
 ## Reading files
 
@@ -34,8 +56,8 @@ release they need.
   `readers_read_occupancy()` read MetaMorpheus and FlashLFQ quantification tables long, one row per
   record per sample, and per-site PTM occupancy (mzLib #1347; *needs the pyMzLib 0.2.0 bridge*).
 * `mzlibr_bridge_version()` reports `verbs`, every command the bridge dispatches.
-* mzLib now recognises 36 file types (Pytheas, mzIdentML and its gzipped form, and the
-  MetaMorpheus and FlashLFQ quantification tables are new), 17 of them with no cross-format view.
+* mzLib now recognises Pytheas, mzIdentML and its gzipped form, and the MetaMorpheus and
+  FlashLFQ quantification tables.
 * `limit = 0` is accepted by every reader, as the bridge allows: the envelope alone.
 
 ## SDRF-Proteomics
