@@ -5,8 +5,11 @@ peptidoform fragments	peptidoform_P02768_small.json
 pride files	pride_PXD000001_files.json
 pride ftp-files	pride_ftp_PXD000001.json
 pride search	pride_search_plasmodium.json
+proteins annotate-go	proteins_annotate_go_out.json
+proteins annotate-go	proteins_annotate_go_pxd036557.json
 proteins classify-peptides	proteins_classify_peptides.json
 proteins read	proteins_read_human.json
+proteins update-go	proteins_update_go.json
 quant flashlfq	flashlfq_small.json
 quant median-polish	median_polish_small.json
 readers formats	readers_formats.json

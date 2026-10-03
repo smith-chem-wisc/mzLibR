@@ -17,7 +17,9 @@
 #   * `--limit`/`--offset` must reproduce the recording's `returned_count` from its `record_count`
 #     (or `row_count`), and a `--flag` with a `<flag>_included` field must match it;
 #   * a `--paths-stdin` call fits only a bulk recording (per-input `files[]` entries carrying `path`,
-#     and no top-level `path`), and a one-path call only a one-document recording.
+#     and no top-level `path`), and a one-path call only a one-document recording;
+#   * a recording with a `written` key fits an `--out` call only if `written` is set, and a call
+#     without `--out` only if it is null.
 #
 # No fit, or more than one, is answered as a usage error naming every recording and why it did not
 # fit - so the example fails and says why, rather than printing something plausible.
@@ -121,6 +123,13 @@ replay_mismatch <- function(data, options) {
     is.null(data[["path"]])
   if (!is.null(options[["paths-stdin"]]) != bulk_recording) {
     return(if (bulk_recording) "a bulk (--paths-stdin) recording" else "a one-document recording")
+  }
+
+  # A recording that wrote a file answers only a call that asked for one, and the reverse: the
+  # payload's `written` block is the evidence, so an `out =` example cannot print a recording that
+  # wrote nothing.
+  if ("written" %in% names(data) && !is.null(options[["out"]]) != is.list(data[["written"]])) {
+    return(if (is.list(data[["written"]])) "a recording that wrote out=" else "a recording without out=")
   }
 
   # A filter the recording applied that the call did not ask for.

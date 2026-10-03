@@ -94,6 +94,13 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   pin; `proteins_classify_peptides()` calls each peptide `Unique`, `SharedWithinGene`,
   `SharedAcrossGenes` or `NotInDatabase`, with I and L one residue. One database or many, in one
   bridge call (mzLib #1336, #1338, #1348; *needs the pyMzLib 0.2.0 bridge*).
+* New `proteins_annotate_go()` annotates a stored MetaMorpheus protein-group table with Gene
+  Ontology terms: one row per (group, term) that any member holds, directly or through an
+  ancestor, naming the members that carry it, so consensus and direct-only views are filters on
+  the rows. Every non-decoy group gets a row, a term-less one saying why. It reads the go.obo you
+  name and never downloads one; `proteins_update_go()` is the one function that fetches the
+  current release, keeping the previous file beside it (mzLib #1353, #1366; *needs the pyMzLib
+  0.3.0 bridge*).
 
 ## Documentation
 
