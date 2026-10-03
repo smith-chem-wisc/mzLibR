@@ -3,9 +3,9 @@
 The first release. Versions follow each wire verb's `since.mzlibr` in the bridge's verb specs,
 which every help page's **Since** section renders.
 
-This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib 0.2.0 bridge* or *needs
-the pyMzLib 0.3.0 bridge* below are new in the bridge that release publishes; with an older bridge
-they are refused, naming the release they need. `mzlibr_install_bridge()` installs the bridge
+This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib 0.2.0 bridge*, *needs
+the pyMzLib 0.3.0 bridge* or *needs the pyMzLib 0.4.0 bridge* below are new in the bridge that
+release publishes; with an older bridge they are refused, naming the release they need. `mzlibr_install_bridge()` installs the bridge
 pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that release's SHA256SUMS.
 
 ## mzLib 1.0.593
@@ -89,6 +89,17 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   `pride_download_files()` list and fetch PRIDE Archive projects.
 * `pride_search()` finds PRIDE projects by keyword, one row per project, with dates as `Date`.
 * `peptidoform_fragments()` digests a UniProt entry and fragments its peptidoforms.
+* New `peptidoform_convert()` rewrites full sequences in another notation with mzLib's
+  `SequenceConversionService`. The main use is MetaMorpheus full sequences to Unimod accessions:
+  `[UniProt:N-acetylserine on S]SEQK` becomes `[UNIMOD:1]SEQK`, and dimethyllysine becomes
+  `UNIMOD:36`. One row per input, in order, in `records`, with mzLib's own verdict (`converted`,
+  `converted_with_warnings` or `failed`), the modifications it could not write, and its warnings.
+  `source` and `target` take any notation mzLib has registered; every result lists them. `mode` is
+  mzLib's `SequenceConversionHandlingMode`. **The ProForma target does not resolve UniProt
+  modifications** in this mzLib build (mzLib#1401) and writes them back by name; convert to Unimod
+  for those. The `pro_forma` column of `readers_read_records()` has the same gap (pyMzLib #75;
+  *needs the pyMzLib 0.4.0 bridge*, not yet published: `mzlibr_install_bridge()` still installs
+  0.3.0, which refuses it).
 * `flashlfq_quantify()` runs FlashLFQ label-free quantification with match-between-runs.
 * `flashlfq_median_polish()` re-runs FlashLFQ's protein median polish from a
   `QuantifiedPeptides.tsv` under a new experimental design, without re-reading spectra.

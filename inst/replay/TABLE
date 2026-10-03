@@ -3,6 +3,9 @@
 genes resolve	genes_resolve_human.json
 isobaric kits	isobaric_kits.json
 isobaric kits	isobaric_kits_TMT18.json
+peptidoform convert	peptidoform_convert_psmtsv.json
+peptidoform convert	peptidoform_convert_psmtsv_proforma.json
+peptidoform convert	peptidoform_convert_unimod.json
 peptidoform fragments	peptidoform_P02768.json
 peptidoform fragments	peptidoform_P02768_small.json
 pride files	pride_PXD000001_files.json
@@ -39,6 +42,7 @@ readers read-records	readers_records_mm_protein_groups.json
 readers read-records	readers_records_mzid_gz.json
 readers read-records	readers_records_toppic.json
 readers read-results	readers_results_fragger.json
+readers read-results	readers_results_psmtsv.json
 readers read-spectra	readers_many_spectra.json
 readers read-spectra	readers_spectra_mzml.json
 readers read-spectra	readers_spectra_peaks.json

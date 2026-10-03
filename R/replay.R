@@ -91,16 +91,29 @@ REPLAY_ECHOED_AS <- c(
   "max-mods" = "max_modifications",
   "max-isoforms" = "max_modification_isoforms",
   "psms" = "psm_file",
-  "peptides" = "peptides_file"
+  "peptides" = "peptides_file",
+  "from" = "source_format",
+  "to" = "target_format"
 )
 
 # Verbs whose input travels on stdin and is echoed in the recording, so a recording answers only a
 # call that sent the same input. Read only for these: other verbs may be given a terminal's stdin.
-REPLAY_STDIN_ECHO <- "quant flashlfq"
+REPLAY_STDIN_ECHO <- c("quant flashlfq", "peptidoform convert")
 
-# For quant flashlfq: the call's mzML runs must be the recording's runs, by file name.
-replay_stdin_mismatch <- function(data, stdin) {
+# The call's stdin must be the recording's input. quant flashlfq: the same mzML runs, by file
+# name. peptidoform convert: the same sequences, in the same order, as the recording's `input`
+# column.
+replay_stdin_mismatch <- function(data, stdin, verb = "quant flashlfq") {
   lines <- stdin[nzchar(trimws(stdin))]
+  if (identical(verb, "peptidoform convert")) {
+    columns <- data[["columns"]]
+    recorded <- if (is.list(columns)) wire_strings(columns[["input"]]) else character(0)
+    if (!identical(lines, recorded)) {
+      return(paste0("recorded for sequences ", paste(recorded, collapse = ", "), ", not ",
+        paste(lines, collapse = ", ")))
+    }
+    return("")
+  }
   sent <- sort(unique(vapply(lines, function(l) replay_base(trimws(strsplit(l, "\t", fixed = TRUE)[[1L]][1L])),
     character(1L), USE.NAMES = FALSE)))
   files <- data[["spectra_files"]]
@@ -277,7 +290,7 @@ replay_answer <- function(argv, dir = replay_dir(), stdin = character(0)) {
     data <- if (enveloped) parsed[["data"]] else parsed
     why <- if (is.list(data) && !is.null(names(data))) replay_mismatch(data, call$options) else ""
     if (!nzchar(why) && call$verb %in% REPLAY_STDIN_ECHO && is.list(data)) {
-      why <- replay_stdin_mismatch(data, stdin)
+      why <- replay_stdin_mismatch(data, stdin, call$verb)
     }
     if (nzchar(why)) {
       reasons <- c(reasons, paste0(fixture, ": ", why))

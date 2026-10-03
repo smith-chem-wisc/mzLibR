@@ -55,9 +55,12 @@ reference:
     contents:
       - starts_with("pride_")
   - title: Peptidoforms
-    desc: Digest a UniProt entry and fragment its peptidoforms.
+    desc: >
+      Digest a UniProt entry and fragment its peptidoforms, and convert full sequences to Unimod or
+      ProForma.
     contents:
       - peptidoform_fragments
+      - peptidoform_convert
       - starts_with("digest_")
       - starts_with("census_")
       - peptide_mz

@@ -10,6 +10,7 @@ Description: Calls the mzLib proteomics library from R over a language-neutral
     search tools, SDRF-Proteomics experimental-design files, protein databases
     ('UniProt' XML, FASTA) with 'Ensembl' gene resolution, PRIDE repository
     access, in-silico digestion and fragmentation of peptidoforms,
+    conversion of full sequences to 'Unimod' and 'ProForma' notation,
     label-free quantification with match-between-runs via FlashLFQ, Gene
     Ontology annotation of protein groups, and the moderated t-test of
     'limma', Benjamini-Hochberg adjustment and random-effects meta-analysis
