@@ -137,6 +137,16 @@ replay_mismatch <- function(data, options) {
   if (!is.null(ms_order) && replay_scalar(ms_order) && is.null(options[["ms-order"]])) {
     return(paste0("recorded with ms_order=", replay_show(ms_order), ", but the call has no ms-order"))
   }
+  # isobaric kits: one kit and every kit never stand in for each other, either way round.
+  if ("kit" %in% names(data)) {
+    kit <- data[["kit"]]
+    if (replay_scalar(kit) && is.null(options[["kit"]])) {
+      return(paste0("recorded for kit=", replay_show(kit), ", but the call asks for every kit"))
+    }
+    if (!replay_scalar(kit) && !is.null(options[["kit"]])) {
+      return("recorded for every kit, but the call asks for one")
+    }
+  }
 
   total <- data[["record_count"]]
   if (is.null(total) || !replay_scalar(total)) total <- data[["row_count"]]

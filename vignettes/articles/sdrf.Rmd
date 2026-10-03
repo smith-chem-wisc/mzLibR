@@ -137,6 +137,94 @@ drift
 drift$records[, c("finding_index", "kind", "value", "occurrences")]
 ```
 
+## Turn an SDRF into a quantification design
+
+FlashLFQ and MetaMorpheus need an experimental design: which runs are the same condition, which
+are biological replicates of one another, which are fractions of one sample. The SDRF already
+says all of that. A hand-written `ExperimentalDesign.tsv` is how most people still give it, and
+an invalid one is worse than none: MetaMorpheus skips quantification with one warning and no
+error.
+
+`sdrf_design()` reads the design out of the SDRF, or refuses and says why. It calls mzLib's
+`SdrfLabelFreeDesign`, which runs every check MetaMorpheus's own design validator runs and reports
+*all* the failures at once:
+
+| question | function | mzLib |
+|---|---|---|
+| the design, or every reason there is none | `sdrf_design(path, condition_columns)` | `SdrfLabelFreeDesign.Read` (#1363) |
+| only the runs one search read | `sdrf_design(..., searched_files = ...)` | `SdrfLabelFreeDesignOptions.SearchedFiles` |
+| it as `flashlfq_quantify(spectra = )` | `sdrf_design_spectra()` | `SdrfLabelFreeDesign.Files` |
+| it as `flashlfq_median_polish(design = )` | `sdrf_design_run_design()` | `SdrfLabelFreeDesign.Files` |
+| MetaMorpheus's `ExperimentalDesign.tsv` | `sdrf_design(..., out = "ExperimentalDesign.tsv")` | `WriteExperimentalDesignTsv` |
+
+The examples use mzLib's own design files: PXD067622, a TurboID proximity-labelling study (two
+genotypes by four treatments, three biological replicates each), and PXD049018 (two pulldowns,
+ten SDS-PAGE bands each).
+
+### A valid design
+
+PXD067622 has two factor columns. Say which make up the condition; their values are joined with
+`_`, in the order you give:
+
+```{r}
+both <- c("factor value[genotype]", "factor value[treatment]")
+d <- sdrf_design("PXD067622.sdrf.tsv", condition_columns = both)
+d
+head(d$records[, c("file_name", "condition", "biological_replicate")], 3)
+```
+
+`biological_replicate`, `technical_replicate` and `fraction` are **0-based** - mzLib's
+`SpectraFileInfo` coordinates, exactly what the FlashLFQ functions take - although every other
+position in mzLibR is 1-based. `out` writes MetaMorpheus's file, which starts at 1; mzLib adds the
+one when it writes, and nowhere else. Never add it yourself.
+
+Hand the design straight to FlashLFQ:
+
+```{r}
+head(sdrf_design_spectra(d), 2)
+```
+
+The SDRF names files without a directory. When your spectra live elsewhere, or the search read
+only some of them, pass `searched_files`: each must be named **exactly** (case and extension) by
+one row, rows for other files are dropped and listed in `notes`, and your paths become
+`full_path`.
+
+### A refusal lists every reason
+
+PXD049018's depositors did not say which pulldown was treated: its `factor value[treatment]` is
+`not available` on every row. A condition built from an unknown factor would pair samples nobody
+said were alike, so mzLib refuses, once per row, naming each file:
+
+```{r}
+refused <- sdrf_design("PXD049018.sdrf.tsv", condition_columns = both)
+refused$is_valid
+c(refusals = length(refused$refusals), files = refused$file_count)
+writeLines(refused$refusals[[1]])
+# The hand-offs refuse a refused design, naming every reason:
+inherits(try(sdrf_design_spectra(refused), silent = TRUE), "try-error")
+```
+
+**A refusal is a result, not an error.** `sdrf_design()` returns normally with `is_valid` `FALSE`;
+only the two hand-offs stop, so a refused design cannot reach FlashLFQ by accident. Without
+`condition_columns`, mzLib uses the document's only factor column - and PXD067622 has two, so
+leaving them undeclared is itself a refusal: joining every factor could split a condition on a
+nuisance factor.
+
+### Replicate numbers are ranked within each condition
+
+A drafted SDRF often copies the study-wide run index out of the file names. MetaMorpheus wants
+replicates numbered within each condition, so mzLib ranks them back, and records every
+renumbering in `notes`, the only place it is kept:
+
+```{r}
+ranked <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
+writeLines(ranked$notes[[2]])
+identical(ranked$records, d$records)
+```
+
+**Label-free only.** An isobaric SDRF needs a channel design that `sdrf_design()` does not build.
+For the channels themselves, see the isobaric kits article.
+
 ## Instead of `readers_read_records()`
 
 `readers_read_records()` recognises SDRF too, but joins each row into one semicolon-separated

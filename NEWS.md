@@ -70,6 +70,18 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   whether it describes its samples, and what its ages are in years; `sdrf_validate_many()`,
   `sdrf_assess_many()` and `sdrf_samples_many()` read a corpus in one bridge call
   (mzLib #1207, #1325, #1326, #1333, #1335).
+* New `sdrf_design()` reads the label-free experimental design MetaMorpheus and FlashLFQ take out
+  of an SDRF, with mzLib's `SdrfLabelFreeDesign`, or every reason it refuses to - all at once,
+  and as a result rather than an error. `sdrf_design_spectra()` and `sdrf_design_run_design()`
+  hand it to `flashlfq_quantify()` and `flashlfq_median_polish()`; `out` writes MetaMorpheus's
+  `ExperimentalDesign.tsv`. Its replicate and fraction coordinates stay 0-based, as the quant
+  functions take them (mzLib #1363; *needs the pyMzLib 0.3.0 bridge*).
+
+## Isobaric kits
+
+* New `isobaric_kits()` lists mzLib's TMT, TMTpro, iTRAQ and DiLeu kits with every channel's
+  label, theoretical reporter-ion m/z and matching window, or one kit by MetaMorpheus's name for
+  it; `channel_index` is 1-based (mzLib #1375; *needs the pyMzLib 0.3.0 bridge*).
 
 ## PRIDE, peptidoforms and quantification
 

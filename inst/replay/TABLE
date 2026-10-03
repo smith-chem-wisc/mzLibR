@@ -1,6 +1,8 @@
 # Written by scripts/stage-replay.R from the verb specs' examples. Do not edit; re-run it.
 # verb<TAB>recording: the recordings the stand-in bridge (R/replay.R) may answer each verb with.
 genes resolve	genes_resolve_human.json
+isobaric kits	isobaric_kits.json
+isobaric kits	isobaric_kits_TMT18.json
 peptidoform fragments	peptidoform_P02768_small.json
 pride files	pride_PXD000001_files.json
 pride ftp-files	pride_ftp_PXD000001.json
@@ -34,6 +36,9 @@ readers read-spectra	readers_many_spectra.json
 readers read-spectra	readers_spectra_mzml.json
 sdrf assess	sdrf_assess_bulk.json
 sdrf assess	sdrf_assess_cohort.json
+sdrf design	sdrf_design_PXD049018.json
+sdrf design	sdrf_design_PXD067622.json
+sdrf design	sdrf_design_studywide.json
 sdrf lint	sdrf_lint_cohort.json
 sdrf parse-age	sdrf_parse_age.json
 sdrf pool	sdrf_pool_two.json

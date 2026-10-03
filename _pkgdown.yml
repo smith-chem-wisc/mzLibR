@@ -34,12 +34,19 @@ reference:
     contents:
       - starts_with("readers_")
   - title: SDRF-Proteomics experimental designs
-    desc: Read one design file, or pool several into one analysis table.
+    desc: >
+      Read one design file or pool several, ask whether each is well-formed and informative, and
+      read the label-free design a quantification takes.
     contents:
       - starts_with("sdrf_")
+  - title: Isobaric kits
+    desc: TMT, TMTpro, iTRAQ and DiLeu channels, with mzLib's reporter-ion m/z.
+    contents:
+      - starts_with("isobaric_")
   - title: Protein databases
     desc: >
-      What an accession is, which gene it resolves to, and whether a peptide is unique.
+      What an accession is, which gene it resolves to, whether a peptide is unique, and what each
+      protein group does in Gene Ontology terms.
     contents:
       - starts_with("proteins_")
   - title: PRIDE Archive
@@ -74,6 +81,7 @@ articles:
     contents:
       - articles/readers
       - articles/sdrf
+      - articles/isobaric
       - articles/pride
       - articles/proteins
       - articles/peptidoforms

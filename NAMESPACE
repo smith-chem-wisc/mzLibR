@@ -94,6 +94,14 @@ S3method(print, mzlibr_sdrf_assessment)
 S3method(print, mzlibr_sdrf_samples)
 S3method(print, mzlibr_sdrf_ages)
 
+export(sdrf_design)
+export(sdrf_design_run_design)
+export(sdrf_design_spectra)
+S3method(print, mzlibr_sdrf_design)
+
+export(isobaric_kits)
+S3method(print, mzlibr_isobaric_kits)
+
 export(proteins_annotate_go)
 export(proteins_classify_peptides)
 export(proteins_read)

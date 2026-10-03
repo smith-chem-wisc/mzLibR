@@ -49,7 +49,7 @@ if (!dir.exists(python_src)) {
   stop("no pyMzLib source at ", python_src, " - pass <pyMzLib>/pkg/python/src/pymzlib")
 }
 
-modules <- c("pride", "peptidoform", "flashlfq", "readers", "sdrf", "proteins")
+modules <- c("pride", "peptidoform", "flashlfq", "readers", "sdrf", "proteins", "isobaric")
 
 suppressMessages(library(mzLibR))
 mz <- asNamespace("mzLibR")

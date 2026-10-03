@@ -102,3 +102,18 @@ FIELD_CHECKS[["sdrf lint"]] <- list("sdrf_lint_cohort.json", function(d) mz$sdrf
 FIELD_CHECKS[["sdrf assess"]] <- list("sdrf_assess_cohort.json", function(d) mz$sdrf_parse_assessment(d))
 FIELD_CHECKS[["sdrf samples"]] <- list("sdrf_samples_cohort.json", function(d) mz$sdrf_parse_samples(d))
 FIELD_CHECKS[["sdrf parse-age"]] <- list("sdrf_parse_age.json", function(d) mz$sdrf_parse_ages_result(d))
+
+# ---------------------------------------------------------------- design
+
+R_TABLE["sdrf design"] <- "records"
+R_DEVIATIONS[["sdrf design"]] <- list(
+  "param.searched-files-stdin" = as_r("searched_files", "the file vector itself; giving it sets the flag and fills stdin"),
+  "field.columns" = RECORDS
+)
+
+PARENT_MAP[c("sdrf_design", "sdrf_design_spectra", "sdrf_design_run_design")] <- c(
+  "sdrf.design", "SdrfDesign.spectra", "SdrfDesign.run_design"
+)
+PARENT_OMISSIONS["SdrfDesign.files"] <- "the runs are `records`, a data.frame; its rows are the files"
+
+FIELD_CHECKS[["sdrf design"]] <- list("sdrf_design_PXD067622.json", function(d) mz$sdrf_parse_design(d))
