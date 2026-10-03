@@ -89,6 +89,8 @@
 <code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code> re-runs FlashLFQ’s protein median polish from a <code>QuantifiedPeptides.tsv</code> under a new experimental design, without re-reading spectra.</li>
 <li>
 <code><a href="../reference/flashlfq_quantify.html">flashlfq_quantify()</a></code> no longer warns about mzLib#1111 when <code>max_threads</code> is not 1: mzLib#1155 fixed it inside the pinned bridge. The default stays 1 here (pyMzLib and mzLibRust use -1).</li>
+<li>
+<code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code> with no design no longer hangs in terminal R. A call that sends the bridge nothing on stdin now gives it an empty stdin rather than R’s own, which a terminal never closes. Every verb goes through the same transport, so none can wait on it (pyMzLib <a href="https://github.com/smith-chem-wisc/mzLibR/issues/73" class="external-link">#73</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="protein-databases-0-1-0">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases-0-1-0"></a></h3>
