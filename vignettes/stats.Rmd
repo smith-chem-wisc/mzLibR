@@ -1,0 +1,187 @@
+---
+title: "Differential abundance: limma's moderated t, BH and meta-analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Differential abundance: limma's moderated t, BH and meta-analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(mzLibR)
+# Every call on this page is answered from a recording of the real bridge, made on the reference
+# tables this package ships in extdata/stats/, so the page builds anywhere. With a bridge
+# installed, the same calls compute the answers.
+.mzlibr_example <- mzLibR:::replay_bridge_start()
+```
+
+Most proteomics differential-abundance analyses end in limma: a linear model per protein, with
+each protein's noisy variance shrunk toward what all the proteins together say (empirical-Bayes
+moderation, Smyth 2004). R has limma. These functions are the same method **computed by mzLib**,
+so an analysis in R reports the statistics MetaMorpheus and the Python and Rust bindings report,
+from the same code. The first section lets you check the agreement rather than take it on trust.
+
+| question | function | mzLib | method |
+|---|---|---|---|
+| which features change with a coefficient, and how surely? | `stats_fit()` | `LinearModel.Fit`, `EmpiricalBayes.Moderate` (#1341) | limma `lmFit` + `eBayes(legacy = TRUE)` |
+| which of my p-values survive a false discovery rate? | `stats_adjust()` | `MultipleTesting.BenjaminiHochberg` | Benjamini and Hochberg 1995 |
+| what is one feature's effect, pooled across studies? | `stats_meta()` | `RandomEffectsMeta.Pool` (#1357) | DerSimonian and Laird 1986, as metafor `rma(method = "DL")` |
+
+`stats_fit()` already adjusts its own p-values, so you need `stats_adjust()` only for p-values
+from somewhere else, and `stats_meta()` only when you have one estimate per study.
+
+## Check it against limma
+
+mzLib's test suite carries a frozen limma run: 400 features, 12 samples with missing values, a
+design of intercept, age in decades and sex, and limma's `eBayes` output for the age coefficient.
+This package ships the input and limma's output in `extdata/stats/`:
+
+```{r}
+data <- system.file("extdata", "stats", package = "mzLibR")
+fit <- stats_fit(file.path(data, "limma_reference_responses.tsv"),
+                 file.path(data, "limma_reference_design.tsv"), "age_decades")
+fit
+fit$coefficient_names
+```
+
+Compare every feature with what limma said:
+
+```{r}
+limma <- read.delim(file.path(data, "limma_ebayes_notrend.tsv"))
+worst <- function(ours, theirs) max(abs(ours - theirs) / abs(theirs))
+c(t = worst(fit$records$t, limma$t_age),
+  p_value = worst(fit$records$p_value, limma$p_age),
+  bh_adjusted = worst(fit$records$bh_adjusted, limma$bh_age),
+  posterior_variance = worst(fit$records$posterior_variance, limma$s2_post),
+  df_total = worst(fit$records$df_total, limma$df_total))
+```
+
+Every relative difference is below 1e-8. With limma installed you can run it yourself on the same
+input, `limma::eBayes(limma::lmFit(y, x), legacy = TRUE)`; this package's tests do exactly that,
+and `bh_adjusted` is `p.adjust(p_value, method = "BH")`.
+
+**Which limma: the *legacy* estimator.** This matches `eBayes(legacy = TRUE)`. When features have
+different residual degrees of freedom, limma 3.61 and later default to a different prior
+estimator. Omitting missing values per feature is exactly what makes residual df differ, so on
+most label-free data default limma reports a slightly different prior and different moderated
+statistics. The fit says when your input is such a case:
+
+```{r}
+fit$residual_df_differ
+```
+
+## A real experiment with a known answer
+
+mzLib's RNA test data (mzLib #1388) holds a dilution series - real mass-spectrometry data where the
+right answer is known in advance. Across 27 runs the lncRNA **MALAT1** was loaded at 500, 250 or
+125 ng, while the luciferase transcript **FLuc** stayed at 500 ng. Halving MALAT1 should read as a
+log2 fold change of -1, quartering it as -2.
+
+The responses are each oligo's log2 FlashLFQ intensity minus that run's median log2 intensity of
+the FLuc-only oligos (blank where FlashLFQ detected nothing), one row per oligo named
+`<transcript>:<sequence>`. The design has an intercept, so each coefficient is the change from the
+500 ng runs:
+
+```{r}
+design <- read.delim(file.path(data, "malat_dilution_design.tsv"))
+table(malat_250ng = design$malat_250ng, malat_125ng = design$malat_125ng)
+fit <- stats_fit(file.path(data, "malat_dilution_log2_vs_fluc.tsv"),
+                 file.path(data, "malat_dilution_design.tsv"), c("malat_250ng", "malat_125ng"))
+fit$status_counts
+```
+
+**Most oligos could not be fitted, and the fit says why rather than dropping them.** An oligo seen
+in two or three runs has no residual variance to estimate (`too_few_observations`); one seen only
+in the 500 ng runs cannot have a 250 ng effect (`rank_deficient`). Both are rows with `NA`
+statistics, and neither enters the Benjamini-Hochberg family.
+
+The question the experiment was designed to answer, as the median log2 fold change per
+transcript:
+
+```{r}
+fitted <- fit$records[fit$records$status == "fitted", ]
+fitted$transcript <- sub(":.*$", "", fitted$feature)
+keep <- fitted$transcript %in% c("MALAT1", "FLuc")
+aggregate(estimate ~ transcript + coefficient, data = fitted[keep, ], FUN = median)
+```
+
+**Half the MALAT1 reads as about -0.9 against a known -1; a quarter reads as about -1 against a
+known -2.** The second is compressed by about half. The statistics did not create that: the
+estimates are ordinary least squares, and moderation changes only their standard errors. FLuc
+sits near 0 largely by construction, since every run was normalised to it.
+
+Which oligos pass a 5% false discovery rate?
+
+```{r}
+hits <- fitted[!is.na(fitted$bh_adjusted) & fitted$bh_adjusted < 0.05, ]
+table(hits$coefficient, hits$transcript)
+```
+
+**Few, and not all of them true.** Two of the quarter-load calls are 20-mer oligos, loaded at a
+constant amount. A 5% false discovery rate bounds the expected share of wrong calls; it does not
+promise none, and a known-answer experiment is how you see it happen.
+
+## Your own data
+
+`stats_fit()` reads two tab-separated files: a **responses** table, one row per feature and one
+column per sample, and a **design**, one row per sample, matched to the responses' columns by
+name. `write.table(x, path, sep = "\t", quote = FALSE)` writes either. Three things decide
+whether the answer means what you think:
+
+- **Log-transform first.** The model is additive in whatever you pass; with log2 intensities,
+  `estimate` is a log2 fold change.
+- **A 0 is an observation.** Many quantification tables write 0 for "not measured". Make those
+  cells `NA`, or they are fitted as a real zero; `zero_count` counts them and a caveat says so.
+- **The design is used as written.** Include the intercept column yourself, and write each
+  comparison as its own column: contrasts are not implemented.
+
+## P-values from anywhere
+
+```{r}
+adjusted <- stats_adjust(c(0.0002, 0.004, 0.019, NA, 0.031, 0.2, NaN, 0.74))
+adjusted$tested_count
+adjusted$records
+```
+
+`NA` marks a feature that was not tested: it stays `NA` and is not counted in m. Do not write 1
+for it; that enlarges the family.
+
+## Pooling across studies
+
+`stats_meta()` takes one row per study - `feature`, `estimate`, `standard_error` - and pools each
+feature with the DerSimonian-Laird random-effects model. These are metafor's own reference cases,
+from mzLib's test data:
+
+```{r}
+inputs <- read.delim(file.path(data, "metafor_dl_inputs.tsv"))
+pooled <- stats_meta(data.frame(feature = inputs$case, estimate = inputs$yi,
+                                standard_error = inputs$sei))
+pooled$records[, c("feature", "studies", "estimate", "tau2", "i_squared", "direction_agree",
+                   "direction_disagree", "leave_one_out_max_delta")]
+metafor <- read.delim(file.path(data, "metafor_dl_results.tsv"))
+worst(pooled$records$estimate[match(metafor$case, pooled$records$feature)], metafor$estimate)
+```
+
+`direction_agree` and `leave_one_out_max_delta` are the two checks a reader of a pooled result
+asks for first: how many studies point the same way, and how far the answer moves without any one
+of them. The interval uses a normal reference and does not widen for few studies, so treat a
+pooled estimate from two or three studies with care.
+
+## What to cite
+
+The methods and resources behind the functions on this page, from their specs:
+
+<!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
+
+- [doi:10.1111/j.2517-6161.1995.tb02031.x](https://doi.org/10.1111/j.2517-6161.1995.tb02031.x): the step-up adjustment (Benjamini and Hochberg, J R Stat Soc B 57:289, 1995).
+- [doi:10.2202/1544-6115.1027](https://doi.org/10.2202/1544-6115.1027): the empirical-Bayes moderated t this verb computes (Smyth, Stat Appl Genet Mol Biol 3:3, 2004).
+- [doi:10.1093/nar/gkv007](https://doi.org/10.1093/nar/gkv007): limma, whose eBayes(legacy = TRUE) mzLib reproduces to 1e-8 relative (Ritchie et al., Nucleic Acids Res 43:e47, 2015).
+- [doi:10.1016/0197-2456(86)90046-2](https://doi.org/10.1016/0197-2456%2886%2990046-2): the moment estimator of the between-study variance (DerSimonian and Laird, Control Clin Trials 7:177, 1986).
+- [doi:10.18637/jss.v036.i03](https://doi.org/10.18637/jss.v036.i03): metafor, whose rma(method = 'DL') mzLib reproduces to 1e-8 relative (Viechtbauer, J Stat Softw 36(3), 2010).
+
+<!-- END cite -->
+
+```{r teardown, include = FALSE}
+mzLibR:::replay_bridge_stop(.mzlibr_example)
+```

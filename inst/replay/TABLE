@@ -1,15 +1,26 @@
 # Written by scripts/stage-replay.R from the verb specs' examples. Do not edit; re-run it.
 # verb<TAB>recording: the recordings the stand-in bridge (R/replay.R) may answer each verb with.
 genes resolve	genes_resolve_human.json
+isobaric kits	isobaric_kits.json
+isobaric kits	isobaric_kits_TMT18.json
+peptidoform fragments	peptidoform_P02768.json
 peptidoform fragments	peptidoform_P02768_small.json
 pride files	pride_PXD000001_files.json
-pride ftp-files	pride_ftp_PXD000001.json
+pride files	pride_PXD999999999_files.json
+pride ftp-files	pride_PXD000001_ftp_files.json
 pride search	pride_search_plasmodium.json
+proteins annotate-go	proteins_annotate_go_out.json
+proteins annotate-go	proteins_annotate_go_pxd036557.json
 proteins classify-peptides	proteins_classify_peptides.json
+proteins read	proteins_read_accessions.json
 proteins read	proteins_read_human.json
+proteins update-go	proteins_update_go.json
+quant flashlfq	flashlfq_k562_mbr.json
 quant flashlfq	flashlfq_small.json
+quant median-polish	median_polish_k562.json
 quant median-polish	median_polish_small.json
 readers formats	readers_formats.json
+readers identify	readers_identify_fragger.json
 readers identify	readers_identify_mzid.json
 readers identify	readers_many_identify.json
 readers read-features	readers_features_topfd.json
@@ -18,6 +29,7 @@ readers read-matches	readers_matches_mzid.json
 readers read-matches	readers_matches_mzid_scores.json
 readers read-occupancy	readers_occupancy.json
 readers read-protein-groups	readers_protein_groups.json
+readers read-protein-groups	readers_protein_groups_rna.json
 readers read-quantified-peptides	readers_quantified_peptides.json
 readers read-records	readers_many_records_mzid.json
 readers read-records	readers_records_crux.json
@@ -29,8 +41,14 @@ readers read-records	readers_records_toppic.json
 readers read-results	readers_results_fragger.json
 readers read-spectra	readers_many_spectra.json
 readers read-spectra	readers_spectra_mzml.json
+readers read-spectra	readers_spectra_peaks.json
+sdrf assess	sdrf_assess_PXD000070.json
 sdrf assess	sdrf_assess_bulk.json
 sdrf assess	sdrf_assess_cohort.json
+sdrf assess	sdrf_assess_skeleton.json
+sdrf design	sdrf_design_PXD049018.json
+sdrf design	sdrf_design_PXD067622.json
+sdrf design	sdrf_design_studywide.json
 sdrf lint	sdrf_lint_cohort.json
 sdrf parse-age	sdrf_parse_age.json
 sdrf pool	sdrf_pool_two.json
@@ -41,4 +59,8 @@ sdrf samples	sdrf_samples_cohort.json
 sdrf validate	sdrf_validate_bulk.json
 sdrf validate	sdrf_validate_cohort.json
 sdrf validate	sdrf_validate_skeleton.json
+stats adjust	stats_adjust.json
+stats fit	stats_fit_limma.json
+stats fit	stats_fit_malat.json
+stats meta	stats_meta_metafor.json
 version	bridge_version.json

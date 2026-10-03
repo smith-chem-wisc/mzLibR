@@ -9,10 +9,12 @@ Description: Calls the mzLib proteomics library from R over a language-neutral
     Bruker '.d', timsTOF, MGF and msalign) and the result files of a dozen
     search tools, SDRF-Proteomics experimental-design files, protein databases
     ('UniProt' XML, FASTA) with 'Ensembl' gene resolution, PRIDE repository
-    access, in-silico digestion and
-    fragmentation of peptidoforms, and label-free quantification with
-    match-between-runs via FlashLFQ. The bridge is a self-contained executable that carries its own
-    .NET runtime, so no .NET installation is required. It is shared with the
+    access, in-silico digestion and fragmentation of peptidoforms,
+    label-free quantification with match-between-runs via FlashLFQ, Gene
+    Ontology annotation of protein groups, and the moderated t-test of
+    'limma', Benjamini-Hochberg adjustment and random-effects meta-analysis
+    as mzLib computes them. The bridge is a self-contained executable that
+    carries its own .NET runtime, so no .NET installation is required. It is shared with the
     Python ('pyMzLib') and Rust ('mzLibRust') bindings, which means all three
     agree field for field.
 License: LGPL (>= 3)
@@ -20,5 +22,7 @@ URL: https://github.com/smith-chem-wisc/mzLibR
 BugReports: https://github.com/smith-chem-wisc/mzLibR/issues
 Depends: R (>= 3.5.0)
 Imports: utils
+Suggests: knitr, limma, metafor, rmarkdown
+VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: no

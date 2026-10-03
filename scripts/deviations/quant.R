@@ -48,3 +48,7 @@ PARENT_OMISSIONS[c(
 
 FIELD_CHECKS[["quant flashlfq"]] <- list("flashlfq_small.json", function(d) mz$flashlfq_parse(d))
 FIELD_CHECKS[["quant median-polish"]] <- list("median_polish_small.json", function(d) mz$flashlfq_parse_median_polish(d))
+
+# Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "quant flashlfq", fixture = "flashlfq_k562_mbr.json")
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "quant median-polish", fixture = "median_polish_k562.json")

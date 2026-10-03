@@ -1,12 +1,12 @@
 # The documentation site, built on every pull request and deployed from main.
 #
-# Building it runs every help-page example and every article under vignettes/articles/, against
-# the recorded-response bridge in R/replay.R, so a page that errors fails the pull request. The
-# site is deployed to the gh-pages branch only from main; GitHub Pages must be set to serve that
-# branch for https://smith-chem-wisc.github.io/mzLibR/ to show it.
+# Building it runs every help-page example and every article (the package's vignettes), against
+# the recorded-response bridge in R/replay.R, so a page that errors fails the pull request. R CMD
+# check runs the same vignettes on every platform in ci.yml. The site is deployed to the gh-pages
+# branch only from main; GitHub Pages must be set to serve that branch (Settings > Pages > Deploy
+# from a branch > gh-pages, / (root)) for https://smith-chem-wisc.github.io/mzLibR/ to show it.
 #
-# pkgdown, rmarkdown and pandoc are needed here and nowhere else: the package itself still imports
-# nothing but base R, and R CMD check never builds these articles (vignettes/ is .Rbuildignore'd).
+# The package itself still imports nothing but base R: knitr and rmarkdown are Suggests.
 name: pkgdown
 
 on:

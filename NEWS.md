@@ -70,6 +70,18 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   whether it describes its samples, and what its ages are in years; `sdrf_validate_many()`,
   `sdrf_assess_many()` and `sdrf_samples_many()` read a corpus in one bridge call
   (mzLib #1207, #1325, #1326, #1333, #1335).
+* New `sdrf_design()` reads the label-free experimental design MetaMorpheus and FlashLFQ take out
+  of an SDRF, with mzLib's `SdrfLabelFreeDesign`, or every reason it refuses to - all at once,
+  and as a result rather than an error. `sdrf_design_spectra()` and `sdrf_design_run_design()`
+  hand it to `flashlfq_quantify()` and `flashlfq_median_polish()`; `out` writes MetaMorpheus's
+  `ExperimentalDesign.tsv`. Its replicate and fraction coordinates stay 0-based, as the quant
+  functions take them (mzLib #1363; *needs the pyMzLib 0.3.0 bridge*).
+
+## Isobaric kits
+
+* New `isobaric_kits()` lists mzLib's TMT, TMTpro, iTRAQ and DiLeu kits with every channel's
+  label, theoretical reporter-ion m/z and matching window, or one kit by MetaMorpheus's name for
+  it; `channel_index` is 1-based (mzLib #1375; *needs the pyMzLib 0.3.0 bridge*).
 
 ## PRIDE, peptidoforms and quantification
 
@@ -86,6 +98,23 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   bridge nothing on stdin now gives it an empty stdin rather than R's own, which a terminal never
   closes. Every verb goes through the same transport, so none can wait on it (pyMzLib #73).
 
+## Differential abundance
+
+* New `stats_fit()` fits one linear model per feature of a feature-by-sample table and tests each
+  named coefficient with limma's empirical-Bayes moderated t, Benjamini-Hochberg adjusted:
+  `lmFit()` then `eBayes(legacy = TRUE)`, computed by mzLib's `LinearModel` and `EmpiricalBayes`.
+  A feature that cannot be fitted is reported with its reason, never dropped, and
+  `residual_df_differ` says when default limma would use a different prior estimator.
+* New `stats_adjust()` Benjamini-Hochberg adjusts p-values from anywhere, keeping every position;
+  `NA` is untested and not counted in m.
+* New `stats_meta()` pools one estimate per study into a DerSimonian-Laird random-effects estimate
+  per feature, with direction agreement and leave-one-out sensitivity.
+* The tests hold all three to limma, metafor and `stats::p.adjust()` to 1e-8 relative - against
+  their recorded output always, and against limma and metafor run in the test when they are
+  installed (both are now in `Suggests`). The reference tables ship in `extdata/stats/` so the
+  examples and the new article read real files (mzLib #1341, #1357; *needs the pyMzLib 0.3.0
+  bridge*).
+
 ## Protein databases
 
 * New `proteins_read()` reads UniProt XML or FASTA databases into one row per protein - organism,
@@ -94,6 +123,13 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   pin; `proteins_classify_peptides()` calls each peptide `Unique`, `SharedWithinGene`,
   `SharedAcrossGenes` or `NotInDatabase`, with I and L one residue. One database or many, in one
   bridge call (mzLib #1336, #1338, #1348; *needs the pyMzLib 0.2.0 bridge*).
+* New `proteins_annotate_go()` annotates a stored MetaMorpheus protein-group table with Gene
+  Ontology terms: one row per (group, term) that any member holds, directly or through an
+  ancestor, naming the members that carry it, so consensus and direct-only views are filters on
+  the rows. Every non-decoy group gets a row, a term-less one saying why. It reads the go.obo you
+  name and never downloads one; `proteins_update_go()` is the one function that fetches the
+  current release, keeping the previous file beside it (mzLib #1353, #1366; *needs the pyMzLib
+  0.3.0 bridge*).
 
 ## Documentation
 
@@ -108,3 +144,17 @@ pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that relea
   network.
 * New `?mzlib_error` documents the condition classes and how to handle each.
 * A pkgdown site, with an article for each module.
+* The articles are now vignettes, so `R CMD check` builds and runs every one of them, on every
+  platform, against the replay bridge. Each opens with a question -> function -> mzLib table,
+  ends with what to cite (rendered from the specs' DOIs, each checked to resolve), and states no
+  count of formats or verbs and no mzLib version in its prose; `scripts/docs-lint.R` holds all of
+  that in CI.
+* The articles teach on real data recorded from the real bridge: a FlashLFQ run with
+  match-between-runs on mzLib's K562 pair (and median polish reproducing its protein intensities
+  for every group), the whole albumin digest, PXD000001's live FTP listing, an RNA search's
+  transcript groups, and the MALAT1 dilution series for `stats_fit()`.
+* Corrected from those runs: the K562 peptide roll-up shows 21 of the 140 MBR transfers, not 52;
+  `use_pep_q_value` filters nothing, it changes the q-value FlashLFQ carries; PXD000001's FTP
+  tree now holds 14 files.
+* `knitr` and `rmarkdown` join `Suggests`, for the vignettes. The package still imports nothing
+  but base R.

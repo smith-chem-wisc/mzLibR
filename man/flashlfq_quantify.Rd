@@ -52,7 +52,9 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 \item{bayesian_protein_quant}{Whether to use the Bayesian protein quantification model.}
 
-\item{use_pep_q_value}{Whether to use PEP q-values rather than q-values for filtering.}
+\item{use_pep_q_value}{Store each identification's PEP q-value as its q-value, instead of its
+  q-value. \strong{It filters nothing here}: FlashLFQ is given every identification either way. It
+  changes the q-value FlashLFQ carries, which match-between-runs reads.}
 
 \item{max_threads}{Worker threads, or \code{-1} for one per core. \strong{Defaults to 1 here, where the
   bridge, pyMzLib and mzLibRust default to -1.}
@@ -92,11 +94,11 @@ An \code{mzlibr_quant}: \code{psm_file}, \code{identification_count}, \code{para
 
 \code{peptides} is FlashLFQ's roll-up and \strong{it drops most match-between-runs transfers.} On
 mzLib's own K562 pair there are \strong{140} true transfers in \code{peaks} and the peptide table shows
-\strong{52} - a 63\% under-count. Worse, it is not evenly spread: per run the peaks give run_3
-\strong{62} and run_4 \strong{78}, while the roll-up gives run_3 \strong{0} and run_4 52. Read only the
-roll-up and MBR appears not to have worked at all in half the experiment.
+\strong{21}. Worse, it is not evenly spread: per run the peaks give run_3 \strong{62} and run_4 \strong{78},
+while the roll-up gives run_3 \strong{0} and run_4 21. Read only the roll-up and MBR appears not to
+have worked at all in half the experiment.
 
-"Peptides quantified in both runs" is \strong{257} from \code{peaks} and \strong{169} from \code{peptides}.
+"Peptides quantified in both runs" is \strong{257} from \code{peaks} and \strong{138} from \code{peptides}.
 
 Nor can you reproduce the roll-up by pivoting \code{peaks} yourself: where a run has several peaks
 for one peptide the roll-up reports one rather than their sum.

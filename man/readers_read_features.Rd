@@ -22,7 +22,7 @@ readers_read_features(path, limit = NULL, offset = 0, out = NULL, timeout = NULL
 \description{
 Read deconvolved MS1 features through the cross-format ms1_features view: m/z, charge, retention-time range, apex intensity and isotope count.
 
-Two file types offer it: TopFD/FLASHDeconv \code{_ms1.feature} and Dinosaur \code{.feature.tsv}. A file
+TopFD/FLASHDeconv \code{_ms1.feature} and Dinosaur \code{.feature.tsv} offer it. A file
 without the view raises, with a message naming the views it does have.
 }
 \value{

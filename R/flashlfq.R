@@ -9,8 +9,8 @@
 # Two facts drive every design decision in this file:
 #
 #   1. **The peptide roll-up drops most MBR transfers.** Read `peaks`. On mzLib's own K562 pair
-#      there are 140 true transfers and the peptide table shows 52 - a 63% under-count - and a
-#      whole run's transfers can vanish entirely (run_3: 62 from peaks, 0 from the roll-up).
+#      there are 140 true transfers and the peptide table shows 21, and a whole run's transfers
+#      can vanish entirely (run_3: 62 from peaks, 0 from the roll-up).
 #   2. **A peptide intensity of 0 and a protein intensity of NA mean different things**, and R
 #      is the only one of the three bindings whose type system can say so. See below.
 #
@@ -431,7 +431,9 @@ flashlfq_parse <- function(data) {
 #'   mzLib's K562 pair, **847** of 943 protein groups are 0 in both runs, mostly because their
 #'   only evidence is shared peptides.
 #' @param bayesian_protein_quant Whether to use the Bayesian protein quantification model.
-#' @param use_pep_q_value Whether to use PEP q-values rather than q-values for filtering.
+#' @param use_pep_q_value Store each identification's PEP q-value as its q-value, instead of its
+#'   q-value. **It filters nothing here**: FlashLFQ is given every identification either way. It
+#'   changes the q-value FlashLFQ carries, which match-between-runs reads.
 #' @param max_threads Worker threads, or `-1` for one per core. **Defaults to 1 here, where the
 #'   bridge, pyMzLib and mzLibRust default to -1.**
 #'
@@ -458,11 +460,11 @@ flashlfq_parse <- function(data) {
 #'
 #' `peptides` is FlashLFQ's roll-up and **it drops most match-between-runs transfers.** On
 #' mzLib's own K562 pair there are **140** true transfers in `peaks` and the peptide table shows
-#' **52** - a 63% under-count. Worse, it is not evenly spread: per run the peaks give run_3
-#' **62** and run_4 **78**, while the roll-up gives run_3 **0** and run_4 52. Read only the
-#' roll-up and MBR appears not to have worked at all in half the experiment.
+#' **21**. Worse, it is not evenly spread: per run the peaks give run_3 **62** and run_4 **78**,
+#' while the roll-up gives run_3 **0** and run_4 21. Read only the roll-up and MBR appears not to
+#' have worked at all in half the experiment.
 #'
-#' "Peptides quantified in both runs" is **257** from `peaks` and **169** from `peptides`.
+#' "Peptides quantified in both runs" is **257** from `peaks` and **138** from `peptides`.
 #'
 #' Nor can you reproduce the roll-up by pivoting `peaks` yourself: where a run has several peaks
 #' for one peptide the roll-up reports one rather than their sum.

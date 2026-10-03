@@ -31,7 +31,7 @@ The many-files form of \code{\link{readers_read_results}}.
 \value{
 An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-based, into \code{paths}) and
   \code{source_path}, then the columns of \code{\link{readers_read_results}}: \code{retention_time} in each file's
-  own \code{retention_time_unit} - minutes for all four formats today - \code{charge_state} a
+  own \code{retention_time_unit} - minutes for every quantifiable format today - \code{charge_state} a
   charge, \code{monoisotopic_mass} in Da. Convert times with \code{\link{readers_retention_time_in_minutes}},
   which applies each file's unit to its rows. \code{files} has one row per input: \code{record_count} in
   records, \code{rows_not_read} in rows, \code{retention_time_unit}, \code{caveats}, \code{absent_fields} and the

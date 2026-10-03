@@ -29,7 +29,7 @@ readers_read_matches(path, limit = NULL, offset = 0, scores = FALSE, out = NULL,
 \description{
 Read identifications through the cross-format spectral_match view - scan, sequences, accession, decoy flag, modifications and the q-value, rank and threshold a format records - optionally with each engine's scores as long rows.
 
-Six file types offer it: MsPathFinderT's targets, decoys and combined results, Casanovo's
+It is offered by MsPathFinderT's targets, decoys and combined results, Casanovo's
 \code{.mztab}, and mzIdentML \code{.mzid} and \code{.mzid.gz} - the format most search engines can export. These
 are the identification formats that share no *file*-level interface, so \code{\link{readers_read_results}}
 cannot reach them.

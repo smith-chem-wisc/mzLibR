@@ -85,3 +85,48 @@ test_that("an example's stand-in bridge runs end to end, and is removed afterwar
   expect_false(file.exists(launcher))
   expect_identical(getOption("mzlibr.bridge"), old$mzlibr.bridge)
 })
+
+test_that("an option echoed under another name is held to it", {
+  # peptidoform fragments echoes --max-mods as max_modifications; quant echoes --psms as psm_file.
+  digest <- list(accession = "P02768", max_modifications = 2)
+  expect_identical(mz$replay_mismatch(digest, list(accession = "P02768", `max-mods` = "2")), "")
+  expect_true(grepl("max_modifications=2", mz$replay_mismatch(digest, list(accession = "P02768", `max-mods` = "1")), fixed = TRUE))
+  quant <- list(psm_file = "E:/data/AllPSMs.psmtsv")
+  expect_identical(mz$replay_mismatch(quant, list(psms = "AllPSMs.psmtsv")), "")
+  expect_true(nzchar(mz$replay_mismatch(quant, list(psms = "other.psmtsv"))))
+  # Any other input file is echoed as <name>_file.
+  fit <- list(responses_file = "/x/limma_reference_responses.tsv")
+  expect_identical(mz$replay_mismatch(fit, list(responses = "limma_reference_responses.tsv")), "")
+  expect_true(nzchar(mz$replay_mismatch(fit, list(responses = "malat.tsv"))))
+})
+
+test_that("a number is compared as a number", {
+  expect_identical(mz$replay_mismatch(list(confidence = 0.95), list(confidence = "0.94999999999999996")), "")
+  expect_true(nzchar(mz$replay_mismatch(list(confidence = 0.95), list(confidence = "0.9"))))
+})
+
+test_that("quant flashlfq answers only for the runs it was recorded on", {
+  data <- list(spectra_files = list(list(full_path = "E:/d/run_3.mzML"), list(full_path = "E:/d/run_4.mzML")))
+  expect_identical(mz$replay_stdin_mismatch(data, c("/a/run_4.mzML\tc\t0", "run_3.mzML")), "")
+  expect_true(grepl("recorded for runs", mz$replay_stdin_mismatch(data, "run_5.mzML"), fixed = TRUE))
+})
+
+test_that("an empty files list is not a bulk recording, and filtered reads stay apart", {
+  unknown <- list(accession = "PXD999999999", file_count = 0, files = list())
+  expect_identical(mz$replay_mismatch(unknown, list(accession = "PXD999999999")), "")
+  filtered <- list(accession_filter_count = 4, record_count = 3)
+  unfiltered <- list(accession_filter_count = NA, record_count = 8)
+  expect_true(grepl("accession filter", mz$replay_mismatch(filtered, list()), fixed = TRUE))
+  expect_identical(mz$replay_mismatch(filtered, list(`accessions-stdin` = TRUE)), "")
+  expect_identical(mz$replay_mismatch(unfiltered, list()), "")
+  expect_true(nzchar(mz$replay_mismatch(unfiltered, list(`accessions-stdin` = TRUE))))
+})
+
+test_that("a recording that wrote out= answers only an out= call, and one kit never answers for all", {
+  wrote <- list(written = list(path = "go.tsv", row_count = 563))
+  expect_identical(mz$replay_mismatch(wrote, list(out = "go.tsv")), "")
+  expect_true(nzchar(mz$replay_mismatch(wrote, list())))
+  expect_true(nzchar(mz$replay_mismatch(list(written = NA), list(out = "go.tsv"))))
+  expect_true(grepl("every kit", mz$replay_mismatch(list(kit = "TMT18"), list()), fixed = TRUE))
+  expect_true(grepl("asks for one", mz$replay_mismatch(list(kit = NA), list(kit = "TMT18")), fixed = TRUE))
+})

@@ -94,13 +94,32 @@ S3method(print, mzlibr_sdrf_assessment)
 S3method(print, mzlibr_sdrf_samples)
 S3method(print, mzlibr_sdrf_ages)
 
+export(sdrf_design)
+export(sdrf_design_run_design)
+export(sdrf_design_spectra)
+S3method(print, mzlibr_sdrf_design)
+
+export(isobaric_kits)
+S3method(print, mzlibr_isobaric_kits)
+
+export(stats_adjust)
+export(stats_fit)
+export(stats_meta)
+S3method(print, mzlibr_moderated_fit)
+S3method(print, mzlibr_adjusted)
+S3method(print, mzlibr_meta_analysis)
+
+export(proteins_annotate_go)
 export(proteins_classify_peptides)
 export(proteins_read)
 export(proteins_resolve_genes)
+export(proteins_update_go)
 
 S3method(print, mzlibr_protein_database)
 S3method(print, mzlibr_gene_resolutions)
 S3method(print, mzlibr_peptide_classification)
+S3method(print, mzlibr_go_annotations)
+S3method(print, mzlibr_go_update)
 
 export(pride_approximate_total_size_bytes)
 export(pride_download)

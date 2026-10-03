@@ -9,8 +9,8 @@
 ^\.Rproj\.user$
 ^STATUS\.md$
 ^design$
-# The documentation site's config, output and articles: built by pkgdown.yml, never by R CMD build.
+# The documentation site's config and output, built by pkgdown.yml. The articles are vignettes:
+# R CMD build builds them and R CMD check runs them, against the replay bridge.
 ^_pkgdown\.yml$
 ^_site$
-^vignettes$
 ^\.pymzlib$

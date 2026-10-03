@@ -16,7 +16,7 @@ pride_list_ftp_files(accession, timeout = 300)
 List every file a PRIDE project holds by walking its FTP directory tree, subdirectories included, with approximate sizes.
 
 The authoritative counterpart to \code{\link{pride_list_files}}. Where that returns PRIDE's REST manifest -
-knowingly incomplete for some projects, omitting for PXD000001 the two largest of 13 files - this
+knowingly incomplete for some projects, omitting for PXD000001 its two largest files - this
 walks the project's FTP directory (subdirectories included) and returns everything the project
 holds (mzLib #1121). Reach for it whenever completeness or a true project size matters.
 }

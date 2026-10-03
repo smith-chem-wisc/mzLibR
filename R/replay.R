@@ -17,7 +17,9 @@
 #   * `--limit`/`--offset` must reproduce the recording's `returned_count` from its `record_count`
 #     (or `row_count`), and a `--flag` with a `<flag>_included` field must match it;
 #   * a `--paths-stdin` call fits only a bulk recording (per-input `files[]` entries carrying `path`,
-#     and no top-level `path`), and a one-path call only a one-document recording.
+#     and no top-level `path`), and a one-path call only a one-document recording;
+#   * a recording with a `written` key fits an `--out` call only if `written` is set, and a call
+#     without `--out` only if it is null.
 #
 # No fit, or more than one, is answered as a usage error naming every recording and why it did not
 # fit - so the example fails and says why, rather than printing something plausible.
@@ -83,11 +85,41 @@ replay_show <- function(value) {
   if (is.logical(value)) tolower(as.character(value)) else format(value)
 }
 
+# Wire options a verb echoes under another name, so a recording made with one value cannot answer
+# a call with another (peptidoform fragments echoes --max-mods as max_modifications).
+REPLAY_ECHOED_AS <- c(
+  "max-mods" = "max_modifications",
+  "max-isoforms" = "max_modification_isoforms",
+  "psms" = "psm_file",
+  "peptides" = "peptides_file"
+)
+
+# Verbs whose input travels on stdin and is echoed in the recording, so a recording answers only a
+# call that sent the same input. Read only for these: other verbs may be given a terminal's stdin.
+REPLAY_STDIN_ECHO <- "quant flashlfq"
+
+# For quant flashlfq: the call's mzML runs must be the recording's runs, by file name.
+replay_stdin_mismatch <- function(data, stdin) {
+  lines <- stdin[nzchar(trimws(stdin))]
+  sent <- sort(unique(vapply(lines, function(l) replay_base(trimws(strsplit(l, "\t", fixed = TRUE)[[1L]][1L])),
+    character(1L), USE.NAMES = FALSE)))
+  files <- data[["spectra_files"]]
+  recorded <- if (is.list(files)) {
+    sort(unique(vapply(files, function(f) replay_base(as.character(f[["full_path"]])), character(1L))))
+  } else {
+    character(0)
+  }
+  if (!identical(sent, recorded)) {
+    return(paste0("recorded for runs ", paste(recorded, collapse = ", "), ", not ", paste(sent, collapse = ", ")))
+  }
+  ""
+}
+
 # Why this recording cannot be the answer to these options, or "" when it can.
 replay_mismatch <- function(data, options) {
   for (name in names(options)) {
     value <- options[[name]]
-    key <- gsub("-", "_", name, fixed = TRUE)
+    key <- if (name %in% names(REPLAY_ECHOED_AS)) REPLAY_ECHOED_AS[[name]] else gsub("-", "_", name, fixed = TRUE)
     if (name %in% c("limit", "offset", "out")) {
       next
     }
@@ -99,6 +131,15 @@ replay_mismatch <- function(data, options) {
       }
       next
     }
+    # An input file option is echoed back as <name>_file (--responses -> responses_file): hold the
+    # call's file to the recording's, by file name.
+    echoed <- data[[paste0(key, "_file")]]
+    if (!key %in% names(data) && is.character(echoed) && length(echoed) == 1L) {
+      if (!identical(replay_base(echoed), replay_base(value))) {
+        return(paste0("recorded from '", replay_base(echoed), "', not '", replay_base(value), "'"))
+      }
+      next
+    }
     recorded <- data[[key]]
     if (is.null(recorded) || !replay_scalar(recorded)) {
       next
@@ -106,6 +147,11 @@ replay_mismatch <- function(data, options) {
     if (identical(key, "path") || endsWith(key, "_file")) {
       if (!identical(replay_base(recorded), replay_base(value))) {
         return(paste0("recorded from '", replay_base(recorded), "', not '", replay_base(value), "'"))
+      }
+    } else if (is.numeric(recorded) && !is.na(suppressWarnings(as.numeric(value)))) {
+      # A number is compared as a number: 0.94999999999999996 on the wire is the recorded 0.95.
+      if (!isTRUE(all.equal(as.numeric(value), as.numeric(recorded), tolerance = 1e-12))) {
+        return(paste0("recorded with ", key, "=", replay_show(recorded), ", not ", value))
       }
     } else if (!identical(replay_show(recorded), value)) {
       return(paste0("recorded with ", key, "=", replay_show(recorded), ", not ", value))
@@ -115,18 +161,44 @@ replay_mismatch <- function(data, options) {
   # BULK.md: a --paths-stdin call has its own envelope (files[], read_count, ...). Neither shape
   # answers for the other, or a one-path example would "fit" a bulk recording that has no path.
   # pride files also has a `files` list - of PRIDE files, which carry no `path` - so it is not bulk.
+  # An empty list says nothing either way (PRIDE's answer for an unknown accession is files = []),
+  # so it counts as bulk only when BULK.md's read_count says so.
   files <- data[["files"]]
-  bulk_recording <- is.list(files) && length(files) > 0L &&
+  bulk_recording <- is.list(files) && (length(files) > 0L || "read_count" %in% names(data)) &&
     all(vapply(files, function(f) is.list(f) && !is.null(f[["path"]]), logical(1L))) &&
     is.null(data[["path"]])
   if (!is.null(options[["paths-stdin"]]) != bulk_recording) {
     return(if (bulk_recording) "a bulk (--paths-stdin) recording" else "a one-document recording")
   }
 
+  # A recording that wrote a file answers only a call that asked for one, and the reverse: the
+  # payload's `written` block is the evidence, so an `out =` example cannot print a recording that
+  # wrote nothing.
+  if ("written" %in% names(data) && !is.null(options[["out"]]) != is.list(data[["written"]])) {
+    return(if (is.list(data[["written"]])) "a recording that wrote out=" else "a recording without out=")
+  }
+
+  # proteins read: a filtered read (--accessions-stdin) and an unfiltered one never stand in for
+  # each other, or an example would print rows its filter did not select.
+  if ("accession_filter_count" %in% names(data) &&
+    !is.null(options[["accessions-stdin"]]) != replay_scalar(data[["accession_filter_count"]])) {
+    return("a recording with the other accession filter (filtered vs unfiltered)")
+  }
+
   # A filter the recording applied that the call did not ask for.
   ms_order <- data[["ms_order"]]
   if (!is.null(ms_order) && replay_scalar(ms_order) && is.null(options[["ms-order"]])) {
     return(paste0("recorded with ms_order=", replay_show(ms_order), ", but the call has no ms-order"))
+  }
+  # isobaric kits: one kit and every kit never stand in for each other, either way round.
+  if ("kit" %in% names(data)) {
+    kit <- data[["kit"]]
+    if (replay_scalar(kit) && is.null(options[["kit"]])) {
+      return(paste0("recorded for kit=", replay_show(kit), ", but the call asks for every kit"))
+    }
+    if (!replay_scalar(kit) && !is.null(options[["kit"]])) {
+      return("recorded for every kit, but the call asks for one")
+    }
   }
 
   total <- data[["record_count"]]
@@ -188,7 +260,7 @@ replay_describe_options <- function(options) {
 }
 
 # The envelope, as JSON text, that the stand-in bridge prints for `argv`.
-replay_answer <- function(argv, dir = replay_dir()) {
+replay_answer <- function(argv, dir = replay_dir(), stdin = character(0)) {
   call <- replay_parse_argv(argv)
   candidates <- replay_read_table(dir)[[call$verb]]
   if (length(candidates) == 0L) {
@@ -204,6 +276,9 @@ replay_answer <- function(argv, dir = replay_dir()) {
     enveloped <- is.list(parsed) && !is.null(parsed[["ok"]]) && "data" %in% names(parsed)
     data <- if (enveloped) parsed[["data"]] else parsed
     why <- if (is.list(data) && !is.null(names(data))) replay_mismatch(data, call$options) else ""
+    if (!nzchar(why) && call$verb %in% REPLAY_STDIN_ECHO && is.list(data)) {
+      why <- replay_stdin_mismatch(data, stdin)
+    }
     if (nzchar(why)) {
       reasons <- c(reasons, paste0(fixture, ": ", why))
     } else {
@@ -233,7 +308,15 @@ replay_answer <- function(argv, dir = replay_dir()) {
 
 # The body of the stand-in executable: answer this process's arguments and exit as the bridge would.
 replay_main <- function(dir = replay_dir()) {
-  answer <- replay_answer(commandArgs(trailingOnly = TRUE), dir)
+  argv <- commandArgs(trailingOnly = TRUE)
+  stdin <- if (replay_parse_argv(argv)$verb %in% REPLAY_STDIN_ECHO) {
+    connection <- file("stdin")
+    on.exit(close(connection), add = TRUE)
+    readLines(connection, warn = FALSE)
+  } else {
+    character(0)
+  }
+  answer <- replay_answer(argv, dir, stdin)
   cat(answer, "\n", sep = "")
   quit(save = "no", status = if (startsWith(answer, "{\"ok\":false")) 2L else 0L)
 }
