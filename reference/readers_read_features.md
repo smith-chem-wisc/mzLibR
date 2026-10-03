@@ -4,9 +4,9 @@ Read deconvolved MS1 features through the cross-format ms1_features
 view: m/z, charge, retention-time range, apex intensity and isotope
 count.
 
-Two file types offer it: TopFD/FLASHDeconv `_ms1.feature` and Dinosaur
-`.feature.tsv`. A file without the view raises, with a message naming
-the views it does have.
+TopFD/FLASHDeconv `_ms1.feature` and Dinosaur `.feature.tsv` offer it. A
+file without the view raises, with a message naming the views it does
+have.
 
 ## Usage
 

@@ -5,11 +5,13 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/STATUS.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/flashlfq.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/index.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/isobaric.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/peptidoforms.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/pride.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/proteins.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/readers.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/sdrf.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/articles/stats.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/authors.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/index.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/news/index.html</loc></url>
@@ -27,6 +29,7 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_protein_count.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/index.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_bridge_path.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_bridge_version.html</loc></url>
@@ -41,14 +44,20 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/pride_locations.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/pride_search.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/pride_total_size_bytes.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_adjusted.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_batch.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_census.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_digest.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_feature_records.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_file_info.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_gene_resolutions.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_go_annotations.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_go_update.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_isobaric_kits.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_match_records.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_median_polish.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_meta_analysis.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_moderated_fit.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_native_records.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_occupancy_records.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_peptide_classification.html</loc></url>
@@ -62,12 +71,15 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_ages.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_assessment.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_design.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_drift.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_samples.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_validation.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_update_go.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/readers_formats.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify_many.html</loc></url>
@@ -91,6 +103,9 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_all.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess_many.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_run_design.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_spectra.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_has_repeated_columns.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_index_of.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_indexes_of.html</loc></url>
@@ -106,5 +121,8 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate_many.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_value.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_adjust.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.html</loc></url>
 </urlset>
 

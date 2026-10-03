@@ -35,10 +35,12 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
+    <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
-    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -64,24 +66,73 @@
       <h1>Digesting and fragmenting peptidoforms</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/articles/peptidoforms.Rmd" class="external-link"><code>vignettes/articles/peptidoforms.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/peptidoforms.Rmd" class="external-link"><code>vignettes/peptidoforms.Rmd</code></a></small>
       <div class="d-none name"><code>peptidoforms.Rmd</code></div>
     </div>
 
     
     
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>question</th>
+<th>function</th>
+<th>mzLib</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>which peptidoforms does a protein give, with which fragments?</td>
+<td><code><a href="../reference/peptidoform_fragments.html">peptidoform_fragments()</a></code></td>
+<td>
+<code>Loaders.LoadUniprot</code>, <code>Protein.Digest</code>,
+<code>PeptideWithSetModifications.Fragment</code>
+</td>
+</tr>
+<tr class="even">
+<td>which modified peptides, and how many distinct backbones?</td>
+<td>
+<code><a href="../reference/digest_modified_peptides.html">digest_modified_peptides()</a></code>,
+<code><a href="../reference/digest_distinct_base_sequences.html">digest_distinct_base_sequences()</a></code>
+</td>
+<td>the same digest</td>
+</tr>
+<tr class="odd">
+<td>one ion series at a time</td>
+<td><code><a href="../reference/digest_fragments_by_series.html">digest_fragments_by_series()</a></code></td>
+<td>the same fragments</td>
+</tr>
+<tr class="even">
+<td>which annotated sites were not applied, and why?</td>
+<td>
+<code><a href="../reference/census_excluded.html">census_excluded()</a></code>, <code><a href="../reference/census_explain.html">census_explain()</a></code>
+</td>
+<td><code>ModificationCensus</code></td>
+</tr>
+<tr class="odd">
+<td>a peptide’s m/z at a charge</td>
+<td><code><a href="../reference/peptide_mz.html">peptide_mz()</a></code></td>
+<td>none: the proton arithmetic is spelled out in
+<code><a href="../reference/peptide_mz.html">?peptide_mz</a></code>
+</td>
+</tr>
+</tbody>
+</table>
 <p><code><a href="../reference/peptidoform_fragments.html">peptidoform_fragments()</a></code> fetches a UniProt entry, applies
 its annotated modifications, digests it and computes fragment ions for
-every peptidoform. The recording used here is human serum albumin,
-P02768, with at most one modification per peptide.</p>
+every peptidoform. The recording used here is the whole digest of human
+serum albumin, P02768, at the defaults.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">digest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/peptidoform_fragments.html">peptidoform_fragments</a></span><span class="op">(</span><span class="st">"P02768"</span>, max_modifications <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">digest</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/peptidoform_fragments.html">peptidoform_fragments</a></span><span class="op">(</span><span class="st">"P02768"</span><span class="op">)</span></span>
 <span><span class="va">digest</span></span>
 <span><span class="co">#&gt; &lt;mzlibr_digest&gt; P02768 ALBU_HUMAN (Homo sapiens)</span></span>
 <span><span class="co">#&gt;   609 residues, trypsin|P, ETD, terminus Both</span></span>
-<span><span class="co">#&gt;   min_length 7, 2 missed cleavages, max 1 modifications</span></span>
-<span><span class="co">#&gt;   2 peptidoforms over 2 distinct sequences</span></span>
-<span><span class="co">#&gt;   127 fragments: c=64, zDot=63</span></span>
+<span><span class="co">#&gt;   min_length 7, 2 missed cleavages, max 2 modifications</span></span>
+<span><span class="co">#&gt;   303 peptidoforms over 195 distinct sequences</span></span>
+<span><span class="co">#&gt;   10728 fragments: c=5338, zDot=5390</span></span>
 <span><span class="co">#&gt;   ! 14 of 38 annotated modifications applied. See ?census_explain.</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="three-data-frames-that-join-on-peptide_index">Three data.frames that join on <code>peptide_index</code><a class="anchor" aria-label="anchor" href="#three-data-frames-that-join-on-peptide_index"></a>
@@ -89,38 +140,309 @@ P02768, with at most one modification per peptide.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">digest</span><span class="op">$</span><span class="va">peptides</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"peptide_index"</span>, <span class="st">"base_sequence"</span>, <span class="st">"monoisotopic_mass"</span>,</span>
 <span>                         <span class="st">"modification_count"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   peptide_index                       base_sequence monoisotopic_mass</span></span>
-<span><span class="co">#&gt; 1             1     ALVLIAFAQYLQQCPFEDHVKLVNEVTEFAK          3562.853</span></span>
-<span><span class="co">#&gt; 2             2 RPCFSALEVDETYVPKEFNAETFTFHADICTLSEK          4136.902</span></span>
-<span><span class="co">#&gt;   modification_count</span></span>
-<span><span class="co">#&gt; 1                  0</span></span>
-<span><span class="co">#&gt; 2                  1</span></span>
+<span><span class="co">#&gt;   peptide_index         base_sequence monoisotopic_mass modification_count</span></span>
+<span><span class="co">#&gt; 1             1     WVTFISLLFLFSSAYSR         2036.0771                  0</span></span>
+<span><span class="co">#&gt; 2             2              DLGEENFK          950.4345                  0</span></span>
+<span><span class="co">#&gt; 3             3 ALVLIAFAQYLQQCPFEDHVK         2432.2562                  0</span></span>
+<span><span class="co">#&gt; 4             4            LVNEVTEFAK         1148.6077                  0</span></span>
+<span><span class="co">#&gt; 5             5         TCVADESAENCDK         1383.5282                  0</span></span>
+<span><span class="co">#&gt; 6             6         TCVADESAENCDK         1463.4946                  1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">digest</span><span class="op">$</span><span class="va">fragments</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   peptide_index product_type fragment_number neutral_mass neutral_loss</span></span>
-<span><span class="co">#&gt; 1             1            c               1     88.06366            0</span></span>
-<span><span class="co">#&gt; 2             1         zDot               1    130.08680            0</span></span>
-<span><span class="co">#&gt; 3             1            c               2    201.14773            0</span></span>
-<span><span class="co">#&gt; 4             1         zDot               2    201.12392            0</span></span>
-<span><span class="co">#&gt; 5             1            c               3    300.21614            0</span></span>
-<span><span class="co">#&gt; 6             1         zDot               3    348.19233            0</span></span>
+<span><span class="co">#&gt; 1             1            c               1     203.1059            0</span></span>
+<span><span class="co">#&gt; 2             1         zDot               1     158.0930            0</span></span>
+<span><span class="co">#&gt; 3             1            c               2     302.1743            0</span></span>
+<span><span class="co">#&gt; 4             1         zDot               2     245.1250            0</span></span>
+<span><span class="co">#&gt; 5             1            c               3     403.2220            0</span></span>
+<span><span class="co">#&gt; 6             1         zDot               3     408.1883            0</span></span>
 <span><span class="co">#&gt;   residue_position</span></span>
 <span><span class="co">#&gt; 1                1</span></span>
-<span><span class="co">#&gt; 2               31</span></span>
+<span><span class="co">#&gt; 2               17</span></span>
 <span><span class="co">#&gt; 3                2</span></span>
-<span><span class="co">#&gt; 4               30</span></span>
+<span><span class="co">#&gt; 4               16</span></span>
 <span><span class="co">#&gt; 5                3</span></span>
-<span><span class="co">#&gt; 6               29</span></span>
+<span><span class="co">#&gt; 6               15</span></span>
 <span><span class="va">digest</span><span class="op">$</span><span class="va">modifications</span></span>
-<span><span class="co">#&gt;   peptide_index one_based_residue terminus                     id    mass</span></span>
-<span><span class="co">#&gt; 1             2                35     &lt;NA&gt; N6-succinyllysine on K 100.016</span></span>
-<span><span class="co">#&gt;   formal_charge</span></span>
-<span><span class="co">#&gt; 1             0</span></span></code></pre></div>
+<span><span class="co">#&gt;     peptide_index one_based_residue terminus                     id      mass</span></span>
+<span><span class="co">#&gt; 1               6                 7     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 2               8                 1     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 3              11                 2     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 4              23                11     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 5              34                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 6              35                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 7              36                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 8              37                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 9              37                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 10             38                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 11             38                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 12             39                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 13             39                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 14             43                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 15             45                19     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 16             47                 9     &lt;NA&gt;   N6-methyllysine on K  14.01565</span></span>
+<span><span class="co">#&gt; 17             56                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 18             58                 1     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 19             63                17     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 20             65                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 21             66                 7     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 22             67                 7     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 23             67                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 24             69                 1     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 25             71                10     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 26             73                 2     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 27             89                 8     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 28             91                 6     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 29            101                16     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 30            103                11     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 31            119                 9     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 32            120                 7     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 33            121                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 34            122                 7     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 35            122                 9     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 36            123                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 37            123                 9     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 38            124                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 39            124                 7     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 40            126                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 41            127                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 42            128                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 43            129                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 44            129                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 45            130                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 46            130                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 47            131                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 48            131                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 49            133                 8     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 50            135                 4     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 51            142                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 52            144                35     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 53            145                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 54            146                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 55            146                35     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 56            148                19     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 57            150                10     &lt;NA&gt;   N6-methyllysine on K  14.01565</span></span>
+<span><span class="co">#&gt; 58            152                 9     &lt;NA&gt;   N6-methyllysine on K  14.01565</span></span>
+<span><span class="co">#&gt; 59            158                 7     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 60            160                 4     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 61            169                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 62            171                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 63            173                 1     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 64            177                38     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 65            179                24     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 66            180                17     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 67            181                17     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 68            181                24     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 69            183                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 70            184                 7     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 71            185                 7     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 72            185                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 73            187                19     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 74            188                 1     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 75            189                 1     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 76            189                19     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 77            191                10     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 78            193                 2     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 79            210                10     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 80            212                 8     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 81            214                 6     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 82            223                33     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 83            225                16     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 84            227                11     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 85            243                12     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 86            244                10     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 87            245                 9     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 88            246                10     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 89            246                12     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 90            247                 9     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 91            247                12     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 92            248                 9     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 93            248                10     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 94            250                 9     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 95            251                 7     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 96            252                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 97            253                 7     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 98            253                 9     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 99            254                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 100           254                 9     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 101           255                 6     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 102           255                 7     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 103           257                22     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 104           258                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 105           259                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 106           260                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 107           261                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 108           261                22     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 109           262                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 110           262                22     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 111           263                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 112           263                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 113           264                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 114           264                22     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 115           265                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 116           265                 8     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 117           266                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 118           266                 6     &lt;NA&gt;  Phosphothreonine on T  79.96633</span></span>
+<span><span class="co">#&gt; 119           268                 8     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 120           270                 4     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 121           277                17     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 122           279                44     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 123           280                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 124           281                14     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 125           281                44     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 126           283                35     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 127           284                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 128           285                 5     &lt;NA&gt;     Phosphoserine on S  79.96633</span></span>
+<span><span class="co">#&gt; 129           285                35     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 130           287                19     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 131           289                13     &lt;NA&gt;   N6-methyllysine on K  14.01565</span></span>
+<span><span class="co">#&gt; 132           291                10     &lt;NA&gt;   N6-methyllysine on K  14.01565</span></span>
+<span><span class="co">#&gt; 133           293                 9     &lt;NA&gt;   N6-methyllysine on K  14.01565</span></span>
+<span><span class="co">#&gt; 134           298                19     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 135           300                 7     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt; 136           302                 4     &lt;NA&gt; N6-succinyllysine on K 100.01604</span></span>
+<span><span class="co">#&gt;     formal_charge</span></span>
+<span><span class="co">#&gt; 1               0</span></span>
+<span><span class="co">#&gt; 2               0</span></span>
+<span><span class="co">#&gt; 3               0</span></span>
+<span><span class="co">#&gt; 4               0</span></span>
+<span><span class="co">#&gt; 5               0</span></span>
+<span><span class="co">#&gt; 6               0</span></span>
+<span><span class="co">#&gt; 7               0</span></span>
+<span><span class="co">#&gt; 8               0</span></span>
+<span><span class="co">#&gt; 9               0</span></span>
+<span><span class="co">#&gt; 10              0</span></span>
+<span><span class="co">#&gt; 11              0</span></span>
+<span><span class="co">#&gt; 12              0</span></span>
+<span><span class="co">#&gt; 13              0</span></span>
+<span><span class="co">#&gt; 14              0</span></span>
+<span><span class="co">#&gt; 15              0</span></span>
+<span><span class="co">#&gt; 16              0</span></span>
+<span><span class="co">#&gt; 17              0</span></span>
+<span><span class="co">#&gt; 18              0</span></span>
+<span><span class="co">#&gt; 19              0</span></span>
+<span><span class="co">#&gt; 20              0</span></span>
+<span><span class="co">#&gt; 21              0</span></span>
+<span><span class="co">#&gt; 22              0</span></span>
+<span><span class="co">#&gt; 23              0</span></span>
+<span><span class="co">#&gt; 24              0</span></span>
+<span><span class="co">#&gt; 25              0</span></span>
+<span><span class="co">#&gt; 26              0</span></span>
+<span><span class="co">#&gt; 27              0</span></span>
+<span><span class="co">#&gt; 28              0</span></span>
+<span><span class="co">#&gt; 29              0</span></span>
+<span><span class="co">#&gt; 30              0</span></span>
+<span><span class="co">#&gt; 31              0</span></span>
+<span><span class="co">#&gt; 32              0</span></span>
+<span><span class="co">#&gt; 33              0</span></span>
+<span><span class="co">#&gt; 34              0</span></span>
+<span><span class="co">#&gt; 35              0</span></span>
+<span><span class="co">#&gt; 36              0</span></span>
+<span><span class="co">#&gt; 37              0</span></span>
+<span><span class="co">#&gt; 38              0</span></span>
+<span><span class="co">#&gt; 39              0</span></span>
+<span><span class="co">#&gt; 40              0</span></span>
+<span><span class="co">#&gt; 41              0</span></span>
+<span><span class="co">#&gt; 42              0</span></span>
+<span><span class="co">#&gt; 43              0</span></span>
+<span><span class="co">#&gt; 44              0</span></span>
+<span><span class="co">#&gt; 45              0</span></span>
+<span><span class="co">#&gt; 46              0</span></span>
+<span><span class="co">#&gt; 47              0</span></span>
+<span><span class="co">#&gt; 48              0</span></span>
+<span><span class="co">#&gt; 49              0</span></span>
+<span><span class="co">#&gt; 50              0</span></span>
+<span><span class="co">#&gt; 51              0</span></span>
+<span><span class="co">#&gt; 52              0</span></span>
+<span><span class="co">#&gt; 53              0</span></span>
+<span><span class="co">#&gt; 54              0</span></span>
+<span><span class="co">#&gt; 55              0</span></span>
+<span><span class="co">#&gt; 56              0</span></span>
+<span><span class="co">#&gt; 57              0</span></span>
+<span><span class="co">#&gt; 58              0</span></span>
+<span><span class="co">#&gt; 59              0</span></span>
+<span><span class="co">#&gt; 60              0</span></span>
+<span><span class="co">#&gt; 61              0</span></span>
+<span><span class="co">#&gt; 62              0</span></span>
+<span><span class="co">#&gt; 63              0</span></span>
+<span><span class="co">#&gt; 64              0</span></span>
+<span><span class="co">#&gt; 65              0</span></span>
+<span><span class="co">#&gt; 66              0</span></span>
+<span><span class="co">#&gt; 67              0</span></span>
+<span><span class="co">#&gt; 68              0</span></span>
+<span><span class="co">#&gt; 69              0</span></span>
+<span><span class="co">#&gt; 70              0</span></span>
+<span><span class="co">#&gt; 71              0</span></span>
+<span><span class="co">#&gt; 72              0</span></span>
+<span><span class="co">#&gt; 73              0</span></span>
+<span><span class="co">#&gt; 74              0</span></span>
+<span><span class="co">#&gt; 75              0</span></span>
+<span><span class="co">#&gt; 76              0</span></span>
+<span><span class="co">#&gt; 77              0</span></span>
+<span><span class="co">#&gt; 78              0</span></span>
+<span><span class="co">#&gt; 79              0</span></span>
+<span><span class="co">#&gt; 80              0</span></span>
+<span><span class="co">#&gt; 81              0</span></span>
+<span><span class="co">#&gt; 82              0</span></span>
+<span><span class="co">#&gt; 83              0</span></span>
+<span><span class="co">#&gt; 84              0</span></span>
+<span><span class="co">#&gt; 85              0</span></span>
+<span><span class="co">#&gt; 86              0</span></span>
+<span><span class="co">#&gt; 87              0</span></span>
+<span><span class="co">#&gt; 88              0</span></span>
+<span><span class="co">#&gt; 89              0</span></span>
+<span><span class="co">#&gt; 90              0</span></span>
+<span><span class="co">#&gt; 91              0</span></span>
+<span><span class="co">#&gt; 92              0</span></span>
+<span><span class="co">#&gt; 93              0</span></span>
+<span><span class="co">#&gt; 94              0</span></span>
+<span><span class="co">#&gt; 95              0</span></span>
+<span><span class="co">#&gt; 96              0</span></span>
+<span><span class="co">#&gt; 97              0</span></span>
+<span><span class="co">#&gt; 98              0</span></span>
+<span><span class="co">#&gt; 99              0</span></span>
+<span><span class="co">#&gt; 100             0</span></span>
+<span><span class="co">#&gt; 101             0</span></span>
+<span><span class="co">#&gt; 102             0</span></span>
+<span><span class="co">#&gt; 103             0</span></span>
+<span><span class="co">#&gt; 104             0</span></span>
+<span><span class="co">#&gt; 105             0</span></span>
+<span><span class="co">#&gt; 106             0</span></span>
+<span><span class="co">#&gt; 107             0</span></span>
+<span><span class="co">#&gt; 108             0</span></span>
+<span><span class="co">#&gt; 109             0</span></span>
+<span><span class="co">#&gt; 110             0</span></span>
+<span><span class="co">#&gt; 111             0</span></span>
+<span><span class="co">#&gt; 112             0</span></span>
+<span><span class="co">#&gt; 113             0</span></span>
+<span><span class="co">#&gt; 114             0</span></span>
+<span><span class="co">#&gt; 115             0</span></span>
+<span><span class="co">#&gt; 116             0</span></span>
+<span><span class="co">#&gt; 117             0</span></span>
+<span><span class="co">#&gt; 118             0</span></span>
+<span><span class="co">#&gt; 119             0</span></span>
+<span><span class="co">#&gt; 120             0</span></span>
+<span><span class="co">#&gt; 121             0</span></span>
+<span><span class="co">#&gt; 122             0</span></span>
+<span><span class="co">#&gt; 123             0</span></span>
+<span><span class="co">#&gt; 124             0</span></span>
+<span><span class="co">#&gt; 125             0</span></span>
+<span><span class="co">#&gt; 126             0</span></span>
+<span><span class="co">#&gt; 127             0</span></span>
+<span><span class="co">#&gt; 128             0</span></span>
+<span><span class="co">#&gt; 129             0</span></span>
+<span><span class="co">#&gt; 130             0</span></span>
+<span><span class="co">#&gt; 131             0</span></span>
+<span><span class="co">#&gt; 132             0</span></span>
+<span><span class="co">#&gt; 133             0</span></span>
+<span><span class="co">#&gt; 134             0</span></span>
+<span><span class="co">#&gt; 135             0</span></span>
+<span><span class="co">#&gt; 136             0</span></span></code></pre></div>
 <p><code>monoisotopic_mass</code> and <code>neutral_mass</code> are
 <strong>neutral</strong> masses in daltons, not m/z.
 <code><a href="../reference/peptide_mz.html">peptide_mz()</a></code> converts at a charge:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/peptide_mz.html">peptide_mz</a></span><span class="op">(</span><span class="va">digest</span><span class="op">$</span><span class="va">peptides</span>, charge <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1782.434 2069.458</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/peptide_mz.html">peptide_mz</a></span><span class="op">(</span><span class="va">digest</span><span class="op">$</span><span class="va">peptides</span>, charge <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1019.0458  476.2245 1217.1354  575.3111  692.7714  732.7546</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="peptidoforms-are-not-sequences">Peptidoforms are not sequences<a class="anchor" aria-label="anchor" href="#peptidoforms-are-not-sequences"></a>
@@ -131,14 +453,16 @@ distinct sequences. Both are legitimate answers to “how many peptides”,
 and they are not interchangeable:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">digest</span><span class="op">$</span><span class="va">peptides</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="co">#&gt; [1] 303</span></span>
 <span><span class="fu"><a href="../reference/digest_distinct_base_sequences.html">digest_distinct_base_sequences</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 2</span></span>
-<span><span class="fu"><a href="../reference/digest_modified_peptides.html">digest_modified_peptides</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"full_sequence"</span>, <span class="st">"modification_count"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                                                         full_sequence</span></span>
-<span><span class="co">#&gt; 2 RPCFSALEVDETYVPKEFNAETFTFHADICTLSEK[UniProt:N6-succinyllysine on K]</span></span>
-<span><span class="co">#&gt;   modification_count</span></span>
-<span><span class="co">#&gt; 2                  1</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 195</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/digest_modified_peptides.html">digest_modified_peptides</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 108</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/digest_modified_peptides.html">digest_modified_peptides</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"full_sequence"</span>, <span class="st">"modification_count"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                  full_sequence modification_count</span></span>
+<span><span class="co">#&gt; 6    TCVADES[UniProt:Phosphoserine on S]AENCDK                  1</span></span>
+<span><span class="co">#&gt; 8        S[UniProt:Phosphoserine on S]LHTLFGDK                  1</span></span>
+<span><span class="co">#&gt; 11 ET[UniProt:Phosphothreonine on T]YGEMADCCAK                  1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="fragment-series">Fragment series<a class="anchor" aria-label="anchor" href="#fragment-series"></a>
@@ -147,9 +471,9 @@ and they are not interchangeable:</p>
 ions; HCD and CID produce <code>b</code> and <code>y</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/digest_fragments_by_series.html">digest_fragments_by_series</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   product_type  n</span></span>
-<span><span class="co">#&gt; 1            c 64</span></span>
-<span><span class="co">#&gt; 2         zDot 63</span></span></code></pre></div>
+<span><span class="co">#&gt;   product_type    n</span></span>
+<span><span class="co">#&gt; 1            c 5338</span></span>
+<span><span class="co">#&gt; 2         zDot 5390</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="which-modifications-were-applied-and-which-were-not">Which modifications were applied, and which were not<a class="anchor" aria-label="anchor" href="#which-modifications-were-applied-and-which-were-not"></a>
@@ -176,6 +500,28 @@ says whether it was reached:</p>
 <code>"trypsin|P"</code> <em>applies</em> the proline rule - the reverse
 of the MaxQuant and Mascot spelling. <code><a href="../reference/peptidoform_fragments.html">?peptidoform_fragments</a></code>
 gives the numbers.</p>
+</div>
+<div class="section level2">
+<h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
+</h2>
+<p>The methods and resources behind the functions on this page, from
+their specs:</p>
+<!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
+<ul>
+<li>
+<a href="https://doi.org/10.1002/pmic.200300744" class="external-link">doi:10.1002/pmic.200300744</a>:
+Unimod, the modification database whose accessions the Unimod target
+writes (Creasy and Cottrell 2004, Proteomics).</li>
+<li>
+<a href="https://doi.org/10.1021/acs.jproteome.1c00771" class="external-link">doi:10.1021/acs.jproteome.1c00771</a>:
+ProForma 2.0, the ProForma target’s notation (LeDuc et al. 2022, J
+Proteome Res).</li>
+<li>
+<a href="https://doi.org/10.1093/nar/gkae1010" class="external-link">doi:10.1093/nar/gkae1010</a>:
+UniProt, the source of the entry, its sequence and its annotated
+modifications (UniProt Consortium 2025, NAR).</li>
+</ul>
+<!-- END cite -->
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

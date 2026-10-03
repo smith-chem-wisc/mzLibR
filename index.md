@@ -35,8 +35,10 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
 | `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md); identify **and read every file type** mzLib knows, search results included — [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md) reads any of them into that format’s own fields, while [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md), [`readers_read_features()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md), [`readers_read_matches()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches.md) and [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md) project the four cross-format views |
-| `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with [`proteins_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.md), which gene it resolves to against a pinned Ensembl release with [`proteins_resolve_genes()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.md), and whether a peptide is unique to one protein or gene with [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md) |
-| `sdrf_*` | Read SDRF-Proteomics experimental-design files with [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md), and pool several into one table with provenance with [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md); check them with [`sdrf_validate()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md), [`sdrf_assess()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md) and [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md), and get each sample’s ages in years with [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md). Use these rather than [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md), which joins each SDRF row into one string that cannot be split back apart |
+| `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with [`proteins_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.md), which gene it resolves to against a pinned Ensembl release with [`proteins_resolve_genes()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.md), whether a peptide is unique to one protein or gene with [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md), and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with [`proteins_annotate_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.md) |
+| `sdrf_*` | Read SDRF-Proteomics experimental-design files with [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md), and pool several into one table with provenance with [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md); check them with [`sdrf_validate()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md), [`sdrf_assess()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md) and [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md), get each sample’s ages in years with [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md), and read the label-free design a quantification takes, or every reason there is none, with [`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md). Use these rather than [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md), which joins each SDRF row into one string that cannot be split back apart |
+| `isobaric_*` | TMT, TMTpro, iTRAQ and DiLeu kits with every channel’s label and theoretical reporter-ion m/z, from mzLib’s own table, with [`isobaric_kits()`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md) |
+| `stats_*` | limma’s moderated t-test (`lmFit` + `eBayes(legacy = TRUE)`) with [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md), Benjamini-Hochberg with [`stats_adjust()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_adjust.md) and DerSimonian-Laird random-effects meta-analysis with [`stats_meta()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.md), computed by mzLib and held to limma and metafor to 1e-8 |
 
 ## Installing
 
@@ -64,9 +66,14 @@ this package, which LGPL section 4 requires mzLibR to permit.
 
 ## No dependencies, and why that made it better
 
-mzLibR imports nothing but base R. `jsonlite` and `processx` would have
-been the obvious floor, and dropping them was a correctness decision
-more than a portability one:
+mzLibR imports nothing but base R. (`limma` and `metafor` are suggested,
+for the tests alone: when they are installed, the tests hold
+[`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+and
+[`stats_meta()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.md)
+to them.) `jsonlite` and `processx` would have been the obvious floor,
+and dropping them was a correctness decision more than a portability
+one:
 
 - **`jsonlite` auto-simplifies, and JSON `null` becomes R `NULL`.** A
   `NULL` assigned into a list *deletes* the element, so a
@@ -131,8 +138,10 @@ explains the condition classes.
 
 - **[The documentation
   site](https://smith-chem-wisc.github.io/mzLibR/)** - the help pages
-  and an article per module: reading files, SDRF, PRIDE, peptidoforms
-  and FlashLFQ.
+  and an article per module: reading files, SDRF, isobaric kits, PRIDE,
+  protein databases and GO, peptidoforms, FlashLFQ, and differential
+  abundance. The articles are also the package’s vignettes,
+  `browseVignettes("mzLibR")`, and `R CMD check` runs every one.
 - [`docs/reference-facts.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/reference-facts.md) -
   for contributors: how the help pages are generated from the specs and
   checked against them.

@@ -35,10 +35,12 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
+    <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
-    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -64,7 +66,7 @@
       <h1>Reading mass-spectrometry and search-result files</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/articles/readers.Rmd" class="external-link"><code>vignettes/articles/readers.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/readers.Rmd" class="external-link"><code>vignettes/readers.Rmd</code></a></small>
       <div class="d-none name"><code>readers.Rmd</code></div>
     </div>
 
@@ -75,6 +77,75 @@
 the output of a dozen search and deconvolution tools. The
 <code>readers_</code> functions ask it what a file is and read its
 records into data.frames.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>question</th>
+<th>function</th>
+<th>mzLib</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>which file types does mzLib know, and what can each give me?</td>
+<td><code><a href="../reference/readers_formats.html">readers_formats()</a></code></td>
+<td><code>SupportedFileType</code></td>
+</tr>
+<tr class="even">
+<td>what is this file?</td>
+<td><code><a href="../reference/readers_identify.html">readers_identify()</a></code></td>
+<td><code>SupportedFileTypeExtensions.ParseFileType</code></td>
+</tr>
+<tr class="odd">
+<td>what scans does this run hold, with peaks on request?</td>
+<td><code><a href="../reference/readers_read_spectra.html">readers_read_spectra()</a></code></td>
+<td><code>MsDataFileReader.GetDataFile</code></td>
+</tr>
+<tr class="even">
+<td>which peptides did the search find, ready to quantify?</td>
+<td><code><a href="../reference/readers_read_results.html">readers_read_results()</a></code></td>
+<td><code>FileReader.ReadQuantifiableResultFile</code></td>
+</tr>
+<tr class="odd">
+<td>which deconvolved MS1 features?</td>
+<td><code><a href="../reference/readers_read_features.html">readers_read_features()</a></code></td>
+<td><code>IMs1FeatureFile.GetMs1Features</code></td>
+</tr>
+<tr class="even">
+<td>which spectral matches, with every engine score?</td>
+<td><code><a href="../reference/readers_read_matches.html">readers_read_matches()</a></code></td>
+<td>
+<code>ISpectralMatch</code>, <code>MzIdentMLResultFile</code>
+</td>
+</tr>
+<tr class="odd">
+<td>everything this file has, in its own fields</td>
+<td><code><a href="../reference/readers_read_records.html">readers_read_records()</a></code></td>
+<td><code>IResultFile.LoadResults</code></td>
+</tr>
+<tr class="even">
+<td>per-sample protein-group, peptide or PTM-site quantities</td>
+<td>
+<code><a href="../reference/readers_read_protein_groups.html">readers_read_protein_groups()</a></code>,
+<code><a href="../reference/readers_read_quantified_peptides.html">readers_read_quantified_peptides()</a></code>,
+<code><a href="../reference/readers_read_occupancy.html">readers_read_occupancy()</a></code>
+</td>
+<td>
+<code>ProteinGroupFromTsvFile</code>,
+<code>QuantifiedPeptideFile</code>,
+<code>ModificationOccupancyCell</code>
+</td>
+</tr>
+<tr class="odd">
+<td>the same, for many files in one call</td>
+<td>the <code>_many</code> form of each</td>
+<td>the same readers, <code>threads</code> at a time</td>
+</tr>
+</tbody>
+</table>
 <p>The one idea to take away: <strong>mzLib does not read every format
 into one uniform shape.</strong> The formats fall into a few disjoint
 <em>views</em>, and many belong to none. This page shows how to tell
@@ -176,6 +247,14 @@ file.</p>
 <span><span class="co">#&gt; 1                     1        1       38.92572        484              NA</span></span>
 <span><span class="co">#&gt; 2                     2        2       38.92606        409        548.4539</span></span>
 <span><span class="co">#&gt; 3                     3        2       38.93049        339        796.7652</span></span></code></pre></div>
+<p>With <code>peaks = TRUE</code>, <code>mz</code> and
+<code>intensity</code> are list columns, one numeric vector per
+scan:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">one</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_spectra.html">readers_read_spectra</a></span><span class="op">(</span><span class="st">"sliced_ethcd.mzML"</span>, peaks <span class="op">=</span> <span class="cn">TRUE</span>, ms_order <span class="op">=</span> <span class="fl">1</span>, limit <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>peaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">one</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">mz</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, peak_count <span class="op">=</span> <span class="va">one</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">peak_count</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      peaks peak_count </span></span>
+<span><span class="co">#&gt;        484        484</span></span></code></pre></div>
 <p><code>retention_time</code> is in minutes for every spectra format.
 <code>selected_ion_mz</code> is <code>NA</code> on an MS1 scan, which
 has no precursor. <code><a href="../reference/readers_read_spectra.html">?readers_read_spectra</a></code> lists every column
@@ -184,7 +263,7 @@ with its unit and what <code>NA</code> means in it.</p>
 <div class="section level3">
 <h3 id="search-results-in-the-uniform-view">Search results in the uniform view<a class="anchor" aria-label="anchor" href="#search-results-in-the-uniform-view"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">psms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_results.html">readers_read_results</a></span><span class="op">(</span><span class="st">"FraggerPsm_FragPipev21.1_psm.tsv"</span>, limit <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">psms</span></span>
 <span><span class="co">#&gt; &lt;mzlibr_result_records&gt; C:\Users\trish\AppData\Local\Temp\claude\E--CodeReview-bridge\eebe6abc-2c7e-4422-9d4e-f0aaa03b3152\scratchpad\wt_c1\code\mzLib\mzLib\Test\FileReadingTests\ExternalFileTypes\FraggerPsm_FragPipev21.1_psm.tsv (MsFraggerPsm)</span></span>
@@ -206,14 +285,14 @@ read as “target”. Convert retention times with
 <code><a href="../reference/readers_retention_time_in_minutes.html">readers_retention_time_in_minutes()</a></code> rather than by hand: it
 uses the file’s own <code>retention_time_unit</code>, and refuses when
 mzLib gives no basis for one.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/readers_retention_time_in_minutes.html">readers_retention_time_in_minutes</a></span><span class="op">(</span><span class="va">psms</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.03233000 0.04907667</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="features-matches-and-everything-else">Features, matches, and everything else<a class="anchor" aria-label="anchor" href="#features-matches-and-everything-else"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_features.html">readers_read_features</a></span><span class="op">(</span><span class="st">"Ms1Feature_TopFDv1.6.2_ms1.feature"</span>, limit <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="va">features</span><span class="op">$</span><span class="va">retention_time_unit</span></span>
 <span><span class="co">#&gt; [1] "unknown"</span></span>
@@ -225,7 +304,7 @@ at v1.7.0 without changing the format, so the honest unit is
 <p>mzIdentML, which most search engines export, reads through the match
 view with its q-value, rank and threshold - and with
 <code>scores = TRUE</code>, one row per match and engine score:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">matches</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_matches.html">readers_read_matches</a></span><span class="op">(</span><span class="st">"PXD078927_msgf_1_1_0.mzid"</span>, limit <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">matches</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"one_based_scan_number"</span>, <span class="st">"base_sequence"</span>, <span class="st">"q_value"</span>, <span class="st">"rank"</span>,</span>
 <span>                    <span class="st">"pass_threshold"</span><span class="op">)</span><span class="op">]</span></span>
@@ -247,14 +326,14 @@ view with its q-value, rank and threshold - and with
 and a column a format has no source for is <code>NA</code> in every row
 and named in <code>absent_fields</code>. Casanovo is de novo, so it has
 no decoy label and no q-value:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">denovo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_matches.html">readers_read_matches</a></span><span class="op">(</span><span class="st">"Casanovo_5.0.0.mztab"</span><span class="op">)</span></span>
 <span><span class="va">denovo</span><span class="op">$</span><span class="va">absent_fields</span></span>
 <span><span class="co">#&gt; [1] "is_decoy"       "q_value"        "rank"           "pass_threshold"</span></span></code></pre></div>
 <p><code><a href="../reference/readers_read_records.html">readers_read_records()</a></code> reads any recognised file into
 that format’s own fields, under mzLib’s names, so a column can be looked
 up in the mzLib source:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">prsms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_records.html">readers_read_records</a></span><span class="op">(</span><span class="st">"ToppicPrsm_TopPICv1.6.2_prsm.tsv"</span><span class="op">)</span></span>
 <span><span class="va">prsms</span><span class="op">$</span><span class="va">record_type</span></span>
 <span><span class="co">#&gt; [1] "ToppicPrsm"</span></span>
@@ -282,7 +361,7 @@ quantifying. Each is wide on disk, one column per sample, and arrives
 long: one row per record per sample. <code>limit</code> and
 <code>offset</code> count records, so one group’s samples are never
 split.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_protein_groups.html">readers_read_protein_groups</a></span><span class="op">(</span><span class="st">"MetaMorpheus_1.1.11_AllQuantifiedProteinGroups.tsv"</span>,</span>
 <span>                                      limit <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">groups</span></span>
@@ -310,7 +389,7 @@ where a FlashLFQ intensity of 0 is <em>not</em> a measurement and
 <code>detection_type</code> says why; and
 <code><a href="../reference/readers_read_occupancy.html">readers_read_occupancy()</a></code> reads the per-site PTM occupancy,
 one row per group, sample, basis and site:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sites</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_occupancy.html">readers_read_occupancy</a></span><span class="op">(</span><span class="st">"MetaMorpheus_1.1.11_AllQuantifiedProteinGroups.tsv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sites</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">sites</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span> <span class="st">"count"</span>,</span>
 <span>                   <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"protein_group_name"</span>, <span class="st">"position"</span>, <span class="st">"modification"</span>, <span class="st">"numerator"</span>,</span>
@@ -354,6 +433,16 @@ rows have <code>spectral_count</code> and no <code>intensity</code>: the
 field is named in <code>absent_fields</code>, which means <em>no
 basis</em>, not zero.</li>
 </ul>
+<p>On mzLib’s own RNA test table:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rna</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_protein_groups.html">readers_read_protein_groups</a></span><span class="op">(</span><span class="st">"MetaMorpheus_RNA_AllQuantifiedTranscriptGroups.tsv"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>groups <span class="op">=</span> <span class="va">rna</span><span class="op">$</span><span class="va">record_count</span>, rows <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">rna</span><span class="op">$</span><span class="va">records</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; groups   rows </span></span>
+<span><span class="co">#&gt;      3    111</span></span>
+<span><span class="va">fluc</span> <span class="op">&lt;-</span> <span class="va">rna</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">rna</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">protein_group_name</span> <span class="op">==</span> <span class="st">"FLuc"</span> <span class="op">&amp;</span> <span class="va">rna</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">sample_label</span> <span class="op">==</span> <span class="st">"1:1_1"</span>, <span class="op">]</span></span>
+<span><span class="va">fluc</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"protein_group_name"</span>, <span class="st">"sample_label"</span>, <span class="st">"spectral_count"</span>, <span class="st">"intensity"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   protein_group_name sample_label spectral_count intensity</span></span>
+<span><span class="co">#&gt; 1               FLuc        1:1_1            355  89077471</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -363,7 +452,7 @@ basis</em>, not zero.</li>
 to one bridge process, which reads <code>threads</code> files at once
 and returns one long table - the same table at any thread count. Never
 loop the one-file function instead: each call starts a new process.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">runs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_spectra_many.html">readers_read_spectra_many</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sliced_ethcd.mzML"</span>, <span class="st">"no-such-run.mzML"</span>, <span class="st">"withZeros.mgf"</span><span class="op">)</span>,</span>
 <span>                                  threads <span class="op">=</span> <span class="fl">2</span>, on_error <span class="op">=</span> <span class="st">"skip"</span><span class="op">)</span></span>
 <span><span class="va">runs</span></span>
@@ -395,6 +484,17 @@ could not be read is a row with its error rather than a failed call.</p>
 paging re-reads the file each time. For a large file pass
 <code>out</code> to write a tab-separated table and read it with
 <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim()</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
+</h2>
+<p>The methods and resources behind the functions on this page, from
+their specs:</p>
+<!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
+<ul>
+<li>No publication: these verbs cite none in their specs.</li>
+</ul>
+<!-- END cite -->
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

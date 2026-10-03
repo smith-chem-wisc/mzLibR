@@ -2,13 +2,15 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  articles/flashlfq: flashlfq.html
-  articles/peptidoforms: peptidoforms.html
-  articles/pride: pride.html
-  articles/proteins: proteins.html
-  articles/readers: readers.html
-  articles/sdrf: sdrf.html
-last_built: 2026-10-03T16:01Z
+  flashlfq: flashlfq.html
+  isobaric: isobaric.html
+  peptidoforms: peptidoforms.html
+  pride: pride.html
+  proteins: proteins.html
+  readers: readers.html
+  sdrf: sdrf.html
+  stats: stats.html
+last_built: 2026-10-03T18:28Z
 urls:
   reference: https://smith-chem-wisc.github.io/mzLibR/reference
   article: https://smith-chem-wisc.github.io/mzLibR/articles

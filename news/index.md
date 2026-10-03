@@ -137,6 +137,34 @@ verified against that release’s SHA256SUMS.
   [\#1326](https://github.com/smith-chem-wisc/mzLibR/issues/1326),
   [\#1333](https://github.com/smith-chem-wisc/mzLibR/issues/1333),
   [\#1335](https://github.com/smith-chem-wisc/mzLibR/issues/1335)).
+- New
+  [`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
+  reads the label-free experimental design MetaMorpheus and FlashLFQ
+  take out of an SDRF, with mzLib’s `SdrfLabelFreeDesign`, or every
+  reason it refuses to - all at once, and as a result rather than an
+  error.
+  [`sdrf_design_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_spectra.md)
+  and
+  [`sdrf_design_run_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_run_design.md)
+  hand it to
+  [`flashlfq_quantify()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
+  and
+  [`flashlfq_median_polish()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_median_polish.md);
+  `out` writes MetaMorpheus’s `ExperimentalDesign.tsv`. Its replicate
+  and fraction coordinates stay 0-based, as the quant functions take
+  them (mzLib
+  [\#1363](https://github.com/smith-chem-wisc/mzLibR/issues/1363);
+  *needs the pyMzLib 0.3.0 bridge*).
+
+### Isobaric kits
+
+- New
+  [`isobaric_kits()`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md)
+  lists mzLib’s TMT, TMTpro, iTRAQ and DiLeu kits with every channel’s
+  label, theoretical reporter-ion m/z and matching window, or one kit by
+  MetaMorpheus’s name for it; `channel_index` is 1-based (mzLib
+  [\#1375](https://github.com/smith-chem-wisc/mzLibR/issues/1375);
+  *needs the pyMzLib 0.3.0 bridge*).
 
 ### PRIDE, peptidoforms and quantification
 
@@ -168,6 +196,36 @@ verified against that release’s SHA256SUMS.
   transport, so none can wait on it (pyMzLib
   [\#73](https://github.com/smith-chem-wisc/mzLibR/issues/73)).
 
+### Differential abundance
+
+- New
+  [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  fits one linear model per feature of a feature-by-sample table and
+  tests each named coefficient with limma’s empirical-Bayes moderated t,
+  Benjamini-Hochberg adjusted: `lmFit()` then `eBayes(legacy = TRUE)`,
+  computed by mzLib’s `LinearModel` and `EmpiricalBayes`. A feature that
+  cannot be fitted is reported with its reason, never dropped, and
+  `residual_df_differ` says when default limma would use a different
+  prior estimator.
+- New
+  [`stats_adjust()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_adjust.md)
+  Benjamini-Hochberg adjusts p-values from anywhere, keeping every
+  position; `NA` is untested and not counted in m.
+- New
+  [`stats_meta()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.md)
+  pools one estimate per study into a DerSimonian-Laird random-effects
+  estimate per feature, with direction agreement and leave-one-out
+  sensitivity.
+- The tests hold all three to limma, metafor and
+  [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) to 1e-8
+  relative - against their recorded output always, and against limma and
+  metafor run in the test when they are installed (both are now in
+  `Suggests`). The reference tables ship in `extdata/stats/` so the
+  examples and the new article read real files (mzLib
+  [\#1341](https://github.com/smith-chem-wisc/mzLibR/issues/1341),
+  [\#1357](https://github.com/smith-chem-wisc/mzLibR/issues/1357);
+  *needs the pyMzLib 0.3.0 bridge*).
+
 ### Protein databases
 
 - New
@@ -186,6 +244,20 @@ verified against that release’s SHA256SUMS.
   [\#1338](https://github.com/smith-chem-wisc/mzLibR/issues/1338),
   [\#1348](https://github.com/smith-chem-wisc/mzLibR/issues/1348);
   *needs the pyMzLib 0.2.0 bridge*).
+- New
+  [`proteins_annotate_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.md)
+  annotates a stored MetaMorpheus protein-group table with Gene Ontology
+  terms: one row per (group, term) that any member holds, directly or
+  through an ancestor, naming the members that carry it, so consensus
+  and direct-only views are filters on the rows. Every non-decoy group
+  gets a row, a term-less one saying why. It reads the go.obo you name
+  and never downloads one;
+  [`proteins_update_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_update_go.md)
+  is the one function that fetches the current release, keeping the
+  previous file beside it (mzLib
+  [\#1353](https://github.com/smith-chem-wisc/mzLibR/issues/1353),
+  [\#1366](https://github.com/smith-chem-wisc/mzLibR/issues/1366);
+  *needs the pyMzLib 0.3.0 bridge*).
 
 ### Documentation
 
@@ -204,3 +276,21 @@ verified against that release’s SHA256SUMS.
   [`?mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md)
   documents the condition classes and how to handle each.
 - A pkgdown site, with an article for each module.
+- The articles are now vignettes, so `R CMD check` builds and runs every
+  one of them, on every platform, against the replay bridge. Each opens
+  with a question -\> function -\> mzLib table, ends with what to cite
+  (rendered from the specs’ DOIs, each checked to resolve), and states
+  no count of formats or verbs and no mzLib version in its prose;
+  `scripts/docs-lint.R` holds all of that in CI.
+- The articles teach on real data recorded from the real bridge: a
+  FlashLFQ run with match-between-runs on mzLib’s K562 pair (and median
+  polish reproducing its protein intensities for every group), the whole
+  albumin digest, PXD000001’s live FTP listing, an RNA search’s
+  transcript groups, and the MALAT1 dilution series for
+  [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md).
+- Corrected from those runs: the K562 peptide roll-up shows 21 of the
+  140 MBR transfers, not 52; `use_pep_q_value` filters nothing, it
+  changes the q-value FlashLFQ carries; PXD000001’s FTP tree now holds
+  14 files.
+- `knitr` and `rmarkdown` join `Suggests`, for the vignettes. The
+  package still imports nothing but base R.

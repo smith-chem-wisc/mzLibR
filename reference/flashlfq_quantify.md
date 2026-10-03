@@ -87,7 +87,10 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 - use_pep_q_value:
 
-  Whether to use PEP q-values rather than q-values for filtering.
+  Store each identification's PEP q-value as its q-value, instead of its
+  q-value. **It filters nothing here**: FlashLFQ is given every
+  identification either way. It changes the q-value FlashLFQ carries,
+  which match-between-runs reads.
 
 - max_threads:
 
@@ -128,13 +131,12 @@ peak (more than one means ambiguous).
 
 `peptides` is FlashLFQ's roll-up and **it drops most match-between-runs
 transfers.** On mzLib's own K562 pair there are **140** true transfers
-in `peaks` and the peptide table shows **52** - a 63% under-count.
-Worse, it is not evenly spread: per run the peaks give run_3 **62** and
-run_4 **78**, while the roll-up gives run_3 **0** and run_4 52. Read
-only the roll-up and MBR appears not to have worked at all in half the
-experiment.
+in `peaks` and the peptide table shows **21**. Worse, it is not evenly
+spread: per run the peaks give run_3 **62** and run_4 **78**, while the
+roll-up gives run_3 **0** and run_4 21. Read only the roll-up and MBR
+appears not to have worked at all in half the experiment.
 
-"Peptides quantified in both runs" is **257** from `peaks` and **169**
+"Peptides quantified in both runs" is **257** from `peaks` and **138**
 from `peptides`.
 
 Nor can you reproduce the roll-up by pivoting `peaks` yourself: where a

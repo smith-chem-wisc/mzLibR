@@ -40,5 +40,5 @@ the REST-manifest counterpart.
 
 listing <- pride_list_ftp_files("PXD000001")
 pride_approximate_total_size_bytes(listing)
-#> [1] 670905958
+#> [1] 1436359680
 ```

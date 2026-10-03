@@ -3,9 +3,8 @@
 Read the scans of a spectra file: every scan's header always, and its
 peak arrays only on request.
 
-Seven file types offer the `spectra` view: `.mzML`, `.mgf`,
-`_ms1.msalign`, `_ms2.msalign`, Thermo `.raw`, Bruker `.d` and timsTOF
-`.d`.
+The `spectra` view is offered by `.mzML`, `.mgf`, `_ms1.msalign`,
+`_ms2.msalign`, Thermo `.raw`, Bruker `.d` and timsTOF `.d`.
 
 ## Usage
 

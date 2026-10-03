@@ -35,10 +35,12 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
+    <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
-    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -64,63 +66,127 @@
       <h1>Label-free quantification with FlashLFQ</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/articles/flashlfq.Rmd" class="external-link"><code>vignettes/articles/flashlfq.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/flashlfq.Rmd" class="external-link"><code>vignettes/flashlfq.Rmd</code></a></small>
       <div class="d-none name"><code>flashlfq.Rmd</code></div>
     </div>
 
     
     
-<p><code><a href="../reference/flashlfq_quantify.html">flashlfq_quantify()</a></code> takes a search’s identifications and
-the mzML runs they came from, and returns FlashLFQ’s peptide, protein
-and peak tables. The recording used here is deliberately tiny - two
-runs, two peptides - so every table fits on the page.</p>
+<p><a href="https://github.com/smith-chem-wisc/FlashLFQ" class="external-link">FlashLFQ</a> is
+the label-free quantification engine MetaMorpheus uses. Give it a search
+result and the mzML runs it came from, and it measures how much of each
+peptide and protein is in each run. The whole pipeline is mzLib’s: its
+readers read the result file, its converter makes FlashLFQ
+identifications, and <code>FlashLfqEngine</code> quantifies them.
+MetaMorpheus is not involved.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>question</th>
+<th>function</th>
+<th>mzLib</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>how much of each peptide and protein is in each run?</td>
+<td><code><a href="../reference/flashlfq_quantify.html">flashlfq_quantify()</a></code></td>
+<td><code>FlashLfqEngine.Run</code></td>
+</tr>
+<tr class="even">
+<td>fill in peptides missing from a run</td>
+<td><code>flashlfq_quantify(match_between_runs = TRUE)</code></td>
+<td>FlashLFQ’s match-between-runs</td>
+</tr>
+<tr class="odd">
+<td>group runs into conditions and replicates</td>
+<td><code>flashlfq_quantify(spectra = &lt;data.frame&gt;)</code></td>
+<td><code>SpectraFileInfo</code></td>
+</tr>
+<tr class="even">
+<td>how many peaks did match-between-runs transfer?</td>
+<td>
+<code><a href="../reference/flashlfq_mbr_peaks.html">flashlfq_mbr_peaks()</a></code>,
+<code><a href="../reference/flashlfq_mbr_peak_count.html">flashlfq_mbr_peak_count()</a></code>
+</td>
+<td>the peak table</td>
+</tr>
+<tr class="odd">
+<td>re-roll proteins from a peptide table, without the mzML</td>
+<td><code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code></td>
+<td><code>FlashLfqResults.CalculateProteinResultsMedianPolish</code></td>
+</tr>
+</tbody>
+</table>
+<p>The data are real: two K562 runs from mzLib’s FlashLFQ test data and
+their MetaMorpheus search, quantified with match-between-runs on.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">quant</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flashlfq_quantify.html">flashlfq_quantify</a></span><span class="op">(</span><span class="st">"AllPSMs.psmtsv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"run_3.mzML"</span>, <span class="st">"run_4.mzML"</span><span class="op">)</span>,</span>
-<span>                           match_between_runs <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">runs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"20100614_Velos1_TaGe_SA_K562_3.mzML"</span>, <span class="st">"20100614_Velos1_TaGe_SA_K562_4.mzML"</span><span class="op">)</span></span>
+<span><span class="va">quant</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flashlfq_quantify.html">flashlfq_quantify</a></span><span class="op">(</span><span class="st">"AllPSMs.psmtsv"</span>, <span class="va">runs</span>, match_between_runs <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">quant</span></span>
-<span><span class="co">#&gt; &lt;mzlibr_quant&gt; AllPSMs.psmtsv, 4 identifications</span></span>
-<span><span class="co">#&gt;   2 runs, 2 peptides, 2 protein groups, 3 peaks</span></span>
-<span><span class="co">#&gt;   MBR: 1 transfers in peaks, 1 distinct peptides</span></span>
-<span><span class="co">#&gt;   proteins: 2 NA (could not be resolved), 0 zero (not measured)</span></span></code></pre></div>
+<span><span class="co">#&gt; &lt;mzlibr_quant&gt; E:\GitClones\mzLib\mzLib\Test\FlashLFQ\TestData\AllPSMs.psmtsv, 594 identifications</span></span>
+<span><span class="co">#&gt;   2 runs, 354 peptides, 943 protein groups, 647 peaks</span></span>
+<span><span class="co">#&gt;   MBR: 140 transfers in peaks, 140 distinct peptides</span></span>
+<span><span class="co">#&gt;   ! the peptide roll-up shows only 21 of those 140 transfers - read peaks, not peptides.</span></span>
+<span><span class="co">#&gt;     See ?flashlfq_quantify.</span></span>
+<span><span class="co">#&gt;   proteins: 10 NA (could not be resolved), 1734 zero (not measured)</span></span></code></pre></div>
+<p>Any quantifiable search result works, not only MetaMorpheus’s: an
+MSFragger <code>psm.tsv</code> or a DIA-NN <code>report.tsv</code> too.
+mzLib converts MSFragger’s retention times from seconds to minutes as it
+reads them (mzLib #1116), so FlashLFQ searches the right window.</p>
 <div class="section level2">
 <h2 id="four-tidy-tables">Four tidy tables<a class="anchor" aria-label="anchor" href="#four-tidy-tables"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">quant</span><span class="op">$</span><span class="va">spectra_files</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_name"</span>, <span class="st">"peak_count"</span>, <span class="st">"mbr_peak_count"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;   file_name peak_count mbr_peak_count</span></span>
-<span><span class="co">#&gt; 1     run_3          3              1</span></span>
-<span><span class="co">#&gt; 2     run_4          2              0</span></span>
-<span><span class="va">quant</span><span class="op">$</span><span class="va">peptides</span></span>
-<span><span class="co">#&gt;                  sequence base_sequence protein_groups file_name intensity</span></span>
-<span><span class="co">#&gt; 1                PEPTIDEK      PEPTIDEK         P12345     run_3      1000</span></span>
-<span><span class="co">#&gt; 2                PEPTIDEK      PEPTIDEK         P12345     run_4       500</span></span>
-<span><span class="co">#&gt; 3 AC[Carbamidomethyl]DEFR        ACDEFR  P67890;Q11111     run_3      2000</span></span>
-<span><span class="co">#&gt; 4 AC[Carbamidomethyl]DEFR        ACDEFR  P67890;Q11111     run_4         0</span></span>
-<span><span class="co">#&gt;   detection_type</span></span>
-<span><span class="co">#&gt; 1           MSMS</span></span>
-<span><span class="co">#&gt; 2            MBR</span></span>
-<span><span class="co">#&gt; 3           MSMS</span></span>
-<span><span class="co">#&gt; 4    NotDetected</span></span>
-<span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span></span>
-<span><span class="co">#&gt;   protein_group gene_name     organism file_name intensity</span></span>
-<span><span class="co">#&gt; 1        P12345     GENE1 Homo sapiens     run_3      1000</span></span>
-<span><span class="co">#&gt; 2        P12345     GENE1 Homo sapiens     run_4       500</span></span>
-<span><span class="co">#&gt; 3        P67890     GENE2 Homo sapiens     run_3        NA</span></span>
-<span><span class="co">#&gt; 4        P67890     GENE2 Homo sapiens     run_4        NA</span></span>
-<span><span class="va">quant</span><span class="op">$</span><span class="va">peaks</span></span>
-<span><span class="co">#&gt;   file_name                sequence base_sequence intensity detection_type</span></span>
-<span><span class="co">#&gt; 1     run_3                PEPTIDEK      PEPTIDEK      1000           MSMS</span></span>
-<span><span class="co">#&gt; 2     run_4                PEPTIDEK      PEPTIDEK       500            MBR</span></span>
-<span><span class="co">#&gt; 3     run_3 AC[Carbamidomethyl]DEFR        ACDEFR      2000           MSMS</span></span>
-<span><span class="co">#&gt;   retention_time num_identifications protein_groups</span></span>
-<span><span class="co">#&gt; 1           30.1                   1         P12345</span></span>
-<span><span class="co">#&gt; 2           30.3                   1         P12345</span></span>
-<span><span class="co">#&gt; 3           22.0                   1  P67890;Q11111</span></span></code></pre></div>
+<span><span class="co">#&gt;                        file_name peak_count mbr_peak_count</span></span>
+<span><span class="co">#&gt; 1 20100614_Velos1_TaGe_SA_K562_3        340             62</span></span>
+<span><span class="co">#&gt; 2 20100614_Velos1_TaGe_SA_K562_4        307             78</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">peptides</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                             sequence        base_sequence</span></span>
+<span><span class="co">#&gt; 1 AHQLVMEGYNWC[Common Fixed:Carbamidomethyl on C]HDR      AHQLVMEGYNWCHDR</span></span>
+<span><span class="co">#&gt; 2 AHQLVMEGYNWC[Common Fixed:Carbamidomethyl on C]HDR      AHQLVMEGYNWCHDR</span></span>
+<span><span class="co">#&gt; 3                               GGAAVDPDSGLEHSAHVLEK GGAAVDPDSGLEHSAHVLEK</span></span>
+<span><span class="co">#&gt; 4                               GGAAVDPDSGLEHSAHVLEK GGAAVDPDSGLEHSAHVLEK</span></span>
+<span><span class="co">#&gt;         protein_groups                      file_name  intensity detection_type</span></span>
+<span><span class="co">#&gt; 1 H0YC23;P62714;P67775 20100614_Velos1_TaGe_SA_K562_3 1930193.13           MSMS</span></span>
+<span><span class="co">#&gt; 2 H0YC23;P62714;P67775 20100614_Velos1_TaGe_SA_K562_4   80695.04           MSMS</span></span>
+<span><span class="co">#&gt; 3    A0A7I2V3E1;P09874 20100614_Velos1_TaGe_SA_K562_3  946862.10           MSMS</span></span>
+<span><span class="co">#&gt; 4    A0A7I2V3E1;P09874 20100614_Velos1_TaGe_SA_K562_4  448493.27           MSMS</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">[</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">intensity</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">intensity</span><span class="op">)</span>, <span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    protein_group    gene_name     organism                      file_name</span></span>
+<span><span class="co">#&gt; 65        P50990 primary:CCT8 Homo sapiens 20100614_Velos1_TaGe_SA_K562_3</span></span>
+<span><span class="co">#&gt; 66        P50990 primary:CCT8 Homo sapiens 20100614_Velos1_TaGe_SA_K562_4</span></span>
+<span><span class="co">#&gt; 91        Q9UQE7 primary:SMC3 Homo sapiens 20100614_Velos1_TaGe_SA_K562_3</span></span>
+<span><span class="co">#&gt; 92        Q9UQE7 primary:SMC3 Homo sapiens 20100614_Velos1_TaGe_SA_K562_4</span></span>
+<span><span class="co">#&gt;     intensity</span></span>
+<span><span class="co">#&gt; 65 13493446.6</span></span>
+<span><span class="co">#&gt; 66  3022424.2</span></span>
+<span><span class="co">#&gt; 91   431063.4</span></span>
+<span><span class="co">#&gt; 92  1342055.8</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">peaks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_name"</span>, <span class="st">"sequence"</span>, <span class="st">"intensity"</span>, <span class="st">"detection_type"</span>, <span class="st">"retention_time"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                        file_name        sequence intensity detection_type</span></span>
+<span><span class="co">#&gt; 1 20100614_Velos1_TaGe_SA_K562_3 RVHVTQEDFEMAVAK  502271.2            MBR</span></span>
+<span><span class="co">#&gt; 2 20100614_Velos1_TaGe_SA_K562_3        IIGVDINK  258493.6            MBR</span></span>
+<span><span class="co">#&gt; 3 20100614_Velos1_TaGe_SA_K562_3         MLEYALK  807482.4            MBR</span></span>
+<span><span class="co">#&gt; 4 20100614_Velos1_TaGe_SA_K562_3        FIDVGGYK  309926.9            MBR</span></span>
+<span><span class="co">#&gt;   retention_time</span></span>
+<span><span class="co">#&gt; 1       79.93353</span></span>
+<span><span class="co">#&gt; 2       81.45669</span></span>
+<span><span class="co">#&gt; 3       82.14552</span></span>
+<span><span class="co">#&gt; 4       81.95885</span></span></code></pre></div>
 <p><code>peptides</code> and <code>proteins</code> are long: one row per
 peptide or protein group per run, with the run in
 <code>file_name</code>. Intensities are in the instrument’s units;
 <code>retention_time</code> in <code>peaks</code> is the apex, in
 minutes.</p>
+<p>Most protein groups read 0 in both runs, and that is a setting, not a
+failure. With
+<code>use_shared_peptides_for_protein_quant = FALSE</code>, the default,
+only a group’s own peptides count, and most groups here have none.</p>
 </div>
 <div class="section level2">
 <h2 id="and-na-mean-different-things">0 and <code>NA</code> mean different things<a class="anchor" aria-label="anchor" href="#and-na-mean-different-things"></a>
@@ -131,62 +197,92 @@ intensity of <code>NA</code> means FlashLFQ could not resolve a number
 at all. mzLibR keeps the two apart, so <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code> over a
 protein column returns <code>NA</code> rather than a confidently wrong
 number, and <code>na.rm = TRUE</code> is a choice you make visibly.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>not_resolved <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">intensity</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  not_measured <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">intensity</span> <span class="op">==</span> <span class="fl">0</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; not_resolved not_measured </span></span>
+<span><span class="co">#&gt;           10         1734</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="count-transfers-from-the-peaks">Count transfers from the peaks<a class="anchor" aria-label="anchor" href="#count-transfers-from-the-peaks"></a>
 </h2>
-<p>With <code>match_between_runs = TRUE</code>, count transfers from
-<code>peaks</code>, never from the peptide roll-up, which drops most of
-them. On mzLib’s own K562 pair the peaks hold 140 true transfers and the
-peptide table shows 52.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/flashlfq_mbr_peaks.html">flashlfq_mbr_peaks</a></span><span class="op">(</span><span class="va">quant</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   file_name sequence base_sequence intensity detection_type retention_time</span></span>
-<span><span class="co">#&gt; 2     run_4 PEPTIDEK      PEPTIDEK       500            MBR           30.3</span></span>
-<span><span class="co">#&gt;   num_identifications protein_groups</span></span>
-<span><span class="co">#&gt; 2                   1         P12345</span></span>
-<span><span class="fu"><a href="../reference/flashlfq_mbr_peak_count.html">flashlfq_mbr_peak_count</a></span><span class="op">(</span><span class="va">quant</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="fu"><a href="../reference/flashlfq_mbr_rescued_peptide_count.html">flashlfq_mbr_rescued_peptide_count</a></span><span class="op">(</span><span class="va">quant</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<p>With <code>match_between_runs = TRUE</code>, a peptide identified in
+one run but missing from another is still quantified in the second, by
+transferring the identification across the aligned retention-time axis.
+Count transfers from <code>peaks</code>, never from the peptide roll-up,
+which mirrors FlashLFQ’s <code>QuantifiedPeptides.tsv</code> and drops
+most of them:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/flashlfq_mbr_peak_count.html">flashlfq_mbr_peak_count</a></span><span class="op">(</span><span class="va">quant</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 140</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">peptides</span><span class="op">$</span><span class="va">file_name</span><span class="op">[</span><span class="va">quant</span><span class="op">$</span><span class="va">peptides</span><span class="op">$</span><span class="va">detection_type</span> <span class="op">==</span> <span class="st">"MBR"</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 20100614_Velos1_TaGe_SA_K562_4 </span></span>
+<span><span class="co">#&gt;                             21</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/flashlfq_mbr_peaks.html">flashlfq_mbr_peaks</a></span><span class="op">(</span><span class="va">quant</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_name"</span>, <span class="st">"sequence"</span>, <span class="st">"intensity"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                        file_name        sequence intensity</span></span>
+<span><span class="co">#&gt; 1 20100614_Velos1_TaGe_SA_K562_3 RVHVTQEDFEMAVAK  502271.2</span></span>
+<span><span class="co">#&gt; 2 20100614_Velos1_TaGe_SA_K562_3        IIGVDINK  258493.6</span></span>
+<span><span class="co">#&gt; 3 20100614_Velos1_TaGe_SA_K562_3         MLEYALK  807482.4</span></span></code></pre></div>
+<p>None of run 3’s transfers appear in the peptide table: they read
+<code>"NotDetected"</code> with intensity 0. A peptide by run matrix
+built from <code>peptides</code> silently drops most of what MBR filled
+in; build it from <code>peaks</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="re-quantify-proteins-under-a-new-design">Re-quantify proteins under a new design<a class="anchor" aria-label="anchor" href="#re-quantify-proteins-under-a-new-design"></a>
 </h2>
 <p><code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code> reruns only the protein
 roll-up, from the <code>QuantifiedPeptides.tsv</code> FlashLFQ wrote,
-without re-reading any spectra. The design says which runs are
-replicates of which sample, and the result is keyed by sample:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">polished</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish</a></span><span class="op">(</span><span class="st">"QuantifiedPeptides.tsv"</span>,</span>
-<span>  design <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>file_name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"run_3"</span>, <span class="st">"run_4"</span><span class="op">)</span>, condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"treated"</span><span class="op">)</span>,</span>
-<span>                      biological_replicate <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+without re-reading any spectra. With no design, each run is its own
+sample, and the answer is FlashLFQ’s own:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">polished</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish</a></span><span class="op">(</span><span class="st">"K562_QuantifiedPeptides.tsv"</span><span class="op">)</span></span>
 <span><span class="va">polished</span><span class="op">$</span><span class="va">samples</span></span>
-<span><span class="co">#&gt;       label condition biological_replicate</span></span>
-<span><span class="co">#&gt; 1 control_1   control                    0</span></span>
-<span><span class="co">#&gt; 2 treated_1   treated                    0</span></span>
-<span><span class="va">polished</span><span class="op">$</span><span class="va">proteins</span></span>
-<span><span class="co">#&gt;   protein_group gene_name     organism    sample intensity</span></span>
-<span><span class="co">#&gt; 1            P1     GENE1 Homo sapiens control_1    3005.6</span></span>
-<span><span class="co">#&gt; 2            P1     GENE1 Homo sapiens treated_1    6011.3</span></span>
-<span><span class="co">#&gt; 3            P2     GENE2 Homo sapiens control_1    2262.7</span></span>
-<span><span class="co">#&gt; 4            P2     GENE2 Homo sapiens treated_1    2368.5</span></span>
-<span><span class="co">#&gt; 5            P3     GENE3 Homo sapiens control_1        NA</span></span>
-<span><span class="co">#&gt; 6            P3     GENE3 Homo sapiens treated_1        NA</span></span></code></pre></div>
+<span><span class="co">#&gt;                            label condition biological_replicate</span></span>
+<span><span class="co">#&gt; 1 20100614_Velos1_TaGe_SA_K562_3                              0</span></span>
+<span><span class="co">#&gt; 2 20100614_Velos1_TaGe_SA_K562_4                              1</span></span>
+<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">groups</span>, <span class="va">runs</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">groups</span>, <span class="va">runs</span><span class="op">)</span></span>
+<span><span class="va">same</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu">key</span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">protein_group</span>, <span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">file_name</span><span class="op">)</span>,</span>
+<span>              <span class="fu">key</span><span class="op">(</span><span class="va">polished</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">protein_group</span>, <span class="va">polished</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">sample</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">quant</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">intensity</span>, <span class="va">polished</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">intensity</span><span class="op">[</span><span class="va">same</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Every protein group’s intensity in every run is reproduced exactly.
+Give <code>design</code> a data.frame with <code>file_name</code>,
+<code>condition</code> and <code>biological_replicate</code> to say
+which runs are replicates of which sample, and only the roll-up is
+redone.</p>
 </div>
 <div class="section level2">
 <h2 id="before-a-real-run">Before a real run<a class="anchor" aria-label="anchor" href="#before-a-real-run"></a>
 </h2>
 <ul>
-<li>Use a MetaMorpheus <code>.psmtsv</code> or <code>.osmtsv</code>, and
-mzML runs; convert <code>.raw</code> first.</li>
+<li>Use a MetaMorpheus <code>.psmtsv</code> or <code>.osmtsv</code>, an
+MSFragger <code>psm.tsv</code> or a DIA-NN report, and mzML runs;
+convert <code>.raw</code> first.</li>
 <li>Give <code>spectra</code> a <code>condition</code> and
 <code>biological_replicate</code> so FlashLFQ knows which runs are
-comparable; match-between-runs needs a balanced design.</li>
+comparable; match-between-runs needs a balanced design.
+<code><a href="../reference/sdrf_design_spectra.html">sdrf_design_spectra()</a></code> builds that from an SDRF.</li>
 <li>
 <code>max_threads</code> defaults to 1 here and to every core in
 pyMzLib and mzLibRust; <code><a href="../reference/flashlfq_quantify.html">?flashlfq_quantify</a></code> says why.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
+</h2>
+<p>The methods and resources behind the functions on this page, from
+their specs:</p>
+<!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
+<ul>
+<li>
+<a href="https://doi.org/10.1021/acs.jproteome.7b00608" class="external-link">doi:10.1021/acs.jproteome.7b00608</a>:
+FlashLFQ: the peak-finding, match-between-runs and protein
+quantification this verb runs (Millikin et al., J Proteome Res
+2018).</li>
+</ul>
+<!-- END cite -->
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

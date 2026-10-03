@@ -4,8 +4,8 @@ Read a result file through the cross-format quantifiable view: sequence,
 retention time, charge, theoretical mass, decoy flag and protein groups,
 the same columns for every format that offers it.
 
-Only the three file types offering the `"quantifiable"` view can be read
-this way — check
+Only the file types offering the `"quantifiable"` view can be read this
+way — check
 [`readers_identify`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
 first, or catch the error, which names the views the file does have.
 
@@ -65,8 +65,8 @@ back, starting `offset` records in; `rows_not_read` counts data rows
 that did not become records.
 
 `records` is a data.frame of the record view, one row per record, or
-`NULL` when `out` was given. `retention_time` is in minutes for all four
-formats today, and `retention_time_unit` says so per file;
+`NULL` when `out` was given. `retention_time` is in minutes for every
+quantifiable format today, and `retention_time_unit` says so per file;
 `charge_state` is a charge; `monoisotopic_mass` is a neutral mass in Da.
 `is_decoy` is `NA` where the format records no decoy label.
 

@@ -76,53 +76,100 @@ matches, or any recognised format in its own fields.
 
 ## SDRF-Proteomics experimental designs
 
-Read one design file, or pool several into one analysis table.
+Read one design file or pool several, ask whether each is well-formed
+and informative, and read the label-free design a quantification takes.
 
 - [`sdrf_all()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_all.md)
   : Every cell under a column, one list element per row
+
 - [`sdrf_assess()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md)
   : Decide whether an SDRF file describes its samples, or is a valid
   skeleton
+
 - [`sdrf_assess_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess_many.md)
   : Assess many SDRF files in one bridge call
+
+- [`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
+  : Read a label-free experimental design out of an SDRF, or every
+  reason it cannot be read
+
+- [`sdrf_design_run_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_run_design.md)
+  :
+
+  A label-free design as
+  [`flashlfq_median_polish()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_median_polish.md)
+  takes its `design`
+
+- [`sdrf_design_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_spectra.md)
+  :
+
+  A label-free design as
+  [`flashlfq_quantify()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
+  takes its `spectra`
+
 - [`sdrf_has_repeated_columns()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_has_repeated_columns.md)
   : Whether an SDRF document repeats a column name
+
 - [`sdrf_index_of()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_index_of.md)
   : Where a column first sits in an SDRF document
+
 - [`sdrf_indexes_of()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_indexes_of.md)
   : Every position a column name occupies in an SDRF document
+
 - [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md)
   : Find the concepts a set of SDRF documents annotated inconsistently
+
 - [`sdrf_parse_ages()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_parse_ages.md)
   : Read SDRF age cells into years, refusing anything that would need a
   guess
+
 - [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md)
   : Merge several SDRF documents into one analysis table
+
 - [`sdrf_ragged_row_count()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_ragged_row_count.md)
   : How many rows are shorter than the header
+
 - [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md)
   : Read one SDRF-Proteomics experimental-design file
+
 - [`sdrf_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_records.md)
   : An SDRF document as a data.frame, when its shape allows one
+
 - [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md)
   : Each sample's characteristics and factor values, merged over its
   rows, ages parsed
+
 - [`sdrf_samples_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples_many.md)
   : The samples of many SDRF files, in one bridge call
+
 - [`sdrf_source_documents()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_source_documents.md)
   : Which document each pooled row came from
+
 - [`sdrf_validate()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md)
   : Check one SDRF file against the specification's structural rules
+
 - [`sdrf_validate_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate_many.md)
   : Validate many SDRF files in one bridge call
+
 - [`sdrf_value()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_value.md)
   : The first cell under a column, one per row
 
+## Isobaric kits
+
+TMT, TMTpro, iTRAQ and DiLeu channels, with mzLib’s reporter-ion m/z.
+
+- [`isobaric_kits()`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md)
+  : The isobaric kits mzLib can name, with every channel's label and
+  reporter-ion m/z
+
 ## Protein databases
 
-What an accession is, which gene it resolves to, and whether a peptide
-is unique.
+What an accession is, which gene it resolves to, whether a peptide is
+unique, and what each protein group does in Gene Ontology terms.
 
+- [`proteins_annotate_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.md)
+  : Annotate MetaMorpheus protein groups with Gene Ontology terms,
+  keeping every member
 - [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md)
   : Classify peptides by how widely they are shared across protein
   databases, with I = L
@@ -132,6 +179,8 @@ is unique.
 - [`proteins_resolve_genes()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.md)
   : Resolve every protein to stable Ensembl gene ids, against a gene set
   you pin
+- [`proteins_update_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_update_go.md)
+  : Download the current Gene Ontology release to a go.obo, on purpose
 
 ## PRIDE Archive
 
@@ -196,6 +245,20 @@ Label-free quantification with FlashLFQ.
 - [`flashlfq_quantify()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
   : Quantify a search's peptides across mzML runs with FlashLFQ
 
+## Differential abundance
+
+limma’s moderated t-test, Benjamini-Hochberg adjustment and
+random-effects meta-analysis, computed by mzLib.
+
+- [`stats_adjust()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_adjust.md)
+  : Benjamini-Hochberg adjust p-values, keeping every position
+- [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  : Fit one linear model per feature and test coefficients with limma's
+  moderated t
+- [`stats_meta()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.md)
+  : Pool one effect size per study into a random-effects estimate per
+  feature
+
 ## The bridge
 
 Installing and locating the bridge every function runs, and asking it
@@ -222,6 +285,8 @@ what it is.
 
 ## Printing
 
+- [`print(`*`<mzlibr_adjusted>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_adjusted.md)
+  : Print Benjamini-Hochberg adjusted p-values
 - [`print(`*`<mzlibr_batch>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_batch.md)
   : Print a batch read from many files
 - [`print(`*`<mzlibr_census>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_census.md)
@@ -234,10 +299,20 @@ what it is.
   : Print a file identification
 - [`print(`*`<mzlibr_gene_resolutions>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_gene_resolutions.md)
   : Print a gene resolution
+- [`print(`*`<mzlibr_go_annotations>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_go_annotations.md)
+  : Print a Gene Ontology annotation
+- [`print(`*`<mzlibr_go_update>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_go_update.md)
+  : Print a Gene Ontology update
+- [`print(`*`<mzlibr_isobaric_kits>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_isobaric_kits.md)
+  : Print isobaric kits
 - [`print(`*`<mzlibr_match_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_match_records.md)
   : Print a spectral-match table
 - [`print(`*`<mzlibr_median_polish>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_median_polish.md)
   : Print a median-polish result
+- [`print(`*`<mzlibr_meta_analysis>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_meta_analysis.md)
+  : Print a meta-analysis
+- [`print(`*`<mzlibr_moderated_fit>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_moderated_fit.md)
+  : Print a moderated fit
 - [`print(`*`<mzlibr_native_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_native_records.md)
   : Print a native record table
 - [`print(`*`<mzlibr_occupancy_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_occupancy_records.md)
@@ -264,6 +339,8 @@ what it is.
   : Print parsed SDRF ages
 - [`print(`*`<mzlibr_sdrf_assessment>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_assessment.md)
   : Print an SDRF informativeness assessment
+- [`print(`*`<mzlibr_sdrf_design>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_design.md)
+  : Print a label-free design
 - [`print(`*`<mzlibr_sdrf_drift>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_drift.md)
   : Print SDRF drift findings
 - [`print(`*`<mzlibr_sdrf_samples>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_samples.md)

@@ -22,10 +22,12 @@ The many-files form of readers_read_results."></head><body>
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
+    <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
-    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -87,7 +89,7 @@ The many-files form of readers_read_results."></head><body>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>mzlibr_read_batch</code>. <code>records</code> begins with <code>source_index</code> (1-based, into <code>paths</code>) and
   <code>source_path</code>, then the columns of <code><a href="readers_read_results.html">readers_read_results</a></code>: <code>retention_time</code> in each file's
-  own <code>retention_time_unit</code> - minutes for all four formats today - <code>charge_state</code> a
+  own <code>retention_time_unit</code> - minutes for every quantifiable format today - <code>charge_state</code> a
   charge, <code>monoisotopic_mass</code> in Da. Convert times with <code><a href="readers_retention_time_in_minutes.html">readers_retention_time_in_minutes</a></code>,
   which applies each file's unit to its rows. <code>files</code> has one row per input: <code>record_count</code> in
   records, <code>rows_not_read</code> in rows, <code>retention_time_unit</code>, <code>caveats</code>, <code>absent_fields</code> and the

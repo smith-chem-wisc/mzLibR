@@ -5,6 +5,16 @@ SDRF-Proteomics file answers *what was searched*: which sample, organism
 part, replicate and instrument settings. That is the half you need to
 group results across experiments.
 
+| question | function | mzLib |
+|----|----|----|
+| what does this SDRF say, row by row? | [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md) | `SdrfDocument.LoadResults` |
+| several SDRFs as one analysis table, with provenance | [`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md) | `SdrfCollection.Merge` |
+| is it well-formed? | [`sdrf_validate()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate.md), [`sdrf_validate_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_validate_many.md) | `SdrfValidator.Validate` |
+| does it describe its samples, or is it a valid skeleton? | [`sdrf_assess()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess.md), [`sdrf_assess_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess_many.md) | `SdrfSampleInformativeness.Assess` |
+| each sample’s characteristics, with ages in years | [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md), [`sdrf_parse_ages()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_parse_ages.md) | `SdrfSampleBlock.BySourceName`, `SdrfAge.TryParse` |
+| do several SDRFs spell their terms alike? | [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md) | `SdrfDriftLint.Analyze` |
+| can it drive a label-free quantification, and with what design? | [`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md) | `SdrfLabelFreeDesign.Read` (#1363) |
+
 ## Read one document
 
 ``` r
@@ -188,6 +198,29 @@ assessment$records[, c("role", "column_name", "filled", "distinct_values", "fill
 #> 7               6 1.0000000
 ```
 
+A real deposit, PXD000070, is `Partial`: it describes its samples and
+varies its replicates, but no factor value varies, so it cannot say what
+was compared. A valid skeleton says nothing:
+
+``` r
+
+pxd70 <- sdrf_assess("PXD000070.sdrf.tsv")
+str(pxd70[c("verdict", "factor_value_varies", "sample_is_described", "biological_replicate_varies")])
+#> List of 4
+#>  $ verdict                    : chr "Partial"
+#>  $ factor_value_varies        : logi FALSE
+#>  $ sample_is_described        : logi TRUE
+#>  $ biological_replicate_varies: logi TRUE
+empty <- sdrf_assess("sdrf_skeleton.sdrf.tsv")
+empty$verdict
+#> [1] "Skeleton"
+empty$records[, c("column_name", "filled", "rows")]
+#>                             column_name filled rows
+#> 1              characteristics[disease]      0    2
+#> 2        characteristics[organism part]      0    2
+#> 3 characteristics[biological replicate]      2    2
+```
+
 For a corpus,
 [`sdrf_assess_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_assess_many.md)
 reads every document in one bridge call:
@@ -282,6 +315,133 @@ drift$records[, c("finding_index", "kind", "value", "occurrences")]
 #> 8             4      ValueCaseVariant               homo sapiens           1
 ```
 
+## Turn an SDRF into a quantification design
+
+FlashLFQ and MetaMorpheus need an experimental design: which runs are
+the same condition, which are biological replicates of one another,
+which are fractions of one sample. The SDRF already says all of that. A
+hand-written `ExperimentalDesign.tsv` is how most people still give it,
+and an invalid one is worse than none: MetaMorpheus skips quantification
+with one warning and no error.
+
+[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
+reads the design out of the SDRF, or refuses and says why. It calls
+mzLib’s `SdrfLabelFreeDesign`, which runs every check MetaMorpheus’s own
+design validator runs and reports *all* the failures at once:
+
+| question | function | mzLib |
+|----|----|----|
+| the design, or every reason there is none | `sdrf_design(path, condition_columns)` | `SdrfLabelFreeDesign.Read` (#1363) |
+| only the runs one search read | `sdrf_design(..., searched_files = ...)` | `SdrfLabelFreeDesignOptions.SearchedFiles` |
+| it as `flashlfq_quantify(spectra = )` | [`sdrf_design_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_spectra.md) | `SdrfLabelFreeDesign.Files` |
+| it as `flashlfq_median_polish(design = )` | [`sdrf_design_run_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_run_design.md) | `SdrfLabelFreeDesign.Files` |
+| MetaMorpheus’s `ExperimentalDesign.tsv` | `sdrf_design(..., out = "ExperimentalDesign.tsv")` | `WriteExperimentalDesignTsv` |
+
+The examples use mzLib’s own design files: PXD067622, a TurboID
+proximity-labelling study (two genotypes by four treatments, three
+biological replicates each), and PXD049018 (two pulldowns, ten SDS-PAGE
+bands each).
+
+### A valid design
+
+PXD067622 has two factor columns. Say which make up the condition; their
+values are joined with `_`, in the order you give:
+
+``` r
+
+both <- c("factor value[genotype]", "factor value[treatment]")
+d <- sdrf_design("PXD067622.sdrf.tsv", condition_columns = both)
+d
+#> <mzlibr_sdrf_design> PXD067622.sdrf.tsv: 24 runs in 8 condition(s)
+#>   files keyed on: comment[data file]
+#>   condition from: factor value[genotype] + factor value[treatment]
+head(d$records[, c("file_name", "condition", "biological_replicate")], 3)
+#>                               file_name                       condition
+#> 1 20240830_HF_LC3_MAA_RK_12032_CA_DMSO4 SPRTN-TurboID CA_DMSO (vehicle)
+#> 2 20240830_HF_LC3_MAA_RK_12032_CA_DMSO5 SPRTN-TurboID CA_DMSO (vehicle)
+#> 3 20240830_HF_LC3_MAA_RK_12032_CA_DMSO6 SPRTN-TurboID CA_DMSO (vehicle)
+#>   biological_replicate
+#> 1                    0
+#> 2                    1
+#> 3                    2
+```
+
+`biological_replicate`, `technical_replicate` and `fraction` are
+**0-based** - mzLib’s `SpectraFileInfo` coordinates, exactly what the
+FlashLFQ functions take - although every other position in mzLibR is
+1-based. `out` writes MetaMorpheus’s file, which starts at 1; mzLib adds
+the one when it writes, and nowhere else. Never add it yourself.
+
+Hand the design straight to FlashLFQ:
+
+``` r
+
+head(sdrf_design_spectra(d), 2)
+#>                                        path                       condition
+#> 1 20240830_HF_LC3_MAA_RK_12032_CA_DMSO4.raw SPRTN-TurboID CA_DMSO (vehicle)
+#> 2 20240830_HF_LC3_MAA_RK_12032_CA_DMSO5.raw SPRTN-TurboID CA_DMSO (vehicle)
+#>   biological_replicate technical_replicate fraction
+#> 1                    0                   0        0
+#> 2                    1                   0        0
+```
+
+The SDRF names files without a directory. When your spectra live
+elsewhere, or the search read only some of them, pass `searched_files`:
+each must be named **exactly** (case and extension) by one row, rows for
+other files are dropped and listed in `notes`, and your paths become
+`full_path`.
+
+### A refusal lists every reason
+
+PXD049018’s depositors did not say which pulldown was treated: its
+`factor value[treatment]` is `not available` on every row. A condition
+built from an unknown factor would pair samples nobody said were alike,
+so mzLib refuses, once per row, naming each file:
+
+``` r
+
+refused <- sdrf_design("PXD049018.sdrf.tsv", condition_columns = both)
+refused$is_valid
+#> [1] FALSE
+c(refusals = length(refused$refusals), files = refused$file_count)
+#> refusals    files 
+#>       20        0
+writeLines(refused$refusals[[1]])
+#> Line 2 (MSB67868ABand_01.raw): 'factor value[treatment]' is 'not available'. A condition cannot be built from an unknown factor; fill it in, or leave the column out of the declared condition columns to pool these rows.
+# The hand-offs refuse a refused design, naming every reason:
+inherits(try(sdrf_design_spectra(refused), silent = TRUE), "try-error")
+#> [1] TRUE
+```
+
+**A refusal is a result, not an error.**
+[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
+returns normally with `is_valid` `FALSE`; only the two hand-offs stop,
+so a refused design cannot reach FlashLFQ by accident. Without
+`condition_columns`, mzLib uses the document’s only factor column - and
+PXD067622 has two, so leaving them undeclared is itself a refusal:
+joining every factor could split a condition on a nuisance factor.
+
+### Replicate numbers are ranked within each condition
+
+A drafted SDRF often copies the study-wide run index out of the file
+names. MetaMorpheus wants replicates numbered within each condition, so
+mzLib ranks them back, and records every renumbering in `notes`, the
+only place it is kept:
+
+``` r
+
+ranked <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
+writeLines(ranked$notes[[2]])
+#> Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates renumbered 22 -> 1, 23 -> 2, 24 -> 3.
+identical(ranked$records, d$records)
+#> [1] TRUE
+```
+
+**Label-free only.** An isobaric SDRF needs a channel design that
+[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
+does not build. For the channels themselves, see the isobaric kits
+article.
+
 ## Instead of `readers_read_records()`
 
 [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
@@ -289,3 +449,12 @@ recognises SDRF too, but joins each row into one semicolon-separated
 string, and SDRF’s own `NT=...;AC=...` grammar puts semicolons inside
 cells. Use
 [`sdrf_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md).
+
+## What to cite
+
+The methods and resources behind the functions on this page, from their
+specs:
+
+- [doi:10.1038/s41467-021-26111-3](https://doi.org/10.1038/s41467-021-26111-3):
+  SDRF-Proteomics sample columns (characteristics, factor value) (Dai et
+  al., Nat Commun 12, 5854, 2021).

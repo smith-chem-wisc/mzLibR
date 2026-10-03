@@ -20,10 +20,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
+    <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
-    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -192,7 +194,7 @@
       </dl></div><div class="section level2">
       <h2 id="sdrf-proteomics-experimental-designs">SDRF-Proteomics experimental designs<a class="anchor" aria-label="anchor" href="#sdrf-proteomics-experimental-designs"></a></h2>
 
-      <div class="section-desc"><p>Read one design file, or pool several into one analysis table.</p></div>
+      <div class="section-desc"><p>Read one design file or pool several, ask whether each is well-formed and informative, and read the label-free design a quantification takes.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -219,6 +221,27 @@
 
         </dt>
         <dd>Assess many SDRF files in one bridge call</dd>
+
+        <dt>
+
+          <code><a href="sdrf_design.html">sdrf_design()</a></code>
+
+        </dt>
+        <dd>Read a label-free experimental design out of an SDRF, or every reason it cannot be read</dd>
+
+        <dt>
+
+          <code><a href="sdrf_design_run_design.html">sdrf_design_run_design()</a></code>
+
+        </dt>
+        <dd>A label-free design as <code><a href="../reference/flashlfq_median_polish.html">flashlfq_median_polish()</a></code> takes its <code>design</code></dd>
+
+        <dt>
+
+          <code><a href="sdrf_design_spectra.html">sdrf_design_spectra()</a></code>
+
+        </dt>
+        <dd>A label-free design as <code><a href="../reference/flashlfq_quantify.html">flashlfq_quantify()</a></code> takes its <code>spectra</code></dd>
 
         <dt>
 
@@ -325,9 +348,9 @@
         </dt>
         <dd>The first cell under a column, one per row</dd>
       </dl></div><div class="section level2">
-      <h2 id="protein-databases">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases"></a></h2>
+      <h2 id="isobaric-kits">Isobaric kits<a class="anchor" aria-label="anchor" href="#isobaric-kits"></a></h2>
 
-      <div class="section-desc"><p>What an accession is, which gene it resolves to, and whether a peptide is unique.</p></div>
+      <div class="section-desc"><p>TMT, TMTpro, iTRAQ and DiLeu channels, with mzLib’s reporter-ion m/z.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -335,6 +358,29 @@
 
 
       <dl><dt>
+
+          <code><a href="isobaric_kits.html">isobaric_kits()</a></code>
+
+        </dt>
+        <dd>The isobaric kits mzLib can name, with every channel's label and reporter-ion m/z</dd>
+      </dl></div><div class="section level2">
+      <h2 id="protein-databases">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases"></a></h2>
+
+      <div class="section-desc"><p>What an accession is, which gene it resolves to, whether a peptide is unique, and what each protein group does in Gene Ontology terms.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="proteins_annotate_go.html">proteins_annotate_go()</a></code>
+
+        </dt>
+        <dd>Annotate MetaMorpheus protein groups with Gene Ontology terms, keeping every member</dd>
+
+        <dt>
 
           <code><a href="proteins_classify_peptides.html">proteins_classify_peptides()</a></code>
 
@@ -354,6 +400,13 @@
 
         </dt>
         <dd>Resolve every protein to stable Ensembl gene ids, against a gene set you pin</dd>
+
+        <dt>
+
+          <code><a href="proteins_update_go.html">proteins_update_go()</a></code>
+
+        </dt>
+        <dd>Download the current Gene Ontology release to a go.obo, on purpose</dd>
       </dl></div><div class="section level2">
       <h2 id="pride-archive">PRIDE Archive<a class="anchor" aria-label="anchor" href="#pride-archive"></a></h2>
 
@@ -543,6 +596,36 @@
         </dt>
         <dd>Quantify a search's peptides across mzML runs with FlashLFQ</dd>
       </dl></div><div class="section level2">
+      <h2 id="differential-abundance">Differential abundance<a class="anchor" aria-label="anchor" href="#differential-abundance"></a></h2>
+
+      <div class="section-desc"><p>limma’s moderated t-test, Benjamini-Hochberg adjustment and random-effects meta-analysis, computed by mzLib.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="stats_adjust.html">stats_adjust()</a></code>
+
+        </dt>
+        <dd>Benjamini-Hochberg adjust p-values, keeping every position</dd>
+
+        <dt>
+
+          <code><a href="stats_fit.html">stats_fit()</a></code>
+
+        </dt>
+        <dd>Fit one linear model per feature and test coefficients with limma's moderated t</dd>
+
+        <dt>
+
+          <code><a href="stats_meta.html">stats_meta()</a></code>
+
+        </dt>
+        <dd>Pool one effect size per study into a random-effects estimate per feature</dd>
+      </dl></div><div class="section level2">
       <h2 id="the-bridge">The bridge<a class="anchor" aria-label="anchor" href="#the-bridge"></a></h2>
 
       <div class="section-desc"><p>Installing and locating the bridge every function runs, and asking it what it is.</p></div>
@@ -600,6 +683,13 @@
 
       <dl><dt>
 
+          <code><a href="print.mzlibr_adjusted.html">print(<i>&lt;mzlibr_adjusted&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print Benjamini-Hochberg adjusted p-values</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_batch.html">print(<i>&lt;mzlibr_batch&gt;</i>)</a></code>
 
         </dt>
@@ -642,6 +732,27 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_go_annotations.html">print(<i>&lt;mzlibr_go_annotations&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a Gene Ontology annotation</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_go_update.html">print(<i>&lt;mzlibr_go_update&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a Gene Ontology update</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_isobaric_kits.html">print(<i>&lt;mzlibr_isobaric_kits&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print isobaric kits</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_match_records.html">print(<i>&lt;mzlibr_match_records&gt;</i>)</a></code>
 
         </dt>
@@ -653,6 +764,20 @@
 
         </dt>
         <dd>Print a median-polish result</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_meta_analysis.html">print(<i>&lt;mzlibr_meta_analysis&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a meta-analysis</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_moderated_fit.html">print(<i>&lt;mzlibr_moderated_fit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a moderated fit</dd>
 
         <dt>
 
@@ -744,6 +869,13 @@
 
         </dt>
         <dd>Print an SDRF informativeness assessment</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_sdrf_design.html">print(<i>&lt;mzlibr_sdrf_design&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a label-free design</dd>
 
         <dt>
 

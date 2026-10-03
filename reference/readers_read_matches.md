@@ -5,10 +5,10 @@ scan, sequences, accession, decoy flag, modifications and the q-value,
 rank and threshold a format records - optionally with each engine's
 scores as long rows.
 
-Six file types offer it: MsPathFinderT's targets, decoys and combined
-results, Casanovo's `.mztab`, and mzIdentML `.mzid` and `.mzid.gz` - the
-format most search engines can export. These are the identification
-formats that share no \*file\*-level interface, so
+It is offered by MsPathFinderT's targets, decoys and combined results,
+Casanovo's `.mztab`, and mzIdentML `.mzid` and `.mzid.gz` - the format
+most search engines can export. These are the identification formats
+that share no \*file\*-level interface, so
 [`readers_read_results`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
 cannot reach them.
 

@@ -34,8 +34,8 @@ cross-format projection of it.
 
 \- `"quantifiable"` — the cross-format record view, and the input
 [`flashlfq_quantify`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
-accepts. **Exactly four file types have it**: MetaMorpheus `psmtsv` and
-`osmtsv`, `MsFraggerPsm`, and DIA-NN `DiaNnReport`. - `"ms1_features"` —
+accepts. **Few file types have it**: MetaMorpheus `psmtsv` and `osmtsv`,
+`MsFraggerPsm`, and DIA-NN `DiaNnReport`. - `"ms1_features"` —
 deconvolved MS1 features (TopFD `_ms1.feature`, Dinosaur). - `"spectra"`
 — the file is spectra, not results. - `"spectral_match"` —
 identifications that share no file-level interface.

@@ -5,6 +5,18 @@ mzLib recognises dozens of file types: instrument data (mzML, Thermo
 search and deconvolution tools. The `readers_` functions ask it what a
 file is and read its records into data.frames.
 
+| question | function | mzLib |
+|----|----|----|
+| which file types does mzLib know, and what can each give me? | [`readers_formats()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_formats.md) | `SupportedFileType` |
+| what is this file? | [`readers_identify()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md) | `SupportedFileTypeExtensions.ParseFileType` |
+| what scans does this run hold, with peaks on request? | [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md) | `MsDataFileReader.GetDataFile` |
+| which peptides did the search find, ready to quantify? | [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md) | `FileReader.ReadQuantifiableResultFile` |
+| which deconvolved MS1 features? | [`readers_read_features()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md) | `IMs1FeatureFile.GetMs1Features` |
+| which spectral matches, with every engine score? | [`readers_read_matches()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches.md) | `ISpectralMatch`, `MzIdentMLResultFile` |
+| everything this file has, in its own fields | [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md) | `IResultFile.LoadResults` |
+| per-sample protein-group, peptide or PTM-site quantities | [`readers_read_protein_groups()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_protein_groups.md), [`readers_read_quantified_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_quantified_peptides.md), [`readers_read_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_occupancy.md) | `ProteinGroupFromTsvFile`, `QuantifiedPeptideFile`, `ModificationOccupancyCell` |
+| the same, for many files in one call | the `_many` form of each | the same readers, `threads` at a time |
+
 The one idea to take away: **mzLib does not read every format into one
 uniform shape.** The formats fall into a few disjoint *views*, and many
 belong to none. This page shows how to tell which you have, and which
@@ -87,6 +99,17 @@ scans$records[, c("one_based_scan_number", "ms_order", "retention_time", "peak_c
 #> 1                     1        1       38.92572        484              NA
 #> 2                     2        2       38.92606        409        548.4539
 #> 3                     3        2       38.93049        339        796.7652
+```
+
+With `peaks = TRUE`, `mz` and `intensity` are list columns, one numeric
+vector per scan:
+
+``` r
+
+one <- readers_read_spectra("sliced_ethcd.mzML", peaks = TRUE, ms_order = 1, limit = 1)
+c(peaks = length(one$records$mz[[1]]), peak_count = one$records$peak_count[[1]])
+#>      peaks peak_count 
+#>        484        484
 ```
 
 `retention_time` is in minutes for every spectra format.
@@ -287,6 +310,20 @@ The same three functions read two kinds of table they used to refuse:
   the field is named in `absent_fields`, which means *no basis*, not
   zero.
 
+On mzLib’s own RNA test table:
+
+``` r
+
+rna <- readers_read_protein_groups("MetaMorpheus_RNA_AllQuantifiedTranscriptGroups.tsv")
+c(groups = rna$record_count, rows = nrow(rna$records))
+#> groups   rows 
+#>      3    111
+fluc <- rna$records[rna$records$protein_group_name == "FLuc" & rna$records$sample_label == "1:1_1", ]
+fluc[, c("protein_group_name", "sample_label", "spectral_count", "intensity")]
+#>   protein_group_name sample_label spectral_count intensity
+#> 1               FLuc        1:1_1            355  89077471
+```
+
 ## Many files in one call
 
 Every reader has a `_many` form that hands the whole list to one bridge
@@ -328,3 +365,10 @@ Every call starts one bridge process and reads the whole file, so
 file each time. For a large file pass `out` to write a tab-separated
 table and read it with
 [`read.delim()`](https://rdrr.io/r/utils/read.table.html).
+
+## What to cite
+
+The methods and resources behind the functions on this page, from their
+specs:
+
+- No publication: these verbs cite none in their specs.

@@ -6,10 +6,10 @@ subdirectories included, with approximate sizes.
 The authoritative counterpart to
 [`pride_list_files`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md).
 Where that returns PRIDE's REST manifest - knowingly incomplete for some
-projects, omitting for PXD000001 the two largest of 13 files - this
-walks the project's FTP directory (subdirectories included) and returns
-everything the project holds (mzLib \#1121). Reach for it whenever
-completeness or a true project size matters.
+projects, omitting for PXD000001 its two largest files - this walks the
+project's FTP directory (subdirectories included) and returns everything
+the project holds (mzLib \#1121). Reach for it whenever completeness or
+a true project size matters.
 
 ## Usage
 
@@ -235,11 +235,36 @@ for the rich REST metadata;
 
 listing <- pride_list_ftp_files("PXD000001")
 listing[, c("relative_path", "approximate_size_mb")]
-#>             relative_path approximate_size_mb
-#> 1              README.txt            0.001638
-#> 2                run1.raw          220.200960
-#> 3   hidden_from_rest.mzML          449.839104
-#> 4 generated/summary.mztab            0.864256
+#>                                                           relative_path
+#> 1                                                           F063721.dat
+#> 2                                                 F063721.dat-mztab.txt
+#> 3                                    PRIDE_Exp_Complete_Ac_22134.xml.gz
+#> 4                                      PRIDE_Exp_mzData_Ac_22134.xml.gz
+#> 5                                PXD000001_community_annotated.sdrf.tsv
+#> 6                                                   PXD000001_mztab.txt
+#> 7                                                            README.txt
+#> 8   TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01-20141210.mzML
+#> 9  TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01-20141210.mzXML
+#> 10          TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzXML
+#> 11            TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw
+#> 12                                             erwinia_carotovora.fasta
+#> 13                   generated/PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz
+#> 14                 generated/PRIDE_Exp_Complete_Ac_22134.pride.mztab.gz
+#>    approximate_size_mb
+#> 1            20.971520
+#> 2             0.305152
+#> 3            10.485760
+#> 4             9.751757
+#> 5             0.004096
+#> 6             0.864256
+#> 7             0.001638
+#> 8           449.839104
+#> 9           472.907776
+#> 10          243.269632
+#> 11          220.200960
+#> 12            1.677722
+#> 13            5.976883
+#> 14            0.103424
 pride_approximate_total_size_bytes(listing)
-#> [1] 670905958
+#> [1] 1436359680
 ```

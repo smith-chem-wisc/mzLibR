@@ -147,5 +147,5 @@ info <- mzlibr_bridge_version()
 info$protocol   # the compatibility contract
 #> [1] 1
 info$mzlib      # which mzLib produced the results, for a methods section
-#> [1] "1.0.0+23c2490e10d3ccce71c941bca31610725826ba83"
+#> [1] "1.0.0+0a808fec346e6e8f334e455490faab463ea65457"
 ```

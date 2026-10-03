@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Protein databases: organisms, genes and unique peptides • mzLibR</title>
+<title>Protein databases: organisms, genes, unique peptides and GO • mzLibR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Protein databases: organisms, genes and unique peptides">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Protein databases: organisms, genes, unique peptides and GO">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -35,10 +35,12 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
+    <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
-    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes and unique peptides</a></li>
+    <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -61,43 +63,62 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Protein databases: organisms, genes and unique peptides</h1>
+      <h1>Protein databases: organisms, genes, unique peptides and GO</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/articles/proteins.Rmd" class="external-link"><code>vignettes/articles/proteins.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/proteins.Rmd" class="external-link"><code>vignettes/proteins.Rmd</code></a></small>
       <div class="d-none name"><code>proteins.Rmd</code></div>
     </div>
 
     
     
-<p>A search result names proteins by accession. Three questions it
-cannot answer on its own are answered by mzLib from the protein database
-you searched:</p>
+<p>A search result names proteins by accession. The questions it cannot
+answer on its own are answered by mzLib from the protein database you
+searched:</p>
 <table class="table">
 <colgroup>
-<col width="50%">
-<col width="50%">
+<col width="33%">
+<col width="33%">
+<col width="33%">
 </colgroup>
 <thead><tr class="header">
 <th>question</th>
 <th>function</th>
+<th>mzLib</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td>what is this accession: organism, taxon, genes, GO terms?</td>
 <td><code><a href="../reference/proteins_read.html">proteins_read()</a></code></td>
+<td><code>ProteinDbLoader</code></td>
 </tr>
 <tr class="even">
 <td>which Ensembl gene is it, reproducibly?</td>
 <td><code><a href="../reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code></td>
+<td><code>EnsemblGeneResolver</code></td>
 </tr>
 <tr class="odd">
 <td>does this peptide identify one protein?</td>
 <td><code><a href="../reference/proteins_classify_peptides.html">proteins_classify_peptides()</a></code></td>
+<td><code>PeptideUniquenessClassifier</code></td>
+</tr>
+<tr class="even">
+<td>which GO terms does each protein group carry, every member
+kept?</td>
+<td><code><a href="../reference/proteins_annotate_go.html">proteins_annotate_go()</a></code></td>
+<td>
+<code>GoGroupAnnotator</code> (#1353),
+<code>ToGoAnnotationGroups</code> (#1366)</td>
+</tr>
+<tr class="odd">
+<td>where do I get a go.obo, and keep it pinned?</td>
+<td><code><a href="../reference/proteins_update_go.html">proteins_update_go()</a></code></td>
+<td>
+<code>Loaders.UpdateGeneOntology</code> (#1353)</td>
 </tr>
 </tbody>
 </table>
-<p>All three take one database or several - UniProt XML or FASTA,
+<p>The first three take one database or several - UniProt XML or FASTA,
 optionally gzipped - and read several in <strong>one</strong> bridge
 call, <code>threads</code> at a time. Mark contaminant databases with
 <code>contaminants</code>: it changes answers.</p>
@@ -198,6 +219,19 @@ none”. Read the UniProt XML of the same proteome for those.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; contaminants.fasta  human_extra.fasta   human_subset.xml  mouse_aifm1.fasta </span></span>
 <span><span class="co">#&gt;                  1                  4                  2                  1</span></span></code></pre></div>
+<p>To look up only some accessions, pass them as
+<code>accessions</code>. The match is <strong>exact</strong>, so an
+isoform suffix that the database does not use is reported, not guessed
+at:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">found</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_read.html">proteins_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"human_subset.xml"</span>, <span class="st">"human_extra.fasta"</span>, <span class="st">"mouse_aifm1.fasta"</span><span class="op">)</span>,</span>
+<span>                       contaminants <span class="op">=</span> <span class="st">"contaminants.fasta"</span>,</span>
+<span>                       accessions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"P04406"</span>, <span class="st">"Q9Z0X1"</span>, <span class="st">"P02769"</span>, <span class="st">"P04406-1"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">found</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">ncbi_taxonomy_id</span>, <span class="va">found</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">accession</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  P04406  Q9Z0X1  P02769 </span></span>
+<span><span class="co">#&gt;  "9606" "10090"  "9913"</span></span>
+<span><span class="va">found</span><span class="op">$</span><span class="va">accessions_not_found</span></span>
+<span><span class="co">#&gt; [1] "P04406-1"</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -207,7 +241,7 @@ none”. Read the UniProt XML of the same proteome for those.</p>
 Ensembl gene ids, <strong>counted against a gene set you
 supply</strong>: an Ensembl GTF for one release. Nothing is downloaded
 or defaulted, because the release is part of the answer.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_resolve_genes.html">proteins_resolve_genes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"human_subset.xml"</span>, <span class="st">"human_extra.fasta"</span><span class="op">)</span>,</span>
 <span>                                contaminants <span class="op">=</span> <span class="st">"contaminants.fasta"</span>,</span>
 <span>                                gtf <span class="op">=</span> <span class="st">"Homo_sapiens.GRCh38.116.gtf"</span>,</span>
@@ -256,7 +290,7 @@ pins the exact gene set.</p>
 <div class="section level2">
 <h2 id="does-this-peptide-identify-one-protein">Does this peptide identify one protein?<a class="anchor" aria-label="anchor" href="#does-this-peptide-identify-one-protein"></a>
 </h2>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">calls</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_classify_peptides.html">proteins_classify_peptides</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"VGVNGFGR"</span>, <span class="st">"LVLNGNPLTLFQER"</span>, <span class="st">"ALSEQINIFFDYSGR"</span>, <span class="st">"YLYEIAR"</span>, <span class="st">"AEFVEVTK"</span>, <span class="st">"PEPTIDEK"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"human_subset.xml"</span>, <span class="st">"human_extra.fasta"</span><span class="op">)</span>,</span>
@@ -285,7 +319,7 @@ cannot tell them apart.</li>
 gene. Leave the contaminant database out and it would read as
 <code>Unique</code>.</li>
 </ul>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">calls</span><span class="op">$</span><span class="va">peptides</span><span class="op">$</span><span class="va">accessions</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "P02768" "P02769"</span></span>
 <span><span class="va">calls</span><span class="op">$</span><span class="va">peptides</span><span class="op">$</span><span class="va">shared_gene_keys</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></span>
@@ -295,6 +329,166 @@ sequence contains it anywhere, whatever the protease. That is
 deliberately conservative, so a peptide called <code>Unique</code>
 cannot be explained by another entry at a site the search’s cleavage
 rules skipped.</p>
+</div>
+<div class="section level2">
+<h2 id="which-go-terms-does-each-protein-group-carry">Which GO terms does each protein group carry?<a class="anchor" aria-label="anchor" href="#which-go-terms-does-each-protein-group-carry"></a>
+</h2>
+<p>A search reports <em>protein groups</em>, and a group can have
+several members: two histone H2A.Z variants no peptide could tell apart
+are one group, <code>P0C0S5|Q71UI9</code>. Taking the first accession
+throws away half the evidence, and it is not even a choice MetaMorpheus
+made: it sorts members and never picks a leading protein. And UniProt
+records the most specific terms, so a protein annotated to
+<em>mitochondrial inner membrane</em> is not, as written, “in the
+mitochondrion” at all.</p>
+<p><code><a href="../reference/proteins_annotate_go.html">proteins_annotate_go()</a></code> answers both, with mzLib’s
+<code>GoGroupAnnotator</code> reading the protein-group table
+MetaMorpheus wrote: <strong>one row per (group, term)</strong> that
+<em>any</em> member holds, directly or through an ancestor
+(<code>is_a</code> and <code>part_of</code>), and every row says which
+members carry it. The data here is real: mzLib’s copy of a MetaMorpheus
+1.1.11 protein-group table from PXD036557, the UniProt entries it names,
+and GO release 2026-07-26, trimmed to the terms those proteins
+reach.</p>
+<div class="section level3">
+<h3 id="first-get-a-go-obo---once-and-keep-it">First, get a go.obo - once, and keep it<a class="anchor" aria-label="anchor" href="#first-get-a-go-obo---once-and-keep-it"></a>
+</h3>
+<p>Terms are added, renamed and moved between GO releases, so a GO
+result means something only relative to one release.
+<code><a href="../reference/proteins_annotate_go.html">proteins_annotate_go()</a></code> never downloads anything; fetching
+is its own function, called on purpose:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">update</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_update_go.html">proteins_update_go</a></span><span class="op">(</span><span class="st">"go.obo"</span><span class="op">)</span></span>
+<span><span class="va">update</span><span class="op">$</span><span class="va">go</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"release"</span>, <span class="st">"term_count"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; $release</span></span>
+<span><span class="co">#&gt; [1] "releases/2026-07-26"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $term_count</span></span>
+<span><span class="co">#&gt; [1] 48340</span></span></code></pre></div>
+<p>Call it again later and a newer release replaces the file, while the
+old one is kept beside it as <code>go.obo.&lt;timestamp&gt;</code>, so a
+result you already published can still be reproduced.</p>
+</div>
+<div class="section level3">
+<h3 id="annotate-the-groups">Annotate the groups<a class="anchor" aria-label="anchor" href="#annotate-the-groups"></a>
+</h3>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">go</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_annotate_go.html">proteins_annotate_go</a></span><span class="op">(</span><span class="st">"PXD036557_AllQuantifiedProteinGroups.tsv"</span>, <span class="st">"pxd036557_proteins.xml"</span>,</span>
+<span>                           go_obo <span class="op">=</span> <span class="st">"go-pxd036557.obo"</span>, category_map <span class="op">=</span> <span class="st">"organelle_map.tsv"</span><span class="op">)</span></span>
+<span><span class="va">go</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_go_annotations&gt; 5 groups, 563 (group, term) rows</span></span>
+<span><span class="co">#&gt;   go.obo: go-pxd036557.obo, releases/2026-07-26, sha256 c1cdfd098c5c</span></span>
+<span><span class="co">#&gt;   groups at q &lt;= 0.01: annotated 4, no_go_terms 0, no_entry 0, contaminant 1</span></span>
+<span><span class="co">#&gt;   categories: organelle v1, 30 rows</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>table_rows <span class="op">=</span> <span class="va">go</span><span class="op">$</span><span class="va">table_row_count</span>, decoys <span class="op">=</span> <span class="va">go</span><span class="op">$</span><span class="va">decoy_group_count</span>, groups <span class="op">=</span> <span class="va">go</span><span class="op">$</span><span class="va">group_count</span>,</span>
+<span>  rows <span class="op">=</span> <span class="va">go</span><span class="op">$</span><span class="va">row_count</span><span class="op">)</span></span>
+<span><span class="co">#&gt; table_rows     decoys     groups       rows </span></span>
+<span><span class="co">#&gt;          6          1          5        563</span></span></code></pre></div>
+<p>The decoy group is skipped, because decoys carry no GO. Albumin, a
+contaminant, gets one row with no term, and its
+<code>annotation_status</code> says why:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">go</span><span class="op">$</span><span class="va">annotations</span><span class="op">[</span><span class="va">go</span><span class="op">$</span><span class="va">annotations</span><span class="op">$</span><span class="va">protein_group</span> <span class="op">==</span> <span class="st">"P02769"</span>,</span>
+<span>               <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"protein_group"</span>, <span class="st">"go_id"</span>, <span class="st">"annotation_status"</span>, <span class="st">"n_with"</span>, <span class="st">"n_members"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;     protein_group go_id annotation_status n_with n_members</span></span>
+<span><span class="co">#&gt; 358        P02769  &lt;NA&gt;       contaminant      0         1</span></span></code></pre></div>
+<p>Both histones are annotated to the nucleosome, each on its own
+evidence:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">histones</span> <span class="op">&lt;-</span> <span class="va">go</span><span class="op">$</span><span class="va">annotations</span><span class="op">[</span><span class="va">go</span><span class="op">$</span><span class="va">annotations</span><span class="op">$</span><span class="va">protein_group</span> <span class="op">==</span> <span class="st">"P0C0S5|Q71UI9"</span>, <span class="op">]</span></span>
+<span><span class="va">nucleosome</span> <span class="op">&lt;-</span> <span class="va">histones</span><span class="op">[</span><span class="va">histones</span><span class="op">$</span><span class="va">go_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="st">"GO:0000786"</span>, <span class="op">]</span></span>
+<span><span class="va">nucleosome</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"go_name"</span>, <span class="st">"aspect"</span>, <span class="st">"n_with"</span>, <span class="st">"n_members"</span>, <span class="st">"propagated"</span>, <span class="st">"inherited"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;        go_name             aspect n_with n_members propagated inherited</span></span>
+<span><span class="co">#&gt; 253 nucleosome cellular_component      2         2      FALSE     FALSE</span></span>
+<span><span class="va">nucleosome</span><span class="op">$</span><span class="va">accession_used</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "P0C0S5" "Q71UI9"</span></span>
+<span><span class="va">nucleosome</span><span class="op">$</span><span class="va">evidence_by_member</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; $P0C0S5</span></span>
+<span><span class="co">#&gt; [1] "ECO:0000353"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $Q71UI9</span></span>
+<span><span class="co">#&gt; [1] "ECO:0000353"</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="union-consensus-direct-only-filters-not-modes">Union, consensus, direct only: filters, not modes<a class="anchor" aria-label="anchor" href="#union-consensus-direct-only-filters-not-modes"></a>
+</h3>
+<p>The table is the <strong>union</strong> over a group’s members.
+Everything narrower is one comparison on the rows:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>union <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">histones</span><span class="op">)</span>, consensus <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">histones</span><span class="op">$</span><span class="va">n_with</span> <span class="op">==</span> <span class="va">histones</span><span class="op">$</span><span class="va">n_members</span><span class="op">)</span>,</span>
+<span>  direct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="va">histones</span><span class="op">$</span><span class="va">propagated</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;     union consensus    direct </span></span>
+<span><span class="co">#&gt;       106        57        18</span></span>
+<span><span class="va">histones</span><span class="op">$</span><span class="va">accession_used</span><span class="op">[</span><span class="va">histones</span><span class="op">$</span><span class="va">go_name</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="st">"euchromatin"</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [[1]]</span></span>
+<span><span class="co">#&gt; [1] "P0C0S5"</span></span></code></pre></div>
+<p><em>Euchromatin</em> is one histone’s term, not the other’s. For an
+enrichment tool that propagates on its own, keep the rows with
+<code>propagated</code> false.</p>
+</div>
+<div class="section level3">
+<h3 id="in-your-own-vocabulary">In your own vocabulary<a class="anchor" aria-label="anchor" href="#in-your-own-vocabulary"></a>
+</h3>
+<p><code>category_map</code> maps terms to the categories you care
+about, through anchors: a term belongs to a category when the anchor is
+the term or one of its ancestors. mzLib ships no vocabulary.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">go</span><span class="op">$</span><span class="va">categories</span><span class="op">$</span><span class="va">records</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        go_id      category       subcategory</span></span>
+<span><span class="co">#&gt; 1 GO:0000785       nucleus nucleus:chromatin</span></span>
+<span><span class="co">#&gt; 2 GO:0000786       nucleus nucleus:chromatin</span></span>
+<span><span class="co">#&gt; 3 GO:0000791       nucleus nucleus:chromatin</span></span>
+<span><span class="co">#&gt; 4 GO:0000792       nucleus nucleus:chromatin</span></span>
+<span><span class="co">#&gt; 5 GO:0005576 extracellular              &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 6 GO:0005634       nucleus              &lt;NA&gt;</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="pin-what-you-used">Pin what you used<a class="anchor" aria-label="anchor" href="#pin-what-you-used"></a>
+</h3>
+<p>Keep <code>go$go$sha256</code> and
+<code>go$annotation_database$sha256</code> with your results. The
+header’s counters count <strong>groups at q &lt;= 0.01</strong>, not
+rows; the rows themselves are never filtered on q.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">go</span><span class="op">$</span><span class="va">go</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"release"</span>, <span class="st">"sha256"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; $release</span></span>
+<span><span class="co">#&gt; [1] "releases/2026-07-26"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $sha256</span></span>
+<span><span class="co">#&gt; [1] "c1cdfd098c5cf395ce4bbefdea017fd698fdf22d135b28623e74f6f714e1c5fa"</span></span>
+<span><span class="va">go</span><span class="op">$</span><span class="va">header</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"counter_q_value_max"</span>, <span class="st">"status_annotated"</span>, <span class="st">"status_contaminant"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; counter_q_value_max    status_annotated  status_contaminant </span></span>
+<span><span class="co">#&gt;              "0.01"                 "4"                 "1"</span></span></code></pre></div>
+<p>When the UniProt XML is newer than the go.obo it cites terms the
+release lacks, and the call fails naming every one. Fetch a newer
+go.obo, or pass <code>skip_unknown_go_ids = TRUE</code> to drop those
+ids and have them listed in <code>unresolved_go_ids</code>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
+</h2>
+<p>The methods and resources behind the functions on this page, from
+their specs:</p>
+<!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
+<ul>
+<li>
+<a href="https://doi.org/10.1093/nar/gkaf1239" class="external-link">doi:10.1093/nar/gkaf1239</a>:
+Ensembl releases, GTFs and cross-references (Ensembl 2026, NAR).</li>
+<li>
+<a href="https://doi.org/10.1093/nar/gkae1010" class="external-link">doi:10.1093/nar/gkae1010</a>:
+UniProt, whose XML dbReferences carry the gene links resolved (UniProt
+Consortium 2025, NAR).</li>
+<li>
+<a href="https://doi.org/10.1093/genetics/iyad031" class="external-link">doi:10.1093/genetics/iyad031</a>:
+The Gene Ontology knowledgebase in 2023 (GO Consortium, Genetics 224,
+iyad031), the ontology and annotations used.</li>
+<li>
+<a href="https://doi.org/10.1038/75556" class="external-link">doi:10.1038/75556</a>: Gene
+Ontology: tool for the unification of biology (Ashburner et al., Nat
+Genet 25, 25-29, 2000), the is_a / part_of graph propagated over.</li>
+</ul>
+<!-- END cite -->
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
