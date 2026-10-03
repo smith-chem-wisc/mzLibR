@@ -60,6 +60,9 @@ release they need.
   `QuantifiedPeptides.tsv` under a new experimental design, without re-reading spectra.
 * `flashlfq_quantify()` no longer warns about mzLib#1111 when `max_threads` is not 1: mzLib#1155
   fixed it inside the pinned bridge. The default stays 1 here (pyMzLib and mzLibRust use -1).
+* `flashlfq_median_polish()` with no design no longer hangs in terminal R. A call that sends the
+  bridge nothing on stdin now gives it an empty stdin rather than R's own, which a terminal never
+  closes. Every verb goes through the same transport, so none can wait on it (pyMzLib #73).
 
 ## Protein databases
 
