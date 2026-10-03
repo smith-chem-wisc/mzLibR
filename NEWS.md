@@ -5,8 +5,8 @@ which every help page's **Since** section renders.
 
 This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib 0.2.0 bridge* or *needs
 the pyMzLib 0.3.0 bridge* below are new in the bridge that release publishes; with an older bridge
-they are refused, naming the release they need. Until pyMzLib 0.3.0 is published,
-`mzlibr_install_bridge()` still installs the 0.2.0 bridge (mzLib 1.0.592).
+they are refused, naming the release they need. `mzlibr_install_bridge()` installs the bridge
+pyMzLib 0.3.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that release's SHA256SUMS.
 
 ## mzLib 1.0.593
 
