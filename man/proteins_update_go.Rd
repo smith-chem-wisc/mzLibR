@@ -35,7 +35,7 @@ An \code{mzlibr_go_update}: \code{go_obo_file} written; \code{url} fetched from;
 
 }
 \section{Wraps}{
-Wire verb \code{proteins update-go}. Generated from the bridge's verb spec \code{proteins.update-go.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins update-go}. Generated from the bridge's verb spec \code{proteins.update-go.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/UsefulProteomicsDatabases/Loaders.cs}{\code{Loaders.UpdateGeneOntology}} in \code{mzLib/UsefulProteomicsDatabases/Loaders.cs} at mzLib \code{0a808fec}

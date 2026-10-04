@@ -84,7 +84,7 @@ msalign files hold \strong{deconvolved neutral masses}, not raw m/z - do not re-
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-spectra}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-spectra}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs}{\code{MsDataFileReader.GetDataFile}} in \code{mzLib/Readers/MsDataFileReader.cs} at mzLib \code{23c2490e}
@@ -99,7 +99,7 @@ Wire verb \code{readers read-spectra}. Generated from the bridge's verb spec \co
 \item{\code{offset}}{int; in \strong{scans}; default \code{0}; range \code{>= 0}. Skip this many scans (after the ms-order filter).}
 \item{\code{limit}}{int; in \strong{scans}; default absent; range \code{>= 0}. Return at most this many scans. Absent means no limit.}
 \item{\code{peaks}}{flag; default \code{FALSE}. Include the mz and intensity arrays. Off by default because peaks are roughly the size of the file; combine with limit, a scan filter, or out.}
-\item{\code{out}}{path; default absent. Write the table to this path as TSV instead of returning columns. Must differ from path. Peak arrays are written as ';'-joined lists.}
+\item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Write the table to this path as TSV instead of returning columns. Must differ from path. Peak arrays are written as ';'-joined lists. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.}
 }
 }
 \section{Returned fields}{
@@ -170,6 +170,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
@@ -204,6 +206,7 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item injection_time unit 'ms' is from the mzML CV term (MS:1000927); not yet confirmed that every mzLib vendor reader (Thermo, Bruker, timsTOF, MGF) emits ms.
 \item source is read from MsDataFile.SourceFile after LoadAllStaticData; Bruker .d and timsTOF .d have not been checked for which of its fields they fill.
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
 }
 }
 \seealso{

@@ -38,7 +38,7 @@ An \code{mzlibr_read_batch}: \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-occupancy} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-occupancy.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-occupancy} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-occupancy.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Omics/BioPolymerGroup/ModificationOccupancyCell.cs}{\code{ModificationOccupancyCell.Parse}} in \code{mzLib/Omics/BioPolymerGroup/ModificationOccupancyCell.cs} at mzLib \code{23c2490e}
@@ -50,7 +50,7 @@ Wire verb \code{readers read-occupancy} with \code{--paths-stdin}. Generated fro
 \item{\code{paths} (wire \code{--paths-stdin})}{flag; default absent. Read MANY files: newline-delimited paths on stdin (blank lines ignored; a repeated path is a usage error). Exclusive with path; offset and limit are refused with it.}
 \item{\code{threads}}{int; in \strong{files}; default \code{1}; range \code{>= 1, or -1 for one per core}. Files read at once. The output is byte-identical at any value (files are emitted in input order); 1 is the default because each file in flight is held whole in memory.}
 \item{\code{on_error} (wire \code{--on-error})}{string; default \code{fail}; range \code{fail | skip}. fail: the first unreadable input stops the batch with its usage or correctness error, the message starting 'Input <i> (<path>)'. skip: the failure goes in that input's files[i].error and the rest are read. skip with a single path is a usage error.}
-\item{\code{out}}{path; default absent. Write the long table here, one file at a time in input order, so memory holds at most threads files. A batch that stops on an error deletes its partial table. Must differ from every input.}
+\item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Write the long table here, one file at a time in input order, so memory holds at most threads files. A batch that stops on an error deletes its partial table. Must differ from every input. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.}
 }
 }
 \section{Returned fields}{
@@ -99,6 +99,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
@@ -131,6 +133,7 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item Peptide-level occupancy: ModificationOccupancyCell also parses peptide tables' cells, but QuantifiedPeptideFromTsv at the pin exposes none, so this verb reads protein groups only.
 \item numerator and denominator are floats for both bases; a count-basis value crosses as a whole number (1, not 1.0) and bindings must read it as a float.
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
 }
 }
 \seealso{

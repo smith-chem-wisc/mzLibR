@@ -54,9 +54,9 @@
       "type": "path",
       "required": false,
       "unit": null,
-      "range": null,
+      "range": ".tsv only, any case (PYB-1)",
       "default": null,
-      "doc": "Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created."
+      "doc": "Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended."
     }
   ],
   "result": {
@@ -364,9 +364,9 @@
           "type": "path",
           "required": false,
           "unit": null,
-          "range": null,
+          "range": ".tsv only, any case (PYB-1)",
           "default": null,
-          "doc": "Write the long table here, one file at a time in input order, so memory holds at most threads files. A batch that stops on an error deletes its partial table. Must differ from every input."
+          "doc": "Write the long table here, one file at a time in input order, so memory holds at most threads files. A batch that stops on an error deletes its partial table. Must differ from every input. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended."
         }
       ],
       "envelope_fields": [
@@ -491,6 +491,14 @@
       "when": "with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'"
     },
     {
+      "kind": "usage",
+      "when": "out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened"
+    },
+    {
+      "kind": "usage",
+      "when": "the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use --limit/--offset or --out', N the parsed record_count"
+    },
+    {
       "kind": "service_unavailable",
       "when": "never"
     }
@@ -529,6 +537,7 @@
   ],
   "open_questions": [
     "Peptide-level occupancy: ModificationOccupancyCell also parses peptide tables' cells, but QuantifiedPeptideFromTsv at the pin exposes none, so this verb reads protein groups only.",
-    "numerator and denominator are floats for both bases; a count-basis value crosses as a whole number (1, not 1.0) and bindings must read it as a float."
+    "numerator and denominator are floats for both bases; a count-basis value crosses as a whole number (1, not 1.0) and bindings must read it as a float.",
+    "PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising."
   ]
 }

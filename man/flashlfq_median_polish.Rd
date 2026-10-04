@@ -68,7 +68,7 @@ peaks, retention times - are not available here. Use \code{\link{flashlfq_quanti
 
 }
 \section{Wraps}{
-Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.CalculateProteinResultsMedianPolish}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{23c2490e}

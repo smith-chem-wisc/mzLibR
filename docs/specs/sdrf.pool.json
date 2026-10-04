@@ -206,5 +206,7 @@
       "r": "pooled <- sdrf_pool(c(malaria = 'PXD000070.sdrf.tsv', colon = 'PXD026824.sdrf.tsv'), limit = 4)"
     }
   ],
-  "open_questions": []
+  "open_questions": [
+    "out has no extension check, unlike the reader verbs, sdrf design and proteins annotate-go (PYB-1). It writes an SDRF, conventionally .sdrf.tsv; should it share their .tsv-only rule? Behaviour unchanged until decided (noted on pyMzLib #76)."
+  ]
 }

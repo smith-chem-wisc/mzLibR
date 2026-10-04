@@ -69,7 +69,7 @@ An \code{mzlibr_sequence_conversions}:
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs}{\code{SequenceConversionService.Default}} in \code{mzLib/Omics/SequenceConversion/SequenceConversionService.cs} at mzLib \code{0a808fec}
@@ -158,7 +158,7 @@ The spec records these as open. They are listed rather than hidden:
 \item The ProForma target's UniProt gap is an mzLib defect (the serializer's default lookup), mzLib#1401; close this when a pin carries its fix. A bridge-side substitute (ProFormaSequenceSerializer.WithLookup(GlobalModificationLookup)) composes serializer internals and is deliberately not used.
 \item mzLib's MzLibSequenceParser joins '|'-separated ambiguous candidates into one sequence with only a warning; whether it should refuse them (as SpectrumMatchFromTsv.ProFormaFromFullSequence does before calling it) is an mzLib question: mzLib#1405.
 \item AutoDetect (SequenceConversionService.ConvertAutoDetect) is not projected: \code{--from} is always explicit.
-\item Not yet ported: mzLibRust and mzLibR names above are proposals until their ports land (parity order).
+\item Ported, unreleased: mzLibRust #32 and mzLibR #32 (drafts until pyMzLib 0.4.0 publishes the bridge). Set since.mzlibrust / since.mzlibr when they release.
 }
 }
 \references{

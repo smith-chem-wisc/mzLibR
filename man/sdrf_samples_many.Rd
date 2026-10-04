@@ -38,7 +38,7 @@ An \code{mzlibr_sdrf_samples_batch}: \code{file_count} documents given, \code{re
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf samples} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{sdrf.samples.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf samples} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{sdrf.samples.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfSampleBlock.cs}{\code{SdrfSampleBlock.BySourceName}} in \code{mzLib/Readers/Sdrf/SdrfSampleBlock.cs} at mzLib \code{23c2490e}

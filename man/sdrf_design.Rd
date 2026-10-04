@@ -66,7 +66,7 @@ Label-free only: an isobaric (TMT, iTRAQ) SDRF needs a channel design this does 
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesign.Read}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{0a808fec}
@@ -79,7 +79,7 @@ Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.d
 \item{\code{path}}{path; required. One .sdrf.tsv file. A file that does not exist is a usage error.}
 \item{\code{condition_columns} (wire \code{--condition-columns})}{string; default absent. The factor value[...] columns the condition is built from, by exact (case-sensitive) name, separated by TAB characters, in join order; the condition is their values joined with "_". Absent: mzLib uses the document's only factor column, and refuses a document with several. Given but blank, or with a blank name, is a usage error.}
 \item{\code{searched_files} (wire \code{--searched-files-stdin})}{flag; default absent. stdin holds the files the search will read, one per line, as paths or bare names. Each must be named EXACTLY (case and extension) by one row; rows for other files are dropped and reported in notes; the searched paths replace the SDRF's names in full_path. An empty list is mzLib's refusal, not a usage error.}
-\item{\code{out}}{path; default absent. Also write MetaMorpheus's ExperimentalDesign.tsv (1-based) here, through mzLib's writer. Must end in .tsv, case-insensitive (PYB-1), checked before the SDRF is read. Written only when is_valid; a refused design writes nothing and written is null.}
+\item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Also write MetaMorpheus's ExperimentalDesign.tsv (1-based) here, through mzLib's writer. Must end in .tsv, case-insensitive (PYB-1), checked before the SDRF is read. Written only when is_valid; a refused design writes nothing and written is null.}
 }
 }
 \section{Returned fields}{
