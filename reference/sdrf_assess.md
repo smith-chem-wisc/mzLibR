@@ -54,7 +54,7 @@ read the `caveats`.
 ## Wraps
 
 Wire verb `sdrf assess`. Generated from the bridge's verb spec
-`sdrf.assess.yaml` (bridge commit `c0cc92372aad`) by
+`sdrf.assess.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

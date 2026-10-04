@@ -57,7 +57,7 @@ records; `row_count` counts the rows of `records`.
 
 Wire verb `readers read-records` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-records.yaml` (bridge commit
-`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
+`e76157831b15`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)
@@ -95,9 +95,12 @@ all three bindings render the same ones.
 
 - `out`:
 
-  path; default absent. Write the long table here, one file at a time in
-  input order, so memory holds at most threads files. A batch that stops
-  on an error deletes its partial table. Must differ from every input.
+  path; default absent; range `.tsv only, any case (PYB-1)`. Write the
+  long table here, one file at a time in input order, so memory holds at
+  most threads files. A batch that stops on an error deletes its partial
+  table. Must differ from every input. Must end in .tsv, any case
+  (PYB-1); any other extension, or none, is a usage error before any
+  input is read, and no extension is appended.
 
 ## Returned fields
 
@@ -184,7 +187,9 @@ named in `column_names`. Every cell follows these rules:
 
 - Enums cross as their member names, dates as ISO 8601 strings, and a
   list of scalars as ONE ';'-joined string, on the wire and in out
-  alike; split it yourself.
+  alike; split it yourself. The one exception is an SDRF row, whose
+  header and cells lists are excluded rather than joined (PYB-2): SDRF
+  cells contain ';' themselves.
 
 - A column named in absent_fields is null in every row, whatever default
   mzLib filled in.
@@ -239,6 +244,19 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   with paths-stdin, inputs of more than one record type: refused before
   any file is parsed, naming the groups, whatever on-error says
 
+- `mzlib_usage_error` (usage):
+
+  out (with path or paths-stdin) whose extension is not .tsv, any case,
+  including none (PYB-1); checked before any input is opened
+
+- `mzlib_usage_error` (usage):
+
+  the answer is too large to return as one JSON document (PYB-3 part 1;
+  measured: past the ~1.07 G-character .NET string ceiling, not RAM).
+  Message: 'this read (N records) is too large to return as one
+  document; use `--limit`/`--offset` or `--out`', N the parsed
+  record_count
+
 - `mzlib_service_unavailable` (service_unavailable):
 
   Never raised by this verb.
@@ -258,6 +276,14 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   (read-protein-groups, and read-occupancy for the occupancy cells),
   FlashLFQQuantifiedPeptide.samples (read-quantified-peptides) and
   MzIdentML/MzIdentMLGz.scores (read-matches `--scores`).
+
+- An SDRF reads with ZERO columns and a real record_count: SdrfRow's
+  only fields, header and cells, are lists of strings, and a ';'-join
+  could not be split back because SDRF cells contain ';'
+  (NT=Oxidation;AC=UNIMOD:35). Both are in excluded_fields with reason
+  "use sdrf read" (PYB-2, pyMzLib \#76); read the document with sdrf
+  read. With out, the file is an empty header line and one empty line
+  per record.
 
 - record_count counts what mzLib parsed, not lines. What mzLib drops is
   reported beside it: rows_not_read counts malformed psmtsv/MSFragger
@@ -320,6 +346,12 @@ The spec records these as open. They are listed rather than hidden:
   MsPathFinderT, TopFD, the \#1347 tables, ...). psmtsv/osmtsv parse
   their own header dictionary, so their optional columns are not judged
   yet; an empty list there means no basis, not nothing absent.
+
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
+  parsed record count already predicts it, is not built. It needs a
+  characters-per-record threshold measured per format (dataRepo's ~805
+  per record is one file type); part 1 catches the failure after
+  serialising.
 
 ## See also
 

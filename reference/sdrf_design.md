@@ -94,7 +94,7 @@ for the channels themselves.
 ## Wraps
 
 Wire verb `sdrf design`. Generated from the bridge's verb spec
-`sdrf.design.yaml` (bridge commit `c0cc92372aad`) by
+`sdrf.design.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -133,11 +133,11 @@ render the same ones.
 
 - `out`:
 
-  path; default absent. Also write MetaMorpheus's ExperimentalDesign.tsv
-  (1-based) here, through mzLib's writer. Must end in .tsv,
-  case-insensitive (PYB-1), checked before the SDRF is read. Written
-  only when is_valid; a refused design writes nothing and written is
-  null.
+  path; default absent; range `.tsv only, any case (PYB-1)`. Also write
+  MetaMorpheus's ExperimentalDesign.tsv (1-based) here, through mzLib's
+  writer. Must end in .tsv, case-insensitive (PYB-1), checked before the
+  SDRF is read. Written only when is_valid; a refused design writes
+  nothing and written is null.
 
 ## Returned fields
 

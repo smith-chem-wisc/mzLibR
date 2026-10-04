@@ -70,7 +70,7 @@ as part of any key.
 ## Wraps
 
 Wire verb `sdrf pool`. Generated from the bridge's verb spec
-`sdrf.pool.yaml` (bridge commit `c0cc92372aad`) by
+`sdrf.pool.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -204,6 +204,15 @@ any work.
 ## Since
 
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+
+## Not yet verified
+
+The spec records these as open. They are listed rather than hidden:
+
+- out has no extension check, unlike the reader verbs, sdrf design and
+  proteins annotate-go (PYB-1). It writes an SDRF, conventionally
+  .sdrf.tsv; should it share their .tsv-only rule? Behaviour unchanged
+  until decided (noted on pyMzLib \#76).
 
 ## References
 

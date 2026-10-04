@@ -32,7 +32,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 |  |  |
 |----|----|
 | `pride_*` | List and download from the PRIDE Archive, with mzLib’s paging and URL resolution |
-| `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
+| `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment; convert MetaMorpheus full sequences to Unimod or ProForma with [`peptidoform_convert()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.md) |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
 | `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md); identify **and read every file type** mzLib knows, search results included — [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md) reads any of them into that format’s own fields, while [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md), [`readers_read_features()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_features.md), [`readers_read_matches()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_matches.md) and [`readers_read_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_spectra.md) project the four cross-format views |
 | `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with [`proteins_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.md), which gene it resolves to against a pinned Ensembl release with [`proteins_resolve_genes()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_resolve_genes.md), whether a peptide is unique to one protein or gene with [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md), and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with [`proteins_annotate_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.md) |
@@ -384,10 +384,14 @@ List a project’s files and download the ones you choose.
 
 ## Peptidoforms
 
-Digest a UniProt entry and fragment its peptidoforms.
+Digest a UniProt entry and fragment its peptidoforms, and convert full
+sequences to Unimod or ProForma.
 
 - [`peptidoform_fragments()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
   : Digest a protein and fragment its peptidoforms
+- [`peptidoform_convert()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.md)
+  : Convert full sequences to another notation with mzLib, one row per
+  input
 - [`digest_distinct_base_sequences()`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_distinct_base_sequences.md)
   : How many distinct base sequences a digest produced
 - [`digest_fragments_by_series()`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_fragments_by_series.md)
@@ -525,6 +529,8 @@ what it is.
   : Print an SDRF document's samples
 - [`print(`*`<mzlibr_sdrf_validation>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_validation.md)
   : Print an SDRF validation
+- [`print(`*`<mzlibr_sequence_conversions>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sequence_conversions.md)
+  : Print sequence conversions
 
 # Articles
 

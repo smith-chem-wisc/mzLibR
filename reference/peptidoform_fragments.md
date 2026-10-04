@@ -129,7 +129,7 @@ one for the other is a large error, not a rounding one. See
 ## Wraps
 
 Wire verb `peptidoform fragments`. Generated from the bridge's verb spec
-`peptidoform.fragments.yaml` (bridge commit `c0cc92372aad`) by
+`peptidoform.fragments.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

@@ -68,7 +68,7 @@ sum as an upper bound on transfer, and see
 ## Wraps
 
 Wire verb `pride files`. Generated from the bridge's verb spec
-`pride.files.yaml` (bridge commit `c0cc92372aad`) by
+`pride.files.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

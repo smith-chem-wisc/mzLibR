@@ -98,7 +98,7 @@ list, <code>threads</code> files at a time, rows grouped by file in input order.
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers read-quantified-peptides</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.read-quantified-peptides.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers read-quantified-peptides</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.read-quantified-peptides.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs" class="external-link"><code>QuantifiedPeptideFile.LoadResults</code></a> in <code>mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/IndividualResultRecords/QuantifiedPeptideFromTsv.cs" class="external-link"><code>QuantifiedPeptideFromTsv.Samples</code></a> in <code>mzLib/Readers/InternalResults/IndividualResultRecords/QuantifiedPeptideFromTsv.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -115,7 +115,7 @@ list, <code>threads</code> files at a time, rows grouped by file in input order.
 <dd><p>string; default <code>fail</code>; range <code>fail | skip</code>. fail: the first unreadable input stops the batch with its usage or correctness error, the message starting 'Input &lt;i&gt; (&lt;path&gt;)'. skip: the failure goes in that input's files[i].error and the rest are read. skip with a single path is a usage error.</p></dd>
 
 <dt><code>out</code></dt>
-<dd><p>path; default absent. Write the long table here, one file at a time in input order, so memory holds at most threads files. A batch that stops on an error deletes its partial table. Must differ from every input.</p></dd>
+<dd><p>path; default absent; range <code>.tsv only, any case (PYB-1)</code>. Write the long table here, one file at a time in input order, so memory holds at most threads files. A batch that stops on an error deletes its partial table. Must differ from every input. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.</p></dd>
 
 
 </dl></div>
@@ -221,6 +221,12 @@ list, <code>threads</code> files at a time, rows grouped by file in input order.
 <dt><code>mzlib_bridge_error</code> (correctness)</dt>
 <dd><p>with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input &lt;i&gt; (&lt;path&gt;)'</p></dd>
 
+<dt><code>mzlib_usage_error</code> (usage)</dt>
+<dd><p>out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened</p></dd>
+
+<dt><code>mzlib_usage_error</code> (usage)</dt>
+<dd><p>the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use <code>--limit</code>/<code>--offset</code> or <code>--out</code>', N the parsed record_count</p></dd>
+
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
 <dd><p>Never raised by this verb.</p></dd>
 
@@ -254,6 +260,7 @@ list, <code>threads</code> files at a time, rows grouped by file in input order.
     <p>The spec records these as open. They are listed rather than hidden:</p>
 <ul><li><p>quant median-polish still parses QuantifiedPeptides.tsv with a private reader (Quantification.cs); switching it to mzLib's QuantifiedPeptideFile is out of this verb's scope.</p></li>
 <li><p>No IsoTracker fixture exists, so retention_time and peak_order have only been seen absent.</p></li>
+<li><p>PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

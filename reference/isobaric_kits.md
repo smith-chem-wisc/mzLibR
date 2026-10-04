@@ -60,7 +60,7 @@ is 121.
 ## Wraps
 
 Wire verb `isobaric kits`. Generated from the bridge's verb spec
-`isobaric.kits.yaml` (bridge commit `c0cc92372aad`) by
+`isobaric.kits.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

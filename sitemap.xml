@@ -35,6 +35,7 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_bridge_version.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/peptide_mz.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/pride_approximate_total_size_bytes.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/pride_download.html</loc></url>
@@ -75,6 +76,7 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_drift.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_samples.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_validation.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sequence_conversions.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.html</loc></url>

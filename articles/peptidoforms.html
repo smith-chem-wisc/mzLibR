@@ -119,6 +119,38 @@
 <code><a href="../reference/peptide_mz.html">?peptide_mz</a></code>
 </td>
 </tr>
+<tr class="even">
+<td>a MetaMorpheus full sequence in Unimod accessions</td>
+<td><code><a href="../reference/peptidoform_convert.html">peptidoform_convert()</a></code></td>
+<td>
+<code>SequenceConversionService.Convert</code>, Unimod
+serializer</td>
+</tr>
+<tr class="odd">
+<td>the same sequence in ProForma</td>
+<td><code>peptidoform_convert(target = "ProForma")</code></td>
+<td>
+<code>SequenceConversionService.Convert</code>, ProForma
+serializer</td>
+</tr>
+<tr class="even">
+<td>which sequences mzLib could not convert, and why</td>
+<td>
+<code>records$status</code>,
+<code>records$incompatible_items</code>
+</td>
+<td><code>ConversionWarnings</code></td>
+</tr>
+<tr class="odd">
+<td>which notations mzLib can read and write</td>
+<td>
+<code>source_formats</code>, <code>target_formats</code>
+</td>
+<td>
+<code>SequenceConversionService.AvailableSourceFormats</code>,
+<code>AvailableTargetFormats</code>
+</td>
+</tr>
 </tbody>
 </table>
 <p><code><a href="../reference/peptidoform_fragments.html">peptidoform_fragments()</a></code> fetches a UniProt entry, applies
@@ -500,6 +532,151 @@ says whether it was reached:</p>
 <code>"trypsin|P"</code> <em>applies</em> the proline rule - the reverse
 of the MaxQuant and Mascot spelling. <code><a href="../reference/peptidoform_fragments.html">?peptidoform_fragments</a></code>
 gives the numbers.</p>
+</div>
+<div class="section level2">
+<h2 id="converting-full-sequences-to-unimod-or-proforma">Converting full sequences to Unimod or ProForma<a class="anchor" aria-label="anchor" href="#converting-full-sequences-to-unimod-or-proforma"></a>
+</h2>
+<p>A MetaMorpheus result names each modification the way mzLib’s
+databases do: <code>[UniProt:N-acetylserine on S]</code>,
+<code>[Common Variable:Oxidation on M]</code>. Most other tools want a
+Unimod accession instead, such as <code>[UNIMOD:1]</code>.
+<code><a href="../reference/peptidoform_convert.html">peptidoform_convert()</a></code> hands each sequence to mzLib’s
+<code>SequenceConversionService</code> and returns one row per input, in
+order. mzLibR maps no modification itself; every output is mzLib’s.</p>
+<p>This example uses <code>BottomUpExample.psmtsv</code>, a MetaMorpheus
+search result that ships with mzLib’s tests. Read its full sequences,
+then convert them:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">psms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_read_results.html">readers_read_results</a></span><span class="op">(</span><span class="st">"BottomUpExample.psmtsv"</span><span class="op">)</span></span>
+<span><span class="va">unimod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/peptidoform_convert.html">peptidoform_convert</a></span><span class="op">(</span><span class="va">psms</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">full_sequence</span><span class="op">)</span></span>
+<span><span class="va">unimod</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_sequence_conversions&gt; 8 sequences, mzLib to Unimod (ReturnNull)</span></span>
+<span><span class="co">#&gt;   8 converted, 0 with warnings, 0 failed</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">unimod</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"status"</span>, <span class="st">"output"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      status                                 output</span></span>
+<span><span class="co">#&gt; 1 converted            YPIEH[UNIMOD:34]GIVTNWDDMEK</span></span>
+<span><span class="co">#&gt; 2 converted                     VAPEEHPVLLTEAPLNPK</span></span>
+<span><span class="co">#&gt; 3 converted     AYHEQLSVAEITNAC[UNIMOD:4]FEPANQMVK</span></span>
+<span><span class="co">#&gt; 4 converted         VEDMAELTC[UNIMOD:4]LNEASVLHNLK</span></span>
+<span><span class="co">#&gt; 5 converted YPIEH[UNIMOD:34]GIVTNWDDM[UNIMOD:35]EK</span></span>
+<span><span class="va">unimod</span><span class="op">$</span><span class="va">converted_count</span> <span class="op">==</span> <span class="va">unimod</span><span class="op">$</span><span class="va">record_count</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>UniProt’s tele-methylhistidine became <code>UNIMOD:34</code>
+(Methyl). Carbamidomethyl became <code>UNIMOD:4</code>, and oxidation
+became <code>UNIMOD:35</code>. Unmodified sequences pass through
+unchanged.</p>
+<p>Every result lists the notations mzLib has registered, so you never
+need to guess a name:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">unimod</span><span class="op">$</span><span class="va">source_formats</span></span>
+<span><span class="co">#&gt; [1] "MassShift" "Modomics"  "ProForma"  "mzLib"</span></span>
+<span><span class="va">unimod</span><span class="op">$</span><span class="va">target_formats</span></span>
+<span><span class="co">#&gt; [1] "Chronologer" "Essential"   "MassShift"   "ProForma"    "Unimod"     </span></span>
+<span><span class="co">#&gt; [6] "mzLib"</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="proforma-does-not-resolve-uniprot-modifications-yet">ProForma does not resolve UniProt modifications yet<a class="anchor" aria-label="anchor" href="#proforma-does-not-resolve-uniprot-modifications-yet"></a>
+</h3>
+<p>Ask for ProForma and the same file gives a different answer.
+Carbamidomethyl and oxidation become UNIMOD accessions. The UniProt
+modification is written back under its mzLib name, and the row still
+says <code>converted</code>:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">proforma</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/peptidoform_convert.html">peptidoform_convert</a></span><span class="op">(</span><span class="va">psms</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">full_sequence</span>, target <span class="op">=</span> <span class="st">"ProForma"</span><span class="op">)</span></span>
+<span><span class="va">proforma</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">output</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDMEK"           </span></span>
+<span><span class="co">#&gt; [2] "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDM[UNIMOD:35]EK"</span></span>
+<span><span class="va">proforma</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">status</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "converted"</span></span></code></pre></div>
+<p>The cause is in mzLib, not in mzLibR (mzLib#1401). mzLib’s ProForma
+serializer looks modifications up only in MetaMorpheus’s own list, which
+has no UniProt entries; the Unimod serializer looks them up in every
+list mzLib loads. Until mzLib fixes this, <strong>convert to Unimod when
+your sequences carry UniProt modifications</strong>, and in ProForma
+output treat any bracket that is not a <code>UNIMOD:</code> term as
+unresolved. mzLibR does not patch around the gap: a patch here would
+leave the same gap in pyMzLib, mzLibRust and MetaMorpheus. The
+<code>pro_forma</code> column that <code><a href="../reference/readers_read_records.html">readers_read_records()</a></code>
+gives a <code>.psmtsv</code> comes from the same serializer, so it has
+the same gap.</p>
+</div>
+<div class="section level3">
+<h3 id="when-mzlib-cannot-convert-a-sequence">When mzLib cannot convert a sequence<a class="anchor" aria-label="anchor" href="#when-mzlib-cannot-convert-a-sequence"></a>
+</h3>
+<p>What happens to a modification the target cannot write depends on
+<code>mode</code>, which is mzLib’s
+<code>SequenceConversionHandlingMode</code>:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th><code>mode</code></th>
+<th>the row</th>
+<th><code>output</code></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<code>"ReturnNull"</code> (default)</td>
+<td><code>failed</code></td>
+<td><code>NA</code></td>
+</tr>
+<tr class="even">
+<td><code>"RemoveIncompatibleElements"</code></td>
+<td><code>converted_with_warnings</code></td>
+<td>the sequence without that modification</td>
+</tr>
+<tr class="odd">
+<td><code>"UsePrimarySequence"</code></td>
+<td><code>converted_with_warnings</code></td>
+<td>the sequence without that modification</td>
+</tr>
+<tr class="even">
+<td><code>"ThrowException"</code></td>
+<td>no rows: the call raises an <code>mzlib_usage_error</code> naming
+the first such sequence</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p><code>status</code> is mzLib’s own verdict: <code>converted</code>
+(an output, and nothing recorded against it),
+<code>converted_with_warnings</code> (an output, but mzLib noted
+something, such as a dropped modification or a skipped character) or
+<code>failed</code> (no output).</p>
+<p>These four sequences include one modification that has no Unimod
+accession:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/peptidoform_convert.html">peptidoform_convert</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"[UniProt:N-acetylserine on S]SEQK"</span>,</span>
+<span>  <span class="st">"PEPK[UniProt:N6,N6-dimethyllysine on K]R"</span>,</span>
+<span>  <span class="st">"PEPM[Common Variable:Oxidation on M]K"</span>,</span>
+<span>  <span class="st">"PEPK[Made Up:Not a modification on K]R"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">result</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">output</span></span>
+<span><span class="co">#&gt; [1] "[UNIMOD:1]SEQK"   "PEPK[UNIMOD:36]R" "PEPM[UNIMOD:35]K" NA</span></span>
+<span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">result</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">status</span> <span class="op">!=</span> <span class="st">"converted"</span>, <span class="op">]</span></span>
+<span><span class="va">bad</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"input"</span>, <span class="st">"status"</span>, <span class="st">"failure_reason"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                                    input status failure_reason</span></span>
+<span><span class="co">#&gt; 4 PEPK[Made Up:Not a modification on K]R failed           &lt;NA&gt;</span></span>
+<span><span class="va">bad</span><span class="op">$</span><span class="va">incompatible_items</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "Made Up:Not a modification on K @3(K)"</span></span></code></pre></div>
+<p><code>failure_reason</code> is <code>NA</code> here. Under
+<code>"ReturnNull"</code>, mzLib’s Unimod serializer records the
+incompatible modification but no reason code, so read
+<code>incompatible_items</code> to see what failed.</p>
+<p><strong>Split ambiguous sequences first.</strong> When MetaMorpheus
+cannot tell candidates apart, it joins their full sequences with
+<code>|</code>. mzLib’s parser does not refuse this (mzLib#1405): it
+skips each <code>|</code> with a warning and joins the candidates into
+one sequence. The row is <code>converted_with_warnings</code>, but the
+output is not a real peptide. Split on <code>|</code> before you
+convert.</p>
+<p><code><a href="../reference/peptidoform_convert.html">?peptidoform_convert</a></code> lists every parameter, field and
+caveat.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>

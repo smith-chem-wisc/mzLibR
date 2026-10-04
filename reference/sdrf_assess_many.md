@@ -55,7 +55,7 @@ has `NA` for every other fact.
 ## Wraps
 
 Wire verb `sdrf assess` with `--paths-stdin`. Generated from the
-bridge's verb spec `sdrf.assess.yaml` (bridge commit `c0cc92372aad`) by
+bridge's verb spec `sdrf.assess.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

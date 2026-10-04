@@ -135,7 +135,7 @@ quantification with no hand-written design. Both refuse a refused design.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>sdrf design</code>. Generated from the bridge's verb spec <code>sdrf.design.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>sdrf design</code>. Generated from the bridge's verb spec <code>sdrf.design.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs" class="external-link"><code>SdrfLabelFreeDesign.Read</code></a> in <code>mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs" class="external-link"><code>SdrfLabelFreeDesign.WriteExperimentalDesignTsv</code></a> in <code>mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs" class="external-link"><code>SdrfLabelFreeDesignOptions</code></a> in <code>mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs</code> at mzLib <code>0a808fec</code></p></li>
@@ -153,7 +153,7 @@ quantification with no hand-written design. Both refuse a refused design.</p>
 <dd><p>flag; default absent. stdin holds the files the search will read, one per line, as paths or bare names. Each must be named EXACTLY (case and extension) by one row; rows for other files are dropped and reported in notes; the searched paths replace the SDRF's names in full_path. An empty list is mzLib's refusal, not a usage error.</p></dd>
 
 <dt><code>out</code></dt>
-<dd><p>path; default absent. Also write MetaMorpheus's ExperimentalDesign.tsv (1-based) here, through mzLib's writer. Must end in .tsv, case-insensitive (PYB-1), checked before the SDRF is read. Written only when is_valid; a refused design writes nothing and written is null.</p></dd>
+<dd><p>path; default absent; range <code>.tsv only, any case (PYB-1)</code>. Also write MetaMorpheus's ExperimentalDesign.tsv (1-based) here, through mzLib's writer. Must end in .tsv, case-insensitive (PYB-1), checked before the SDRF is read. Written only when is_valid; a refused design writes nothing and written is null.</p></dd>
 
 
 </dl></div>

@@ -93,7 +93,7 @@ finds concepts several documents wrote inconsistently.
 ## Wraps
 
 Wire verb `sdrf read`. Generated from the bridge's verb spec
-`sdrf.read.yaml` (bridge commit `c0cc92372aad`) by
+`sdrf.read.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

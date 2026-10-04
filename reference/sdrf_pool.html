@@ -120,7 +120,7 @@ uniqueness rule. Use <code><a href="sdrf_source_documents.html">sdrf_source_docu
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>sdrf pool</code>. Generated from the bridge's verb spec <code>sdrf.pool.yaml</code> (bridge commit <code>c0cc92372aad</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>sdrf pool</code>. Generated from the bridge's verb spec <code>sdrf.pool.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs" class="external-link"><code>SdrfCollection.Merge</code></a> in <code>mzLib/Readers/Sdrf/SdrfCollection.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfDocument.cs" class="external-link"><code>SdrfDocument.WriteResults</code></a> in <code>mzLib/Readers/Sdrf/SdrfDocument.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -217,6 +217,11 @@ uniqueness rule. Use <code><a href="sdrf_source_documents.html">sdrf_source_docu
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
     <p>Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
+    <div class="section level2">
+    <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
+    <p>The spec records these as open. They are listed rather than hidden:</p>
+<ul><li><p>out has no extension check, unlike the reader verbs, sdrf design and proteins annotate-go (PYB-1). It writes an SDRF, conventionally .sdrf.tsv; should it share their .tsv-only rule? Behaviour unchanged until decided (noted on pyMzLib #76).</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
 

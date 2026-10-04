@@ -206,10 +206,14 @@ List a project’s files and download the ones you choose.
 
 ## Peptidoforms
 
-Digest a UniProt entry and fragment its peptidoforms.
+Digest a UniProt entry and fragment its peptidoforms, and convert full
+sequences to Unimod or ProForma.
 
 - [`peptidoform_fragments()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
   : Digest a protein and fragment its peptidoforms
+- [`peptidoform_convert()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.md)
+  : Convert full sequences to another notation with mzLib, one row per
+  input
 - [`digest_distinct_base_sequences()`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_distinct_base_sequences.md)
   : How many distinct base sequences a digest produced
 - [`digest_fragments_by_series()`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_fragments_by_series.md)
@@ -347,3 +351,5 @@ what it is.
   : Print an SDRF document's samples
 - [`print(`*`<mzlibr_sdrf_validation>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_validation.md)
   : Print an SDRF validation
+- [`print(`*`<mzlibr_sequence_conversions>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sequence_conversions.md)
+  : Print sequence conversions

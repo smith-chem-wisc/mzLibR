@@ -58,7 +58,7 @@ as well.
 ## Wraps
 
 Wire verb `sdrf samples`. Generated from the bridge's verb spec
-`sdrf.samples.yaml` (bridge commit `c0cc92372aad`) by
+`sdrf.samples.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

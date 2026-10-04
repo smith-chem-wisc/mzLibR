@@ -48,7 +48,7 @@ and `error_message`, which are `NA` for a path that was identified.
 
 Wire verb `readers identify` with `--paths-stdin`. Generated from the
 bridge's verb spec `readers.identify.yaml` (bridge commit
-`c0cc92372aad`) by `scripts/build-man.R`; the spec owns these facts, and
+`e76157831b15`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)

@@ -51,7 +51,7 @@ asks.
 ## Wraps
 
 Wire verb `sdrf validate`. Generated from the bridge's verb spec
-`sdrf.validate.yaml` (bridge commit `c0cc92372aad`) by
+`sdrf.validate.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

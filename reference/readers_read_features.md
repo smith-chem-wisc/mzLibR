@@ -77,7 +77,7 @@ without complaint.
 ## Wraps
 
 Wire verb `readers read-features`. Generated from the bridge's verb spec
-`readers.read-features.yaml` (bridge commit `c0cc92372aad`) by
+`readers.read-features.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -110,9 +110,11 @@ render the same ones.
 
 - `out`:
 
-  path; default absent. Write the table to this path as tab-separated
-  text instead of returning columns. Must differ from path. Parent
-  directories are created.
+  path; default absent; range `.tsv only, any case (PYB-1)`. Write the
+  table to this path as tab-separated text instead of returning columns.
+  Must differ from path. Parent directories are created. Must end in
+  .tsv, any case (PYB-1); any other extension, or none, is a usage error
+  before any input is read, and no extension is appended.
 
 ## Returned fields
 
@@ -276,6 +278,19 @@ only from
   with on-error fail, mzLib failing to parse an input: that input's own
   error type, message prefixed 'Input \<i\> (\<path\>)'
 
+- `mzlib_usage_error` (usage):
+
+  out (with path or paths-stdin) whose extension is not .tsv, any case,
+  including none (PYB-1); checked before any input is opened
+
+- `mzlib_usage_error` (usage):
+
+  the answer is too large to return as one JSON document (PYB-3 part 1;
+  measured: past the ~1.07 G-character .NET string ceiling, not RAM).
+  Message: 'this read (N records) is too large to return as one
+  document; use `--limit`/`--offset` or `--out`', N the parsed
+  record_count
+
 - `mzlib_service_unavailable` (service_unavailable):
 
   Never raised by this verb.
@@ -329,6 +344,12 @@ The spec records these as open. They are listed rather than hidden:
 - retention_time_start/\_end declare their unit as the envelope's
   retention_time_unit, not a fixed unit, because it genuinely varies per
   file.
+
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
+  parsed record count already predicts it, is not built. It needs a
+  characters-per-record threshold measured per format (dataRepo's ~805
+  per record is one file type); part 1 catches the failure after
+  serialising.
 
 ## See also
 

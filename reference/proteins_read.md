@@ -110,7 +110,7 @@ by mzLib, which renames the accession (`P38936_C117Y`); the file's
 ## Wraps
 
 Wire verb `proteins read`. Generated from the bridge's verb spec
-`proteins.read.yaml` (bridge commit `c0cc92372aad`) by
+`proteins.read.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

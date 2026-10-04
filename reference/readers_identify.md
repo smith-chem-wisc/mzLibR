@@ -53,7 +53,7 @@ and the `caveats` it returns.
 ## Wraps
 
 Wire verb `readers identify`. Generated from the bridge's verb spec
-`readers.identify.yaml` (bridge commit `c0cc92372aad`) by
+`readers.identify.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

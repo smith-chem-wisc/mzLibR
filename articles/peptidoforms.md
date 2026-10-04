@@ -7,6 +7,10 @@
 | one ion series at a time | [`digest_fragments_by_series()`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_fragments_by_series.md) | the same fragments |
 | which annotated sites were not applied, and why? | [`census_excluded()`](https://smith-chem-wisc.github.io/mzLibR/reference/census_excluded.md), [`census_explain()`](https://smith-chem-wisc.github.io/mzLibR/reference/census_explain.md) | `ModificationCensus` |
 | a peptide’s m/z at a charge | [`peptide_mz()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptide_mz.md) | none: the proton arithmetic is spelled out in [`?peptide_mz`](https://smith-chem-wisc.github.io/mzLibR/reference/peptide_mz.md) |
+| a MetaMorpheus full sequence in Unimod accessions | [`peptidoform_convert()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.md) | `SequenceConversionService.Convert`, Unimod serializer |
+| the same sequence in ProForma | `peptidoform_convert(target = "ProForma")` | `SequenceConversionService.Convert`, ProForma serializer |
+| which sequences mzLib could not convert, and why | `records$status`, `records$incompatible_items` | `ConversionWarnings` |
+| which notations mzLib can read and write | `source_formats`, `target_formats` | `SequenceConversionService.AvailableSourceFormats`, `AvailableTargetFormats` |
 
 [`peptidoform_fragments()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
 fetches a UniProt entry, applies its annotated modifications, digests it
@@ -408,6 +412,135 @@ drops everything shorter, and mzLib’s `"trypsin|P"` *applies* the
 proline rule - the reverse of the MaxQuant and Mascot spelling.
 [`?peptidoform_fragments`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
 gives the numbers.
+
+## Converting full sequences to Unimod or ProForma
+
+A MetaMorpheus result names each modification the way mzLib’s databases
+do: `[UniProt:N-acetylserine on S]`, `[Common Variable:Oxidation on M]`.
+Most other tools want a Unimod accession instead, such as `[UNIMOD:1]`.
+[`peptidoform_convert()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.md)
+hands each sequence to mzLib’s `SequenceConversionService` and returns
+one row per input, in order. mzLibR maps no modification itself; every
+output is mzLib’s.
+
+This example uses `BottomUpExample.psmtsv`, a MetaMorpheus search result
+that ships with mzLib’s tests. Read its full sequences, then convert
+them:
+
+``` r
+
+psms <- readers_read_results("BottomUpExample.psmtsv")
+unimod <- peptidoform_convert(psms$records$full_sequence)
+unimod
+#> <mzlibr_sequence_conversions> 8 sequences, mzLib to Unimod (ReturnNull)
+#>   8 converted, 0 with warnings, 0 failed
+head(unimod$records[, c("status", "output")], 5)
+#>      status                                 output
+#> 1 converted            YPIEH[UNIMOD:34]GIVTNWDDMEK
+#> 2 converted                     VAPEEHPVLLTEAPLNPK
+#> 3 converted     AYHEQLSVAEITNAC[UNIMOD:4]FEPANQMVK
+#> 4 converted         VEDMAELTC[UNIMOD:4]LNEASVLHNLK
+#> 5 converted YPIEH[UNIMOD:34]GIVTNWDDM[UNIMOD:35]EK
+unimod$converted_count == unimod$record_count
+#> [1] TRUE
+```
+
+UniProt’s tele-methylhistidine became `UNIMOD:34` (Methyl).
+Carbamidomethyl became `UNIMOD:4`, and oxidation became `UNIMOD:35`.
+Unmodified sequences pass through unchanged.
+
+Every result lists the notations mzLib has registered, so you never need
+to guess a name:
+
+``` r
+
+unimod$source_formats
+#> [1] "MassShift" "Modomics"  "ProForma"  "mzLib"
+unimod$target_formats
+#> [1] "Chronologer" "Essential"   "MassShift"   "ProForma"    "Unimod"     
+#> [6] "mzLib"
+```
+
+### ProForma does not resolve UniProt modifications yet
+
+Ask for ProForma and the same file gives a different answer.
+Carbamidomethyl and oxidation become UNIMOD accessions. The UniProt
+modification is written back under its mzLib name, and the row still
+says `converted`:
+
+``` r
+
+proforma <- peptidoform_convert(psms$records$full_sequence, target = "ProForma")
+proforma$records$output[c(1, 5)]
+#> [1] "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDMEK"           
+#> [2] "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDM[UNIMOD:35]EK"
+proforma$records$status[1]
+#> [1] "converted"
+```
+
+The cause is in mzLib, not in mzLibR (mzLib#1401). mzLib’s ProForma
+serializer looks modifications up only in MetaMorpheus’s own list, which
+has no UniProt entries; the Unimod serializer looks them up in every
+list mzLib loads. Until mzLib fixes this, **convert to Unimod when your
+sequences carry UniProt modifications**, and in ProForma output treat
+any bracket that is not a `UNIMOD:` term as unresolved. mzLibR does not
+patch around the gap: a patch here would leave the same gap in pyMzLib,
+mzLibRust and MetaMorpheus. The `pro_forma` column that
+[`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
+gives a `.psmtsv` comes from the same serializer, so it has the same
+gap.
+
+### When mzLib cannot convert a sequence
+
+What happens to a modification the target cannot write depends on
+`mode`, which is mzLib’s `SequenceConversionHandlingMode`:
+
+| `mode` | the row | `output` |
+|----|----|----|
+| `"ReturnNull"` (default) | `failed` | `NA` |
+| `"RemoveIncompatibleElements"` | `converted_with_warnings` | the sequence without that modification |
+| `"UsePrimarySequence"` | `converted_with_warnings` | the sequence without that modification |
+| `"ThrowException"` | no rows: the call raises an `mzlib_usage_error` naming the first such sequence | none |
+
+`status` is mzLib’s own verdict: `converted` (an output, and nothing
+recorded against it), `converted_with_warnings` (an output, but mzLib
+noted something, such as a dropped modification or a skipped character)
+or `failed` (no output).
+
+These four sequences include one modification that has no Unimod
+accession:
+
+``` r
+
+result <- peptidoform_convert(c(
+  "[UniProt:N-acetylserine on S]SEQK",
+  "PEPK[UniProt:N6,N6-dimethyllysine on K]R",
+  "PEPM[Common Variable:Oxidation on M]K",
+  "PEPK[Made Up:Not a modification on K]R"
+))
+result$records$output
+#> [1] "[UNIMOD:1]SEQK"   "PEPK[UNIMOD:36]R" "PEPM[UNIMOD:35]K" NA
+bad <- result$records[result$records$status != "converted", ]
+bad[, c("input", "status", "failure_reason")]
+#>                                    input status failure_reason
+#> 4 PEPK[Made Up:Not a modification on K]R failed           <NA>
+bad$incompatible_items[[1]]
+#> [1] "Made Up:Not a modification on K @3(K)"
+```
+
+`failure_reason` is `NA` here. Under `"ReturnNull"`, mzLib’s Unimod
+serializer records the incompatible modification but no reason code, so
+read `incompatible_items` to see what failed.
+
+**Split ambiguous sequences first.** When MetaMorpheus cannot tell
+candidates apart, it joins their full sequences with `|`. mzLib’s parser
+does not refuse this (mzLib#1405): it skips each `|` with a warning and
+joins the candidates into one sequence. The row is
+`converted_with_warnings`, but the output is not a real peptide. Split
+on `|` before you convert.
+
+[`?peptidoform_convert`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_convert.md)
+lists every parameter, field and caveat.
 
 ## What to cite
 

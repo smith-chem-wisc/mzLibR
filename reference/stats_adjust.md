@@ -44,7 +44,7 @@ rows; and `caveats`.
 ## Wraps
 
 Wire verb `stats adjust`. Generated from the bridge's verb spec
-`stats.adjust.yaml` (bridge commit `c0cc92372aad`) by
+`stats.adjust.yaml` (bridge commit `e76157831b15`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
