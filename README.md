@@ -29,7 +29,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | | |
 |---|---|
 | `pride_*` | List and download from the PRIDE Archive, with mzLib's paging and URL resolution |
-| `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment |
+| `peptidoform_*` | Fetch a UniProt entry, apply its modifications, digest, and fragment; convert MetaMorpheus full sequences to Unimod or ProForma with `peptidoform_convert()` |
 | `flashlfq_*` | Label-free quantification with match-between-runs |
 | `readers_*` | Read spectra from **mzML**, Thermo `.raw`, Bruker `.d`, timsTOF `.d`, MGF and msalign with `readers_read_spectra()`; identify **and read every file type** mzLib knows, search results included — `readers_read_records()` reads any of them into that format's own fields, while `readers_read_results()`, `readers_read_features()`, `readers_read_matches()` and `readers_read_spectra()` project the four cross-format views |
 | `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with `proteins_read()`, which gene it resolves to against a pinned Ensembl release with `proteins_resolve_genes()`, whether a peptide is unique to one protein or gene with `proteins_classify_peptides()`, and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with `proteins_annotate_go()` |

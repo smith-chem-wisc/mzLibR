@@ -76,7 +76,7 @@ mass difference, a delta, TopPIC's \code{feature_score} - and nulling those woul
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -89,7 +89,7 @@ Wire verb \code{readers read-records}. Generated from the bridge's verb spec \co
 \item{\code{path}}{path; required. Any of the file types readers formats lists (38 at mzLib 1.0.593), including spectra files and the Bruker .d directories.}
 \item{\code{offset}}{int; in \strong{records}; default \code{0}; range \code{>= 0}. Skip this many records. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it. For a large file use out in one call.}
 \item{\code{limit}}{int; in \strong{records}; default absent; range \code{>= 0}. Return at most this many records. Absent means no limit; there is deliberately no default cap.}
-\item{\code{out}}{path; default absent. Write the selected window as a tab-separated table here instead of returning columns (header = column_names). Must differ from path. Parent directories are created.}
+\item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Write the selected window as a tab-separated table here instead of returning columns (header = column_names). Must differ from path. Parent directories are created. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.}
 }
 }
 \section{Returned fields}{
@@ -105,7 +105,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{returned_count}}{int; in \strong{records}; never \code{NA}. Records in columns; 0 when written to out.}
 \item{\code{offset}}{int; in \strong{records}; never \code{NA}. The offset applied.}
 \item{\code{truncated}}{bool; never \code{NA}. True whenever records were left out by offset or limit.}
-\item{\code{excluded_fields}}{table; never \code{NA}. Every property of record_type that could not become a column, as \{field, type, reason, verb\}: nested objects, lists of composites, and dictionaries (reason starts "a dictionary"). verb names the command that carries the field (sample_groups: readers read-protein-groups; samples: readers read-quantified-peptides; mzIdentML scores: readers read-matches) or is null. Empty when every property projects.}
+\item{\code{excluded_fields}}{table; never \code{NA}. Every property of record_type that could not become a column, as \{field, type, reason, verb\}: nested objects, lists of composites, and dictionaries (reason starts "a dictionary"), and an SDRF row's header and cells (reason "use sdrf read", verb "sdrf read"; PYB-2). verb names the command that carries the field (sample_groups: readers read-protein-groups; samples: readers read-quantified-peptides; mzIdentML scores: readers read-matches) or is null. Empty when every property projects.}
 \item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when the count is not meaningful for this format (only the psmtsv family and MSFragger are one line per record). Data rows that did not become records; mzLib drops a malformed psmtsv line silently.}
 \item{\code{retention_time_unit}}{string; \code{NA} when always: the columns are the format's own, and several formats carry more than one time column. Always null for this verb; use a typed view when units matter.}
 \item{\code{caveats}}{string[]; never \code{NA}. Always empty for this verb; the static caveats below apply.}
@@ -126,7 +126,7 @@ The columns are \strong{per format}: this file's own mzLib record fields, named 
 \item A cell is null when mzLib's value is null, when a double is NaN or infinite (JSON cannot carry it), or when the property threw (then named in failed_fields).
 \item -1 crosses unchanged: in a format's own columns it is often a real measurement. The one exception is retention_time and monoisotopic_mass on IQuantifiableRecord types (psmtsv, osmtsv, MsFraggerPsm, DiaNnReport), where mzLib documents -1 as absent; those are null, matching read-results.
 \item Units are the writing tool's and are not normalised: retention time is minutes for psmtsv/osmtsv/MsFraggerPsm/DiaNnReport and undeclared for the rest. read-records carries no retention_time_unit; use a typed view when units matter.
-\item Enums cross as their member names, dates as ISO 8601 strings, and a list of scalars as ONE ';'-joined string, on the wire and in out alike; split it yourself.
+\item Enums cross as their member names, dates as ISO 8601 strings, and a list of scalars as ONE ';'-joined string, on the wire and in out alike; split it yourself. The one exception is an SDRF row, whose header and cells lists are excluded rather than joined (PYB-2): SDRF cells contain ';' themselves.
 \item A column named in absent_fields is null in every row, whatever default mzLib filled in.
 }
 }
@@ -143,6 +143,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_usage_error} (usage)}{with paths-stdin, inputs of more than one record type: refused before any file is parsed, naming the groups, whatever on-error says}
+\item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
@@ -150,6 +152,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \itemize{
 \item Columns are this format's own fields under mzLib's names. Two formats do not share columns, and a same-named column need not mean the same thing; use a typed view (read-results, read-features, read-matches, read-spectra) for comparable columns.
 \item No field is silently dropped: anything that cannot be a column is in excluded_fields, whose verb names where it IS carried. At mzLib 1.0.592 that includes the most important values of three new readers, which are dictionaries: MetaMorpheusQuantifiedProteinGroups.sample_groups (read-protein-groups, and read-occupancy for the occupancy cells), FlashLFQQuantifiedPeptide.samples (read-quantified-peptides) and MzIdentML/MzIdentMLGz.scores (read-matches \code{--scores}).
+\item An SDRF reads with ZERO columns and a real record_count: SdrfRow's only fields, header and cells, are lists of strings, and a ';'-join could not be split back because SDRF cells contain ';' (NT=Oxidation;AC=UNIMOD:35). Both are in excluded_fields with reason "use sdrf read" (PYB-2, pyMzLib #76); read the document with sdrf read. With out, the file is an empty header line and one empty line per record.
 \item record_count counts what mzLib parsed, not lines. What mzLib drops is reported beside it: rows_not_read counts malformed psmtsv/MSFragger lines, and skipped_count/skipped list the mzIdentML items it could not represent.
 \item Since mzLib 1.0.592 (#1346), pro_forma on psmtsv/osmtsv from MetaMorpheus 1.1.11 or earlier is computed from full_sequence instead of null; ambiguous or unconvertible rows stay null. Measured cost: 12.9 s -> 15.6 s on a 271,551-row psmtsv.
 \item Since mzLib 1.0.592 (#1345), mbr_score on FlashLFQQuantifiedPeak is null, not 0, when a peak has no score, and current-format peaks tables (no MBR Score column) read, with seven more columns.
@@ -177,6 +180,7 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item The three mzLib 1.0.592 fixtures (mzid_gz, mm_protein_groups, mm_peptides) exist only on pyMzLib#61 until it merges; mzLibRust and mzLibR have not copied them.
 \item absent_fields for read-records is judged only for record types mapped with CsvHelper [Name] attributes (FlashLFQ peaks, MSFragger, MsPathFinderT, TopFD, the #1347 tables, ...). psmtsv/osmtsv parse their own header dictionary, so their optional columns are not judged yet; an empty list there means no basis, not nothing absent.
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
 }
 }
 \seealso{

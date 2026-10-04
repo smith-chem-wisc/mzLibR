@@ -82,7 +82,7 @@ controls the false discovery rate among the features tested; it is not a target-
 
 }
 \section{Wraps}{
-Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs}{\code{LinearModel.Fit}} in \code{mzLib/StatisticalModels/LinearModel.cs} at mzLib \code{0a808fec}

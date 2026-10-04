@@ -54,7 +54,7 @@ uniqueness rule. Use \code{\link{sdrf_source_documents}} as part of any key.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs}{\code{SdrfCollection.Merge}} in \code{mzLib/Readers/Sdrf/SdrfCollection.cs} at mzLib \code{23c2490e}
@@ -114,6 +114,13 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item out has no extension check, unlike the reader verbs, sdrf design and proteins annotate-go (PYB-1). It writes an SDRF, conventionally .sdrf.tsv; should it share their .tsv-only rule? Behaviour unchanged until decided (noted on pyMzLib #76).
+}
 }
 \references{
 \itemize{

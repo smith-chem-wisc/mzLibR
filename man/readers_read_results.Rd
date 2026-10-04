@@ -68,7 +68,7 @@ with \code{\link{readers_retention_time_in_minutes}} rather than by hand.
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -80,7 +80,7 @@ Wire verb \code{readers read-results}. Generated from the bridge's verb spec \co
 \item{\code{path}}{path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv or a DIA-NN report.tsv.}
 \item{\code{offset}}{int; in \strong{records}; default \code{0}; range \code{>= 0}. Skip this many records. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
 \item{\code{limit}}{int; in \strong{records}; default absent; range \code{>= 0}. Return at most this many records. Absent means no limit; there is deliberately no default cap.}
-\item{\code{out}}{path; default absent. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created.}
+\item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.}
 }
 }
 \section{Returned fields}{
@@ -131,6 +131,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
@@ -156,6 +158,13 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
+}
+\section{Not yet verified}{
+The spec records these as open. They are listed rather than hidden:
+
+\itemize{
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
+}
 }
 \seealso{
 \code{\link{readers_read_results_many}}, \code{\link{readers_identify}},

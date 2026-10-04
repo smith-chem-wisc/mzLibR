@@ -67,7 +67,7 @@ MetaMorpheus's per-sample PTM occupancy cells have no column shape and are liste
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-protein-groups}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-protein-groups}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs}{\code{ProteinGroupFromTsvFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs} at mzLib \code{23c2490e}
@@ -79,7 +79,7 @@ Wire verb \code{readers read-protein-groups}. Generated from the bridge's verb s
 \item{\code{path}}{path; required. A MetaMorpheus protein-group table: AllQuantifiedProteinGroups.tsv, or (mzLib 1.0.593, #1365) AllProteinGroups.tsv and <file>_ProteinGroups.tsv; or an RNA search's AllQuantifiedTranscriptGroups.tsv (#1388), whose reader subclasses the protein-group one.}
 \item{\code{offset}}{int; in \strong{groups}; default \code{0}; range \code{>= 0}. Skip this many protein groups (each gives one row per sample group). A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
 \item{\code{limit}}{int; in \strong{groups}; default absent; range \code{>= 0}. Return at most this many protein groups (each gives one row per sample group). Absent means no limit; there is deliberately no default cap.}
-\item{\code{out}}{path; default absent. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created.}
+\item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.}
 }
 }
 \section{Returned fields}{
@@ -133,6 +133,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
+\item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
@@ -167,6 +169,7 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item The group-level columns carried beside each sample (identity, q-value, decoy label) are a choice made here; coverage, masses and counts stay in read-records. Revisit if every binding ends up joining for the same field.
 \item Only the MetaMorpheus 1.1.11 fixture exists (label-free); no isobaric or 1.2+ (BioPolymer ...) header table has been read through this verb yet.
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
 }
 }
 \seealso{

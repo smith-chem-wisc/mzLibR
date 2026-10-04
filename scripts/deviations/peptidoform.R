@@ -35,3 +35,26 @@ FIELD_CHECKS[["peptidoform fragments"]] <- list("peptidoform_P02768_small.json",
 
 # Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "peptidoform fragments", fixture = "peptidoform_P02768.json")
+
+# peptidoform convert: pyMzLib #75.
+R_TABLE["peptidoform convert"] <- "records"
+R_DEVIATIONS[["peptidoform convert"]] <- list(
+  "param.from" = as_r("source", "pyMzLib's name, the pair to target; mzLib calls it sourceFormat"),
+  "param.to" = as_r("target", "the pair to source; mzLib calls it targetFormat"),
+  "field.columns" = RECORDS
+)
+PARENT_MAP["peptidoform_convert"] <- "peptidoform.convert"
+PARENT_OMISSIONS[c(
+  "SequenceConversions.outputs", "SequenceConversions.sequences",
+  "SequenceConversions.not_converted", "ConvertedSequence.ok"
+)] <- c(
+  "`records$output`",
+  "the rows are `records`, a data.frame",
+  "`records[records$status != \"converted\", ]`",
+  "`records$status == \"converted\"`"
+)
+FIELD_CHECKS[["peptidoform convert"]] <- list("peptidoform_convert_unimod.json", function(d) mz$peptidoform_parse_conversions(d))
+
+# The peptidoforms article reads MetaMorpheus's BottomUpExample.psmtsv (mzLib's test data) before
+# converting its full sequences (pyMzLib #75).
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "readers read-results", fixture = "readers_results_psmtsv.json")

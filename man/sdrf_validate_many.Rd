@@ -42,7 +42,7 @@ An \code{mzlibr_sdrf_validation_batch}: \code{file_count} documents given, \code
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf validate} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{sdrf.validate.yaml} (bridge commit \code{c0cc92372aad}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf validate} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{sdrf.validate.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfValidator.cs}{\code{SdrfValidator.Validate}} in \code{mzLib/Readers/Sdrf/SdrfValidator.cs} at mzLib \code{23c2490e}
