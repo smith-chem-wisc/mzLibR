@@ -27,17 +27,22 @@
     {
       "symbol": "DigestionParams",
       "path": "mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs",
-      "pin": "23c2490e"
+      "pin": "d10017ce"
     },
     {
       "symbol": "ProteaseDictionary",
       "path": "mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs",
-      "pin": "23c2490e"
+      "pin": "d10017ce"
+    },
+    {
+      "symbol": "proteases.tsv (each protease name's cleavage motif)",
+      "path": "mzLib/Proteomics/ProteolyticDigestion/proteases.tsv",
+      "pin": "d10017ce"
     },
     {
       "symbol": "PeptideWithSetModifications.Fragment",
       "path": "mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs",
-      "pin": "23c2490e"
+      "pin": "d10017ce"
     }
   ],
   "cite": [
@@ -62,8 +67,8 @@
       "required": false,
       "unit": null,
       "range": "a key of mzLib's ProteaseDictionary",
-      "default": "trypsin|P",
-      "doc": "mzLib protease name. The default \"trypsin|P\" is the Keil rule (cleave after K/R EXCEPT before P); mzLib's plain \"trypsin\" cleaves before P too. The bracket/bar marks a PREVENTING residue, the reverse of MaxQuant's and Mascot's \"Trypsin/P\"."
+      "default": null,
+      "doc": "mzLib protease name. Absent, the bridge sends none and DigestionParams' default applies (\"trypsin\" at d10017ce). The names and what each one cuts are mzLib's, defined in proteases.tsv. At d10017ce \"trypsin\" is K|,R|, which cuts after K and R even before P; \"trypsin|P\" is K[P]|,R[P]|, where [P] marks a residue that prevents the cut, so it does not cut before P. These are not MaxQuant's or Mascot's names: their \"Trypsin/P\" ignores the proline rule. On serum albumin (P02768) \"trypsin\" gives 202 distinct peptides and \"trypsin|P\" gives 195 (other options absent)."
     },
     {
       "name": "dissociation",
@@ -71,8 +76,8 @@
       "required": false,
       "unit": null,
       "range": "a mzLib DissociationType name, case-insensitive: HCD, CID, ETD, EThcD, ...",
-      "default": "ETD",
-      "doc": "Which fragment series to generate: HCD/CID give b and y; ETD gives c and zDot."
+      "default": "HCD",
+      "doc": "Which fragment series to generate: HCD and CID give b and y; ETD gives c and zDot. Absent, HCD. mzLib's Fragment requires a type and names no default, so HCD is the bridge's own stop-gap until mzLib names one. mzLib#1488 asks for HCD, which MetaMorpheus's CommonParameters already defaults to."
     },
     {
       "name": "terminus",
@@ -80,8 +85,8 @@
       "required": false,
       "unit": null,
       "range": "a mzLib FragmentationTerminus name, case-insensitive: Both, N, C",
-      "default": "Both",
-      "doc": "Which fragment termini to generate; also passed to DigestionParams."
+      "default": null,
+      "doc": "Which fragment termini to generate. It is also passed to DigestionParams. Absent, DigestionParams' default applies (Both at d10017ce), to the digest and to the fragments."
     },
     {
       "name": "no-modifications",
@@ -98,8 +103,8 @@
       "required": false,
       "unit": "cleavage sites",
       "range": ">= 0",
-      "default": 2,
-      "doc": "Maximum missed cleavage sites per peptide."
+      "default": null,
+      "doc": "Maximum missed cleavage sites per peptide (DigestionParams maxMissedCleavages). Absent, DigestionParams' default applies (2 at d10017ce)."
     },
     {
       "name": "min-length",
@@ -107,8 +112,8 @@
       "required": false,
       "unit": "residues",
       "range": ">= 1",
-      "default": 7,
-      "doc": "Shortest peptide kept. The default silently drops shorter peptides (about a third of a histone digest); pass 1 for every peptide."
+      "default": null,
+      "doc": "Shortest peptide kept (DigestionParams minPeptideLength). Absent, DigestionParams' default applies (7 at d10017ce). That default drops shorter peptides silently: histone H3.1 (P68431) keeps 49 of the 96 peptides it gives at 1 (distinct start and end, other options absent). Pass 1 for every peptide."
     },
     {
       "name": "max-length",
@@ -116,8 +121,8 @@
       "required": false,
       "unit": "residues",
       "range": ">= 0",
-      "default": 0,
-      "doc": "Longest peptide kept; 0 means unbounded."
+      "default": null,
+      "doc": "Longest peptide kept (DigestionParams maxPeptideLength); 0 means unbounded. Absent, DigestionParams' default applies (unbounded at d10017ce)."
     },
     {
       "name": "max-mods",
@@ -125,8 +130,8 @@
       "required": false,
       "unit": "modifications",
       "range": ">= 0",
-      "default": 2,
-      "doc": "Maximum modifications per peptidoform (DigestionParams maxModsForPeptides). Isoforms grow combinatorially: histone H3.1 gives 49 bare tryptic peptides, 2,563 at 2 and 7,040 at 3."
+      "default": null,
+      "doc": "Maximum modifications per peptidoform (DigestionParams maxModsForPeptides). Absent, DigestionParams' default applies (2 at d10017ce). Isoforms grow combinatorially: histone H3.1's 49 peptides give 2,419 peptidoforms at 2 and 6,580 at 3, where 2 peptide positions already reach the isoform cap (other options absent)."
     },
     {
       "name": "max-isoforms",
@@ -134,8 +139,8 @@
       "required": false,
       "unit": "peptidoforms",
       "range": ">= 1",
-      "default": 1024,
-      "doc": "Cap on modification isoforms per peptide position (DigestionParams maxModificationIsoforms). mzLib truncates SILENTLY at the cap; peptides_at_isoform_cap reports it."
+      "default": null,
+      "doc": "Cap on modification isoforms per peptide position (DigestionParams maxModificationIsoforms). Absent, DigestionParams' default applies (1024 at d10017ce). mzLib truncates SILENTLY at the cap; peptides_at_isoform_cap reports it."
     }
   ],
   "result": {
@@ -234,7 +239,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "The protease used."
+        "doc": "The protease used: the one given, or DigestionParams' default."
       },
       {
         "wire": "dissociation",
@@ -242,7 +247,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "DissociationType name used."
+        "doc": "DissociationType name used: the one given, or HCD."
       },
       {
         "wire": "terminus",
@@ -250,7 +255,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "FragmentationTerminus name used."
+        "doc": "FragmentationTerminus name used: the one given, or DigestionParams' default."
       },
       {
         "wire": "max_modifications",
@@ -258,7 +263,7 @@
         "unit": "modifications",
         "nullable": false,
         "null_means": null,
-        "doc": "max-mods, echoed."
+        "doc": "max-mods as used: the value given, or DigestionParams' default."
       },
       {
         "wire": "max_modification_isoforms",
@@ -266,7 +271,7 @@
         "unit": "peptidoforms",
         "nullable": false,
         "null_means": null,
-        "doc": "max-isoforms, echoed."
+        "doc": "max-isoforms as used: the value given, or DigestionParams' default."
       },
       {
         "wire": "peptides_at_isoform_cap",
@@ -274,7 +279,7 @@
         "unit": "peptide positions",
         "nullable": false,
         "null_means": null,
-        "doc": "Peptide positions (start, end) whose distinct peptidoforms reached max-isoforms. Non-zero means the list is TRUNCATED."
+        "doc": "Peptide positions (start, end) whose peptidoforms in mzLib's raw digest, counted before the bridge collapses the mzLib#1108 duplicates, reached max-isoforms. Non-zero means the list is TRUNCATED."
       },
       {
         "wire": "peptide_count",
@@ -372,7 +377,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "{one_based_residue, terminus, id, mass, formal_charge} per modification: one_based_residue is 1-based within the PEPTIDE and null for a terminal modification, which sets terminus 'N' or 'C' instead (terminus is null for a residue modification); id is mzLib's IdWithMotif; mass is its monoisotopic mass in Da (null only if the modification defines none); formal_charge in elementary charges."
+        "doc": "{one_based_residue, terminus, id, mass, formal_charge} per modification: one_based_residue is 1-based within the PEPTIDE and null for a terminal modification, which sets terminus 'N' or 'C' instead (terminus is null for a residue modification); id is mzLib's IdWithMotif; mass is its monoisotopic mass in Da, never null for a loaded modification (mzLib keeps one only if it has a formula or a mass, and fills a missing mass from the formula); formal_charge in elementary charges."
       },
       {
         "wire": "fragments",
@@ -400,7 +405,7 @@
   ],
   "caveats": [
     "UniProt annotates more than mzLib applies: only 'modified residue' and 'lipid moiety-binding region' features load. Serum albumin: 14 of 38 annotated features applied, the 24 glycosylation-site features dropped on type (mzLib#1112). Read uniprot_features_by_type and unresolved_modifications before trusting a modification count.",
-    "max-isoforms truncates silently in mzLib (histone H3.1 at four modifications loses about 30% of peptidoforms at 1024). Check peptides_at_isoform_cap before treating the list as exhaustive.",
+    "max-isoforms truncates silently in mzLib. Histone H3.1 at four modifications keeps 8,644 of its 12,808 peptidoforms at the default cap of 1024, losing about a third. Check peptides_at_isoform_cap before treating the list as exhaustive.",
     "Duplicate peptidoforms that mzLib's Digest emits where a chain boundary meets the initiator-Met cleavage site (mzLib#1108, open) are collapsed by the bridge on (start, end, full sequence).",
     "Fragment masses are neutral. Converting one to m/z needs the fixed charge within that fragment's span, which the wire does not report; fixed_charges is whole-peptide only.",
     "ETD's zDot ions are suppressed N-terminal to proline while the complementary c ions are not, leaving about 4% of the c series unobservable (mzLib#1110).",
@@ -422,15 +427,13 @@
     {
       "fixture": "peptidoform_P02768_small.json",
       "py": "digest = pymzlib.peptidoform.fragments('P02768', max_modifications=1)",
-      "rust": "let digest = mzlib::peptidoform::fragments_with(\"P02768\", &FragmentOptions { max_modifications: 1, ..Default::default() })?;",
+      "rust": "let digest = mzlib::peptidoform::fragments_with(\"P02768\", &FragmentOptions { max_modifications: Some(1), ..Default::default() })?;",
       "r": "digest <- peptidoform_fragments('P02768', max_modifications = 1)"
     }
   ],
   "open_questions": [
-    "peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Confirmed a bridge bug (pyMzLib 005), fixed on pyMzLib main by #67 (unreleased after 0.2.0): the wire then counts the raw digest, as the doc above says. Close this once a release carries #67.",
-    "The example fixture is hand-trimmed (2 peptides of a max-mods 1 digest), so its peptide_count is not what the live call returns; the envelope keys are the live ones.",
-    "Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them. Enum.TryParse also accepts numeric strings, so --dissociation 3 or --terminus 7 pass as undefined members. Behaviour of mzLib on such values is unverified.",
-    "The wire names max-mods and no-modifications project as max_modifications and modifications (inverted) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries for them.",
-    "modifications[].mass nullability: Modification.MonoisotopicMass is double?; a loaded UniProt modification has not been seen without one."
+    "Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them, not alike (min_length 0 passes pyMzLib and mzLibRust, not mzLibR). Enum.TryParse also accepts numeric strings: --dissociation 3 passes as SID, and --dissociation 99 or --terminus 7 pass as undefined members. mzLib's behaviour on those values is unverified.",
+    "The envelope echoes the protease, dissociation, terminus and both caps it used, but not missed-cleavages, min-length or max-length. Since 2026-10-21 those can be mzLib's defaults, so a binding cannot show the values used (mzLibR prints NA as 'mzLib's default'). Echoing them, read from the DigestionParams the bridge built, would be additive and optional (CONTRACT.md).",
+    "Unmeasured: mzLib caps isoforms per proteolytic peptide (ProteolyticPeptide.cs:62), so a position that two proteolysis products both produce (the mzLib#1108 duplicates) is capped twice but counted once. It could then read as at the cap when neither copy was cut."
   ]
 }

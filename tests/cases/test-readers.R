@@ -21,33 +21,38 @@ recorded_payload <- function(name) {
 
 test_that("every format mzLib recognises becomes a row", {
   formats <- recorded_formats()
-  # 36 -> 38 with mzLib 1.0.593 (#1388's RNA transcript-group and quantified-oligo tables).
-  expect_identical(nrow(formats), 38L)
+  # 36 -> 38 with mzLib 1.0.593 (#1388's RNA transcript-group and quantified-oligo tables), and
+  # 38 -> 39 with mzLib 1.0.595 (#1384's DiaNnReportParquet, DIA-NN 2.x's report.parquet).
+  expect_identical(nrow(formats), 39L)
   expect_true(is.data.frame(formats))
   expect_false(is.factor(formats$file_type))
 })
 
-test_that("exactly four file types are quantifiable", {
+test_that("exactly five file types are quantifiable", {
   # The precondition for flashlfq_quantify(), and it is a much smaller set than "31 formats"
   # suggests. The number is quoted in ?readers_formats, so it is pinned here.
   #
   # It moved from three to four when mzLib 1.0.585 added DiaNnReport (mzLib #1120), which is
-  # how DIA data reaches flashlfq_quantify() at all. This test failing on a bridge repin is
-  # the mechanism working: the claim changed, so the name and the number both moved.
+  # how DIA data reaches flashlfq_quantify() at all, and from four to five when mzLib 1.0.595
+  # added DiaNnReportParquet (mzLib #1384), DIA-NN 2.x's report.parquet. This test failing on a
+  # bridge repin is the mechanism working: the claim changed, so the name and the number both moved.
   formats <- recorded_formats()
   quantifiable <- formats[formats$is_quantifiable, ]
-  expect_identical(nrow(quantifiable), 4L)
+  expect_identical(nrow(quantifiable), 5L)
   expect_identical(sort(quantifiable$file_type),
-                   sort(c("psmtsv", "osmtsv", "MsFraggerPsm", "DiaNnReport")))
+                   sort(c("psmtsv", "osmtsv", "MsFraggerPsm", "DiaNnReport", "DiaNnReportParquet")))
+  parquet <- formats[formats$file_type == "DiaNnReportParquet", ]
+  expect_identical(c(parquet$extension, parquet$reader), c("report.parquet", "DiaNnParquetReportFile"))
 })
 
 test_that("most formats have no views at all, and that is a real answer", {
-  # 19 of 38. An empty views list means mzLib can parse the file but offers no cross-format
+  # 19 of 39. An empty views list means mzLib can parse the file but offers no cross-format
   # projection of it - not that anything failed. It moved from 14 of 31 at mzLib 1.0.592, which
   # added Pytheas and the MetaMorpheus and FlashLFQ quantification tables (read by their own
   # verbs, not a view) and mzIdentML (which joins spectral_match), and from 17 of 36 at mzLib
   # 1.0.593, whose RNA transcript-group and quantified-oligo tables (#1388) subclass those two
-  # readers and add no shared interface.
+  # readers and add no shared interface. Still 19 at mzLib 1.0.595: #1384's DiaNnReportParquet
+  # offers quantifiable.
   formats <- recorded_formats()
   viewless <- vapply(formats$views, function(v) length(v) == 0L, logical(1L))
   expect_identical(sum(viewless), 19L)
@@ -269,19 +274,20 @@ test_that("a large limit is not written in scientific notation", {
 
 # ---------------------------------------------------------------- against a real mzLib
 
-test_that("LIVE: mzLib still recognises 38 formats, four of them quantifiable", {
+test_that("LIVE: mzLib still recognises 39 formats, five of them quantifiable", {
   # Enumerated from mzLib itself, so this is the test that notices when the installed version
   # changes what it supports.
   #
-  # 38 and 19 are mzLib 1.0.593's. Its bridge is the first to dispatch `sdrf design`, so that is
-  # what tells it apart; an older bridge skips rather than failing.
+  # 39, 5 and 19 are mzLib 1.0.595's. A bridge older than `sdrf design` (mzLib 1.0.593) skips; one
+  # from 1.0.593 or 1.0.594 fails, because no verb tells those apart from 1.0.595's, and a failure
+  # is what should greet a repin that moves the counts.
   skip_unless_bridge_has("sdrf design")
   options(mzlibr.bridge = live_bridge)
   on.exit(options(mzlibr.bridge = NULL), add = TRUE)
 
   formats <- readers_formats()
-  expect_identical(nrow(formats), 38L)
-  expect_identical(sum(formats$is_quantifiable), 4L)
+  expect_identical(nrow(formats), 39L)
+  expect_identical(sum(formats$is_quantifiable), 5L)
   expect_identical(sum(vapply(formats$views, length, integer(1L)) == 0L), 19L)
 })
 

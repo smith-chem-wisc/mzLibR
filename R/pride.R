@@ -319,9 +319,12 @@ pride_check_filter_matched <- function(written, accession, category, extensions)
 
 # ---------------------------------------------------------------- argument assembly
 
-pride_build_list_args <- function(accession, page_size) {
-  canonical <- pride_normalise_accession(accession)
-
+# The wire's `--page-size` pair, or nothing for NULL, so mzLib's own paging default applies. A size
+# that is given is checked here, before a subprocess.
+pride_page_size_args <- function(page_size) {
+  if (is.null(page_size)) {
+    return(character(0))
+  }
   if (!is.numeric(page_size) || length(page_size) != 1L || is.na(page_size) ||
     page_size != round(page_size)) {
     stop(mzlib_usage_error("page_size must be a single whole number."))
@@ -334,9 +337,12 @@ pride_build_list_args <- function(accession, page_size) {
       "page_size is larger than the API allows; got ", format(page_size, scientific = FALSE), "."
     )))
   }
+  c("--page-size", format(page_size, scientific = FALSE))
+}
 
-  c("pride", "files", "--accession", canonical,
-    "--page-size", format(page_size, scientific = FALSE))
+pride_build_list_args <- function(accession, page_size) {
+  canonical <- pride_normalise_accession(accession)
+  c("pride", "files", "--accession", canonical, pride_page_size_args(page_size))
 }
 
 pride_build_download_args <- function(accession, destination, category, extensions, overwrite) {
@@ -449,10 +455,10 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #' @section What this manifest is, and is not:
 #'
 #' **This is what PRIDE's REST API publishes, which is not always everything in the project.**
-#' For PXD000001 the API returns **8** files while the FTP tree holds **14** (a live listing,
-#' 2026-10) - and the ones it omits include the two largest, a 450 MB `.mzML` and the matching 472 MB `.mzXML`, which are
-#' exactly the modern open-format conversions most people want. The omission is PRIDE's, not
-#' mzLib's.
+#' On 2026-10-21, for PXD000001, the API listed **9** of the **14** files in the FTP tree, and the
+#' five it omits include the two largest, a 450 MB `.mzML` and the matching 472 MB `.mzXML`, which
+#' are exactly the modern open-format conversions most people want. (The example below replays a
+#' recording from 2026-10-03, when it listed 8.) The omission is PRIDE's, not mzLib's.
 #'
 #' So a manifest that looks short may be short. If completeness matters - mirroring a project,
 #' budgeting a download, proving you analysed everything - cross-check the FTP directory at
@@ -463,7 +469,7 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #'   costs one live request before it fails, because PXD accessions are not fixed-width forever
 #'   and rejecting a valid future one would be worse.
 #' @param page_size How many files to request per underlying API call. Affects only how the
-#'   manifest is fetched, never what you get back.
+#'   manifest is fetched, never what you get back. `NULL` means mzLib's default.
 #' @param timeout Seconds to allow for the whole fetch, or `NULL` to wait indefinitely.
 #'
 #' @return A data.frame with one row per file and the columns `file_name`, `file_size_bytes`,
@@ -487,7 +493,7 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #' files[, c("file_name", "category", "size_mb", "downloadable")]
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
-pride_list_files <- function(accession, page_size = 100, timeout = 300) {
+pride_list_files <- function(accession, page_size = NULL, timeout = 300) {
   args <- pride_build_list_args(accession, page_size)
   canonical <- pride_normalise_accession(accession)
   data <- bridge_invoke(args, timeout = timeout)
@@ -588,21 +594,7 @@ pride_build_search_args <- function(keyword, page_size) {
     )))
   }
 
-  if (!is.numeric(page_size) || length(page_size) != 1L || is.na(page_size) ||
-    page_size != round(page_size)) {
-    stop(mzlib_usage_error("page_size must be a single whole number."))
-  }
-  if (page_size < 1) {
-    stop(mzlib_usage_error(paste0("page_size must be positive; got ", page_size, ".")))
-  }
-  if (page_size > 2147483647) {
-    stop(mzlib_usage_error(paste0(
-      "page_size is larger than the API allows; got ", format(page_size, scientific = FALSE), "."
-    )))
-  }
-
-  c("pride", "search", "--keyword", canonical,
-    "--page-size", format(page_size, scientific = FALSE))
+  c("pride", "search", "--keyword", canonical, pride_page_size_args(page_size))
 }
 
 # Turn the `pride search` payload into a data.frame, one row per hit.
@@ -697,7 +689,7 @@ pride_parse_search <- function(data) {
 #'   more; the `matched_fields` column says which fields actually matched each hit. A keyword
 #'   beginning with `-` is refused, since the bridge would read it as an option.
 #' @param page_size How many projects to request per underlying API call. Changes how many
-#'   requests the fetch takes, never what comes back.
+#'   requests the fetch takes, never what comes back. `NULL` means mzLib's default.
 #' @param timeout Seconds to allow for the whole fetch, or `NULL` to wait indefinitely.
 #'
 #' @return A data.frame with one row per matching project, in PRIDE's ranking order. **Zero rows
@@ -751,7 +743,7 @@ pride_parse_search <- function(data) {
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @spec pride.search
 #' @export
-pride_search <- function(keyword, page_size = 100, timeout = 300) {
+pride_search <- function(keyword, page_size = NULL, timeout = 300) {
   args <- pride_build_search_args(keyword, page_size)
   pride_parse_search(bridge_invoke(args, timeout = timeout))
 }

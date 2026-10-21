@@ -84,7 +84,7 @@ has those variants applied by mzLib, which renames the accession (\code{P38936_C
 
 }
 \section{Wraps}{
-Wire verb \code{proteins read}. Generated from the bridge's verb spec \code{proteins.read.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins read}. Generated from the bridge's verb spec \code{proteins.read.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}
@@ -207,11 +207,9 @@ Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item files[] is always present, with \code{--path} too, instead of BULK.md §3's flattened single-file block: a new verb has no pre-existing single-file shape to preserve, and one shape is simpler for every binding. Confirm or amend BULK.md.
-\item Two lists sharing stdin, separated by a line holding only '--', is new wire grammar (also used by proteins classify-peptides). It belongs in CONTRACT.md or BULK.md if adopted.
-\item result.tables (go_terms, ensembl_genes) is not validated by tools/check_verbs.py, which checks only 'columns'; the pyMzLib tests pin them.
+\item result.tables (go_terms, ensembl_genes) is not validated by tools/check_verbs.py, which checks only 'columns' and 'bulk'. On 2026-10-21 proteins_read_human.json matched both lists exactly, but nothing fails if one drifts: the pyMzLib tests read only some of the columns.
 \item No \code{--out} TSV mode yet (BULK.md §2 mentions one): multi-table output is JSON only, since three tables would need three files.
-\item proteins_read_filtered.json (an accession-filtered read) is a second recording used by the pyMzLib tests; it is not listed as an example because the doctest replay bridge cannot tell two recordings of one verb apart by stdin.
+\item proteins_read_filtered.json (a one-path read filtered by accession) is used only by the pyMzLib tests. The doctest replay bridge cannot answer a one-path proteins read: it treats any recording with files[] and no top-level path as bulk, and this verb always returns files[]. Filtered and unfiltered reads are told apart (pyMzLib #72); the guide's filtered recording proteins_read_accessions.json comes through conftest REPLAY_EXTRA, not through this spec's examples.
 }
 }
 \references{

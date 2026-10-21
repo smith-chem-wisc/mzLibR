@@ -77,7 +77,7 @@ joins several genes, and nothing chooses among them for you.
 
 }
 \section{Wraps}{
-Wire verb \code{genes resolve}. Generated from the bridge's verb spec \code{genes.resolve.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{genes resolve}. Generated from the bridge's verb spec \code{genes.resolve.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneResolver.cs}{\code{EnsemblGeneResolver.Resolve}} in \code{mzLib/UsefulProteomicsDatabases/Ensembl/EnsemblGeneResolver.cs} at mzLib \code{23c2490e}
@@ -177,9 +177,7 @@ Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The wire module is 'genes' but every binding projects it in its proteins module (BULK.md §6); confirm.
 \item No verb writes the compact gene set (EnsemblGeneSetWriter); callers need mzLib or a future 'genes gene-set' verb to make one.
-\item The example gene set is a hand-built three-gene GTF in Ensembl's layout; O43653 is off_primary_only only because PSCA is left out of it.
 }
 }
 \references{

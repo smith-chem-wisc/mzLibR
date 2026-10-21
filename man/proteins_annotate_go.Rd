@@ -101,7 +101,7 @@ An \code{mzlibr_go_annotations}:
 
 }
 \section{Wraps}{
-Wire verb \code{proteins annotate-go}. Generated from the bridge's verb spec \code{proteins.annotate-go.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins annotate-go}. Generated from the bridge's verb spec \code{proteins.annotate-go.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/UsefulProteomicsDatabases/GeneOntology/GoGroupAnnotator.cs}{\code{GoGroupAnnotator.AnnotateAll}} in \code{mzLib/UsefulProteomicsDatabases/GeneOntology/GoGroupAnnotator.cs} at mzLib \code{0a808fec}
@@ -181,6 +181,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{a missing groups table, database, go.obo or category map; a FASTA database; out or categories-out not .tsv, naming an input, naming each other, or in a folder that does not exist; categories-out without category-map; a negative offset or limit. Every one is raised before any file is read.}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1, Program.SuccessJson). Message: 'this read is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', with no count, because this envelope has no record_count}
 \item{\code{mzlib_bridge_error} (correctness)}{the database cites a GO id the release lacks, without skip-unknown-go-ids (InvalidDataException naming every id); a go.obo mzLib cannot parse, including a truncated one whose edges name absent terms (InvalidDataException with the line); a category map it refuses; a group written twice with different members (InvalidDataException); a table or database it cannot parse}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
@@ -214,7 +215,7 @@ The spec records these as open. They are listed rather than hidden:
 \itemize{
 \item Only one annotation database: a search over a target XML plus a separate contaminant database annotates contaminant members as no_entry unless their entries are in the XML. Whether GoGroupAnnotator should take several databases (and stamp several sha256s) is mzLib's call.
 \item No bulk (\code{--paths-stdin}) form yet. One table per call; a cohort of many tables against one proteome reloads the proteome each time.
-\item PYB-3 (a document too large to return is a usage error) is not built in the bridge yet; until it is, use out with limit 0 for a large table.
+\item PYB-3 part 2 is not built: running out of memory before serialising still fails as correctness. Part 1 is in the bridge since pyMzLib 0.4.0 (see errors). For a large table, use out with limit 0.
 }
 }
 \references{

@@ -7,8 +7,8 @@
 # Ported from pyMzLib's `peptidoform.convert()` (pyMzLib #75). Every output and every status is
 # mzLib's: this file checks the arguments, sends the sequences one per stdin line, and projects the
 # answer into a data.frame, `records`, one row per input in input order. It maps no modification
-# itself, and repairs nothing mzLib returns - including the ProForma target's UniProt gap, which
-# the caveats describe (mzLib#1401).
+# itself, and repairs nothing mzLib returns. It never patched the ProForma target's UniProt gap
+# either (mzLib#1401), so mzLib's fix (#1403) reached this package with no change here.
 
 # The pyMzLib release whose bridge first dispatches `peptidoform convert` (its spec's
 # since.pymzlib).
@@ -167,11 +167,12 @@ peptidoform_parse_conversions <- function(data) {
 #' accessions: `[UniProt:N-acetylserine on S]SEQK` becomes `[UNIMOD:1]SEQK`. Nothing is converted
 #' in R or in the bridge; every output and every status is mzLib's.
 #'
-#' **Choose Unimod, not ProForma, for UniProt-sourced modifications.** mzLib's ProForma target does
-#' not resolve them and writes them back under their mzLib name, with status `"converted"`
-#' (mzLib#1401). In ProForma output, treat any bracket that is not a `UNIMOD:` term as unresolved.
-#' The `pro_forma` column [readers_read_records()] gives a `.psmtsv` comes from the same serializer
-#' and has the same gap.
+#' Both targets name UniProt-sourced modifications by their UNIMOD accession (the ProForma one since
+#' mzLib #1403). They differ on a modification no list mzLib loads knows: ProForma writes it back
+#' under its own name, with status `"converted"`, where Unimod fails the row or drops it, depending
+#' on `mode`. In ProForma output, treat any bracket that is not a `UNIMOD:` term as unresolved. The
+#' `pro_forma` column [readers_read_records()] computes for a `.psmtsv` written without one comes
+#' from the same serializer.
 #'
 #' @param sequences A character vector of full sequences, one result row each, in order, duplicates
 #'   included, sent to mzLib exactly as given. An `NA`, a blank entry or one with a line break is

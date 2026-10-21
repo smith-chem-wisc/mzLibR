@@ -12,8 +12,7 @@ digest_distinct_base_sequences(digest)
 }
 \description{
 \code{nrow(digest$peptides)} counts \strong{peptidoforms} - one per sequence-and-modification-placement.
-This counts distinct sequences. On albumin at two modifications the two are \strong{303} and
-\strong{195}.
+This counts distinct sequences. On albumin's default digest the two are \strong{310} and \strong{202}.
 }
 \value{
 A single count.

@@ -37,7 +37,7 @@ A list with \code{bridge}, \code{protocol}, \code{runtime}, \code{mzlib} and \co
   reported as old rather than answering "Unknown command".
 }
 \section{Wraps}{
-Wire verb \code{version}. Generated from the bridge's verb spec \code{version.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{version}. Generated from the bridge's verb spec \code{version.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj}{\code{AssemblyInformationalVersionAttribute}} in \code{mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj} at mzLib \code{23c2490e}
@@ -82,14 +82,6 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item The Unknown-command message and verbs share one generated list (Program.Verbs, from the DeriveVerbList MSBuild task); check_verbs.py still parses the switch itself. Both read the same pattern, so they cannot disagree unless the switch stops being one arm per line.
-\item pyMzLib returns version as a plain dict, typed as the TypedDict pymzlib.BridgeVersion so its keys are documented and linted; Rust returns the struct mzlib::BridgeVersion, R a named list.
-}
 }
 \examples{
 

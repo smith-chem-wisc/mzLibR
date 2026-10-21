@@ -4,7 +4,7 @@
 \alias{pride_list_files}
 \title{List the files in a PRIDE Archive project}
 \usage{
-pride_list_files(accession, page_size = 100, timeout = 300)
+pride_list_files(accession, page_size = NULL, timeout = 300)
 }
 \arguments{
 \item{accession}{A project accession, e.g. \code{"PXD000001"}. Case and surrounding whitespace are
@@ -13,7 +13,7 @@ pride_list_files(accession, page_size = 100, timeout = 300)
   and rejecting a valid future one would be worse.}
 
 \item{page_size}{How many files to request per underlying API call. Affects only how the
-  manifest is fetched, never what you get back.}
+  manifest is fetched, never what you get back. \code{NULL} means mzLib's default.}
 
 \item{timeout}{Seconds to allow for the whole fetch, or \code{NULL} to wait indefinitely.
 }
@@ -28,10 +28,10 @@ Paging is handled for you: however many pages the project spans, you get one dat
 
 
 \strong{This is what PRIDE's REST API publishes, which is not always everything in the project.}
-For PXD000001 the API returns \strong{8} files while the FTP tree holds \strong{14} (a live listing,
-2026-10) - and the ones it omits include the two largest, a 450 MB \code{.mzML} and the matching 472 MB \code{.mzXML}, which are
-exactly the modern open-format conversions most people want. The omission is PRIDE's, not
-mzLib's.
+On 2026-10-21, for PXD000001, the API listed \strong{9} of the \strong{14} files in the FTP tree, and the
+five it omits include the two largest, a 450 MB \code{.mzML} and the matching 472 MB \code{.mzXML}, which
+are exactly the modern open-format conversions most people want. (The example below replays a
+recording from 2026-10-03, when it listed 8.) The omission is PRIDE's, not mzLib's.
 
 So a manifest that looks short may be short. If completeness matters - mirroring a project,
 budgeting a download, proving you analysed everything - cross-check the FTP directory at
@@ -54,7 +54,7 @@ A data.frame with one row per file and the columns \code{file_name}, \code{file_
 
 }
 \section{Wraps}{
-Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -66,7 +66,7 @@ Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.
 \section{Parameters: units, ranges and defaults}{
 \describe{
 \item{\code{accession}}{string; required. The project accession, e.g. PXD000001. Sent to PRIDE as given: the bridge checks only that it is not blank (the bindings upper-case it and check its shape first, because PRIDE is case-sensitive).}
-\item{\code{page_size} (wire \code{--page-size})}{int; in \strong{files}; default \code{100}; range \code{>= 1}. Files requested per underlying API call. Changes how many requests the fetch takes, never what comes back: mzLib pages until the manifest is complete. Leave it at the default; above PRIDE's server-side cap the manifest is complete only while PRIDE reports total_records.}
+\item{\code{page_size} (wire \code{--page-size})}{int; in \strong{files}; default absent; range \code{>= 1}. Files requested per underlying API call. Changes how many requests the fetch takes, never what comes back: mzLib pages until the manifest is complete. Absent, the bridge sends none and GetProjectFilesAsync's default applies (100 at d10017ce). Leave it absent; above PRIDE's server-side cap the manifest is complete only while PRIDE reports total_records.}
 }
 }
 \section{Returned fields}{
@@ -97,14 +97,14 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
 
 \describe{
-\item{\code{mzlib_usage_error} (usage)}{accession missing or blank; page-size not an integer}
+\item{\code{mzlib_usage_error} (usage)}{accession missing or blank; page-size not an integer, given without a value, or <= 0 (checked by the bridge before mzLib)}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, an HttpRequestException with no status but an inner cause (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a response body cut off in transit}
-\item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), the MaxPages backstop (an HttpRequestException mzLib composes with no status and no inner exception, which ClassifyHttpFailure deliberately does not excuse as an outage), or page-size <= 0 (mzLib's ArgumentOutOfRangeException; the bridge does not check it first)}
+\item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status (e.g. 404), a paging contract violation (MzLibException: an identical page while total_records says more remain), the MaxPages backstop (an HttpRequestException mzLib composes with no status and no inner exception, which ClassifyHttpFailure deliberately does not excuse as an outage)}
 }
 }
 \section{Caveats}{
 \itemize{
-\item This is PRIDE's REST manifest, which is knowingly incomplete: for PXD000001 it lists 8 files while the FTP tree holds 13, omitting the two largest. Use pride ftp-files when completeness or the true project size matters.
+\item This is PRIDE's REST manifest, which is knowingly incomplete: for PXD000001 on 2026-10-21 it listed 9 of the 14 files in the FTP tree, omitting five including the two largest (on 2026-10-03, when the fixtures were recorded, it listed 8). Use pride ftp-files when completeness or the true project size matters.
 \item An unknown accession and a private project both return file_count 0, not an error. The bindings raise their not-found error on an empty manifest; the wire does not.
 \item total_size_bytes is not the number of bytes a download transfers: PRIDE reports some compressed files at their decompressed size, and the sum covers only the files the manifest lists. The two errors run in opposite directions and do not cancel.
 \item Dates are timestamps with an offset here, unlike pride search, whose dates are bare calendar dates.
@@ -127,9 +127,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item page-size <= 0 crosses as a correctness failure (ArgumentOutOfRangeException) because the bridge, unlike pride search, does not check it before calling mzLib. Every binding rejects it first, so no binding user sees it; the wire should say usage.
 \item An absent PRIDE date crosses as 0001-01-01T00:00:00+00:00, not null (PrideArchiveFile's dates are non-nullable DateTimeOffset, and ToWireFile does not map default to null as pride search's ToWireDate does). Not observed on a real manifest; unverified whether PRIDE ever omits one.
-\item An option given with no value (e.g. \code{--page-size} followed by another option) is parsed as a flag and silently defaulted: OptionalInt does not consult WasProvided.
 }
 }
 \references{

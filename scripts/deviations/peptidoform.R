@@ -28,7 +28,7 @@ PARENT_ADDITIONS["digest_fragments_by_series"] <-
   "from mzLibRust (Digest::fragments_by_series); pyMzLib has only fragment_count"
 PARENT_OMISSIONS[c("Peptide.is_modified", "Digest.fragment_count")] <- c(
   "a column comparison, `modification_count > 0`",
-  "`nrow(digest$fragments)`; not promoted to a function because a bare total folds in the spurious ETD y series — see ?digest_fragments_by_series"
+  "`nrow(digest$fragments)`; not promoted to a function because, for ETD, a bare total folds in the extra full-length z-dot per peptide — see ?digest_fragments_by_series"
 )
 
 FIELD_CHECKS[["peptidoform fragments"]] <- list("peptidoform_P02768_small.json", function(d) mz$peptidoform_parse(d))

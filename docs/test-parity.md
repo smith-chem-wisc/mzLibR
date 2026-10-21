@@ -90,16 +90,18 @@ These are the tests that hold the documented figures.
 
 | figure | test |
 |---|---|
-| PXD000001 publishes 8 files, 0.51 GB | `the recorded manifest holds the eight files PRIDE's API publishes` |
+| PXD000001's recorded manifest: 8 files, 0.51 GB | `the recorded manifest holds the eight files PRIDE's API published` |
 | a compressed file's extension is `.gz` | `a compressed file's extension is .gz, not what it is compressed from` |
-| albumin: 195 sequences, 303 peptidoforms | `LIVE: albumin digests to the numbers the documentation quotes` |
-| albumin at `min_length = 1`: **243** | `LIVE: min_length is what hides the short peptides` |
-| plain `trypsin` gives 202 | `LIVE: the trypsin naming inversion changes the peptide count` |
+| albumin at mzLib's defaults: 202 sequences, 310 peptidoforms | `LIVE: albumin digests to the numbers the documentation quotes` |
+| albumin at `min_length = 1`: **257** | `LIVE: min_length is what hides the short peptides` |
+| `"trypsin|P"` gives 195, plain `"trypsin"` 202 | `LIVE: the trypsin naming inversion changes the peptide count` |
+| the old defaults, `protease = "trypsin|P", dissociation = "ETD"`: 303 peptidoforms, 195 sequences | `LIVE: the old defaults' answer is one pair of arguments away` |
 | 14 of 38 modifications applied | `the census counts sites, applied and annotated separately` |
-| ETD's spurious `y` series is about a third | `the spurious y series is about a third of an ETD fragment list` |
+| ETD gives `c` and `zDot`, no `y` (mzLib #1114) | `ETD emits c and zDot, no y (mzLib #1114)` |
 | z-dot suppressed at proline, `c` not | `z-dot ions are suppressed at proline while the complementary c ions are not` |
 
-PLAN.md's own figure of **254** for albumin at `min_length = 1` was wrong; it is **243**. The
+PLAN.md's own figure of **254** for albumin at `min_length = 1`, under the then-default
+`"trypsin|P"`, was wrong; it was **243**. The
 live test caught it, ground truth was taken by driving the bridge from the shell with no R in
 the loop, and PLAN.md is corrected in place. It had never shipped — neither sibling quotes a
 `min_length` figure at all.

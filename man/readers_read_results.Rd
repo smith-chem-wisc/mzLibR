@@ -7,7 +7,8 @@
 readers_read_results(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 }
 \arguments{
-\item{path}{Path to a MetaMorpheus \code{.psmtsv} / \code{.osmtsv} or an MSFragger \code{psm.tsv}.}
+\item{path}{Path to a MetaMorpheus \code{.psmtsv} / \code{.osmtsv}, an MSFragger \code{psm.tsv}, or a DIA-NN
+  \code{report.tsv} or DIA-NN 2.x \code{report.parquet}.}
 
 \item{limit}{Maximum records to return. \code{NULL}, the default, returns all of them.
 
@@ -47,9 +48,16 @@ An \code{mzlibr_result_records}, carrying the file's \code{reader}, \code{absent
   starting \code{offset} records in; \code{rows_not_read} counts data rows that did not become records.
 
   \code{records} is a data.frame of the record view, one row per record, or \code{NULL} when \code{out} was
-  given. \code{retention_time} is in minutes for every quantifiable format today, and
-  \code{retention_time_unit} says so per file; \code{charge_state} is a charge; \code{monoisotopic_mass} is a
-  neutral mass in Da. \code{is_decoy} is \code{NA} where the format records no decoy label.
+  given. \code{retention_time} is in minutes for every quantifiable format today, the DIA-NN
+  \code{report.parquet} included, and \code{retention_time_unit} says so per file; \code{charge_state} is a
+  charge; \code{monoisotopic_mass} is a neutral mass in Da. \code{is_decoy} is \code{NA} where the format
+  records no decoy label.
+
+  A DIA-NN 2.x \code{report.parquet} reads into the same record as the TSV report, but 2.x no longer
+  writes some of its columns (\code{File.Name}, \code{PG.Quantity}, \code{MS2.Scan} and others). In
+  \code{\link{readers_read_records}} those are \code{NA}, except \code{ms2_scan_number}, which mzLib fills with 0,
+  and \code{absent_fields} does not name them: it is judged from a text header, which a parquet does
+  not have.
 
 }
 \section{Two fields to read before you trust the table}{
@@ -68,7 +76,7 @@ with \code{\link{readers_retention_time_in_minutes}} rather than by hand.
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -77,7 +85,7 @@ Wire verb \code{readers read-results}. Generated from the bridge's verb spec \co
 }
 \section{Parameters: units, ranges and defaults}{
 \describe{
-\item{\code{path}}{path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv or a DIA-NN report.tsv.}
+\item{\code{path}}{path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv, or a DIA-NN main report: report.tsv, or DIA-NN 2.x's report.parquet (mzLib 1.0.595, #1384).}
 \item{\code{offset}}{int; in \strong{records}; default \code{0}; range \code{>= 0}. Skip this many records. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.}
 \item{\code{limit}}{int; in \strong{records}; default absent; range \code{>= 0}. Return at most this many records. Absent means no limit; there is deliberately no default cap.}
 \item{\code{out}}{path; default absent; range \code{.tsv only, any case (PYB-1)}. Write the table to this path as tab-separated text instead of returning columns. Must differ from path. Parent directories are created. Must end in .tsv, any case (PYB-1); any other extension, or none, is a usage error before any input is read, and no extension is appended.}
@@ -92,7 +100,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{reader}}{string; never \code{NA}. The mzLib reader class that parsed the file.}
 \item{\code{record_count}}{int; in \strong{records}; never \code{NA}. Records in the whole file, before the window.}
 \item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when the count is not meaningful for this format (only the psmtsv family and MSFragger are one line per record). Data rows that did not become records: mzLib drops a malformed line silently.}
-\item{\code{retention_time_unit}}{string; never \code{NA}. The unit of retention_time for THIS format: minutes for all four at mzLib 1.0.592, unknown when mzLib gives no basis.}
+\item{\code{retention_time_unit}}{string; never \code{NA}. The unit of retention_time for THIS format: minutes for all five at mzLib 1.0.595 (DiaNnReportParquet shares DiaNnReport's record and RT column), unknown when mzLib gives no basis.}
 \item{\code{caveats}}{string[]; never \code{NA}. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.}
 \item{\code{column_names}}{string[]; never \code{NA}. Column order.}
 \item{\code{absent_fields}}{string[]; never \code{NA}. Columns the view defines that this file's format has no column or source for; null in every row (BULK.md section 4). Empty when every column has a source.}
@@ -114,7 +122,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{retention_time}}{float; in \strong{min}; \code{NA} when mzLib's -1 'absent' sentinel, or a non-finite value. Retention time, in retention_time_unit.}
 \item{\code{charge_state}}{int; in \strong{charge}; never \code{NA}. Precursor charge.}
 \item{\code{monoisotopic_mass}}{float; in \strong{Da}; \code{NA} when mzLib's -1 'absent' sentinel. THEORETICAL peptide mass, not the observed precursor.}
-\item{\code{is_decoy}}{bool; \code{NA} when the format cannot report decoys: MSFragger and DIA-NN, where is_decoy is also in absent_fields. Decoy flag where the format carries one.}
+\item{\code{is_decoy}}{bool; \code{NA} when the format cannot report decoys: MSFragger and both DIA-NN report types, where is_decoy is also in absent_fields. Decoy flag where the format carries one.}
 \item{\code{protein_accessions}}{string; never \code{NA}. ';'-joined accessions.}
 \item{\code{gene_name}}{string; never \code{NA}. ';'-joined gene names.}
 \item{\code{organism}}{string; never \code{NA}. ';'-joined organisms.}
@@ -132,16 +140,16 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
-\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the records this answer holds (its returned_count, or record_count where the envelope has none)}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
 \section{Caveats}{
 \itemize{
 \item No q-value, PEP or score: nothing here is FDR-filtered.
-\item is_decoy is absent for MSFragger and DIA-NN, which write no target/decoy label; null there means unknown, not target.
+\item is_decoy is absent for MSFragger and both DIA-NN report types, which give mzLib no per-row target/decoy label (a DIA-NN 2.x parquet written with \code{--report-decoys} has one, but mzLib skips its decoy rows); null there means unknown, not target.
 \item monoisotopic_mass is the theoretical mass in every format; the observed precursor is not in this view.
-\item psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:119, :194).
+\item psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:122, :197).
 \item A malformed psmtsv row is dropped silently by mzLib; rows_not_read counts them.
 \item Many files: \code{--paths-stdin} reads the list in ONE process, \code{--threads} at a time, into one long table with source_index and source_path first. The output does not depend on \code{--threads} (a tested property); the default of 1 is a memory choice, since every reader materialises the whole file.
 }
@@ -163,7 +171,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising is not built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches the failure after serialising. A threshold per record will not work: dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04) measured 725 and 805 characters per record in two psmtsv files from one producer. It proposed source size instead, 0.63 to 0.71 output characters per source byte, which puts the limit at about 1.51 to 1.70 GB of source text. That is two files of one format, and no threshold has been agreed.
 }
 }
 \seealso{

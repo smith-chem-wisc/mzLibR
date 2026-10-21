@@ -22,7 +22,8 @@ deliberate}, not a defect. It is absent when the peptide starts with proline.
 
 Note also that \code{zDot} counts come in \strong{below} \code{length} per peptide rather than above it,
 because z-dot ions are suppressed N-terminal to proline while the complementary \code{c} ions are
-not. On albumin that is 138 proline sites, 138 suppressed \code{z-dot} and \strong{0} suppressed \code{c}
+not. On albumin with \code{dissociation = "ETD"} that is 135 proline sites across its 202 distinct
+sequences, 135 suppressed \code{z-dot} and \strong{0} suppressed \code{c}
 (smith-chem-wisc/mzLib#1110).
 }
 \value{

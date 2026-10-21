@@ -68,7 +68,7 @@ peaks, retention times - are not available here. Use \code{\link{flashlfq_quanti
 
 }
 \section{Wraps}{
-Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.CalculateProteinResultsMedianPolish}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{23c2490e}
@@ -80,7 +80,7 @@ Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \cod
 \section{Parameters: units, ranges and defaults}{
 \describe{
 \item{\code{peptides}}{path; required. A FlashLFQ QuantifiedPeptides.tsv. Columns are found by header name: Sequence, Base Sequence and Protein Groups are required; Gene Names (or Gene Name) and Organism are optional; one Intensity_<run> per run, each optionally with a Detection Type_<run>. A blank intensity cell is 0 (not measured).}
-\item{\code{design} (wire \code{--stdin})}{string[]; default absent; range \code{none, or exactly one line per Intensity_ run}. The experimental design, one run per line, tab-separated: run_name[TAB condition[TAB biorep[TAB techrep[TAB fraction]]]], run_name matching an Intensity_<run_name> column (a name, never opened as a file). Omitted fields: condition "", biorep = the line's 0-based index, techrep 0, fraction 0. With no lines at all, every Intensity_ column is its own biological replicate with a blank condition, as FlashLFQ assumes with no design file. Median polish groups runs by condition and biological replicate, so this is how a caller says which runs are replicates of which sample.}
+\item{\code{design} (wire \code{--stdin})}{string[]; default absent; range \code{none, or exactly one line per Intensity_ run}. The experimental design, one run per line, tab-separated: run_name[TAB condition[TAB biorep[TAB techrep[TAB fraction]]]], run_name matching an Intensity_<run_name> column (a name, never opened as a file). Omitted fields: condition "", biorep = the line's 0-based index, techrep 0, fraction 0. With no lines at all, every Intensity_ column is its own biological replicate with a blank condition, as FlashLFQ assumes with no design file. Median polish groups runs by condition and biological replicate, so this is how a caller says which runs are replicates of which sample. Within a sample, median polish averages a peptide's positive intensities over the runs that share a fraction, then takes the fraction with the highest average. A techrep number only orders runs; it never changes a value (FlashLFQResults.cs:471-497 at d10017ce).}
 \item{\code{use_shared_peptides} (wire \code{--shared-peptides})}{flag; default \code{FALSE}. Let peptides shared between protein groups contribute (UseSharedPeptidesForProteinQuant). Off: a group with only shared peptides quantifies to 0.}
 \item{\code{output_directory} (wire \code{--out})}{path; default absent. Directory (created if absent) where FlashLFQ also writes QuantifiedProteins.tsv. Absent or blank writes nothing.}
 }
@@ -103,7 +103,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{protein_group}}{string; never \code{NA}. Protein group name; a ';'-joined Protein Groups cell is split into one group per name.}
 \item{\code{gene_name}}{string; never \code{NA}. From the table's gene column, paired to the group by position when the counts match, else the whole ';'-joined cell; "" when the table has no gene column.}
 \item{\code{organism}}{string; never \code{NA}. As gene_name, from the Organism column.}
-\item{\code{intensity} (wire \code{intensities})}{map<string,float>; in \strong{intensity (instrument units)}; never \code{NA}. Sample label -> protein intensity. A value is null when median polish could not resolve one (NaN: a degenerate peptide matrix); 0 means not measured in that sample. A sample of several runs (fractions, technical replicates) reports their sum, as FlashLFQ's own output does, EXCEPT when labels are run names (no design and one fraction): then the bridge reads the first run of the sample only.}
+\item{\code{intensity} (wire \code{intensities})}{map<string,float>; in \strong{intensity (instrument units)}; never \code{NA}. Sample label -> protein intensity. A value is null when median polish could not resolve one (NaN: a degenerate peptide matrix); 0 means not measured in that sample. A sample of several runs (fractions, technical replicates) reports their sum, as FlashLFQ's own output does, EXCEPT when labels are run names (no design and one fraction): then the bridge reads the sample's first run only, which loses nothing: the engine zeroes every run and writes each sample's value on its first run (FlashLFQResults.cs:410-417, :514 at d10017ce).}
 }
 }
 \section{Fields of \code{samples}}{
@@ -149,11 +149,8 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The bridge's own comment in MedianPolishToWire and pyMzLib's median_polish docstring still say the TSV labels disagree until mzLib#1129 lands; it is in the pin, so both are stale (confirmed by pyMzLib 005; removed on pyMzLib main by #67, unreleased after 0.2.0). The agreement stated in the caveat is from reading ProteinGroup.cs at 23c2490e, not from a recorded \code{--out} run.
+\item The label agreement in the caveat comes from reading ProteinGroup.TabSeparatedHeader at the pin, not from a recorded \code{--out} run: MedianPolish_WritesQuantifiedProteinsTsv_WhenOutGiven checks only that the file exists. A test that reads the file's Intensity_ headers back against samples[].label, with and without a design, would close it.
 \item median_polish_small.json is hand-shaped ('/abs/...'), not a live recording.
-\item When labels are run names, the bridge reads only a sample's first run; whether the engine zeroes that sample's other runs (so the reading loses nothing) was not traced. It matters only if several runs share a biorep with no design.
-\item The design's techrep and fraction are parsed but only fraction feeds the label rule; how FlashLFQ's median polish uses techrep is mzLib's and was not traced.
-\item The wire params peptides/shared-peptides/out project as peptides/use_shared_peptides/output_directory in pyMzLib; the spec lint will need PYTHON_DEVIATIONS entries (stdin -> design, shared-peptides -> use_shared_peptides, out -> output_directory).
 }
 }
 \references{

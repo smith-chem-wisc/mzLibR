@@ -1,0 +1,110 @@
+# Written 2026-10-05 BEFORE the verb (SPEC-1: spec first; PYMZ-B3 item 6, G-verb-specs-uniprot-modlookup),
+# from mzLib's sequence-conversion lookups read at the bridge pin 0a808fec (tag 1.0.593) and
+# confirmed unchanged on smith/master 5974d4d7d. The same day it was probed, not built: a scratch
+# program on the mzLib 1.0.593 NuGet package (the pin's release) ran 6,797 distinct names through
+# TryResolve under all four lookups. 240 of them are real names from 124 MetaMorpheus result files of
+# public PRIDE datasets; the rest are every entry of every list mzLib loads, bare and type-prefixed.
+# Counts in the caveats and open_questions come from that run.
+# It wraps mzLib's own lookup instead of parsing mzLib's modification files, which is the defect
+# dataRepo's modlist.py has (their G26).
+verb: modifications resolve
+module: modifications
+summary: >-
+  Resolve modification names, such as MetaMorpheus's 'UniProt:N6-acetyllysine on K', to the
+  modification mzLib knows by that name, with its UNIMOD accession, monoisotopic mass, formula,
+  target and position rule, one result per name.
+since: {protocol: 1, pymzlib: null, mzlibrust: null, mzlibr: null}
+wraps:
+  - {symbol: "IModificationLookup.TryResolve(string, char?, ChemicalFormula?, ModificationPositionType?)", path: mzLib/Omics/SequenceConversion/IModificationLookup.cs, pin: 0a808fec}
+  - {symbol: ModificationLookupBase.TryResolve, path: mzLib/Omics/SequenceConversion/BaseClasses/ModificationLookupBase.cs, pin: 0a808fec}
+  - {symbol: GlobalModificationLookup.Instance, path: mzLib/Omics/SequenceConversion/Implementations/Global/GlobalModificationLookup.cs, pin: 0a808fec}
+  - {symbol: UnimodModificationLookup.Instance, path: mzLib/Omics/SequenceConversion/Implementations/Unimod/UnimodModificationLookup.cs, pin: 0a808fec}
+  - {symbol: MzLibModificationLookup.Instance, path: mzLib/Omics/SequenceConversion/Implementations/MzLib/MzLibModificationLookup.cs, pin: 0a808fec}
+  - {symbol: ModomicsModificationLookup.Instance, path: mzLib/Omics/SequenceConversion/Implementations/Modomics/ModomicsModificationLookup.cs, pin: 0a808fec}
+  - {symbol: CanonicalModification.WithResolvedModification, path: mzLib/Omics/SequenceConversion/CanonicalSequence/CanonicalModification.cs, pin: 0a808fec}
+cite:
+  - {doi: "10.1002/pmic.200300744", for: "Unimod, whose accessions unimod_id reports (Creasy and Cottrell 2004, Proteomics)"}
+
+params:
+  - name: lookup
+    type: string
+    required: false
+    unit: null
+    range: "global | unimod | mzlib | modomics"
+    default: global
+    doc: >-
+      Which of mzLib's lookups resolves the names, case-insensitive. global searches every list
+      mzLib loads (Mods.AllKnownMods: Unimod, UniProt and MetaMorpheus protein entries, plus the
+      MetaMorpheus RNA entries except those Mods.ShouldExcludeFromAllKnownMods drops from combined
+      sets, which modomics still reaches). unimod searches the
+      Unimod list only, mzlib the MetaMorpheus protein and RNA lists only, and modomics the
+      Modomics RNA list only. Any other value, or the option without a value, is a usage error that
+      lists the four.
+  - name: threads
+    type: int
+    required: false
+    unit: null
+    range: ">= 1, or -1 for every core"
+    default: 1
+    doc: "Names resolved at once. Rows are identical, in input order, at any value."
+  - name: names
+    type: "string[]"
+    required: true
+    unit: null
+    range: non-empty
+    default: null
+    doc: >-
+      Read from stdin (not an option): one modification name per line, given to mzLib exactly as
+      read. Blank lines are skipped. One row per line, in order, duplicates included. No names is a
+      usage error.
+
+result:
+  envelope_fields:
+    - {wire: lookup, type: string, unit: null, nullable: false, null_means: null, doc: "--lookup, lower case."}
+    - {wire: record_count, type: int, unit: names, nullable: false, null_means: null, doc: "Rows: the input names."}
+    - {wire: resolved_count, type: int, unit: names, nullable: false, null_means: null, doc: Rows with status resolved.}
+    - {wire: unresolved_count, type: int, unit: names, nullable: false, null_means: null, doc: Rows with status unresolved.}
+    - {wire: column_names, type: "string[]", unit: null, nullable: false, null_means: null, doc: The table's columns in order.}
+    - {wire: columns, type: table, unit: null, nullable: false, null_means: null, doc: "Column name to one value per input, in input order."}
+    - {wire: caveats, type: "string[]", unit: null, nullable: false, null_means: null, doc: The static caveats below.}
+  columns:
+    - {wire: input, type: string, unit: null, nullable: false, null_means: null, doc: The line exactly as read from stdin.}
+    - {wire: status, type: string, unit: null, nullable: false, null_means: null, doc: "resolved (mzLib returned a modification) | unresolved (TryResolve returned null: no entry matched, or several did and mzLib would not choose)."}
+    - {wire: id_with_motif, type: string, unit: null, nullable: true, null_means: "unresolved", doc: "Modification.IdWithMotif of the resolved entry, for example 'N6-acetyllysine on K'."}
+    - {wire: modification_type, type: string, unit: null, nullable: true, null_means: "unresolved, or the entry has no ModificationType", doc: "Modification.ModificationType: the list or category the entry came from, for example 'UniProt' or 'Common Biological'."}
+    - {wire: original_id, type: string, unit: null, nullable: true, null_means: "unresolved, or the entry has no OriginalId", doc: "Modification.OriginalId: the entry's name without its motif."}
+    - {wire: unimod_id, type: int, unit: null, nullable: true, null_means: "unresolved, or the resolved entry carries no Unimod cross-reference (no DR Unimod line and no UNIMOD: accession)", doc: "The resolved entry's own Unimod accession number, as CanonicalModification.WithResolvedModification reads it: the first value of its Unimod database reference, else its UNIMOD:n accession. 35 means UNIMOD:35."}
+    - {wire: monoisotopic_mass, type: float, unit: Da, nullable: true, null_means: "unresolved, or the entry has no mass", doc: "Modification.MonoisotopicMass: the mass the modification adds."}
+    - {wire: chemical_formula, type: string, unit: null, nullable: true, null_means: "unresolved, or the entry has no formula", doc: "Modification.ChemicalFormula.Formula: the formula the modification adds, in mzLib's notation (for example 'C2H2O')."}
+    - {wire: target, type: string, unit: null, nullable: true, null_means: "unresolved, or the entry has no target motif", doc: "Modification.Target as text: the residue or motif the entry sits on, for example 'K', or 'X' for any residue."}
+    - {wire: location_restriction, type: string, unit: null, nullable: true, null_means: "unresolved, or the entry records no restriction", doc: "Modification.LocationRestriction as mzLib stores it, for example 'Anywhere.', 'N-terminal.' or 'Peptide N-terminal.'."}
+
+errors:
+  - {kind: usage, when: "no names on stdin; --lookup not one of global, unimod, mzlib, modomics, or given without a value (the message lists the four); --threads 0 or below -1"}
+  - {kind: correctness, when: "mzLib threw while resolving (TryResolve returns null rather than throwing, so this is not expected)"}
+  - {kind: service_unavailable, when: never}
+
+caveats:
+  - "unresolved means TryResolve returned null, and mzLib returns null for two different things: no entry matched the name, or several matched with different formulas and target residues, so mzLib would not choose. The wire cannot tell them apart. mzLib's own behaviour is never to guess."
+  - "When several entries match and share one formula, mzLib treats them as chemically equivalent and returns the one with the shortest OriginalId (ModificationLookupBase.SelectBestCandidate). The resolved id_with_motif can then differ from the input name, while the mass and formula are the same."
+  - "A name matches an entry case-insensitively by its IdWithMotif, its OriginalId, 'ModificationType:IdWithMotif', or the part after the input's first colon. So 'UniProt:N6-acetyllysine on K' and 'N6-acetyllysine on K' resolve alike, and the category prefix does not restrict the search to that list."
+  - "unimod_id is the cross-reference the resolved entry itself carries, not a search of the Unimod database. An entry whose Unimod reference is wrong reports the wrong accession, and an entry with none reports null even when Unimod has the modification."
+  - "Each stdin line is one input, given to mzLib exactly as read; blank lines are skipped; rows are in input order at any --threads."
+  - "A type prefix never restricts the match. 'Common Fixed:Carbamidomethyl on C' resolves to Unimod's Carbamidomethyl on C, the same chemistry under another list's name. In the probe, 67 of 3,239 type-prefixed list names resolved to an entry other than the one they named, all with the same formula."
+  - "A name without a residue ('Oxidation', 'Phospho', 'Acetyl') resolves, but to one residue's entry chosen by mzLib's tie-break, not to a residue-free answer: 'Oxidation' gave Oxidation on T and 'Phospho' gave Phospho on C. The mass and formula are right; target and id_with_motif are arbitrary. Send names with 'on X' to get a meaningful target."
+  - "Only names resolve. An accession such as 'UNIMOD:35' comes back unresolved under every lookup."
+  - "--lookup unimod resolves only names spelled as Unimod spells them. In the probe it resolved 47 of 165 MetaMorpheus protein names and 5 of 438 UniProt names, exactly those whose name coincides with a Unimod title, and 14 of the 240 real names. global is the default because it is the only lookup that resolves MetaMorpheus and UniProt names."
+  - "Glycan compositions and custom modifications do not resolve. Of the 240 real names, the 32 unresolved under global are 31 glycan compositions from MetaMorpheus glyco searches (for example 'N-linked glycosylation:H5N2 on Nxs' and 'O-Glycosylation:H1N1 on X') and one 'Custom:' modification. mzLib has no entry for them by name."
+  - "The verb reports mzLib's data faithfully, defects included. In the 1.0.593 probe, Lactylation on K was 71.013 Da, one hydrogen short, and TMTpro on H, S, T or Y resolved to TMT, 224 Da; mzLib 1.0.595 fixes both (mzLib#1417, #1419). Still open there: the tie-break behind the TMTpro answer can return the wrong candidate (mzLib#1418), and the bundled Unimod file is from 2017 and many UniProt entries carry no Unimod reference, so unimod_id is null for them (mzLib#1415, #1416)."
+
+bindings:
+  py: {name: pymzlib.modifications.resolve, note: "planned; not yet shipped"}
+  rust: {name: "mzlib::modifications::resolve_with", options: ResolveOptions, note: "planned; not yet shipped"}
+  r: {name: modifications_resolve, note: "planned; not yet shipped"}
+
+examples: []
+
+open_questions:
+  - "Probed, not built (PYB-7). When the verb exists, record fixtures, at its pin rather than the probe's 1.0.593, for a MetaMorpheus name ('Common Variable:Oxidation on M'), a UniProt name ('UniProt:N6-acetyllysine on K'), 'UniProt:N6,N6-dimethyllysine on K' (unimod_id 36, the accession peptidoform convert --to Unimod also writes: PEPK[UNIMOD:36]R), 'Decarboxylation on D' and 'on E' (the probe resolved both, bare or prefixed 'Less Common:', under global to Unimod's Decarboxylation, -30.010565 Da, unimod_id 1915, which Mods.txt has cited since mzLib#1245), a name with no Unimod reference, a made-up name, a bare name ('Oxidation'), 'UNIMOD:35', a glycan composition, and the same name under each --lookup. The probe's answers for each are in the caveats."
+  - "Position context is not projected: TryResolve also takes a target residue, a formula and a position type, and mzLib uses them to narrow an ambiguous match. The probe shows a bare name lands on an arbitrary residue, so a --residue option would make bare names meaningful. Add it only if a consumer needs to resolve bare names."
+  - "Which mzLib versions report the same answers: the lists come from mzLib's resource files, so a release that edits them changes rows. mzLib 1.0.595 (pyMzLib main's pin, not yet in a pyMzLib release) already changes two of the probe's answers: Lactylation on K is C3H4O2 with Unimod 2114 (mzLib#1417), and TMTpro on H, S, T or Y no longer resolves to TMT (mzLib#1419). mzLib#1415 and #1416 are still open and will change more (new Unimod records and references). Consumers that pin answers (dataRepo bundle ids) should record the bridge version with them."

@@ -15,7 +15,7 @@
 # a real and common answer rather than a failure.
 
 # The view that matters most: the cross-format record projection, and the input
-# `flashlfq_quantify()` accepts. Exactly four file types have it.
+# `flashlfq_quantify()` accepts. Few file types have it: readers_formats() says which.
 READERS_QUANTIFIABLE <- "quantifiable"
 
 # ---------------------------------------------------------------- parsing
@@ -196,13 +196,17 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #'
 #' - `"quantifiable"` — the cross-format record view, and the input [flashlfq_quantify()]
 #'   accepts. **Few file types have it**: MetaMorpheus `psmtsv` and `osmtsv`,
-#'   `MsFraggerPsm`, and DIA-NN `DiaNnReport`.
+#'   `MsFraggerPsm`, DIA-NN's `report.tsv` (`DiaNnReport`), and DIA-NN 2.x's `report.parquet`
+#'   (`DiaNnReportParquet`, mzLib #1384).
 #' - `"ms1_features"` — deconvolved MS1 features (TopFD `_ms1.feature`, Dinosaur).
 #' - `"spectra"` — the file is spectra, not results.
 #' - `"spectral_match"` — identifications that share no file-level interface.
 #'
 #' Note also that `extension` is **not unique**: `BrukerD` and `BrukerTimsTof` are both `.d`,
-#' told apart by what the directory holds, and several formats share `.tsv`.
+#' told apart by what the directory holds, and several formats share `.tsv`. Nor is it always how
+#' dispatch works: a DIA-NN report is recognised by its columns, not its name, so a renamed
+#' `report.tsv` still reads, and any `.parquet` whose columns include `Precursor.Id`,
+#' `Stripped.Sequence` and `Run` is a `DiaNnReportParquet` while any other `.parquet` is refused.
 #'
 #' @seealso [readers_identify()]
 #' @spec readers.formats
@@ -265,7 +269,8 @@ readers_identify <- function(path, timeout = 60) {
 #' Only the file types offering the `"quantifiable"` view can be read this way — check
 #' [readers_identify()] first, or catch the error, which names the views the file does have.
 #'
-#' @param path Path to a MetaMorpheus `.psmtsv` / `.osmtsv` or an MSFragger `psm.tsv`.
+#' @param path Path to a MetaMorpheus `.psmtsv` / `.osmtsv`, an MSFragger `psm.tsv`, or a DIA-NN
+#'   `report.tsv` or DIA-NN 2.x `report.parquet`.
 #' @param limit Maximum records to return. `NULL`, the default, returns all of them.
 #'
 #'   **There is no default row limit**, deliberately. A result file can carry a million rows, and
@@ -292,9 +297,16 @@ readers_identify <- function(path, timeout = 60) {
 #'   starting `offset` records in; `rows_not_read` counts data rows that did not become records.
 #'
 #'   `records` is a data.frame of the record view, one row per record, or `NULL` when `out` was
-#'   given. `retention_time` is in minutes for every quantifiable format today, and
-#'   `retention_time_unit` says so per file; `charge_state` is a charge; `monoisotopic_mass` is a
-#'   neutral mass in Da. `is_decoy` is `NA` where the format records no decoy label.
+#'   given. `retention_time` is in minutes for every quantifiable format today, the DIA-NN
+#'   `report.parquet` included, and `retention_time_unit` says so per file; `charge_state` is a
+#'   charge; `monoisotopic_mass` is a neutral mass in Da. `is_decoy` is `NA` where the format
+#'   records no decoy label.
+#'
+#'   A DIA-NN 2.x `report.parquet` reads into the same record as the TSV report, but 2.x no longer
+#'   writes some of its columns (`File.Name`, `PG.Quantity`, `MS2.Scan` and others). In
+#'   [readers_read_records()] those are `NA`, except `ms2_scan_number`, which mzLib fills with 0,
+#'   and `absent_fields` does not name them: it is judged from a text header, which a parquet does
+#'   not have.
 #'
 #' @section Two fields to read before you trust the table:
 #'
@@ -478,7 +490,7 @@ print.mzlibr_result_records <- function(x, ...) {
 
 # ---------------------------------------------------------------- exhaustive coverage
 #
-# `readers_read_results()` projects `IQuantifiableResultFile`, which four of the file types
+# `readers_read_results()` projects `IQuantifiableResultFile`, which only a few of the file types
 # implement. The four verbs below reach the rest, in two different ways because the gap has two
 # shapes.
 #

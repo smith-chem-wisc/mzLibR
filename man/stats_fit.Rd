@@ -23,8 +23,9 @@ stats_fit(responses, design, coefficients, trend = FALSE, spline_basis = NULL,
 \item{trend}{Let the prior variance follow average response (limma's \code{trend = TRUE}), for data
   whose low-abundance features are noisier.}
 
-\item{spline_basis}{Basis functions of the trend spline, intercept included (the bridge's
-  default is 4). Only with \code{trend = TRUE}; mzLib may use fewer, and \code{prior$spline_basis_count}
+\item{spline_basis}{Basis functions of the trend spline, intercept included. Only with
+  \code{trend = TRUE}. Leave it \code{NULL} to let mzLib choose, as limma does, for the number of
+  features; mzLib may also use fewer than you ask for. Either way \code{prior$spline_basis_count}
   reports what it used.}
 
 \item{threads}{Features fitted at once (threads), or \code{-1} for every core. The answer is identical
@@ -82,12 +83,13 @@ controls the false discovery rate among the features tested; it is not a target-
 
 }
 \section{Wraps}{
-Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs}{\code{LinearModel.Fit}} in \code{mzLib/StatisticalModels/LinearModel.cs} at mzLib \code{0a808fec}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.Moderate}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{0a808fec}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.Moderate}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.FitPrior}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{0a808fec}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.DefaultSplineBasisCount}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/MultipleTesting.cs}{\code{MultipleTesting.BenjaminiHochberg}} in \code{mzLib/StatisticalModels/MultipleTesting.cs} at mzLib \code{0a808fec}
 }
 }
@@ -97,7 +99,7 @@ Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fi
 \item{\code{design}}{path; required. A TSV with a header row and one row per sample. The first column is the sample name and must match the responses header exactly (rows are matched by name, so their order does not matter); every other column is one coefficient, named by its header, and every cell must be a finite number. The design is used as written: include an intercept column if you want one.}
 \item{\code{coefficients} (wire \code{--stdin})}{string[]; required; range \code{>= 1 line; each a design column name, none repeated}. The coefficients to test, one design column name per line. Each gets its own moderated test and its own Benjamini-Hochberg family. The model always fits every design column.}
 \item{\code{trend}}{flag; default \code{FALSE}. Let the prior variance trend with each feature's average response (limma's trend = TRUE), as a natural cubic spline.}
-\item{\code{spline_basis} (wire \code{--spline-basis})}{int; in \strong{basis functions}; default \code{4}; range \code{>= 1; only with --trend}. Basis functions of the trend spline, intercept included. mzLib caps it at the distinct average responses and the fitted features minus one; prior.spline_basis_count reports what was used.}
+\item{\code{spline_basis} (wire \code{--spline-basis})}{int; in \strong{basis functions}; default absent; range \code{>= 1; only with --trend}. Basis functions of the trend spline, intercept included. Absent, the bridge sends none and mzLib chooses by limma's fitFDist rule (EmpiricalBayes.DefaultSplineBasisCount, mzLib 1.0.594 #1398): 1 + (n >= 3) + (n >= 6) + (n >= 30) for n fitted features, so 4 only from 30 features. A given value is capped at the fitted features minus one. mzLib caps either at the distinct average responses and may merge coinciding knots; prior.spline_basis_count reports what was used.}
 \item{\code{threads}}{int; in \strong{threads}; default \code{1}; range \code{>= 1, or -1 for every core}. Features fitted at once. The bridge default is 1 (BULK.md); mzLib's own default is -1. Results are identical at any value.}
 }
 }
@@ -184,14 +186,6 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not yet shipped.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item Rust and R spellings are proposals until those bindings ship the verb.
-\item stats_fit_malat.json is the largest recorded fixture (about 258 KB): 492 features x 2 coefficients. It is real data (mzLib's RNA oligo table, #1388), derived by a rule held in StatisticsTests.MalatDilutionFixture_IsLog2OfMzLibsOligoTable.
-}
 }
 \references{
 \itemize{
