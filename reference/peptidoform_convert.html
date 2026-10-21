@@ -108,11 +108,12 @@ in R or in the bridge; every output and every status is mzLib's.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Choose Unimod, not ProForma, for UniProt-sourced modifications.</strong> mzLib's ProForma target does
-not resolve them and writes them back under their mzLib name, with status <code>"converted"</code>
-(mzLib#1401). In ProForma output, treat any bracket that is not a <code>UNIMOD:</code> term as unresolved.
-The <code>pro_forma</code> column <code><a href="readers_read_records.html">readers_read_records</a></code> gives a <code>.psmtsv</code> comes from the same serializer
-and has the same gap.</p>
+    <p>Both targets name UniProt-sourced modifications by their UNIMOD accession (the ProForma one since
+mzLib #1403). They differ on a modification no list mzLib loads knows: ProForma writes it back
+under its own name, with status <code>"converted"</code>, where Unimod fails the row or drops it, depending
+on <code>mode</code>. In ProForma output, treat any bracket that is not a <code>UNIMOD:</code> term as unresolved. The
+<code>pro_forma</code> column <code><a href="readers_read_records.html">readers_read_records</a></code> computes for a <code>.psmtsv</code> written without one comes
+from the same serializer.</p>
     </div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -134,7 +135,7 @@ and has the same gap.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>peptidoform convert</code>. Generated from the bridge's verb spec <code>peptidoform.convert.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>peptidoform convert</code>. Generated from the bridge's verb spec <code>peptidoform.convert.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs" class="external-link"><code>SequenceConversionService.Default</code></a> in <code>mzLib/Omics/SequenceConversion/SequenceConversionService.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs" class="external-link"><code>SequenceConversionService.GetConverter</code></a> in <code>mzLib/Omics/SequenceConversion/SequenceConversionService.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConverter.cs" class="external-link"><code>ISequenceConverter.Convert</code></a> in <code>mzLib/Omics/SequenceConversion/SequenceConverter.cs</code> at mzLib <code>0a808fec</code></p></li>
@@ -146,7 +147,7 @@ and has the same gap.</p>
     <h2 id="parameters-units-ranges-and-defaults">Parameters: units, ranges and defaults<a class="anchor" aria-label="anchor" href="#parameters-units-ranges-and-defaults"></a></h2>
 
 <dl><dt><code>source</code> (wire <code>--from</code>)</dt>
-<dd><p>string; default <code>mzLib</code>; range <code>a registered source format: MassShift, Modomics, ProForma, mzLib (at 0a808fec)</code>. The notation the sequences are in, matched case-insensitively against the service's AvailableSourceFormats. Any other name, or the option without a value, is a usage error that lists the registered names.</p></dd>
+<dd><p>string; default <code>mzLib</code>; range <code>a registered source format: MassShift, Modomics, ProForma, mzLib (at 0a808fec)</code>. The notation the sequences are in, matched case-insensitively against the service's AvailableSourceFormats. Any other name, or the option without a value, is a usage error that lists the registered names. mzLib's ConvertAutoDetect is not projected: the source is always a named format, mzLib when <code>--from</code> is absent.</p></dd>
 
 <dt><code>target</code> (wire <code>--to</code>)</dt>
 <dd><p>string; default <code>Unimod</code>; range <code>a registered target format: Chronologer, Essential, MassShift, ProForma, Unimod, mzLib (at 0a808fec)</code>. The notation to write, matched case-insensitively against the service's AvailableTargetFormats. Any other name, or the option without a value, is a usage error that lists the registered names.</p></dd>
@@ -199,7 +200,7 @@ and has the same gap.</p>
 <dd><p>table; never <code>NA</code>. Column name to one value per input, in input order.</p></dd>
 
 <dt><code>caveats</code></dt>
-<dd><p>string[]; never <code>NA</code>. Six static caveats.</p></dd>
+<dd><p>string[]; never <code>NA</code>. Five static caveats (six through mzLib 1.0.593).</p></dd>
 
 
 </dl></div>
@@ -249,8 +250,7 @@ and has the same gap.</p>
     <div class="section level2">
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
-<ul><li><p>ProForma does not resolve UniProt-sourced modifications at 0a808fec: '[UniProt:N-acetylserine on S]SEQK' comes out as '[UniProt:N-acetylserine on S]-SEQK', status converted, not '[UNIMOD:1]-SEQK'. mzLib's ProForma serializer looks modifications up in the MetaMorpheus list only (ProFormaSequenceSerializer.cs:34, MzLibModificationLookup.cs:54); the Unimod target looks them up in every list mzLib loads, UniProt's included (GlobalModificationLookup.cs:23). Convert to Unimod when the sequences carry UniProt modifications. mzLib#1401.</p></li>
-<li><p>ProForma writes a modification it cannot resolve under its mzLib name and the row is still converted, so status converted does not mean every bracket in a ProForma output is a controlled-vocabulary term. Unimod either names a modification by its UNIMOD accession or reports it in incompatible_items.</p></li>
+<ul><li><p>ProForma writes a modification it cannot resolve under its mzLib name and the row is still converted, so status converted does not mean every bracket in a ProForma output is a controlled-vocabulary term. Unimod either names a modification by its UNIMOD accession or reports it in incompatible_items.</p></li>
 <li><p>A modification the target cannot write: under ReturnNull the row fails (output null); under RemoveIncompatibleElements and UsePrimarySequence it is dropped from output, named in incompatible_items, and the row is converted_with_warnings; under ThrowException the first such input fails the whole call as a usage error.</p></li>
 <li><p>status is mzLib's verdict read off ConversionWarnings; failure_reason can be null on a failed row (the Unimod target under ReturnNull records only incompatible_items).</p></li>
 <li><p>An ambiguous MetaMorpheus full sequence ('|'-joined candidates) is not refused: mzLib's parser skips each '|' with a warning and joins the candidates into one sequence, status converted_with_warnings. Split ambiguous full sequences before converting them.</p></li>
@@ -274,10 +274,8 @@ and has the same gap.</p>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>The ProForma target's UniProt gap is an mzLib defect (the serializer's default lookup), mzLib#1401; close this when a pin carries its fix. A bridge-side substitute (ProFormaSequenceSerializer.WithLookup(GlobalModificationLookup)) composes serializer internals and is deliberately not used.</p></li>
-<li><p>mzLib's MzLibSequenceParser joins '|'-separated ambiguous candidates into one sequence with only a warning; whether it should refuse them (as SpectrumMatchFromTsv.ProFormaFromFullSequence does before calling it) is an mzLib question: mzLib#1405.</p></li>
-<li><p>AutoDetect (SequenceConversionService.ConvertAutoDetect) is not projected: <code>--from</code> is always explicit.</p></li>
-<li><p>Ported, unreleased: mzLibRust #32 and mzLibR #32 (drafts until pyMzLib 0.4.0 publishes the bridge). Set since.mzlibrust / since.mzlibr when they release.</p></li>
+<ul><li><p>mzLib's MzLibSequenceParser joins '|'-separated ambiguous candidates into one sequence with only a warning; whether it should refuse them (as SpectrumMatchFromTsv.ProFormaFromFullSequence does before calling it) is an mzLib question: mzLib#1405.</p></li>
+<li><p>Ported, unreleased: mzLibRust #32 and mzLibR #32 merged on 2026-10-04, on the pyMzLib 0.4.0 bridge. Neither binding has cut a release; set since.mzlibrust / since.mzlibr when they do.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

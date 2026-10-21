@@ -57,7 +57,7 @@ rather than returning nothing.
 ## Wraps
 
 Wire verb `pride ftp-files`. Generated from the bridge's verb spec
-`pride.ftp-files.yaml` (bridge commit `e76157831b15`) by
+`pride.ftp-files.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -110,7 +110,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   object\[\]; never `NA`. One entry per file in walk order (each
   directory's autoindex order, depth first); fields under
-  result.columns.
+  result.columns. mzLib does not sort, so the order is PRIDE's and is
+  not promised stable across requests.
 
 ## Columns
 
@@ -167,8 +168,9 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 ## Caveats
 
 - This is the complete file list; pride files (PRIDE's REST manifest)
-  omits files, for PXD000001 five of 13 including the two largest. The
-  price is metadata: no category, checksum or CV locations here.
+  omits files, for PXD000001 five of 14 on 2026-10-21, including the two
+  largest. The price is metadata: no category, checksum or CV locations
+  here.
 
 - Sizes are approximate (rounded autoindex values), so
   approximate_total_size_bytes is an estimate, but an estimate over
@@ -202,20 +204,12 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- No recorded fixture: the verb needs a pride_PXD000001_ftp_files.json
-  recording (live, 13 files) before it can have a checked example, and
-  before the bindings' doctests can drop +SKIP.
-
 - An unknown accession crosses as correctness (MzLibException), not
-  usage, although it is the caller's mistake. Every binding re-maps it
-  to its not-found error; the wire itself does not say 'not found'.
-
-- Directory order is whatever PRIDE's Apache autoindex serves; not
-  verified to be stable across requests, so files order is not promised.
-
-- mzlib::pride::list_ftp_files_with takes the timeout as its second
-  argument rather than an options struct; no Rust options type exists
-  for this verb.
+  usage, although it is the caller's mistake; the wire has no 'not
+  found'. Each binding re-maps it, but not alike: pyMzLib matches
+  mzLib's two not-found messages, while mzLibRust and mzLibR re-map
+  every MzLibException, so the 64-level cyclic-listing failure also
+  reads as not found there.
 
 ## References
 

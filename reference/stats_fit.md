@@ -47,9 +47,10 @@ stats_fit(responses, design, coefficients, trend = FALSE, spline_basis = NULL,
 
 - spline_basis:
 
-  Basis functions of the trend spline, intercept included (the bridge's
-  default is 4). Only with `trend = TRUE`; mzLib may use fewer, and
-  `prior$spline_basis_count` reports what it used.
+  Basis functions of the trend spline, intercept included. Only with
+  `trend = TRUE`. Leave it `NULL` to let mzLib choose, as limma does,
+  for the number of features; mzLib may also use fewer than you ask for.
+  Either way `prior$spline_basis_count` reports what it used.
 
 - threads:
 
@@ -107,18 +108,21 @@ q-value.
 ## Wraps
 
 Wire verb `stats fit`. Generated from the bridge's verb spec
-`stats.fit.yaml` (bridge commit `e76157831b15`) by
+`stats.fit.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
 - [`LinearModel.Fit`](https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs)
   in `mzLib/StatisticalModels/LinearModel.cs` at mzLib `0a808fec`
 
-- [`EmpiricalBayes.Moderate`](https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs)
-  in `mzLib/StatisticalModels/EmpiricalBayes.cs` at mzLib `0a808fec`
+- [`EmpiricalBayes.Moderate`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs)
+  in `mzLib/StatisticalModels/EmpiricalBayes.cs` at mzLib `d10017ce`
 
 - [`EmpiricalBayes.FitPrior`](https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs)
   in `mzLib/StatisticalModels/EmpiricalBayes.cs` at mzLib `0a808fec`
+
+- [`EmpiricalBayes.DefaultSplineBasisCount`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs)
+  in `mzLib/StatisticalModels/EmpiricalBayes.cs` at mzLib `d10017ce`
 
 - [`MultipleTesting.BenjaminiHochberg`](https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/MultipleTesting.cs)
   in `mzLib/StatisticalModels/MultipleTesting.cs` at mzLib `0a808fec`
@@ -159,11 +163,15 @@ render the same ones.
 
 - `spline_basis` (wire `--spline-basis`):
 
-  int; in **basis functions**; default `4`; range
+  int; in **basis functions**; default absent; range
   `>= 1; only with --trend`. Basis functions of the trend spline,
-  intercept included. mzLib caps it at the distinct average responses
-  and the fitted features minus one; prior.spline_basis_count reports
-  what was used.
+  intercept included. Absent, the bridge sends none and mzLib chooses by
+  limma's fitFDist rule (EmpiricalBayes.DefaultSplineBasisCount, mzLib
+  1.0.594 \#1398): 1 + (n \>= 3) + (n \>= 6) + (n \>= 30) for n fitted
+  features, so 4 only from 30 features. A given value is capped at the
+  fitted features minus one. mzLib caps either at the distinct average
+  responses and may merge coinciding knots; prior.spline_basis_count
+  reports what was used.
 
 - `threads`:
 
@@ -440,17 +448,6 @@ any work.
 
 Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not
 yet shipped.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- Rust and R spellings are proposals until those bindings ship the verb.
-
-- stats_fit_malat.json is the largest recorded fixture (about 258 KB):
-  492 features x 2 coefficients. It is real data (mzLib's RNA oligo
-  table, \#1388), derived by a rule held in
-  StatisticsTests.MalatDilutionFixture_IsLog2OfMzLibsOligoTable.
 
 ## References
 

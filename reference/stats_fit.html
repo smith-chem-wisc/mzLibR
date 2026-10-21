@@ -97,8 +97,9 @@ reference output.</p>
 
 
 <dt id="arg-spline-basis">spline_basis<a class="anchor" aria-label="anchor" href="#arg-spline-basis"></a></dt>
-<dd><p>Basis functions of the trend spline, intercept included (the bridge's
-  default is 4). Only with <code>trend = TRUE</code>; mzLib may use fewer, and <code>prior$spline_basis_count</code>
+<dd><p>Basis functions of the trend spline, intercept included. Only with
+  <code>trend = TRUE</code>. Leave it <code>NULL</code> to let mzLib choose, as limma does, for the number of
+  features; mzLib may also use fewer than you ask for. Either way <code>prior$spline_basis_count</code>
   reports what it used.</p></dd>
 
 
@@ -153,10 +154,11 @@ controls the false discovery rate among the features tested; it is not a target-
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>stats fit</code>. Generated from the bridge's verb spec <code>stats.fit.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>stats fit</code>. Generated from the bridge's verb spec <code>stats.fit.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs" class="external-link"><code>LinearModel.Fit</code></a> in <code>mzLib/StatisticalModels/LinearModel.cs</code> at mzLib <code>0a808fec</code></p></li>
-<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs" class="external-link"><code>EmpiricalBayes.Moderate</code></a> in <code>mzLib/StatisticalModels/EmpiricalBayes.cs</code> at mzLib <code>0a808fec</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs" class="external-link"><code>EmpiricalBayes.Moderate</code></a> in <code>mzLib/StatisticalModels/EmpiricalBayes.cs</code> at mzLib <code>d10017ce</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs" class="external-link"><code>EmpiricalBayes.FitPrior</code></a> in <code>mzLib/StatisticalModels/EmpiricalBayes.cs</code> at mzLib <code>0a808fec</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs" class="external-link"><code>EmpiricalBayes.DefaultSplineBasisCount</code></a> in <code>mzLib/StatisticalModels/EmpiricalBayes.cs</code> at mzLib <code>d10017ce</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/MultipleTesting.cs" class="external-link"><code>MultipleTesting.BenjaminiHochberg</code></a> in <code>mzLib/StatisticalModels/MultipleTesting.cs</code> at mzLib <code>0a808fec</code></p></li>
 </ul></div>
     <div class="section level2">
@@ -175,7 +177,7 @@ controls the false discovery rate among the features tested; it is not a target-
 <dd><p>flag; default <code>FALSE</code>. Let the prior variance trend with each feature's average response (limma's trend = TRUE), as a natural cubic spline.</p></dd>
 
 <dt><code>spline_basis</code> (wire <code>--spline-basis</code>)</dt>
-<dd><p>int; in <strong>basis functions</strong>; default <code>4</code>; range <code>&gt;= 1; only with --trend</code>. Basis functions of the trend spline, intercept included. mzLib caps it at the distinct average responses and the fitted features minus one; prior.spline_basis_count reports what was used.</p></dd>
+<dd><p>int; in <strong>basis functions</strong>; default absent; range <code>&gt;= 1; only with --trend</code>. Basis functions of the trend spline, intercept included. Absent, the bridge sends none and mzLib chooses by limma's fitFDist rule (EmpiricalBayes.DefaultSplineBasisCount, mzLib 1.0.594 #1398): 1 + (n &gt;= 3) + (n &gt;= 6) + (n &gt;= 30) for n fitted features, so 4 only from 30 features. A given value is capped at the fitted features minus one. mzLib caps either at the distinct average responses and may merge coinciding knots; prior.spline_basis_count reports what was used.</p></dd>
 
 <dt><code>threads</code></dt>
 <dd><p>int; in <strong>threads</strong>; default <code>1</code>; range <code>&gt;= 1, or -1 for every core</code>. Features fitted at once. The bridge default is 1 (BULK.md); mzLib's own default is -1. Results are identical at any value.</p></dd>
@@ -354,12 +356,6 @@ controls the false discovery rate among the features tested; it is not a target-
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
     <p>Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not yet shipped.</p>
     </div>
-    <div class="section level2">
-    <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
-    <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>Rust and R spellings are proposals until those bindings ship the verb.</p></li>
-<li><p>stats_fit_malat.json is the largest recorded fixture (about 258 KB): 492 features x 2 coefficients. It is real data (mzLib's RNA oligo table, #1388), derived by a rule held in StatisticsTests.MalatDilutionFixture_IsLog2OfMzLibsOligoTable.</p></li>
-</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
 

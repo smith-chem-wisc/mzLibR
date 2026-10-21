@@ -94,7 +94,7 @@ for the channels themselves.
 ## Wraps
 
 Wire verb `sdrf design`. Generated from the bridge's verb spec
-`sdrf.design.yaml` (bridge commit `e76157831b15`) by
+`sdrf.design.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -318,9 +318,6 @@ The spec records these as open. They are listed rather than hidden:
   per-deposit facts; a batch would need either one shared declaration
   (only sensible with none, i.e. each document's only factor column) or
   a per-document list. Decide before adding sdrf design_many.
-
-- Not yet ported: mzLibRust and mzLibR names above are proposals until
-  their ports land (parity order).
 
 ## References
 

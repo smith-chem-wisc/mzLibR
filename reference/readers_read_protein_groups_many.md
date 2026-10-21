@@ -65,7 +65,7 @@ groups over the files read and `returned_count` the groups returned;
 
 Wire verb `readers read-protein-groups` with `--paths-stdin`. Generated
 from the bridge's verb spec `readers.read-protein-groups.yaml` (bridge
-commit `e76157831b15`) by `scripts/build-man.R`; the spec owns these
+commit `22638d4276ff`) by `scripts/build-man.R`; the spec owns these
 facts, and all three bindings render the same ones.
 
 - [`ProteinGroupFromTsvFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs)
@@ -293,8 +293,9 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   the answer is too large to return as one JSON document (PYB-3 part 1;
   measured: past the ~1.07 G-character .NET string ceiling, not RAM).
   Message: 'this read (N records) is too large to return as one
-  document; use `--limit`/`--offset` or `--out`', N the parsed
-  record_count
+  document; use `--limit`/`--offset` or `--out`', N the records this
+  answer holds (its returned_count, or record_count where the envelope
+  has none)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -365,15 +366,21 @@ The spec records these as open. They are listed rather than hidden:
   in read-records. Revisit if every binding ends up joining for the same
   field.
 
-- Only the MetaMorpheus 1.1.11 fixture exists (label-free); no isobaric
-  or 1.2+ (BioPolymer ...) header table has been read through this verb
-  yet.
+- Two fixtures exist, both label-free and in MetaMorpheus 1.1.x's
+  'Protein ...' header names: readers_protein_groups.json (MetaMorpheus
+  1.1.11) and readers_protein_groups_rna.json (an RNA
+  AllQuantifiedTranscriptGroups.tsv, mzLib \#1388). No isobaric or
+  'BioPolymer ...' header table has been read through this verb yet.
 
-- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
-  parsed record count already predicts it, is not built. It needs a
-  characters-per-record threshold measured per format (dataRepo's ~805
-  per record is one file type); part 1 catches the failure after
-  serialising.
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising is not
+  built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches
+  the failure after serialising. A threshold per record will not work:
+  dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04)
+  measured 725 and 805 characters per record in two psmtsv files from
+  one producer. It proposed source size instead, 0.63 to 0.71 output
+  characters per source byte, which puts the limit at about 1.51 to 1.70
+  GB of source text. That is two files of one format, and no threshold
+  has been agreed.
 
 ## See also
 

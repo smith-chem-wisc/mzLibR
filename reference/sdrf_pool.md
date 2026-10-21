@@ -70,7 +70,7 @@ as part of any key.
 ## Wraps
 
 Wire verb `sdrf pool`. Generated from the bridge's verb spec
-`sdrf.pool.yaml` (bridge commit `e76157831b15`) by
+`sdrf.pool.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -209,10 +209,11 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- out has no extension check, unlike the reader verbs, sdrf design and
-  proteins annotate-go (PYB-1). It writes an SDRF, conventionally
-  .sdrf.tsv; should it share their .tsv-only rule? Behaviour unchanged
-  until decided (noted on pyMzLib \#76).
+- Decided in bridge 010 (PYB-4): out takes the .tsv-only rule, through
+  Program.RequireTsvOutput, before any input is read. Not built yet: at
+  pyMzLib main b18f013, Sdrf.Pool reads `--out` with no check. When
+  PYB-4 merges, delete this, and add the rule to out's doc and to the
+  usage errors.
 
 ## References
 

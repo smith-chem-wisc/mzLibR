@@ -62,7 +62,7 @@ data.frame, with no accession repeated.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pride_search</span><span class="op">(</span><span class="va">keyword</span>, page_size <span class="op">=</span> <span class="fl">100</span>, timeout <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pride_search</span><span class="op">(</span><span class="va">keyword</span>, page_size <span class="op">=</span> <span class="cn">NULL</span>, timeout <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -78,7 +78,7 @@ data.frame, with no accession repeated.</p>
 
 <dt id="arg-page-size">page_size<a class="anchor" aria-label="anchor" href="#arg-page-size"></a></dt>
 <dd><p>How many projects to request per underlying API call. Changes how many
-  requests the fetch takes, never what comes back.</p></dd>
+  requests the fetch takes, never what comes back. <code>NULL</code> means mzLib's default.</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
@@ -139,7 +139,7 @@ one page cannot be affected.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride search</code>. Generated from the bridge's verb spec <code>pride.search.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride search</code>. Generated from the bridge's verb spec <code>pride.search.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.SearchProjectsAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.MaxKeywordLength</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideProjectSearchResult.cs" class="external-link"><code>PrideProjectSearchResult</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideProjectSearchResult.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -152,7 +152,7 @@ one page cannot be affected.</p>
 <dd><p>string; required; range <code>1 to 1000 characters</code>. What to search for, matched by PRIDE across titles, descriptions, keywords, organisms, references and more. Longer than 1000 characters (mzLib MaxKeywordLength) is a usage error, because PRIDE answers one with HTTP 500, which cannot be told apart from an outage.</p></dd>
 
 <dt><code>page_size</code> (wire <code>--page-size</code>)</dt>
-<dd><p>int; in <strong>projects</strong>; default <code>100</code>; range <code>&gt;= 1</code>. Hits requested per underlying API call. Changes how many requests the fetch takes, never what comes back.</p></dd>
+<dd><p>int; in <strong>projects</strong>; default absent; range <code>&gt;= 1</code>. Hits requested per underlying API call. Changes how many requests the fetch takes, never what comes back. Absent, the bridge sends none and SearchProjectsAsync's default applies (100 at d10017ce).</p></dd>
 
 
 </dl></div>
@@ -166,7 +166,7 @@ one page cannot be affected.</p>
 <dd><p>int; in <strong>projects</strong>; never <code>NA</code>. Entries in results. 0 is a real answer (no hits), not an error.</p></dd>
 
 <dt><code>results</code></dt>
-<dd><p>object[]; never <code>NA</code>. One entry per matching project, deduplicated by accession, in PRIDE's ranking order; fields under result.columns.</p></dd>
+<dd><p>object[]; never <code>NA</code>. One entry per matching project, deduplicated by accession, in PRIDE's ranking order, which is not promised stable across calls; fields under result.columns.</p></dd>
 
 
 </dl></div>
@@ -284,7 +284,7 @@ one page cannot be affected.</p>
     <h2 id="errors">Errors<a class="anchor" aria-label="anchor" href="#errors"></a></h2>
     <p>Each is an R condition carrying the class shown and <code>mzlib_error</code>; see <code><a href="mzlib_error.html">mzlib_error</a></code>.</p>
 <dl><dt><code>mzlib_usage_error</code> (usage)</dt>
-<dd><p>keyword missing or blank; keyword longer than 1000 characters; page-size not an integer or &lt;= 0 (both checked by the bridge before mzLib)</p></dd>
+<dd><p>keyword missing or blank; keyword longer than 1000 characters; page-size not an integer, given without a value, or &lt;= 0 (all checked by the bridge before mzLib)</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
 <dd><p>the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in transit</p></dd>
@@ -320,9 +320,7 @@ one page cannot be affected.</p>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>Shape difference: mzlib::pride::search / search_with return Vec&lt;PrideProjectSearchResult&gt; and R pride_search() returns the hits data.frame, so neither carries the envelope's keyword or result_count (the caller has the keyword; the count is len() / nrow()). pyMzLib returns the hits list likewise. Declare it as a deviation or drop the two fields from the wire?</p></li>
-<li><p>The bindings also refuse a keyword beginning with '-' (it would be parsed as an option); the bridge cannot, since a value starting with '–' reaches it as a flag and the keyword then reads as missing.</p></li>
-<li><p>The ranking order of results is PRIDE's and is not promised stable across calls.</p></li>
+<ul><li><p>The bindings refuse a keyword beginning with '-', but the bridge misreads only one beginning with '–': its parser takes the next argument as the value unless that starts with '–'. So '-x' reaches PRIDE as given, while '<code>--x</code>' turns <code>--keyword</code> into a flag and the call fails as 'Missing required option <code>--keyword</code>.' Whether the bindings should narrow their check to '–' is undecided.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

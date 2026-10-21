@@ -2,7 +2,7 @@
 
 `nrow(digest$peptides)` counts **peptidoforms** - one per
 sequence-and-modification-placement. This counts distinct sequences. On
-albumin at two modifications the two are **303** and **195**.
+albumin's default digest the two are **310** and **202**.
 
 ## Usage
 

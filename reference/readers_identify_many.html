@@ -91,7 +91,7 @@ at a time, and answers in input order.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers identify</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.identify.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers identify</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.identify.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs" class="external-link"><code>FileReader.ReadResultFile</code></a> in <code>mzLib/Readers/FileReader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.ParseFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -145,7 +145,7 @@ at a time, and answers in input order.</p>
     <div class="section level2">
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
-<ul><li><p>Cheap but not pure: mzLib reads a bare .tsv's first line, a .mztab's first five and a .d directory's listing to dispatch them.</p></li>
+<ul><li><p>Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and a .mztab's first five, a .parquet's column schema and a .d directory's listing to dispatch them. A .parquet without the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run) is a usage error, 'Parquet file type not supported' (mzLib 1.0.595, #1384).</p></li>
 <li><p>No software field: mzLib's Software property is Unspecified for everything its factory builds; file_type already names the tool.</p></li>
 <li><p>Many paths: <code>--paths-stdin</code> (newline-delimited paths on stdin) with <code>--threads</code> N (default 1, -1 = one per core; the answer is identical at any value) and <code>--on-error</code> fail|skip answers {file_count, read_count, failed_count, on_error, files}, files[i] being path i's answer in input order with error set when it could not be identified under skip (readers_many_identify.json). There is no table and no <code>--out</code>.</p></li>
 </ul></div>

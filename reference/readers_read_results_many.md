@@ -61,7 +61,7 @@ input: `record_count` in records, `rows_not_read` in rows,
 
 Wire verb `readers read-results` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-results.yaml` (bridge commit
-`e76157831b15`) by `scripts/build-man.R`; the spec owns these facts, and
+`22638d4276ff`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadQuantifiableResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)
@@ -210,9 +210,9 @@ rows are grouped by input, in input order, whatever `threads` is.
 
 - `is_decoy`:
 
-  bool; `NA` when the format cannot report decoys: MSFragger and DIA-NN,
-  where is_decoy is also in absent_fields. Decoy flag where the format
-  carries one.
+  bool; `NA` when the format cannot report decoys: MSFragger and both
+  DIA-NN report types, where is_decoy is also in absent_fields. Decoy
+  flag where the format carries one.
 
 - `protein_accessions`:
 
@@ -276,8 +276,9 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   the answer is too large to return as one JSON document (PYB-3 part 1;
   measured: past the ~1.07 G-character .NET string ceiling, not RAM).
   Message: 'this read (N records) is too large to return as one
-  document; use `--limit`/`--offset` or `--out`', N the parsed
-  record_count
+  document; use `--limit`/`--offset` or `--out`', N the records this
+  answer holds (its returned_count, or record_count where the envelope
+  has none)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -287,15 +288,17 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - No q-value, PEP or score: nothing here is FDR-filtered.
 
-- is_decoy is absent for MSFragger and DIA-NN, which write no
-  target/decoy label; null there means unknown, not target.
+- is_decoy is absent for MSFragger and both DIA-NN report types, which
+  give mzLib no per-row target/decoy label (a DIA-NN 2.x parquet written
+  with `--report-decoys` has one, but mzLib skips its decoy rows); null
+  there means unknown, not target.
 
 - monoisotopic_mass is the theoretical mass in every format; the
   observed precursor is not in this view.
 
 - psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous
-  row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:119,
-  :194).
+  row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:122,
+  :197).
 
 - A malformed psmtsv row is dropped silently by mzLib; rows_not_read
   counts them.
@@ -331,11 +334,15 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
-  parsed record count already predicts it, is not built. It needs a
-  characters-per-record threshold measured per format (dataRepo's ~805
-  per record is one file type); part 1 catches the failure after
-  serialising.
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising is not
+  built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches
+  the failure after serialising. A threshold per record will not work:
+  dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04)
+  measured 725 and 805 characters per record in two psmtsv files from
+  one producer. It proposed source size instead, 0.63 to 0.71 output
+  characters per source byte, which puts the limit at about 1.51 to 1.70
+  GB of source text. That is two files of one format, and no threshold
+  has been agreed.
 
 ## See also
 

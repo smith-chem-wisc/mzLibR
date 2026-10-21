@@ -19,7 +19,7 @@ scans$records[, c("one_based_scan_number", "retention_time", "selected_ion_mz")]
 files <- pride_list_files("PXD000001")
 files[files$size_mb < 5 & files$downloadable, c("file_name", "size_mb", "category")]
 
-digest <- peptidoform_fragments("P02768")           # serum albumin, tryptic, ETD
+digest <- peptidoform_fragments("P02768")           # serum albumin, at mzLib's defaults
 digest_fragments_by_series(digest)
 
 quant <- flashlfq_quantify("AllPSMs.psmtsv", c("run_3.mzML", "run_4.mzML"),
@@ -96,19 +96,21 @@ pinned by a test.
 - **A compressed file’s extension is `.gz`, not what it is compressed
   from.** PXD000001’s peak list is `…pride.mgf.gz`, so filtering on
   `".mgf"` matches nothing.
-- **PRIDE’s API manifest is incomplete.** It publishes 8 files for
-  PXD000001; the FTP tree holds 13, including the two largest. And
-  `file_size_bytes` is the *decompressed* size for some compressed files
-  — 2.75x off for that MGF.
-- **mzLib’s `"trypsin|P"` applies the Keil rule and plain `"trypsin"`
-  does not** — the reverse of the MaxQuant and Mascot convention. 195
-  peptides against 202 on albumin.
-- **`min_length` defaults to 7 and silently discards everything
-  shorter** — albumin goes from 195 distinct sequences to 243 at
-  `min_length = 1`.
-- **ETD and ECD return a `y` series with no `b` ions**, about a third of
-  the fragment list. No fragmentation mechanism produces that; use
-  [`digest_fragments_by_series()`](https://smith-chem-wisc.github.io/mzLibR/reference/digest_fragments_by_series.md).
+- **PRIDE’s API manifest is incomplete.** On 2026-10-21 it listed 9 of
+  PXD000001’s 14 files, omitting the two largest;
+  [`pride_list_ftp_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_ftp_files.md)
+  lists them all. And `file_size_bytes` is the *decompressed* size for
+  some compressed files — 2.75x off for that MGF.
+- **mzLib’s `"trypsin|P"` applies the Keil rule and plain `"trypsin"`,
+  its default, does not** — the reverse of the MaxQuant and Mascot
+  convention. 195 peptides against 202 on albumin.
+- **mzLib’s default `min_length` silently discards everything shorter**
+  — albumin goes from 202 distinct sequences to 257 at `min_length = 1`.
+- **[`peptidoform_fragments()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
+  leaves its defaults to mzLib.** An argument you leave `NULL` is not
+  sent, and mzLib’s own default applies; with no `dissociation`, the
+  bridge uses HCD until mzLib names one (mzLib#1488). The result says
+  which protease and dissociation type were used.
 - **Read `peaks`, never the peptide roll-up, for match-between-runs.**
   The roll-up drops most transfers — 140 true against 52 shown — and a
   whole run’s can vanish.

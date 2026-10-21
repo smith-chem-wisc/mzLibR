@@ -75,7 +75,8 @@ whole peptide minus NH2 - the N-Ca cleavage at residue 1 - which is <strong>corr
 deliberate</strong>, not a defect. It is absent when the peptide starts with proline.</p>
 <p>Note also that <code>zDot</code> counts come in <strong>below</strong> <code>length</code> per peptide rather than above it,
 because z-dot ions are suppressed N-terminal to proline while the complementary <code>c</code> ions are
-not. On albumin that is 138 proline sites, 138 suppressed <code>z-dot</code> and <strong>0</strong> suppressed <code>c</code>
+not. On albumin with <code>dissociation = "ETD"</code> that is 135 proline sites across its 202 distinct
+sequences, 135 suppressed <code>z-dot</code> and <strong>0</strong> suppressed <code>c</code>
 (smith-chem-wisc/mzLib#1110).</p>
     </div>
     <div class="section level2">
@@ -89,8 +90,8 @@ not. On albumin that is 138 proline sites, 138 suppressed <code>z-dot</code> and
 <span class="r-in"><span><span class="va">digest</span> <span class="op">&lt;-</span> <span class="fu"><a href="peptidoform_fragments.html">peptidoform_fragments</a></span><span class="op">(</span><span class="st">"P02768"</span>, max_modifications <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">digest_fragments_by_series</span><span class="op">(</span><span class="va">digest</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   product_type  n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1            c 64</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         zDot 63</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            b 64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2            y 64</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

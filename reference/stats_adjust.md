@@ -44,7 +44,7 @@ rows; and `caveats`.
 ## Wraps
 
 Wire verb `stats adjust`. Generated from the bridge's verb spec
-`stats.adjust.yaml` (bridge commit `e76157831b15`) by
+`stats.adjust.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -151,12 +151,6 @@ any work.
 
 Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not
 yet shipped.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- Rust and R spellings are proposals until those bindings ship the verb.
 
 ## References
 

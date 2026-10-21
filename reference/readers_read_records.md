@@ -106,7 +106,7 @@ destroy data.
 ## Wraps
 
 Wire verb `readers read-records`. Generated from the bridge's verb spec
-`readers.read-records.yaml` (bridge commit `e76157831b15`) by
+`readers.read-records.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -124,8 +124,8 @@ render the same ones.
 
 - `path`:
 
-  path; required. Any of the file types readers formats lists (38 at
-  mzLib 1.0.593), including spectra files and the Bruker .d directories.
+  path; required. Any of the file types readers formats lists (39 at
+  mzLib 1.0.595), including spectra files and the Bruker .d directories.
 
 - `offset`:
 
@@ -232,7 +232,10 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   mbr_score on a current FlashLFQ peaks table, \#1345; q_value and
   pep_q_value on an MsPathFinderT targets file). Judged from mzLib's own
   \[Name\]/\[Optional\] attributes against the file's header; empty
-  means none found or no basis to judge.
+  means none found or no basis to judge. Always empty for a .parquet
+  (DiaNnReportParquet): it has no text header, and mzLib maps its
+  columns through a rename table it does not expose, so there is no
+  basis without re-implementing that mapping.
 
 - `error`:
 
@@ -286,13 +289,13 @@ named in `column_names`. Every cell follows these rules:
 - -1 crosses unchanged: in a format's own columns it is often a real
   measurement. The one exception is retention_time and monoisotopic_mass
   on IQuantifiableRecord types (psmtsv, osmtsv, MsFraggerPsm,
-  DiaNnReport), where mzLib documents -1 as absent; those are null,
-  matching read-results.
+  DiaNnReport, DiaNnReportParquet), where mzLib documents -1 as absent;
+  those are null, matching read-results.
 
 - Units are the writing tool's and are not normalised: retention time is
-  minutes for psmtsv/osmtsv/MsFraggerPsm/DiaNnReport and undeclared for
-  the rest. read-records carries no retention_time_unit; use a typed
-  view when units matter.
+  minutes for psmtsv/osmtsv/MsFraggerPsm/DiaNnReport/DiaNnReportParquet
+  and undeclared for the rest. read-records carries no
+  retention_time_unit; use a typed view when units matter.
 
 - Enums cross as their member names, dates as ISO 8601 strings, and a
   list of scalars as ONE ';'-joined string, on the wire and in out
@@ -366,8 +369,9 @@ only from
   the answer is too large to return as one JSON document (PYB-3 part 1;
   measured: past the ~1.07 G-character .NET string ceiling, not RAM).
   Message: 'this read (N records) is too large to return as one
-  document; use `--limit`/`--offset` or `--out`', N the parsed
-  record_count
+  document; use `--limit`/`--offset` or `--out`', N the records this
+  answer holds (its returned_count, or record_count where the envelope
+  has none)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -416,8 +420,23 @@ only from
 
 - pro_forma is never absent at mzLib 1.0.592: when a psmtsv has no
   ProForma column it is computed from Full Sequence, which the reader
-  REQUIRES (SpectrumMatchFromTsv.cs:194), so a file without both fails
+  REQUIRES (SpectrumMatchFromTsv.cs:197), so a file without both fails
   to read instead.
+
+- Since mzLib 1.0.594 (#1403), a computed pro_forma names
+  UniProt-sourced modifications by UNIMOD accession:
+  BottomUpExample.psmtsv's first row reads YPIEH\[UNIMOD:34\]GIVTNWDDMEK
+  where it read YPIEH\[UniProt:Tele-methylhistidine on H\]GIVTNWDDMEK. A
+  pro_forma column the file carries is passed through as written.
+
+- A DIA-NN 2.x report.parquet (DiaNnReportParquet, mzLib \#1384) reads
+  into the TSV report's record type, DiaNnPrecursor, so the columns are
+  the same; those for fields 2.x no longer writes (File.Name,
+  PG.Quantity, MS2.Scan and others, DiaNnParquetReportFile.cs:16) hold
+  mzLib's not-reported default: null, except ms2_scan_number, which
+  reads 0. absent_fields does not name them (see absent_fields). Decoy
+  rows (`--report-decoys`) are skipped by mzLib, so record_count counts
+  targets.
 
 - Many files: `--paths-stdin` needs every input to have the same record
   type (the long table has one column set); a mixed list is a usage
@@ -451,21 +470,21 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- The three mzLib 1.0.592 fixtures (mzid_gz, mm_protein_groups,
-  mm_peptides) exist only on pyMzLib#61 until it merges; mzLibRust and
-  mzLibR have not copied them.
-
 - absent_fields for read-records is judged only for record types mapped
   with CsvHelper \[Name\] attributes (FlashLFQ peaks, MSFragger,
   MsPathFinderT, TopFD, the \#1347 tables, ...). psmtsv/osmtsv parse
   their own header dictionary, so their optional columns are not judged
   yet; an empty list there means no basis, not nothing absent.
 
-- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
-  parsed record count already predicts it, is not built. It needs a
-  characters-per-record threshold measured per format (dataRepo's ~805
-  per record is one file type); part 1 catches the failure after
-  serialising.
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising is not
+  built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches
+  the failure after serialising. A threshold per record will not work:
+  dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04)
+  measured 725 and 805 characters per record in two psmtsv files from
+  one producer. It proposed source size instead, 0.63 to 0.71 output
+  characters per source byte, which puts the limit at about 1.51 to 1.70
+  GB of source text. That is two files of one format, and no threshold
+  has been agreed.
 
 ## See also
 

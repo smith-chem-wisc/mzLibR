@@ -91,7 +91,7 @@ for those.
 ## Wraps
 
 Wire verb `quant median-polish`. Generated from the bridge's verb spec
-`quant.median-polish.yaml` (bridge commit `e76157831b15`) by
+`quant.median-polish.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -129,7 +129,11 @@ render the same ones.
   is its own biological replicate with a blank condition, as FlashLFQ
   assumes with no design file. Median polish groups runs by condition
   and biological replicate, so this is how a caller says which runs are
-  replicates of which sample.
+  replicates of which sample. Within a sample, median polish averages a
+  peptide's positive intensities over the runs that share a fraction,
+  then takes the fraction with the highest average. A techrep number
+  only orders runs; it never changes a value (FlashLFQResults.cs:471-497
+  at d10017ce).
 
 - `use_shared_peptides` (wire `--shared-peptides`):
 
@@ -207,7 +211,9 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   measured in that sample. A sample of several runs (fractions,
   technical replicates) reports their sum, as FlashLFQ's own output
   does, EXCEPT when labels are run names (no design and one fraction):
-  then the bridge reads the first run of the sample only.
+  then the bridge reads the sample's first run only, which loses
+  nothing: the engine zeroes every run and writes each sample's value on
+  its first run (FlashLFQResults.cs:410-417, :514 at d10017ce).
 
 ## Fields of `samples`
 
@@ -299,29 +305,15 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- The bridge's own comment in MedianPolishToWire and pyMzLib's
-  median_polish docstring still say the TSV labels disagree until
-  mzLib#1129 lands; it is in the pin, so both are stale (confirmed by
-  pyMzLib 005; removed on pyMzLib main by \#67, unreleased after 0.2.0).
-  The agreement stated in the caveat is from reading ProteinGroup.cs at
-  23c2490e, not from a recorded `--out` run.
+- The label agreement in the caveat comes from reading
+  ProteinGroup.TabSeparatedHeader at the pin, not from a recorded
+  `--out` run: MedianPolish_WritesQuantifiedProteinsTsv_WhenOutGiven
+  checks only that the file exists. A test that reads the file's
+  Intensity\_ headers back against samples\[\].label, with and without a
+  design, would close it.
 
 - median_polish_small.json is hand-shaped ('/abs/...'), not a live
   recording.
-
-- When labels are run names, the bridge reads only a sample's first run;
-  whether the engine zeroes that sample's other runs (so the reading
-  loses nothing) was not traced. It matters only if several runs share a
-  biorep with no design.
-
-- The design's techrep and fraction are parsed but only fraction feeds
-  the label rule; how FlashLFQ's median polish uses techrep is mzLib's
-  and was not traced.
-
-- The wire params peptides/shared-peptides/out project as
-  peptides/use_shared_peptides/output_directory in pyMzLib; the spec
-  lint will need PYTHON_DEVIATIONS entries (stdin -\> design,
-  shared-peptides -\> use_shared_peptides, out -\> output_directory).
 
 ## References
 

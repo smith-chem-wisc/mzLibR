@@ -13,7 +13,7 @@ data.frame, with no accession repeated.
 ## Usage
 
 ``` r
-pride_search(keyword, page_size = 100, timeout = 300)
+pride_search(keyword, page_size = NULL, timeout = 300)
 ```
 
 ## Arguments
@@ -29,7 +29,8 @@ pride_search(keyword, page_size = 100, timeout = 300)
 - page_size:
 
   How many projects to request per underlying API call. Changes how many
-  requests the fetch takes, never what comes back.
+  requests the fetch takes, never what comes back. `NULL` means mzLib's
+  default.
 
 - timeout:
 
@@ -96,7 +97,7 @@ affected.
 ## Wraps
 
 Wire verb `pride search`. Generated from the bridge's verb spec
-`pride.search.yaml` (bridge commit `e76157831b15`) by
+`pride.search.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -128,9 +129,10 @@ render the same ones.
 
 - `page_size` (wire `--page-size`):
 
-  int; in **projects**; default `100`; range `>= 1`. Hits requested per
+  int; in **projects**; default absent; range `>= 1`. Hits requested per
   underlying API call. Changes how many requests the fetch takes, never
-  what comes back.
+  what comes back. Absent, the bridge sends none and
+  SearchProjectsAsync's default applies (100 at d10017ce).
 
 ## Returned fields
 
@@ -148,7 +150,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `results`:
 
   object\[\]; never `NA`. One entry per matching project, deduplicated
-  by accession, in PRIDE's ranking order; fields under result.columns.
+  by accession, in PRIDE's ranking order, which is not promised stable
+  across calls; fields under result.columns.
 
 ## Columns
 
@@ -324,8 +327,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - `mzlib_usage_error` (usage):
 
   keyword missing or blank; keyword longer than 1000 characters;
-  page-size not an integer or \<= 0 (both checked by the bridge before
-  mzLib)
+  page-size not an integer, given without a value, or \<= 0 (all checked
+  by the bridge before mzLib)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -384,19 +387,12 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- Shape difference: mzlib::pride::search / search_with return
-  Vec\<PrideProjectSearchResult\> and R pride_search() returns the hits
-  data.frame, so neither carries the envelope's keyword or result_count
-  (the caller has the keyword; the count is len() / nrow()). pyMzLib
-  returns the hits list likewise. Declare it as a deviation or drop the
-  two fields from the wire?
-
-- The bindings also refuse a keyword beginning with '-' (it would be
-  parsed as an option); the bridge cannot, since a value starting with
-  '–' reaches it as a flag and the keyword then reads as missing.
-
-- The ranking order of results is PRIDE's and is not promised stable
-  across calls.
+- The bindings refuse a keyword beginning with '-', but the bridge
+  misreads only one beginning with '–': its parser takes the next
+  argument as the value unless that starts with '–'. So '-x' reaches
+  PRIDE as given, while '`--x`' turns `--keyword` into a flag and the
+  call fails as 'Missing required option `--keyword`.' Whether the
+  bindings should narrow their check to '–' is undecided.
 
 ## References
 

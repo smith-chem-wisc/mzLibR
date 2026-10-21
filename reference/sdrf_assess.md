@@ -54,7 +54,7 @@ read the `caveats`.
 ## Wraps
 
 Wire verb `sdrf assess`. Generated from the bridge's verb spec
-`sdrf.assess.yaml` (bridge commit `e76157831b15`) by
+`sdrf.assess.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -227,13 +227,6 @@ the thread count stated on the wire.
 ## Since
 
 Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- fill_rate is a C# double that serialises 1.0 as 1; bindings must read
-  it as a float.
 
 ## References
 

@@ -80,7 +80,7 @@ A character vector of the paths where the files now are.
 ## Wraps
 
 Wire verb `pride download`. Generated from the bridge's verb spec
-`pride.download.yaml` (bridge commit `e76157831b15`) by
+`pride.download.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -265,28 +265,16 @@ The spec records these as open. They are listed rather than hidden:
 
 - No recorded fixture, so no checked example: a replay needs a stub
   bridge that also fakes the written files. The envelope keys above are
-  from ToWire in PrideDownloadAsync, not from a recording.
+  read from the object PrideDownloadAsync returns, not from a recording.
 
 - The unmatched-selection check runs after the download, so a typo in
   one name still downloads every other selected file before failing.
   Checking the manifest first would need the bridge to fetch it
   separately from DownloadProjectFilesAsync.
 
-- downloaded_count counts skipped files under no-overwrite; the wire has
-  no separate skipped count.
-
-- 'selection' under bindings names the names-from-stdin projection
-  (download_files in every binding); tools/check_verbs.py does not read
-  it.
-
 - A zero-match filter is a usage error in the bindings but a success on
   the wire; whether the wire should raise it (as it does for an
   unmatched names-from-stdin selection) is undecided.
-
-- Wire params dest, ext, no-overwrite, names-from-stdin and stdin
-  project as destination, extensions, overwrite (inverted) and
-  download_files(files) in every binding; pyMzLib's spec lint will need
-  PYTHON_DEVIATIONS entries.
 
 ## References
 

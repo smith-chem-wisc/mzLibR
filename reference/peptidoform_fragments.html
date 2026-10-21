@@ -56,9 +56,9 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">peptidoform_fragments</span><span class="op">(</span><span class="va">accession</span>, protease <span class="op">=</span> <span class="st">"trypsin|P"</span>, dissociation <span class="op">=</span> <span class="st">"ETD"</span>,</span>
-<span>  modifications <span class="op">=</span> <span class="cn">TRUE</span>, missed_cleavages <span class="op">=</span> <span class="fl">2</span>, min_length <span class="op">=</span> <span class="fl">7</span>, max_length <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  max_modifications <span class="op">=</span> <span class="fl">2</span>, max_isoforms <span class="op">=</span> <span class="fl">1024</span>, terminus <span class="op">=</span> <span class="st">"Both"</span>, timeout <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">peptidoform_fragments</span><span class="op">(</span><span class="va">accession</span>, protease <span class="op">=</span> <span class="cn">NULL</span>, dissociation <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  modifications <span class="op">=</span> <span class="cn">TRUE</span>, missed_cleavages <span class="op">=</span> <span class="cn">NULL</span>, min_length <span class="op">=</span> <span class="cn">NULL</span>, max_length <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_modifications <span class="op">=</span> <span class="cn">NULL</span>, max_isoforms <span class="op">=</span> <span class="cn">NULL</span>, terminus <span class="op">=</span> <span class="cn">NULL</span>, timeout <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,62 +70,73 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 
 
 <dt id="arg-protease">protease<a class="anchor" aria-label="anchor" href="#arg-protease"></a></dt>
-<dd><p>The protease, in <strong>mzLib's naming</strong>.</p>
-<p><strong>Read this if you are coming from MaxQuant or Mascot.</strong> mzLib's <code>"trypsin|P"</code> *applies* the
-  Keil rule - it does not cleave before proline - while plain <code>"trypsin"</code> cleaves everywhere.
-  That is the <strong>reverse</strong> of the MaxQuant and Mascot convention, where the <code>/P</code> suffix means
-  "do cleave before proline". On albumin the two give <strong>195</strong> and <strong>202</strong> peptides, so the
-  mistake is quiet and small enough to survive review (smith-chem-wisc/mzLib#1106).</p></dd>
+<dd><p>A protease name, as mzLib names it. <code>NULL</code> means mzLib's default protease.</p>
+<p><strong>Read this if you are coming from MaxQuant or Mascot.</strong> The names and what each one cuts
+  are mzLib's. mzLib's <code>"trypsin"</code> cuts after K and R even before proline, and <code>"trypsin|P"</code>
+  does not cut before proline: the <code>P</code> names a residue that prevents the cut. That is the
+  <strong>reverse</strong> of MaxQuant's and Mascot's <code>Trypsin/P</code>, which ignores the proline rule. On serum
+  albumin the two give <strong>202</strong> and <strong>195</strong> distinct peptides, a small count hiding a large
+  difference: which peptides you get changes wherever K or R precedes a proline
+  (smith-chem-wisc/mzLib#1106).</p></dd>
 
 
 <dt id="arg-dissociation">dissociation<a class="anchor" aria-label="anchor" href="#arg-dissociation"></a></dt>
-<dd><p>The dissociation type, e.g. <code>"ETD"</code>, <code>"HCD"</code>, <code>"CID"</code>, <code>"ECD"</code>.</p>
-<p>**<code>"ETD"</code> and <code>"ECD"</code> return the <code>c</code> and <code>zDot</code> series** (radical N-Ca cleavage yields
-  c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the spurious <code>y</code>
-  series ETD used to emit.</p></dd>
+<dd><p><code>"HCD"</code> or <code>"CID"</code> (b and y ions), <code>"ETD"</code>, <code>"ECD"</code>, and the rest of
+  mzLib's dissociation types. <code>NULL</code> means <code>"HCD"</code>: mzLib names no default here, so HCD is the
+  bridge's choice until mzLib names one (smith-chem-wisc/mzLib#1488).</p>
+<p><code>"ETD"</code> and <code>"ECD"</code> <strong>return the c and z-dot series</strong>, <code>c</code> and <code>zDot</code> (radical N-Ca
+  cleavage yields c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the
+  spurious <code>y</code> series ETD used to emit.</p></dd>
 
 
 <dt id="arg-modifications">modifications<a class="anchor" aria-label="anchor" href="#arg-modifications"></a></dt>
 <dd><p>Whether to apply UniProt's annotated modifications.</p>
 <p><code>FALSE</code> gives the bare sequences - a clean control, since the digest's distinct backbones
   are unchanged and only the modified variants of them go away. The peptidoform count drops
-  a long way; on albumin from <strong>303</strong> to <strong>195</strong>.</p>
+  a long way; on albumin from <strong>310</strong> to <strong>202</strong>.</p>
 <p>This once carried a caveat saying <code>FALSE</code> also discarded <strong>proteolysis products</strong>, so that
   the peptide list itself changed and albumin lost two signal-peptide peptides
-  (smith-chem-wisc/pyMzLib#8). That was true and is no longer: verified against the published
-  bridge, both peptides are present either way and albumin gives 195 distinct base sequences
-  with modifications on or off.</p></dd>
+  (smith-chem-wisc/pyMzLib#8). That was true and is no longer: both peptides are present
+  either way, and albumin gives 202 distinct base sequences with modifications on or off.</p></dd>
 
 
 <dt id="arg-missed-cleavages">missed_cleavages<a class="anchor" aria-label="anchor" href="#arg-missed-cleavages"></a></dt>
-<dd><p>Maximum missed cleavage sites per peptide.</p></dd>
+<dd><p>Maximum missed cleavage sites per peptide. <code>NULL</code> means mzLib's
+  default.</p></dd>
 
 
 <dt id="arg-min-length">min_length<a class="anchor" aria-label="anchor" href="#arg-min-length"></a></dt>
-<dd><p>Shortest peptide to keep, in residues.</p>
-<p>The default of 7 <strong>silently discards</strong> everything shorter. Albumin goes from <strong>195</strong>
-  distinct sequences at <code>min_length = 7</code> to <strong>243</strong> at <code>min_length = 1</code> - a fifth of the
-  digest lives below the default. If you are looking for a short peptide and not finding it,
-  look here first.</p></dd>
+<dd><p>Shortest peptide to keep, in residues. <code>NULL</code> means mzLib's default.</p>
+<p>mzLib's default <strong>silently discards</strong> everything shorter. Albumin goes from <strong>202</strong> distinct
+  sequences at the default to <strong>257</strong> at <code>min_length = 1</code> - a fifth of the digest lives below
+  it - and histone H3.1 keeps 49 of the 96 peptides, by start and end, that it gives at
+  <code>min_length = 1</code>. If you are looking for a short peptide and not finding it, look here
+  first, and pass <code>min_length = 1</code> when you mean every peptide.</p></dd>
 
 
 <dt id="arg-max-length">max_length<a class="anchor" aria-label="anchor" href="#arg-max-length"></a></dt>
-<dd><p>Longest peptide to keep, in residues, or <code>NULL</code> for no limit.</p></dd>
+<dd><p>Longest peptide to keep, in residues. <code>NULL</code> means mzLib's default, which is
+  unbounded; <code>0</code> asks for no bound.</p></dd>
 
 
 <dt id="arg-max-modifications">max_modifications<a class="anchor" aria-label="anchor" href="#arg-max-modifications"></a></dt>
-<dd><p>Maximum modifications considered per peptide.</p></dd>
+<dd><p>Maximum modifications considered per peptide. <code>NULL</code> means mzLib's
+  default. Modification isoforms are enumerated combinatorially: histone H3.1's 49 peptides
+  give 2,419 peptidoforms at two modifications and 6,580 at three.</p></dd>
 
 
 <dt id="arg-max-isoforms">max_isoforms<a class="anchor" aria-label="anchor" href="#arg-max-isoforms"></a></dt>
-<dd><p>Maximum modification isoforms (peptidoforms) generated per peptide.</p>
+<dd><p>Maximum modification isoforms (peptidoforms) generated per peptide
+  position. <code>NULL</code> means mzLib's default.</p>
 <p><strong>This cap truncates silently.</strong> A truncated result and a genuinely short one look
-  identical from the outside - histone H3.1 at four modifications loses about <strong>30%</strong>. Check
-  <code><a href="digest_truncated.html">digest_truncated</a></code> before treating a peptide list as exhaustive.</p></dd>
+  identical from the outside - on histone H3.1 at four modifications the default cap keeps
+  8,644 of 12,808 peptidoforms, losing about a third. Check <code><a href="digest_truncated.html">digest_truncated</a></code> before
+  treating a peptide list as exhaustive.</p></dd>
 
 
 <dt id="arg-terminus">terminus<a class="anchor" aria-label="anchor" href="#arg-terminus"></a></dt>
-<dd><p>Which terminus to fragment: <code>"N"</code>, <code>"C"</code>, <code>"Both"</code> or <code>"None"</code>.</p></dd>
+<dd><p>Which terminus to fragment: <code>"N"</code>, <code>"C"</code>, <code>"Both"</code> or <code>"None"</code>. <code>NULL</code> means
+  mzLib's default.</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
@@ -134,34 +145,46 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><strong>The defaults are mzLib's, not this package's.</strong> Every digestion option you leave as <code>NULL</code>
+is not sent, and mzLib's own default (its <code>DigestionParams</code>) applies; the Parameters table
+below gives each value at the pinned mzLib. mzLib names no default dissociation type, so the
+bridge uses HCD until it does (smith-chem-wisc/mzLib#1488). The result says which protease,
+dissociation type, terminus and caps were used.</p>
+    </div>
+    <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>mzlibr_digest</code>: a list with the scalars describing the run, a <code>census</code> (see
   <code><a href="census_explain.html">census_explain</a></code>), and three data.frames that join on <code>peptide_index</code> -
   <code>peptides</code>, <code>fragments</code> and <code>modifications</code>.</p>
-<p>The scalars: <code>sequence_length</code>, the protein's length in residues; <code>max_modifications</code>, the
-  cap in modifications per peptidoform; <code>max_modification_isoforms</code>, the cap in peptidoforms
-  per peptide position; and <code>peptides_at_isoform_cap</code>, the peptide positions that reached it -
-  non-zero means the list is truncated. The census counts <code>sites</code> in residues (distinct
-  positions carrying a modification), <code>applied</code> in modifications and <code>annotated</code> in UniProt
-  features.</p>
+<p>The scalars: <code>sequence_length</code>, the protein's length in residues; <code>protease</code>,
+  <code>dissociation</code> and <code>terminus</code>, each the one passed or the default used; <code>max_modifications</code>,
+  the cap in modifications per peptidoform, and <code>max_modification_isoforms</code>, the cap in
+  peptidoforms per peptide position, each the value passed or mzLib's default;
+  <code>peptides_at_isoform_cap</code>, the peptide positions that reached it - non-zero means the list
+  is truncated; and <code>min_length</code> and <code>max_length</code> in residues and <code>missed_cleavages</code> in
+  cleavage sites, as passed, or <code>NA</code> when left to mzLib, since the bridge does not report
+  those three back. The census counts <code>sites</code> in residues (distinct positions carrying a
+  modification), <code>applied</code> in modifications and <code>annotated</code> in UniProt features.</p>
 <p><code>peptides</code> has <code>monoisotopic_mass</code>, the neutral mass in Da; <code>length</code> in residues;
   <code>missed_cleavages</code> in cleavage sites; <code>modification_count</code> in modifications; and
   <code>fixed_charges</code>, the formal charge the intact peptide carries before protonation.</p>
-<p>**<code>peptides</code> holds peptidoforms, not distinct sequences.<strong> One row per
-  sequence-and-modification-placement, so albumin at two modifications is </strong>303<strong> rows over
-  </strong>195** distinct sequences. Both are legitimate answers to "how many peptides" and they are
+<p><code>peptides</code> <strong>holds peptidoforms, not distinct sequences.</strong> One row per
+  sequence-and-modification-placement, so albumin's default digest is <strong>310</strong> rows over
+  <strong>202</strong> distinct sequences. Both are legitimate answers to "how many peptides" and they are
   not interchangeable; quoting one for the other is a large error, not a rounding one. See
   <code><a href="digest_distinct_base_sequences.html">digest_distinct_base_sequences</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>peptidoform fragments</code>. Generated from the bridge's verb spec <code>peptidoform.fragments.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>peptidoform fragments</code>. Generated from the bridge's verb spec <code>peptidoform.fragments.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs" class="external-link"><code>ProteinDbLoader.LoadProteinXML</code></a> in <code>mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Loaders.cs" class="external-link"><code>Loaders.LoadUniprot</code></a> in <code>mzLib/UsefulProteomicsDatabases/Loaders.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/Protein.cs" class="external-link"><code>Protein.Digest</code></a> in <code>mzLib/Proteomics/Protein/Protein.cs</code> at mzLib <code>23c2490e</code></p></li>
-<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs" class="external-link"><code>DigestionParams</code></a> in <code>mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs</code> at mzLib <code>23c2490e</code></p></li>
-<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs" class="external-link"><code>ProteaseDictionary</code></a> in <code>mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs</code> at mzLib <code>23c2490e</code></p></li>
-<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs" class="external-link"><code>PeptideWithSetModifications.Fragment</code></a> in <code>mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs</code> at mzLib <code>23c2490e</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs" class="external-link"><code>DigestionParams</code></a> in <code>mzLib/Proteomics/ProteolyticDigestion/DigestionParams.cs</code> at mzLib <code>d10017ce</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs" class="external-link"><code>ProteaseDictionary</code></a> in <code>mzLib/Proteomics/ProteolyticDigestion/ProteaseDictionary.cs</code> at mzLib <code>d10017ce</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Proteomics/ProteolyticDigestion/proteases.tsv" class="external-link"><samp>proteases.tsv (each protease name's cleavage motif)</samp></a> in <code>mzLib/Proteomics/ProteolyticDigestion/proteases.tsv</code> at mzLib <code>d10017ce</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs" class="external-link"><code>PeptideWithSetModifications.Fragment</code></a> in <code>mzLib/Proteomics/ProteolyticDigestion/PeptideWithSetModifications.cs</code> at mzLib <code>d10017ce</code></p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="parameters-units-ranges-and-defaults">Parameters: units, ranges and defaults<a class="anchor" aria-label="anchor" href="#parameters-units-ranges-and-defaults"></a></h2>
@@ -170,31 +193,31 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 <dd><p>string; required. A UniProtKB accession, e.g. P02768; fetched from rest.uniprot.org. The bridge checks only that it is not blank (the bindings upper-case it and check its shape first). UniProt's 400 or 404 becomes a usage error.</p></dd>
 
 <dt><code>protease</code></dt>
-<dd><p>string; default <code>trypsin|P</code>; range <samp>a key of mzLib's ProteaseDictionary</samp>. mzLib protease name. The default "trypsin|P" is the Keil rule (cleave after K/R EXCEPT before P); mzLib's plain "trypsin" cleaves before P too. The bracket/bar marks a PREVENTING residue, the reverse of MaxQuant's and Mascot's "Trypsin/P".</p></dd>
+<dd><p>string; default absent; range <samp>a key of mzLib's ProteaseDictionary</samp>. mzLib protease name. Absent, the bridge sends none and DigestionParams' default applies ("trypsin" at d10017ce). The names and what each one cuts are mzLib's, defined in proteases.tsv. At d10017ce "trypsin" is K|,R|, which cuts after K and R even before P; "trypsin|P" is K[P]|,R[P]|, where [P] marks a residue that prevents the cut, so it does not cut before P. These are not MaxQuant's or Mascot's names: their "Trypsin/P" ignores the proline rule. On serum albumin (P02768) "trypsin" gives 202 distinct peptides and "trypsin|P" gives 195 (other options absent).</p></dd>
 
 <dt><code>dissociation</code></dt>
-<dd><p>string; default <code>ETD</code>; range <code>a mzLib DissociationType name, case-insensitive: HCD, CID, ETD, EThcD, ...</code>. Which fragment series to generate: HCD/CID give b and y; ETD gives c and zDot.</p></dd>
+<dd><p>string; default <code>HCD</code>; range <code>a mzLib DissociationType name, case-insensitive: HCD, CID, ETD, EThcD, ...</code>. Which fragment series to generate: HCD and CID give b and y; ETD gives c and zDot. Absent, HCD. mzLib's Fragment requires a type and names no default, so HCD is the bridge's own stop-gap until mzLib names one. mzLib#1488 asks for HCD, which MetaMorpheus's CommonParameters already defaults to.</p></dd>
 
 <dt><code>terminus</code></dt>
-<dd><p>string; default <code>Both</code>; range <code>a mzLib FragmentationTerminus name, case-insensitive: Both, N, C</code>. Which fragment termini to generate; also passed to DigestionParams.</p></dd>
+<dd><p>string; default absent; range <code>a mzLib FragmentationTerminus name, case-insensitive: Both, N, C</code>. Which fragment termini to generate. It is also passed to DigestionParams. Absent, DigestionParams' default applies (Both at d10017ce), to the digest and to the fragments.</p></dd>
 
 <dt><code>modifications</code> (wire <code>--no-modifications</code>)</dt>
 <dd><p>flag; default <code>FALSE</code>. Digest the bare sequence: UniProt's modifications are discarded but its signal-peptide and propeptide boundaries are kept (pyMzLib#8), so the backbone peptide list is unchanged and only the modified variants go away. A clean control.</p></dd>
 
 <dt><code>missed_cleavages</code> (wire <code>--missed-cleavages</code>)</dt>
-<dd><p>int; in <strong>cleavage sites</strong>; default <code>2</code>; range <code>&gt;= 0</code>. Maximum missed cleavage sites per peptide.</p></dd>
+<dd><p>int; in <strong>cleavage sites</strong>; default absent; range <code>&gt;= 0</code>. Maximum missed cleavage sites per peptide (DigestionParams maxMissedCleavages). Absent, DigestionParams' default applies (2 at d10017ce).</p></dd>
 
 <dt><code>min_length</code> (wire <code>--min-length</code>)</dt>
-<dd><p>int; in <strong>residues</strong>; default <code>7</code>; range <code>&gt;= 1</code>. Shortest peptide kept. The default silently drops shorter peptides (about a third of a histone digest); pass 1 for every peptide.</p></dd>
+<dd><p>int; in <strong>residues</strong>; default absent; range <code>&gt;= 1</code>. Shortest peptide kept (DigestionParams minPeptideLength). Absent, DigestionParams' default applies (7 at d10017ce). That default drops shorter peptides silently: histone H3.1 (P68431) keeps 49 of the 96 peptides it gives at 1 (distinct start and end, other options absent). Pass 1 for every peptide.</p></dd>
 
 <dt><code>max_length</code> (wire <code>--max-length</code>)</dt>
-<dd><p>int; in <strong>residues</strong>; default <code>0</code>; range <code>&gt;= 0</code>. Longest peptide kept; 0 means unbounded.</p></dd>
+<dd><p>int; in <strong>residues</strong>; default absent; range <code>&gt;= 0</code>. Longest peptide kept (DigestionParams maxPeptideLength); 0 means unbounded. Absent, DigestionParams' default applies (unbounded at d10017ce).</p></dd>
 
 <dt><code>max_modifications</code> (wire <code>--max-mods</code>)</dt>
-<dd><p>int; in <strong>modifications</strong>; default <code>2</code>; range <code>&gt;= 0</code>. Maximum modifications per peptidoform (DigestionParams maxModsForPeptides). Isoforms grow combinatorially: histone H3.1 gives 49 bare tryptic peptides, 2,563 at 2 and 7,040 at 3.</p></dd>
+<dd><p>int; in <strong>modifications</strong>; default absent; range <code>&gt;= 0</code>. Maximum modifications per peptidoform (DigestionParams maxModsForPeptides). Absent, DigestionParams' default applies (2 at d10017ce). Isoforms grow combinatorially: histone H3.1's 49 peptides give 2,419 peptidoforms at 2 and 6,580 at 3, where 2 peptide positions already reach the isoform cap (other options absent).</p></dd>
 
 <dt><code>max_isoforms</code> (wire <code>--max-isoforms</code>)</dt>
-<dd><p>int; in <strong>peptidoforms</strong>; default <code>1024</code>; range <code>&gt;= 1</code>. Cap on modification isoforms per peptide position (DigestionParams maxModificationIsoforms). mzLib truncates SILENTLY at the cap; peptides_at_isoform_cap reports it.</p></dd>
+<dd><p>int; in <strong>peptidoforms</strong>; default absent; range <code>&gt;= 1</code>. Cap on modification isoforms per peptide position (DigestionParams maxModificationIsoforms). Absent, DigestionParams' default applies (1024 at d10017ce). mzLib truncates SILENTLY at the cap; peptides_at_isoform_cap reports it.</p></dd>
 
 
 </dl></div>
@@ -235,22 +258,22 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 <dd><p>object[]; never <code>NA</code>. {type, count, loaded} per feature type, sorted by type. loaded is true only for 'modified residue' and 'lipid moiety-binding region': mzLib drops the others on feature TYPE alone, before any mass lookup.</p></dd>
 
 <dt><code>protease</code></dt>
-<dd><p>string; never <code>NA</code>. The protease used.</p></dd>
+<dd><p>string; never <code>NA</code>. The protease used: the one given, or DigestionParams' default.</p></dd>
 
 <dt><code>dissociation</code></dt>
-<dd><p>string; never <code>NA</code>. DissociationType name used.</p></dd>
+<dd><p>string; never <code>NA</code>. DissociationType name used: the one given, or HCD.</p></dd>
 
 <dt><code>terminus</code></dt>
-<dd><p>string; never <code>NA</code>. FragmentationTerminus name used.</p></dd>
+<dd><p>string; never <code>NA</code>. FragmentationTerminus name used: the one given, or DigestionParams' default.</p></dd>
 
 <dt><code>max_modifications</code></dt>
-<dd><p>int; in <strong>modifications</strong>; never <code>NA</code>. max-mods, echoed.</p></dd>
+<dd><p>int; in <strong>modifications</strong>; never <code>NA</code>. max-mods as used: the value given, or DigestionParams' default.</p></dd>
 
 <dt><code>max_modification_isoforms</code></dt>
-<dd><p>int; in <strong>peptidoforms</strong>; never <code>NA</code>. max-isoforms, echoed.</p></dd>
+<dd><p>int; in <strong>peptidoforms</strong>; never <code>NA</code>. max-isoforms as used: the value given, or DigestionParams' default.</p></dd>
 
 <dt><code>peptides_at_isoform_cap</code></dt>
-<dd><p>int; in <strong>peptide positions</strong>; never <code>NA</code>. Peptide positions (start, end) whose distinct peptidoforms reached max-isoforms. Non-zero means the list is TRUNCATED.</p></dd>
+<dd><p>int; in <strong>peptide positions</strong>; never <code>NA</code>. Peptide positions (start, end) whose peptidoforms in mzLib's raw digest, counted before the bridge collapses the mzLib#1108 duplicates, reached max-isoforms. Non-zero means the list is TRUNCATED.</p></dd>
 
 <dt><code>peptide_count</code></dt>
 <dd><p>int; in <strong>peptidoforms</strong>; never <code>NA</code>. Entries in peptides.</p></dd>
@@ -291,7 +314,7 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 <dd><p>int; in <strong>charge</strong>; never <code>NA</code>. Formal charges the INTACT peptide carries before protonation (e.g. trimethyllysine's quaternary ammonium), recovered from each modification's formula-vs-recorded mass deficit in whole electrons. m/z at charge z is (monoisotopic_mass + (z - fixed_charges) * 1.00727646677) / z. Does NOT apply to fragments.</p></dd>
 
 <dt><code>modifications</code></dt>
-<dd><p>object[]; never <code>NA</code>. {one_based_residue, terminus, id, mass, formal_charge} per modification: one_based_residue is 1-based within the PEPTIDE and null for a terminal modification, which sets terminus 'N' or 'C' instead (terminus is null for a residue modification); id is mzLib's IdWithMotif; mass is its monoisotopic mass in Da (null only if the modification defines none); formal_charge in elementary charges.</p></dd>
+<dd><p>object[]; never <code>NA</code>. {one_based_residue, terminus, id, mass, formal_charge} per modification: one_based_residue is 1-based within the PEPTIDE and null for a terminal modification, which sets terminus 'N' or 'C' instead (terminus is null for a residue modification); id is mzLib's IdWithMotif; mass is its monoisotopic mass in Da, never null for a loaded modification (mzLib keeps one only if it has a formula or a mass, and fills a missing mass from the formula); formal_charge in elementary charges.</p></dd>
 
 <dt><code>fragments</code></dt>
 <dd><p>object[]; never <code>NA</code>. {product_type, fragment_number, neutral_mass, neutral_loss, residue_position} per ion: product_type e.g. b, y, c, zDot; fragment_number the position in its series; neutral_mass the monoisotopic NEUTRAL mass in Da (not an m/z; no proton added); neutral_loss in Da (0 when none); residue_position 1-based within the peptide.</p></dd>
@@ -316,7 +339,7 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
 <ul><li><p>UniProt annotates more than mzLib applies: only 'modified residue' and 'lipid moiety-binding region' features load. Serum albumin: 14 of 38 annotated features applied, the 24 glycosylation-site features dropped on type (mzLib#1112). Read uniprot_features_by_type and unresolved_modifications before trusting a modification count.</p></li>
-<li><p>max-isoforms truncates silently in mzLib (histone H3.1 at four modifications loses about 30% of peptidoforms at 1024). Check peptides_at_isoform_cap before treating the list as exhaustive.</p></li>
+<li><p>max-isoforms truncates silently in mzLib. Histone H3.1 at four modifications keeps 8,644 of its 12,808 peptidoforms at the default cap of 1024, losing about a third. Check peptides_at_isoform_cap before treating the list as exhaustive.</p></li>
 <li><p>Duplicate peptidoforms that mzLib's Digest emits where a chain boundary meets the initiator-Met cleavage site (mzLib#1108, open) are collapsed by the bridge on (start, end, full sequence).</p></li>
 <li><p>Fragment masses are neutral. Converting one to m/z needs the fixed charge within that fragment's span, which the wire does not report; fixed_charges is whole-peptide only.</p></li>
 <li><p>ETD's zDot ions are suppressed N-terminal to proline while the complementary c ions are not, leaving about 4% of the c series unobservable (mzLib#1110).</p></li>
@@ -340,11 +363,9 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>peptides_at_isoform_cap is computed on the DE-DUPLICATED list, although FragmentsAsync's own comment says it must count the raw digest (a truncated locus deduped below the cap then reads as untruncated); the correctly computed peptidesAtCap local is never used. Confirmed a bridge bug (pyMzLib 005), fixed on pyMzLib main by #67 (unreleased after 0.2.0): the wire then counts the raw digest, as the doc above says. Close this once a release carries #67.</p></li>
-<li><p>The example fixture is hand-trimmed (2 peptides of a max-mods 1 digest), so its peptide_count is not what the live call returns; the envelope keys are the live ones.</p></li>
-<li><p>Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them. Enum.TryParse also accepts numeric strings, so <code>--dissociation</code> 3 or <code>--terminus</code> 7 pass as undefined members. Behaviour of mzLib on such values is unverified.</p></li>
-<li><p>The wire names max-mods and no-modifications project as max_modifications and modifications (inverted) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries for them.</p></li>
-<li><p>modifications[].mass nullability: Modification.MonoisotopicMass is double?; a loaded UniProt modification has not been seen without one.</p></li>
+<ul><li><p>Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them, not alike (min_length 0 passes pyMzLib and mzLibRust, not mzLibR). Enum.TryParse also accepts numeric strings: <code>--dissociation</code> 3 passes as SID, and <code>--dissociation</code> 99 or <code>--terminus</code> 7 pass as undefined members. mzLib's behaviour on those values is unverified.</p></li>
+<li><p>The envelope echoes the protease, dissociation, terminus and both caps it used, but not missed-cleavages, min-length or max-length. Since 2026-10-21 those can be mzLib's defaults, so a binding cannot show the values used (mzLibR prints NA as 'mzLib's default'). Echoing them, read from the DigestionParams the bridge built, would be additive and optional (CONTRACT.md).</p></li>
+<li><p>Unmeasured: mzLib caps isoforms per proteolytic peptide (ProteolyticPeptide.cs:62), so a position that two proteolysis products both produce (the mzLib#1108 duplicates) is capped twice but counted once. It could then read as at the cap when neither copy was cut.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -362,10 +383,10 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 <span class="r-in"><span><span class="va">digest</span> <span class="op">&lt;-</span> <span class="fu">peptidoform_fragments</span><span class="op">(</span><span class="st">"P02768"</span>, max_modifications <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">digest</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;mzlibr_digest&gt; P02768 ALBU_HUMAN (Homo sapiens)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   609 residues, trypsin|P, ETD, terminus Both</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   min_length 7, 2 missed cleavages, max 1 modifications</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   609 residues, trypsin, HCD, terminus Both</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   min_length mzLib's default, missed cleavages mzLib's default, max 1 modifications</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2 peptidoforms over 2 distinct sequences</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   127 fragments: c=64, zDot=63</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   128 fragments: b=64, y=64</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! 14 of 38 annotated modifications applied. See ?census_explain.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">digest</span><span class="op">$</span><span class="va">peptides</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"base_sequence"</span>, <span class="st">"monoisotopic_mass"</span>, <span class="st">"modification_count"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                         base_sequence monoisotopic_mass modification_count</span>
@@ -373,8 +394,8 @@ protease, and computes fragment ions for every resulting peptidoform.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 RPCFSALEVDETYVPKEFNAETFTFHADICTLSEK          4136.902                  1</span>
 <span class="r-in"><span><span class="fu"><a href="digest_fragments_by_series.html">digest_fragments_by_series</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   product_type  n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1            c 64</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         zDot 63</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            b 64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2            y 64</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

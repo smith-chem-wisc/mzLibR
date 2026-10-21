@@ -47,7 +47,7 @@ paired with, so an old bridge is reported as old rather than answering
 ## Wraps
 
 Wire verb `version`. Generated from the bridge's verb spec
-`version.yaml` (bridge commit `e76157831b15`) by `scripts/build-man.R`;
+`version.yaml` (bridge commit `22638d4276ff`) by `scripts/build-man.R`;
 the spec owns these facts, and all three bindings render the same ones.
 
 - [`AssemblyInformationalVersionAttribute`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj)
@@ -125,19 +125,6 @@ any work.
 ## Since
 
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- The Unknown-command message and verbs share one generated list
-  (Program.Verbs, from the DeriveVerbList MSBuild task); check_verbs.py
-  still parses the switch itself. Both read the same pattern, so they
-  cannot disagree unless the switch stops being one arm per line.
-
-- pyMzLib returns version as a plain dict, typed as the TypedDict
-  pymzlib.BridgeVersion so its keys are documented and linted; Rust
-  returns the struct mzlib::BridgeVersion, R a named list.
 
 ## Examples
 

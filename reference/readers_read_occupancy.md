@@ -71,7 +71,7 @@ An entity with no modified sites is dropped from the cell, so
 ## Wraps
 
 Wire verb `readers read-occupancy`. Generated from the bridge's verb
-spec `readers.read-occupancy.yaml` (bridge commit `e76157831b15`) by
+spec `readers.read-occupancy.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -260,12 +260,14 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   float; in **PSMs (basis count) or intensity (basis intensity)**; never
   `NA`. Modified count, or modified intensity to four significant
-  digits.
+  digits. On either basis it may cross with no decimal point (1,
+  495700); read it as a float.
 
 - `denominator`:
 
   float; in **PSMs (basis count) or intensity (basis intensity)**; never
-  `NA`. Total count, or total intensity to four significant digits.
+  `NA`. Total count, or total intensity to four significant digits. On
+  either basis it may cross with no decimal point; read it as a float.
 
 - `cell_is_truncated`:
 
@@ -325,8 +327,9 @@ only from
   the answer is too large to return as one JSON document (PYB-3 part 1;
   measured: past the ~1.07 G-character .NET string ceiling, not RAM).
   Message: 'this read (N records) is too large to return as one
-  document; use `--limit`/`--offset` or `--out`', N the parsed
-  record_count
+  document; use `--limit`/`--offset` or `--out`', N the records this
+  answer holds (its returned_count, or record_count where the envelope
+  has none)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -389,15 +392,15 @@ The spec records these as open. They are listed rather than hidden:
   tables' cells, but QuantifiedPeptideFromTsv at the pin exposes none,
   so this verb reads protein groups only.
 
-- numerator and denominator are floats for both bases; a count-basis
-  value crosses as a whole number (1, not 1.0) and bindings must read it
-  as a float.
-
-- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
-  parsed record count already predicts it, is not built. It needs a
-  characters-per-record threshold measured per format (dataRepo's ~805
-  per record is one file type); part 1 catches the failure after
-  serialising.
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising is not
+  built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches
+  the failure after serialising. A threshold per record will not work:
+  dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04)
+  measured 725 and 805 characters per record in two psmtsv files from
+  one producer. It proposed source size instead, 0.63 to 0.71 output
+  characters per source byte, which puts the limit at about 1.51 to 1.70
+  GB of source text. That is two files of one format, and no threshold
+  has been agreed.
 
 ## See also
 

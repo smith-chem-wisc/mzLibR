@@ -15,18 +15,19 @@
 [`peptidoform_fragments()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
 fetches a UniProt entry, applies its annotated modifications, digests it
 and computes fragment ions for every peptidoform. The recording used
-here is the whole digest of human serum albumin, P02768, at the
-defaults.
+here is the whole digest of human serum albumin, P02768, at mzLib’s
+defaults: an argument left out is not sent, and mzLib chooses. The
+digest says what was used.
 
 ``` r
 
 digest <- peptidoform_fragments("P02768")
 digest
 #> <mzlibr_digest> P02768 ALBU_HUMAN (Homo sapiens)
-#>   609 residues, trypsin|P, ETD, terminus Both
-#>   min_length 7, 2 missed cleavages, max 2 modifications
-#>   303 peptidoforms over 195 distinct sequences
-#>   10728 fragments: c=5338, zDot=5390
+#>   609 residues, trypsin, HCD, terminus Both
+#>   min_length mzLib's default, missed cleavages mzLib's default, max 2 modifications
+#>   310 peptidoforms over 202 distinct sequences
+#>   10488 fragments: b=5244, y=5244
 #>   ! 14 of 38 annotated modifications applied. See ?census_explain.
 ```
 
@@ -45,12 +46,12 @@ head(digest$peptides[, c("peptide_index", "base_sequence", "monoisotopic_mass",
 #> 6             6         TCVADESAENCDK         1463.4946                  1
 head(digest$fragments)
 #>   peptide_index product_type fragment_number neutral_mass neutral_loss
-#> 1             1            c               1     203.1059            0
-#> 2             1         zDot               1     158.0930            0
-#> 3             1            c               2     302.1743            0
-#> 4             1         zDot               2     245.1250            0
-#> 5             1            c               3     403.2220            0
-#> 6             1         zDot               3     408.1883            0
+#> 1             1            b               1     186.0793            0
+#> 2             1            y               1     174.1117            0
+#> 3             1            b               2     285.1477            0
+#> 4             1            y               2     261.1437            0
+#> 5             1            b               3     386.1954            0
+#> 6             1            y               3     424.2070            0
 #>   residue_position
 #> 1                1
 #> 2               17
@@ -64,138 +65,138 @@ digest$modifications
 #> 2               8                 1     <NA>     Phosphoserine on S  79.96633
 #> 3              11                 2     <NA>  Phosphothreonine on T  79.96633
 #> 4              23                11     <NA>     Phosphoserine on S  79.96633
-#> 5              34                 8     <NA>  Phosphothreonine on T  79.96633
-#> 6              35                 6     <NA>  Phosphothreonine on T  79.96633
-#> 7              36                 5     <NA>     Phosphoserine on S  79.96633
-#> 8              37                 6     <NA>  Phosphothreonine on T  79.96633
-#> 9              37                 8     <NA>  Phosphothreonine on T  79.96633
-#> 10             38                 5     <NA>     Phosphoserine on S  79.96633
-#> 11             38                 8     <NA>  Phosphothreonine on T  79.96633
-#> 12             39                 5     <NA>     Phosphoserine on S  79.96633
-#> 13             39                 6     <NA>  Phosphothreonine on T  79.96633
-#> 14             43                 5     <NA>     Phosphoserine on S  79.96633
-#> 15             45                19     <NA> N6-succinyllysine on K 100.01604
-#> 16             47                 9     <NA>   N6-methyllysine on K  14.01565
-#> 17             56                 5     <NA>     Phosphoserine on S  79.96633
-#> 18             58                 1     <NA>     Phosphoserine on S  79.96633
-#> 19             63                17     <NA>     Phosphoserine on S  79.96633
-#> 20             65                14     <NA>     Phosphoserine on S  79.96633
-#> 21             66                 7     <NA>     Phosphoserine on S  79.96633
-#> 22             67                 7     <NA>     Phosphoserine on S  79.96633
-#> 23             67                14     <NA>     Phosphoserine on S  79.96633
-#> 24             69                 1     <NA>     Phosphoserine on S  79.96633
-#> 25             71                10     <NA>  Phosphothreonine on T  79.96633
-#> 26             73                 2     <NA>  Phosphothreonine on T  79.96633
+#> 5              33                 8     <NA>  Phosphothreonine on T  79.96633
+#> 6              34                 6     <NA>  Phosphothreonine on T  79.96633
+#> 7              35                 5     <NA>     Phosphoserine on S  79.96633
+#> 8              36                 6     <NA>  Phosphothreonine on T  79.96633
+#> 9              36                 8     <NA>  Phosphothreonine on T  79.96633
+#> 10             37                 5     <NA>     Phosphoserine on S  79.96633
+#> 11             37                 8     <NA>  Phosphothreonine on T  79.96633
+#> 12             38                 5     <NA>     Phosphoserine on S  79.96633
+#> 13             38                 6     <NA>  Phosphothreonine on T  79.96633
+#> 14             42                 4     <NA>     Phosphoserine on S  79.96633
+#> 15             44                19     <NA> N6-succinyllysine on K 100.01604
+#> 16             46                 9     <NA>   N6-methyllysine on K  14.01565
+#> 17             55                 5     <NA>     Phosphoserine on S  79.96633
+#> 18             57                 1     <NA>     Phosphoserine on S  79.96633
+#> 19             62                17     <NA>     Phosphoserine on S  79.96633
+#> 20             64                14     <NA>     Phosphoserine on S  79.96633
+#> 21             65                 7     <NA>     Phosphoserine on S  79.96633
+#> 22             66                 7     <NA>     Phosphoserine on S  79.96633
+#> 23             66                14     <NA>     Phosphoserine on S  79.96633
+#> 24             68                 1     <NA>     Phosphoserine on S  79.96633
+#> 25             70                10     <NA>  Phosphothreonine on T  79.96633
+#> 26             72                 2     <NA>  Phosphothreonine on T  79.96633
 #> 27             89                 8     <NA> N6-succinyllysine on K 100.01604
 #> 28             91                 6     <NA> N6-succinyllysine on K 100.01604
 #> 29            101                16     <NA>     Phosphoserine on S  79.96633
 #> 30            103                11     <NA>     Phosphoserine on S  79.96633
-#> 31            119                 9     <NA>  Phosphothreonine on T  79.96633
-#> 32            120                 7     <NA>  Phosphothreonine on T  79.96633
-#> 33            121                 6     <NA>     Phosphoserine on S  79.96633
-#> 34            122                 7     <NA>  Phosphothreonine on T  79.96633
-#> 35            122                 9     <NA>  Phosphothreonine on T  79.96633
-#> 36            123                 6     <NA>     Phosphoserine on S  79.96633
-#> 37            123                 9     <NA>  Phosphothreonine on T  79.96633
-#> 38            124                 6     <NA>     Phosphoserine on S  79.96633
-#> 39            124                 7     <NA>  Phosphothreonine on T  79.96633
-#> 40            126                 8     <NA>  Phosphothreonine on T  79.96633
-#> 41            127                 6     <NA>  Phosphothreonine on T  79.96633
-#> 42            128                 5     <NA>     Phosphoserine on S  79.96633
-#> 43            129                 6     <NA>  Phosphothreonine on T  79.96633
-#> 44            129                 8     <NA>  Phosphothreonine on T  79.96633
-#> 45            130                 5     <NA>     Phosphoserine on S  79.96633
-#> 46            130                 8     <NA>  Phosphothreonine on T  79.96633
-#> 47            131                 5     <NA>     Phosphoserine on S  79.96633
-#> 48            131                 6     <NA>  Phosphothreonine on T  79.96633
-#> 49            133                 8     <NA> N6-succinyllysine on K 100.01604
-#> 50            135                 4     <NA> N6-succinyllysine on K 100.01604
-#> 51            142                14     <NA>     Phosphoserine on S  79.96633
-#> 52            144                35     <NA> N6-succinyllysine on K 100.01604
-#> 53            145                 5     <NA>     Phosphoserine on S  79.96633
-#> 54            146                 5     <NA>     Phosphoserine on S  79.96633
-#> 55            146                35     <NA> N6-succinyllysine on K 100.01604
-#> 56            148                19     <NA> N6-succinyllysine on K 100.01604
-#> 57            150                10     <NA>   N6-methyllysine on K  14.01565
-#> 58            152                 9     <NA>   N6-methyllysine on K  14.01565
-#> 59            158                 7     <NA> N6-succinyllysine on K 100.01604
-#> 60            160                 4     <NA> N6-succinyllysine on K 100.01604
-#> 61            169                 6     <NA>     Phosphoserine on S  79.96633
-#> 62            171                 5     <NA>     Phosphoserine on S  79.96633
-#> 63            173                 1     <NA>     Phosphoserine on S  79.96633
-#> 64            177                38     <NA>     Phosphoserine on S  79.96633
-#> 65            179                24     <NA>     Phosphoserine on S  79.96633
-#> 66            180                17     <NA>     Phosphoserine on S  79.96633
-#> 67            181                17     <NA>     Phosphoserine on S  79.96633
-#> 68            181                24     <NA>     Phosphoserine on S  79.96633
-#> 69            183                14     <NA>     Phosphoserine on S  79.96633
-#> 70            184                 7     <NA>     Phosphoserine on S  79.96633
-#> 71            185                 7     <NA>     Phosphoserine on S  79.96633
-#> 72            185                14     <NA>     Phosphoserine on S  79.96633
-#> 73            187                19     <NA>  Phosphothreonine on T  79.96633
-#> 74            188                 1     <NA>     Phosphoserine on S  79.96633
-#> 75            189                 1     <NA>     Phosphoserine on S  79.96633
-#> 76            189                19     <NA>  Phosphothreonine on T  79.96633
-#> 77            191                10     <NA>  Phosphothreonine on T  79.96633
-#> 78            193                 2     <NA>  Phosphothreonine on T  79.96633
-#> 79            210                10     <NA> N6-succinyllysine on K 100.01604
-#> 80            212                 8     <NA> N6-succinyllysine on K 100.01604
-#> 81            214                 6     <NA> N6-succinyllysine on K 100.01604
-#> 82            223                33     <NA>     Phosphoserine on S  79.96633
-#> 83            225                16     <NA>     Phosphoserine on S  79.96633
-#> 84            227                11     <NA>     Phosphoserine on S  79.96633
-#> 85            243                12     <NA>  Phosphothreonine on T  79.96633
-#> 86            244                10     <NA>  Phosphothreonine on T  79.96633
-#> 87            245                 9     <NA>     Phosphoserine on S  79.96633
-#> 88            246                10     <NA>  Phosphothreonine on T  79.96633
-#> 89            246                12     <NA>  Phosphothreonine on T  79.96633
-#> 90            247                 9     <NA>     Phosphoserine on S  79.96633
-#> 91            247                12     <NA>  Phosphothreonine on T  79.96633
-#> 92            248                 9     <NA>     Phosphoserine on S  79.96633
-#> 93            248                10     <NA>  Phosphothreonine on T  79.96633
-#> 94            250                 9     <NA>  Phosphothreonine on T  79.96633
-#> 95            251                 7     <NA>  Phosphothreonine on T  79.96633
-#> 96            252                 6     <NA>     Phosphoserine on S  79.96633
-#> 97            253                 7     <NA>  Phosphothreonine on T  79.96633
-#> 98            253                 9     <NA>  Phosphothreonine on T  79.96633
-#> 99            254                 6     <NA>     Phosphoserine on S  79.96633
-#> 100           254                 9     <NA>  Phosphothreonine on T  79.96633
-#> 101           255                 6     <NA>     Phosphoserine on S  79.96633
-#> 102           255                 7     <NA>  Phosphothreonine on T  79.96633
-#> 103           257                22     <NA> N6-succinyllysine on K 100.01604
-#> 104           258                 8     <NA>  Phosphothreonine on T  79.96633
-#> 105           259                 6     <NA>  Phosphothreonine on T  79.96633
-#> 106           260                 5     <NA>     Phosphoserine on S  79.96633
-#> 107           261                 8     <NA>  Phosphothreonine on T  79.96633
-#> 108           261                22     <NA> N6-succinyllysine on K 100.01604
-#> 109           262                 6     <NA>  Phosphothreonine on T  79.96633
-#> 110           262                22     <NA> N6-succinyllysine on K 100.01604
-#> 111           263                 6     <NA>  Phosphothreonine on T  79.96633
-#> 112           263                 8     <NA>  Phosphothreonine on T  79.96633
-#> 113           264                 5     <NA>     Phosphoserine on S  79.96633
-#> 114           264                22     <NA> N6-succinyllysine on K 100.01604
-#> 115           265                 5     <NA>     Phosphoserine on S  79.96633
-#> 116           265                 8     <NA>  Phosphothreonine on T  79.96633
-#> 117           266                 5     <NA>     Phosphoserine on S  79.96633
-#> 118           266                 6     <NA>  Phosphothreonine on T  79.96633
-#> 119           268                 8     <NA> N6-succinyllysine on K 100.01604
-#> 120           270                 4     <NA> N6-succinyllysine on K 100.01604
-#> 121           277                17     <NA>     Phosphoserine on S  79.96633
-#> 122           279                44     <NA> N6-succinyllysine on K 100.01604
-#> 123           280                14     <NA>     Phosphoserine on S  79.96633
-#> 124           281                14     <NA>     Phosphoserine on S  79.96633
-#> 125           281                44     <NA> N6-succinyllysine on K 100.01604
-#> 126           283                35     <NA> N6-succinyllysine on K 100.01604
-#> 127           284                 5     <NA>     Phosphoserine on S  79.96633
-#> 128           285                 5     <NA>     Phosphoserine on S  79.96633
-#> 129           285                35     <NA> N6-succinyllysine on K 100.01604
-#> 130           287                19     <NA> N6-succinyllysine on K 100.01604
-#> 131           289                13     <NA>   N6-methyllysine on K  14.01565
-#> 132           291                10     <NA>   N6-methyllysine on K  14.01565
-#> 133           293                 9     <NA>   N6-methyllysine on K  14.01565
-#> 134           298                19     <NA> N6-succinyllysine on K 100.01604
-#> 135           300                 7     <NA> N6-succinyllysine on K 100.01604
-#> 136           302                 4     <NA> N6-succinyllysine on K 100.01604
+#> 31            121                 9     <NA>  Phosphothreonine on T  79.96633
+#> 32            122                 7     <NA>  Phosphothreonine on T  79.96633
+#> 33            123                 6     <NA>     Phosphoserine on S  79.96633
+#> 34            124                 7     <NA>  Phosphothreonine on T  79.96633
+#> 35            124                 9     <NA>  Phosphothreonine on T  79.96633
+#> 36            125                 6     <NA>     Phosphoserine on S  79.96633
+#> 37            125                 9     <NA>  Phosphothreonine on T  79.96633
+#> 38            126                 6     <NA>     Phosphoserine on S  79.96633
+#> 39            126                 7     <NA>  Phosphothreonine on T  79.96633
+#> 40            128                 8     <NA>  Phosphothreonine on T  79.96633
+#> 41            129                 6     <NA>  Phosphothreonine on T  79.96633
+#> 42            130                 5     <NA>     Phosphoserine on S  79.96633
+#> 43            131                 6     <NA>  Phosphothreonine on T  79.96633
+#> 44            131                 8     <NA>  Phosphothreonine on T  79.96633
+#> 45            132                 5     <NA>     Phosphoserine on S  79.96633
+#> 46            132                 8     <NA>  Phosphothreonine on T  79.96633
+#> 47            133                 5     <NA>     Phosphoserine on S  79.96633
+#> 48            133                 6     <NA>  Phosphothreonine on T  79.96633
+#> 49            135                 8     <NA> N6-succinyllysine on K 100.01604
+#> 50            137                 4     <NA> N6-succinyllysine on K 100.01604
+#> 51            145                 5     <NA>     Phosphoserine on S  79.96633
+#> 52            147                34     <NA> N6-succinyllysine on K 100.01604
+#> 53            148                 4     <NA>     Phosphoserine on S  79.96633
+#> 54            149                 4     <NA>     Phosphoserine on S  79.96633
+#> 55            149                34     <NA> N6-succinyllysine on K 100.01604
+#> 56            151                19     <NA> N6-succinyllysine on K 100.01604
+#> 57            153                10     <NA>   N6-methyllysine on K  14.01565
+#> 58            155                 9     <NA>   N6-methyllysine on K  14.01565
+#> 59            160                 7     <NA> N6-succinyllysine on K 100.01604
+#> 60            162                 4     <NA> N6-succinyllysine on K 100.01604
+#> 61            171                 6     <NA>     Phosphoserine on S  79.96633
+#> 62            173                 5     <NA>     Phosphoserine on S  79.96633
+#> 63            175                 1     <NA>     Phosphoserine on S  79.96633
+#> 64            179                38     <NA>     Phosphoserine on S  79.96633
+#> 65            181                24     <NA>     Phosphoserine on S  79.96633
+#> 66            182                17     <NA>     Phosphoserine on S  79.96633
+#> 67            183                17     <NA>     Phosphoserine on S  79.96633
+#> 68            183                24     <NA>     Phosphoserine on S  79.96633
+#> 69            185                14     <NA>     Phosphoserine on S  79.96633
+#> 70            186                 7     <NA>     Phosphoserine on S  79.96633
+#> 71            187                 7     <NA>     Phosphoserine on S  79.96633
+#> 72            187                14     <NA>     Phosphoserine on S  79.96633
+#> 73            189                19     <NA>  Phosphothreonine on T  79.96633
+#> 74            190                 1     <NA>     Phosphoserine on S  79.96633
+#> 75            191                 1     <NA>     Phosphoserine on S  79.96633
+#> 76            191                19     <NA>  Phosphothreonine on T  79.96633
+#> 77            193                10     <NA>  Phosphothreonine on T  79.96633
+#> 78            195                 2     <NA>  Phosphothreonine on T  79.96633
+#> 79            213                10     <NA> N6-succinyllysine on K 100.01604
+#> 80            215                 8     <NA> N6-succinyllysine on K 100.01604
+#> 81            217                 6     <NA> N6-succinyllysine on K 100.01604
+#> 82            226                33     <NA>     Phosphoserine on S  79.96633
+#> 83            228                16     <NA>     Phosphoserine on S  79.96633
+#> 84            230                11     <NA>     Phosphoserine on S  79.96633
+#> 85            248                12     <NA>  Phosphothreonine on T  79.96633
+#> 86            249                10     <NA>  Phosphothreonine on T  79.96633
+#> 87            250                 9     <NA>     Phosphoserine on S  79.96633
+#> 88            251                10     <NA>  Phosphothreonine on T  79.96633
+#> 89            251                12     <NA>  Phosphothreonine on T  79.96633
+#> 90            252                 9     <NA>     Phosphoserine on S  79.96633
+#> 91            252                12     <NA>  Phosphothreonine on T  79.96633
+#> 92            253                 9     <NA>     Phosphoserine on S  79.96633
+#> 93            253                10     <NA>  Phosphothreonine on T  79.96633
+#> 94            255                 9     <NA>  Phosphothreonine on T  79.96633
+#> 95            256                 7     <NA>  Phosphothreonine on T  79.96633
+#> 96            257                 6     <NA>     Phosphoserine on S  79.96633
+#> 97            258                 7     <NA>  Phosphothreonine on T  79.96633
+#> 98            258                 9     <NA>  Phosphothreonine on T  79.96633
+#> 99            259                 6     <NA>     Phosphoserine on S  79.96633
+#> 100           259                 9     <NA>  Phosphothreonine on T  79.96633
+#> 101           260                 6     <NA>     Phosphoserine on S  79.96633
+#> 102           260                 7     <NA>  Phosphothreonine on T  79.96633
+#> 103           262                22     <NA> N6-succinyllysine on K 100.01604
+#> 104           263                 8     <NA>  Phosphothreonine on T  79.96633
+#> 105           264                 6     <NA>  Phosphothreonine on T  79.96633
+#> 106           265                 5     <NA>     Phosphoserine on S  79.96633
+#> 107           266                 8     <NA>  Phosphothreonine on T  79.96633
+#> 108           266                22     <NA> N6-succinyllysine on K 100.01604
+#> 109           267                 6     <NA>  Phosphothreonine on T  79.96633
+#> 110           267                22     <NA> N6-succinyllysine on K 100.01604
+#> 111           268                 6     <NA>  Phosphothreonine on T  79.96633
+#> 112           268                 8     <NA>  Phosphothreonine on T  79.96633
+#> 113           269                 5     <NA>     Phosphoserine on S  79.96633
+#> 114           269                22     <NA> N6-succinyllysine on K 100.01604
+#> 115           270                 5     <NA>     Phosphoserine on S  79.96633
+#> 116           270                 8     <NA>  Phosphothreonine on T  79.96633
+#> 117           271                 5     <NA>     Phosphoserine on S  79.96633
+#> 118           271                 6     <NA>  Phosphothreonine on T  79.96633
+#> 119           273                 8     <NA> N6-succinyllysine on K 100.01604
+#> 120           275                 4     <NA> N6-succinyllysine on K 100.01604
+#> 121           283                14     <NA>     Phosphoserine on S  79.96633
+#> 122           285                35     <NA> N6-succinyllysine on K 100.01604
+#> 123           286                 5     <NA>     Phosphoserine on S  79.96633
+#> 124           287                 5     <NA>     Phosphoserine on S  79.96633
+#> 125           287                35     <NA> N6-succinyllysine on K 100.01604
+#> 126           289                34     <NA> N6-succinyllysine on K 100.01604
+#> 127           290                 4     <NA>     Phosphoserine on S  79.96633
+#> 128           291                 4     <NA>     Phosphoserine on S  79.96633
+#> 129           291                34     <NA> N6-succinyllysine on K 100.01604
+#> 130           293                19     <NA> N6-succinyllysine on K 100.01604
+#> 131           295                13     <NA>   N6-methyllysine on K  14.01565
+#> 132           297                10     <NA>   N6-methyllysine on K  14.01565
+#> 133           299                 9     <NA>   N6-methyllysine on K  14.01565
+#> 134           305                19     <NA> N6-succinyllysine on K 100.01604
+#> 135           307                 7     <NA> N6-succinyllysine on K 100.01604
+#> 136           309                 4     <NA> N6-succinyllysine on K 100.01604
 #>     formal_charge
 #> 1               0
 #> 2               0
@@ -356,9 +357,9 @@ interchangeable:
 ``` r
 
 nrow(digest$peptides)
-#> [1] 303
+#> [1] 310
 digest_distinct_base_sequences(digest)
-#> [1] 195
+#> [1] 202
 nrow(digest_modified_peptides(digest))
 #> [1] 108
 head(digest_modified_peptides(digest)[, c("full_sequence", "modification_count")], 3)
@@ -370,15 +371,16 @@ head(digest_modified_peptides(digest)[, c("full_sequence", "modification_count")
 
 ## Fragment series
 
-ETD, the default, produces `c` and `z-dot` ions; HCD and CID produce `b`
-and `y`.
+HCD and CID produce `b` and `y` ions; ETD produces `c` and `z-dot`.
+mzLib names no default dissociation type, so with none given the bridge
+uses HCD until it does (mzLib#1488).
 
 ``` r
 
 digest_fragments_by_series(digest)
 #>   product_type    n
-#> 1            c 5338
-#> 2         zDot 5390
+#> 1            b 5244
+#> 2            y 5244
 ```
 
 ## Which modifications were applied, and which were not
@@ -407,11 +409,13 @@ digest_truncated(digest)
 #> [1] FALSE
 ```
 
-Two defaults also decide which peptides exist at all: `min_length = 7`
-drops everything shorter, and mzLib’s `"trypsin|P"` *applies* the
-proline rule - the reverse of the MaxQuant and Mascot spelling.
+Two of mzLib’s defaults also decide which peptides exist at all: its
+`min_length` drops everything shorter, and its protease, `"trypsin"`,
+cuts before proline, where `"trypsin|P"` does not - the reverse of the
+MaxQuant and Mascot spelling.
 [`?peptidoform_fragments`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
-gives the numbers.
+gives the numbers. To get what this page showed before mzLibR left the
+defaults to mzLib, pass `protease = "trypsin|P", dissociation = "ETD"`.
 
 ## Converting full sequences to Unimod or ProForma
 
@@ -461,34 +465,37 @@ unimod$target_formats
 #> [6] "mzLib"
 ```
 
-### ProForma does not resolve UniProt modifications yet
+### ProForma gives the same accessions
 
-Ask for ProForma and the same file gives a different answer.
-Carbamidomethyl and oxidation become UNIMOD accessions. The UniProt
-modification is written back under its mzLib name, and the row still
-says `converted`:
+Ask for ProForma and this file gives the same accessions. The UniProt
+modification is `UNIMOD:34` here too:
 
 ``` r
 
 proforma <- peptidoform_convert(psms$records$full_sequence, target = "ProForma")
 proforma$records$output[c(1, 5)]
-#> [1] "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDMEK"           
-#> [2] "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDM[UNIMOD:35]EK"
-proforma$records$status[1]
-#> [1] "converted"
+#> [1] "YPIEH[UNIMOD:34]GIVTNWDDMEK"           
+#> [2] "YPIEH[UNIMOD:34]GIVTNWDDM[UNIMOD:35]EK"
+identical(proforma$records$output, unimod$records$output)
+#> [1] TRUE
 ```
 
-The cause is in mzLib, not in mzLibR (mzLib#1401). mzLib’s ProForma
-serializer looks modifications up only in MetaMorpheus’s own list, which
-has no UniProt entries; the Unimod serializer looks them up in every
-list mzLib loads. Until mzLib fixes this, **convert to Unimod when your
-sequences carry UniProt modifications**, and in ProForma output treat
-any bracket that is not a `UNIMOD:` term as unresolved. mzLibR does not
-patch around the gap: a patch here would leave the same gap in pyMzLib,
-mzLibRust and MetaMorpheus. The `pro_forma` column that
+That is new with mzLib#1403. Before it, mzLib’s ProForma serializer
+looked modifications up only in MetaMorpheus’s own list, which has no
+UniProt entries, so it wrote `[UniProt:Tele-methylhistidine on H]` back
+by name (mzLib#1401). It now falls back to every list mzLib loads, as
+the Unimod serializer does. mzLibR never patched around the gap, so the
+fix reached it, pyMzLib, mzLibRust and MetaMorpheus at once. The
+`pro_forma` column that
 [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
-gives a `.psmtsv` comes from the same serializer, so it has the same
-gap.
+computes for a `.psmtsv` written without one comes from the same
+serializer, so it gained the accessions too.
+
+The two targets still differ on a modification that no list mzLib loads
+knows. ProForma writes it back under its own name and the row says
+`converted`; Unimod fails the row, or drops the modification, depending
+on `mode`. In ProForma output, treat any bracket that is not a `UNIMOD:`
+term as unresolved.
 
 ### When mzLib cannot convert a sequence
 

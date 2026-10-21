@@ -156,13 +156,14 @@ which you have, and which function reads it.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readers_formats.html">readers_formats</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">formats</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 38</span></span>
+<span><span class="co">#&gt; [1] 39</span></span>
 <span><span class="va">formats</span><span class="op">[</span><span class="va">formats</span><span class="op">$</span><span class="va">is_quantifiable</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_type"</span>, <span class="st">"extension"</span>, <span class="st">"reader"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;       file_type  extension           reader</span></span>
-<span><span class="co">#&gt; 12       psmtsv    .psmtsv   PsmFromTsvFile</span></span>
-<span><span class="co">#&gt; 13       osmtsv    .osmtsv   OsmFromTsvFile</span></span>
-<span><span class="co">#&gt; 18 MsFraggerPsm    psm.tsv MsFraggerPsmFile</span></span>
-<span><span class="co">#&gt; 30  DiaNnReport report.tsv  DiaNnReportFile</span></span></code></pre></div>
+<span><span class="co">#&gt;             file_type      extension                 reader</span></span>
+<span><span class="co">#&gt; 12             psmtsv        .psmtsv         PsmFromTsvFile</span></span>
+<span><span class="co">#&gt; 13             osmtsv        .osmtsv         OsmFromTsvFile</span></span>
+<span><span class="co">#&gt; 18       MsFraggerPsm        psm.tsv       MsFraggerPsmFile</span></span>
+<span><span class="co">#&gt; 30        DiaNnReport     report.tsv        DiaNnReportFile</span></span>
+<span><span class="co">#&gt; 39 DiaNnReportParquet report.parquet DiaNnParquetReportFile</span></span></code></pre></div>
 <p>A format’s <code>views</code> say which cross-format projection it
 offers. An empty <code>views</code> is a real and common answer: mzLib
 can parse the file, but no function other than
@@ -172,7 +173,7 @@ can parse the file, but no function other than
 <span>             <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;         (none)   ms1_features   quantifiable        spectra spectral_match </span></span>
-<span><span class="co">#&gt;             19              2              4              7              6</span></span></code></pre></div>
+<span><span class="co">#&gt;             19              2              5              7              6</span></span></code></pre></div>
 <p>For one file, <code><a href="../reference/readers_identify.html">readers_identify()</a></code> resolves the type
 without parsing the contents:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">

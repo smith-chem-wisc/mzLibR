@@ -28,13 +28,14 @@ function reads it.
 
 formats <- readers_formats()
 nrow(formats)
-#> [1] 38
+#> [1] 39
 formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
-#>       file_type  extension           reader
-#> 12       psmtsv    .psmtsv   PsmFromTsvFile
-#> 13       osmtsv    .osmtsv   OsmFromTsvFile
-#> 18 MsFraggerPsm    psm.tsv MsFraggerPsmFile
-#> 30  DiaNnReport report.tsv  DiaNnReportFile
+#>             file_type      extension                 reader
+#> 12             psmtsv        .psmtsv         PsmFromTsvFile
+#> 13             osmtsv        .osmtsv         OsmFromTsvFile
+#> 18       MsFraggerPsm        psm.tsv       MsFraggerPsmFile
+#> 30        DiaNnReport     report.tsv        DiaNnReportFile
+#> 39 DiaNnReportParquet report.parquet DiaNnParquetReportFile
 ```
 
 A format’s `views` say which cross-format projection it offers. An empty
@@ -49,7 +50,7 @@ table(vapply(formats$views, function(v) if (length(v)) paste(v, collapse = "+") 
              character(1)))
 #> 
 #>         (none)   ms1_features   quantifiable        spectra spectral_match 
-#>             19              2              4              7              6
+#>             19              2              5              7              6
 ```
 
 For one file,

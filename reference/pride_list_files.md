@@ -10,7 +10,7 @@ one data.frame.
 ## Usage
 
 ``` r
-pride_list_files(accession, page_size = 100, timeout = 300)
+pride_list_files(accession, page_size = NULL, timeout = 300)
 ```
 
 ## Arguments
@@ -26,7 +26,8 @@ pride_list_files(accession, page_size = 100, timeout = 300)
 - page_size:
 
   How many files to request per underlying API call. Affects only how
-  the manifest is fetched, never what you get back.
+  the manifest is fetched, never what you get back. `NULL` means mzLib's
+  default.
 
 - timeout:
 
@@ -35,11 +36,12 @@ pride_list_files(accession, page_size = 100, timeout = 300)
 ## What this manifest is, and is not
 
 **This is what PRIDE's REST API publishes, which is not always
-everything in the project.** For PXD000001 the API returns **8** files
-while the FTP tree holds **14** (a live listing, 2026-10) - and the ones
-it omits include the two largest, a 450 MB `.mzML` and the matching 472
-MB `.mzXML`, which are exactly the modern open-format conversions most
-people want. The omission is PRIDE's, not mzLib's.
+everything in the project.** On 2026-10-21, for PXD000001, the API
+listed **9** of the **14** files in the FTP tree, and the five it omits
+include the two largest, a 450 MB `.mzML` and the matching 472 MB
+`.mzXML`, which are exactly the modern open-format conversions most
+people want. (The example below replays a recording from 2026-10-03,
+when it listed 8.) The omission is PRIDE's, not mzLib's.
 
 So a manifest that looks short may be short. If completeness matters -
 mirroring a project, budgeting a download, proving you analysed
@@ -68,7 +70,7 @@ sum as an upper bound on transfer, and see
 ## Wraps
 
 Wire verb `pride files`. Generated from the bridge's verb spec
-`pride.files.yaml` (bridge commit `e76157831b15`) by
+`pride.files.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -99,11 +101,12 @@ render the same ones.
 
 - `page_size` (wire `--page-size`):
 
-  int; in **files**; default `100`; range `>= 1`. Files requested per
+  int; in **files**; default absent; range `>= 1`. Files requested per
   underlying API call. Changes how many requests the fetch takes, never
-  what comes back: mzLib pages until the manifest is complete. Leave it
-  at the default; above PRIDE's server-side cap the manifest is complete
-  only while PRIDE reports total_records.
+  what comes back: mzLib pages until the manifest is complete. Absent,
+  the bridge sends none and GetProjectFilesAsync's default applies (100
+  at d10017ce). Leave it absent; above PRIDE's server-side cap the
+  manifest is complete only while PRIDE reports total_records.
 
 ## Returned fields
 
@@ -191,7 +194,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - `mzlib_usage_error` (usage):
 
-  accession missing or blank; page-size not an integer
+  accession missing or blank; page-size not an integer, given without a
+  value, or \<= 0 (checked by the bridge before mzLib)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -209,16 +213,15 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   (MzLibException: an identical page while total_records says more
   remain), the MaxPages backstop (an HttpRequestException mzLib composes
   with no status and no inner exception, which ClassifyHttpFailure
-  deliberately does not excuse as an outage), or page-size \<= 0
-  (mzLib's ArgumentOutOfRangeException; the bridge does not check it
-  first)
+  deliberately does not excuse as an outage)
 
 ## Caveats
 
 - This is PRIDE's REST manifest, which is knowingly incomplete: for
-  PXD000001 it lists 8 files while the FTP tree holds 13, omitting the
-  two largest. Use pride ftp-files when completeness or the true project
-  size matters.
+  PXD000001 on 2026-10-21 it listed 9 of the 14 files in the FTP tree,
+  omitting five including the two largest (on 2026-10-03, when the
+  fixtures were recorded, it listed 8). Use pride ftp-files when
+  completeness or the true project size matters.
 
 - An unknown accession and a private project both return file_count 0,
   not an error. The bindings raise their not-found error on an empty
@@ -253,20 +256,11 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- page-size \<= 0 crosses as a correctness failure
-  (ArgumentOutOfRangeException) because the bridge, unlike pride search,
-  does not check it before calling mzLib. Every binding rejects it
-  first, so no binding user sees it; the wire should say usage.
-
 - An absent PRIDE date crosses as 0001-01-01T00:00:00+00:00, not null
   (PrideArchiveFile's dates are non-nullable DateTimeOffset, and
   ToWireFile does not map default to null as pride search's ToWireDate
   does). Not observed on a real manifest; unverified whether PRIDE ever
   omits one.
-
-- An option given with no value (e.g. `--page-size` followed by another
-  option) is parsed as a flag and silently defaulted: OptionalInt does
-  not consult WasProvided.
 
 ## References
 

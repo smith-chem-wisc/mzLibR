@@ -19,8 +19,8 @@ readers_read_results(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 
 - path:
 
-  Path to a MetaMorpheus `.psmtsv` / `.osmtsv` or an MSFragger
-  `psm.tsv`.
+  Path to a MetaMorpheus `.psmtsv` / `.osmtsv`, an MSFragger `psm.tsv`,
+  or a DIA-NN `report.tsv` or DIA-NN 2.x `report.parquet`.
 
 - limit:
 
@@ -66,9 +66,18 @@ that did not become records.
 
 `records` is a data.frame of the record view, one row per record, or
 `NULL` when `out` was given. `retention_time` is in minutes for every
-quantifiable format today, and `retention_time_unit` says so per file;
-`charge_state` is a charge; `monoisotopic_mass` is a neutral mass in Da.
-`is_decoy` is `NA` where the format records no decoy label.
+quantifiable format today, the DIA-NN `report.parquet` included, and
+`retention_time_unit` says so per file; `charge_state` is a charge;
+`monoisotopic_mass` is a neutral mass in Da. `is_decoy` is `NA` where
+the format records no decoy label.
+
+A DIA-NN 2.x `report.parquet` reads into the same record as the TSV
+report, but 2.x no longer writes some of its columns (`File.Name`,
+`PG.Quantity`, `MS2.Scan` and others). In
+[`readers_read_records`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
+those are `NA`, except `ms2_scan_number`, which mzLib fills with 0, and
+`absent_fields` does not name them: it is judged from a text header,
+which a parquet does not have.
 
 ## Two fields to read before you trust the table
 
@@ -91,7 +100,7 @@ rather than by hand.
 ## Wraps
 
 Wire verb `readers read-results`. Generated from the bridge's verb spec
-`readers.read-results.yaml` (bridge commit `e76157831b15`) by
+`readers.read-results.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -106,8 +115,9 @@ render the same ones.
 
 - `path`:
 
-  path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv
-  or a DIA-NN report.tsv.
+  path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv,
+  or a DIA-NN main report: report.tsv, or DIA-NN 2.x's report.parquet
+  (mzLib 1.0.595, \#1384).
 
 - `offset`:
 
@@ -160,7 +170,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `retention_time_unit`:
 
   string; never `NA`. The unit of retention_time for THIS format:
-  minutes for all four at mzLib 1.0.592, unknown when mzLib gives no
+  minutes for all five at mzLib 1.0.595 (DiaNnReportParquet shares
+  DiaNnReport's record and RT column), unknown when mzLib gives no
   basis.
 
 - `caveats`:
@@ -250,9 +261,9 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `is_decoy`:
 
-  bool; `NA` when the format cannot report decoys: MSFragger and DIA-NN,
-  where is_decoy is also in absent_fields. Decoy flag where the format
-  carries one.
+  bool; `NA` when the format cannot report decoys: MSFragger and both
+  DIA-NN report types, where is_decoy is also in absent_fields. Decoy
+  flag where the format carries one.
 
 - `protein_accessions`:
 
@@ -319,8 +330,9 @@ only from
   the answer is too large to return as one JSON document (PYB-3 part 1;
   measured: past the ~1.07 G-character .NET string ceiling, not RAM).
   Message: 'this read (N records) is too large to return as one
-  document; use `--limit`/`--offset` or `--out`', N the parsed
-  record_count
+  document; use `--limit`/`--offset` or `--out`', N the records this
+  answer holds (its returned_count, or record_count where the envelope
+  has none)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -330,15 +342,17 @@ only from
 
 - No q-value, PEP or score: nothing here is FDR-filtered.
 
-- is_decoy is absent for MSFragger and DIA-NN, which write no
-  target/decoy label; null there means unknown, not target.
+- is_decoy is absent for MSFragger and both DIA-NN report types, which
+  give mzLib no per-row target/decoy label (a DIA-NN 2.x parquet written
+  with `--report-decoys` has one, but mzLib skips its decoy rows); null
+  there means unknown, not target.
 
 - monoisotopic_mass is the theoretical mass in every format; the
   observed precursor is not in this view.
 
 - psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous
-  row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:119,
-  :194).
+  row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:122,
+  :197).
 
 - A malformed psmtsv row is dropped silently by mzLib; rows_not_read
   counts them.
@@ -376,11 +390,15 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
-  parsed record count already predicts it, is not built. It needs a
-  characters-per-record threshold measured per format (dataRepo's ~805
-  per record is one file type); part 1 catches the failure after
-  serialising.
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising is not
+  built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches
+  the failure after serialising. A threshold per record will not work:
+  dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04)
+  measured 725 and 805 characters per record in two psmtsv files from
+  one producer. It proposed source size instead, 0.63 to 0.71 output
+  characters per source byte, which puts the limit at about 1.51 to 1.70
+  GB of source text. That is two files of one format, and no threshold
+  has been agreed.
 
 ## See also
 

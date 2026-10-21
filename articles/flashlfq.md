@@ -33,9 +33,10 @@ quant
 ```
 
 Any quantifiable search result works, not only MetaMorpheus’s: an
-MSFragger `psm.tsv` or a DIA-NN `report.tsv` too. mzLib converts
-MSFragger’s retention times from seconds to minutes as it reads them
-(mzLib \#1116), so FlashLFQ searches the right window.
+MSFragger `psm.tsv`, or a DIA-NN `report.tsv` or DIA-NN 2.x
+`report.parquet`, too. mzLib converts MSFragger’s retention times from
+seconds to minutes as it reads them (mzLib \#1116), so FlashLFQ searches
+the right window.
 
 ## Four tidy tables
 

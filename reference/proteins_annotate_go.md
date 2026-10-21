@@ -138,7 +138,7 @@ entry in cellular component, which is why the row says so.
 ## Wraps
 
 Wire verb `proteins annotate-go`. Generated from the bridge's verb spec
-`proteins.annotate-go.yaml` (bridge commit `e76157831b15`) by
+`proteins.annotate-go.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -456,6 +456,13 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   category-map; a negative offset or limit. Every one is raised before
   any file is read.
 
+- `mzlib_usage_error` (usage):
+
+  the answer is too large to return as one JSON document (PYB-3 part 1,
+  Program.SuccessJson). Message: 'this read is too large to return as
+  one document; use `--limit`/`--offset` or `--out`', with no count,
+  because this envelope has no record_count
+
 - `mzlib_bridge_error` (correctness):
 
   the database cites a GO id the release lacks, without
@@ -527,9 +534,9 @@ The spec records these as open. They are listed rather than hidden:
 - No bulk (`--paths-stdin`) form yet. One table per call; a cohort of
   many tables against one proteome reloads the proteome each time.
 
-- PYB-3 (a document too large to return is a usage error) is not built
-  in the bridge yet; until it is, use out with limit 0 for a large
-  table.
+- PYB-3 part 2 is not built: running out of memory before serialising
+  still fails as correctness. Part 1 is in the bridge since pyMzLib
+  0.4.0 (see errors). For a large table, use out with limit 0.
 
 ## References
 

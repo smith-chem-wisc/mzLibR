@@ -134,9 +134,10 @@ their MetaMorpheus search, quantified with match-between-runs on.</p>
 <span><span class="co">#&gt;     See ?flashlfq_quantify.</span></span>
 <span><span class="co">#&gt;   proteins: 10 NA (could not be resolved), 1734 zero (not measured)</span></span></code></pre></div>
 <p>Any quantifiable search result works, not only MetaMorpheus’s: an
-MSFragger <code>psm.tsv</code> or a DIA-NN <code>report.tsv</code> too.
-mzLib converts MSFragger’s retention times from seconds to minutes as it
-reads them (mzLib #1116), so FlashLFQ searches the right window.</p>
+MSFragger <code>psm.tsv</code>, or a DIA-NN <code>report.tsv</code> or
+DIA-NN 2.x <code>report.parquet</code>, too. mzLib converts MSFragger’s
+retention times from seconds to minutes as it reads them (mzLib #1116),
+so FlashLFQ searches the right window.</p>
 <div class="section level2">
 <h2 id="four-tidy-tables">Four tidy tables<a class="anchor" aria-label="anchor" href="#four-tidy-tables"></a>
 </h2>

@@ -105,7 +105,7 @@ input order whatever <code>threads</code> is. Never loop the one-file function o
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers read-protein-groups</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.read-protein-groups.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers read-protein-groups</code> with <code>--paths-stdin</code>. Generated from the bridge's verb spec <code>readers.read-protein-groups.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs" class="external-link"><code>ProteinGroupFromTsvFile.LoadResults</code></a> in <code>mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/IndividualResultRecords/ProteinGroupFromTsv.cs" class="external-link"><code>ProteinGroupFromTsv.SampleGroups</code></a> in <code>mzLib/Readers/InternalResults/IndividualResultRecords/ProteinGroupFromTsv.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -235,7 +235,7 @@ input order whatever <code>threads</code> is. Never loop the one-file function o
 <dd><p>out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened</p></dd>
 
 <dt><code>mzlib_usage_error</code> (usage)</dt>
-<dd><p>the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use <code>--limit</code>/<code>--offset</code> or <code>--out</code>', N the parsed record_count</p></dd>
+<dd><p>the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use <code>--limit</code>/<code>--offset</code> or <code>--out</code>', N the records this answer holds (its returned_count, or record_count where the envelope has none)</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
 <dd><p>Never raised by this verb.</p></dd>
@@ -273,8 +273,8 @@ input order whatever <code>threads</code> is. Never loop the one-file function o
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
 <ul><li><p>The group-level columns carried beside each sample (identity, q-value, decoy label) are a choice made here; coverage, masses and counts stay in read-records. Revisit if every binding ends up joining for the same field.</p></li>
-<li><p>Only the MetaMorpheus 1.1.11 fixture exists (label-free); no isobaric or 1.2+ (BioPolymer ...) header table has been read through this verb yet.</p></li>
-<li><p>PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.</p></li>
+<li><p>Two fixtures exist, both label-free and in MetaMorpheus 1.1.x's 'Protein ...' header names: readers_protein_groups.json (MetaMorpheus 1.1.11) and readers_protein_groups_rna.json (an RNA AllQuantifiedTranscriptGroups.tsv, mzLib #1388). No isobaric or 'BioPolymer ...' header table has been read through this verb yet.</p></li>
+<li><p>PYB-3 part 2: refusing a too-large answer BEFORE serialising is not built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches the failure after serialising. A threshold per record will not work: dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04) measured 725 and 805 characters per record in two psmtsv files from one producer. It proposed source size instead, 0.63 to 0.71 output characters per source byte, which puts the limit at about 1.51 to 1.70 GB of source text. That is two files of one format, and no threshold has been agreed.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

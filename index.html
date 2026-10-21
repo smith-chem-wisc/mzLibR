@@ -73,7 +73,7 @@
 <span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pride_list_files.html">pride_list_files</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span></span>
 <span><span class="va">files</span><span class="op">[</span><span class="va">files</span><span class="op">$</span><span class="va">size_mb</span> <span class="op">&lt;</span> <span class="fl">5</span> <span class="op">&amp;</span> <span class="va">files</span><span class="op">$</span><span class="va">downloadable</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_name"</span>, <span class="st">"size_mb"</span>, <span class="st">"category"</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">digest</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peptidoform_fragments.html">peptidoform_fragments</a></span><span class="op">(</span><span class="st">"P02768"</span><span class="op">)</span>           <span class="co"># serum albumin, tryptic, ETD</span></span>
+<span><span class="va">digest</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peptidoform_fragments.html">peptidoform_fragments</a></span><span class="op">(</span><span class="st">"P02768"</span><span class="op">)</span>           <span class="co"># serum albumin, at mzLib's defaults</span></span>
 <span><span class="fu"><a href="reference/digest_fragments_by_series.html">digest_fragments_by_series</a></span><span class="op">(</span><span class="va">digest</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">quant</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/flashlfq_quantify.html">flashlfq_quantify</a></span><span class="op">(</span><span class="st">"AllPSMs.psmtsv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"run_3.mzML"</span>, <span class="st">"run_4.mzML"</span><span class="op">)</span>,</span>
@@ -158,13 +158,13 @@
 <li>
 <strong>A compressed file’s extension is <code>.gz</code>, not what it is compressed from.</strong> PXD000001’s peak list is <code>…pride.mgf.gz</code>, so filtering on <code>".mgf"</code> matches nothing.</li>
 <li>
-<strong>PRIDE’s API manifest is incomplete.</strong> It publishes 8 files for PXD000001; the FTP tree holds 13, including the two largest. And <code>file_size_bytes</code> is the <em>decompressed</em> size for some compressed files — 2.75x off for that MGF.</li>
+<strong>PRIDE’s API manifest is incomplete.</strong> On 2026-10-21 it listed 9 of PXD000001’s 14 files, omitting the two largest; <code><a href="reference/pride_list_ftp_files.html">pride_list_ftp_files()</a></code> lists them all. And <code>file_size_bytes</code> is the <em>decompressed</em> size for some compressed files — 2.75x off for that MGF.</li>
 <li>
-<strong>mzLib’s <code>"trypsin|P"</code> applies the Keil rule and plain <code>"trypsin"</code> does not</strong> — the reverse of the MaxQuant and Mascot convention. 195 peptides against 202 on albumin.</li>
+<strong>mzLib’s <code>"trypsin|P"</code> applies the Keil rule and plain <code>"trypsin"</code>, its default, does not</strong> — the reverse of the MaxQuant and Mascot convention. 195 peptides against 202 on albumin.</li>
 <li>
-<strong><code>min_length</code> defaults to 7 and silently discards everything shorter</strong> — albumin goes from 195 distinct sequences to 243 at <code>min_length = 1</code>.</li>
+<strong>mzLib’s default <code>min_length</code> silently discards everything shorter</strong> — albumin goes from 202 distinct sequences to 257 at <code>min_length = 1</code>.</li>
 <li>
-<strong>ETD and ECD return a <code>y</code> series with no <code>b</code> ions</strong>, about a third of the fragment list. No fragmentation mechanism produces that; use <code><a href="reference/digest_fragments_by_series.html">digest_fragments_by_series()</a></code>.</li>
+<strong><code><a href="reference/peptidoform_fragments.html">peptidoform_fragments()</a></code> leaves its defaults to mzLib.</strong> An argument you leave <code>NULL</code> is not sent, and mzLib’s own default applies; with no <code>dissociation</code>, the bridge uses HCD until mzLib names one (mzLib#1488). The result says which protease and dissociation type were used.</li>
 <li>
 <strong>Read <code>peaks</code>, never the peptide roll-up, for match-between-runs.</strong> The roll-up drops most transfers — 140 true against 52 shown — and a whole run’s can vanish.</li>
 <li>

@@ -98,7 +98,7 @@ pride_download_files(small, "downloads")
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride download</code>. Generated from the bridge's verb spec <code>pride.download.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride download</code>. Generated from the bridge's verb spec <code>pride.download.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.DownloadProjectFilesAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.DownloadFileAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs" class="external-link"><code>PrideArchiveExtensions.WhereCategory</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -191,12 +191,9 @@ pride_download_files(small, "downloads")
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>No recorded fixture, so no checked example: a replay needs a stub bridge that also fakes the written files. The envelope keys above are from ToWire in PrideDownloadAsync, not from a recording.</p></li>
+<ul><li><p>No recorded fixture, so no checked example: a replay needs a stub bridge that also fakes the written files. The envelope keys above are read from the object PrideDownloadAsync returns, not from a recording.</p></li>
 <li><p>The unmatched-selection check runs after the download, so a typo in one name still downloads every other selected file before failing. Checking the manifest first would need the bridge to fetch it separately from DownloadProjectFilesAsync.</p></li>
-<li><p>downloaded_count counts skipped files under no-overwrite; the wire has no separate skipped count.</p></li>
-<li><p>'selection' under bindings names the names-from-stdin projection (download_files in every binding); tools/check_verbs.py does not read it.</p></li>
 <li><p>A zero-match filter is a usage error in the bindings but a success on the wire; whether the wire should raise it (as it does for an unmatched names-from-stdin selection) is undecided.</p></li>
-<li><p>Wire params dest, ext, no-overwrite, names-from-stdin and stdin project as destination, extensions, overwrite (inverted) and download_files(files) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

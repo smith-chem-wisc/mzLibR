@@ -76,7 +76,7 @@ scans over the files read; `row_count` counts the rows of `records`.
 
 Wire verb `readers read-spectra` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-spectra.yaml` (bridge commit
-`e76157831b15`) by `scripts/build-man.R`; the spec owns these facts, and
+`22638d4276ff`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`MsDataFileReader.GetDataFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs)
@@ -243,7 +243,9 @@ rows are grouped by input, in input order, whatever `threads` is.
 - `injection_time`:
 
   float; in **ms**; `NA` when the file did not record it. Ion injection
-  time.
+  time. Two readers write a placeholder instead of null: every MGF scan
+  crosses 0, and a timsTOF TSF (MRM) scan crosses -1 (mzLib#1489 asks
+  for null). Treat 0 from an MGF file as not recorded.
 
 - `peak_count`:
 
@@ -386,8 +388,9 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   the answer is too large to return as one JSON document (PYB-3 part 1;
   measured: past the ~1.07 G-character .NET string ceiling, not RAM).
   Message: 'this read (N records) is too large to return as one
-  document; use `--limit`/`--offset` or `--out`', N the parsed
-  record_count
+  document; use `--limit`/`--offset` or `--out`', N the records this
+  answer holds (its returned_count, or record_count where the envelope
+  has none)
 
 - `mzlib_service_unavailable` (service_unavailable):
 
@@ -457,19 +460,26 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- injection_time unit 'ms' is from the mzML CV term (MS:1000927); not
-  yet confirmed that every mzLib vendor reader (Thermo, Bruker, timsTOF,
-  MGF) emits ms.
+- injection_time is declared ms from the mzML CV term (MS:1000927).
+  Checked at d10017ce: Thermo .raw reads the 'Ion Injection Time (ms)'
+  trailer and reads 0 as null (ThermoRawFileReader.cs:425); Bruker .d
+  (BAF) is always null (BrukerFileReader.cs:325). Still open: timsTOF
+  reads Frames.AccumulationTime (timsTOF/Tables.cs:73), summed over a
+  PASEF precursor's frames (TimsTofFileReader.cs:734), and its unit is
+  not confirmed as ms; a TSF MRM scan gets -1
+  (TimsTofFileReader.cs:660), which crosses unchanged. MGF records none,
+  but mzLib sets 0 (Mgf.cs:378, :383), so every MGF scan crosses 0, not
+  null (mzLib#1489).
 
-- source is read from MsDataFile.SourceFile after LoadAllStaticData;
-  Bruker .d and timsTOF .d have not been checked for which of its fields
-  they fill.
-
-- PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the
-  parsed record count already predicts it, is not built. It needs a
-  characters-per-record threshold measured per format (dataRepo's ~805
-  per record is one file type); part 1 catches the failure after
-  serialising.
+- PYB-3 part 2: refusing a too-large answer BEFORE serialising is not
+  built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches
+  the failure after serialising. A threshold per record will not work:
+  dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04)
+  measured 725 and 805 characters per record in two psmtsv files from
+  one producer. It proposed source size instead, 0.63 to 0.71 output
+  characters per source byte, which puts the limit at about 1.51 to 1.70
+  GB of source text. That is two files of one format, and no threshold
+  has been agreed.
 
 ## See also
 

@@ -84,16 +84,20 @@ formats fall into disjoint families, and <strong>about half belong to none of th
 cross-format projection of it.</p>
 <p>- <code>"quantifiable"</code> — the cross-format record view, and the input <code><a href="flashlfq_quantify.html">flashlfq_quantify</a></code>
   accepts. <strong>Few file types have it</strong>: MetaMorpheus <code>psmtsv</code> and <code>osmtsv</code>,
-  <code>MsFraggerPsm</code>, and DIA-NN <code>DiaNnReport</code>.
+  <code>MsFraggerPsm</code>, DIA-NN's <code>report.tsv</code> (<code>DiaNnReport</code>), and DIA-NN 2.x's <code>report.parquet</code>
+  (<code>DiaNnReportParquet</code>, mzLib #1384).
 - <code>"ms1_features"</code> — deconvolved MS1 features (TopFD <code>_ms1.feature</code>, Dinosaur).
 - <code>"spectra"</code> — the file is spectra, not results.
 - <code>"spectral_match"</code> — identifications that share no file-level interface.</p>
 <p>Note also that <code>extension</code> is <strong>not unique</strong>: <code>BrukerD</code> and <code>BrukerTimsTof</code> are both <code>.d</code>,
-told apart by what the directory holds, and several formats share <code>.tsv</code>.</p>
+told apart by what the directory holds, and several formats share <code>.tsv</code>. Nor is it always how
+dispatch works: a DIA-NN report is recognised by its columns, not its name, so a renamed
+<code>report.tsv</code> still reads, and any <code>.parquet</code> whose columns include <code>Precursor.Id</code>,
+<code>Stripped.Sequence</code> and <code>Run</code> is a <code>DiaNnReportParquet</code> while any other <code>.parquet</code> is refused.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers formats</code>. Generated from the bridge's verb spec <code>readers.formats.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers formats</code>. Generated from the bridge's verb spec <code>readers.formats.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.GetFileExtension</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.GetResultFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -106,7 +110,7 @@ told apart by what the directory holds, and several formats share <code>.tsv</co
     <h2 id="returned-fields">Returned fields<a class="anchor" aria-label="anchor" href="#returned-fields"></a></h2>
     <p>Each field with its type, its unit, and what <code>NA</code> means when it is <code>NA</code>.</p>
 <dl><dt><code>format_count</code></dt>
-<dd><p>int; in <strong>formats</strong>; never <code>NA</code>. Number of entries in formats; equal to the number of SupportedFileType members. 38 at mzLib 1.0.593 (36 at 1.0.592, 32 at 1.0.591).</p></dd>
+<dd><p>int; in <strong>formats</strong>; never <code>NA</code>. Number of entries in formats; equal to the number of SupportedFileType members. 39 at mzLib 1.0.595 (38 at 1.0.593 and 1.0.594, 36 at 1.0.592, 32 at 1.0.591).</p></dd>
 
 <dt><code>formats</code></dt>
 <dd><p>table; never <code>NA</code>. One entry per SupportedFileType, in enum declaration order. Enumerated from mzLib, not transcribed, so it cannot drift from what mzLib dispatches.</p></dd>
@@ -120,13 +124,13 @@ told apart by what the directory holds, and several formats share <code>.tsv</co
 <dd><p>string; never <code>NA</code>. mzLib's SupportedFileType member name, e.g. "MsFraggerPsm", "psmtsv", "MzIdentMLGz".</p></dd>
 
 <dt><code>extension</code></dt>
-<dd><p>string; <code>NA</code> when mzLib has no extension mapping for this member (a broken mzLib build); the listing reports it rather than failing. The suffix mzLib dispatches on, e.g. ".mzid.gz" or "QuantifiedProteinGroups.tsv". NOT unique: both Bruker types are ".d" and several share ".tsv"; DiaNnReport and PytheasResult dispatch on content, not on this value.</p></dd>
+<dd><p>string; <code>NA</code> when mzLib has no extension mapping for this member (a broken mzLib build); the listing reports it rather than failing. The suffix mzLib dispatches on, e.g. ".mzid.gz" or "QuantifiedProteinGroups.tsv". NOT unique: both Bruker types are ".d" and several share ".tsv"; DiaNnReport, DiaNnReportParquet and PytheasResult dispatch on content, not on this value ("report.parquet" is only the conventional name: any .parquet with Precursor.Id, Stripped.Sequence and Run columns is a DIA-NN report, and any other .parquet is refused).</p></dd>
 
 <dt><code>reader</code></dt>
 <dd><p>string; <code>NA</code> when mzLib has no reader mapping for this member (a broken mzLib build). The mzLib reader class name, e.g. "MzIdentMLResultFile".</p></dd>
 
 <dt><code>views</code></dt>
-<dd><p>string[]; never <code>NA</code>. Cross-format views this type offers, from quantifiable, ms1_features, spectra, spectral_match. Empty is a real answer: 19 of 38 types offer none and are readable only through read-records.</p></dd>
+<dd><p>string[]; never <code>NA</code>. Cross-format views this type offers, from quantifiable, ms1_features, spectra, spectral_match. Empty is a real answer: 19 of 39 types offer none and are readable only through read-records.</p></dd>
 
 
 </dl></div>
@@ -149,7 +153,7 @@ told apart by what the directory holds, and several formats share <code>.tsv</co
 
 <ul><li><p>Extensions are not unique and not always how dispatch works: identify a real path rather than matching on extension.</p></li>
 <li><p>An empty views list means mzLib parses the format into its own record type with no cross-format interface; read-records still reads it.</p></li>
-<li><p>At mzLib 1.0.593 the view families are: quantifiable 4, ms1_features 2, spectral_match 6, spectra 7, none 19. These counts are the pin's, not the contract's: bindings should call formats rather than repeat them in prose.</p></li>
+<li><p>At mzLib 1.0.595 the view families are: quantifiable 5, ms1_features 2, spectral_match 6, spectra 7, none 19 (quantifiable was 4 through 1.0.594; #1384 added DiaNnReportParquet). These counts are the pin's, not the contract's: bindings should call formats rather than repeat them in prose.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>
@@ -176,13 +180,14 @@ told apart by what the directory holds, and several formats share <code>.tsv</co
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu">readers_formats</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">formats</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 38</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 39</span>
 <span class="r-in"><span><span class="va">formats</span><span class="op">[</span><span class="va">formats</span><span class="op">$</span><span class="va">is_quantifiable</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_type"</span>, <span class="st">"extension"</span>, <span class="st">"reader"</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       file_type  extension           reader</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12       psmtsv    .psmtsv   PsmFromTsvFile</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13       osmtsv    .osmtsv   OsmFromTsvFile</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18 MsFraggerPsm    psm.tsv MsFraggerPsmFile</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30  DiaNnReport report.tsv  DiaNnReportFile</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             file_type      extension                 reader</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12             psmtsv        .psmtsv         PsmFromTsvFile</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13             osmtsv        .osmtsv         OsmFromTsvFile</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18       MsFraggerPsm        psm.tsv       MsFraggerPsmFile</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30        DiaNnReport     report.tsv        DiaNnReportFile</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 DiaNnReportParquet report.parquet DiaNnParquetReportFile</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths</a></span><span class="op">(</span><span class="va">formats</span><span class="op">$</span><span class="va">views</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span></span></span>

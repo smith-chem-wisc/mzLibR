@@ -64,7 +64,8 @@ readers_identify first, or catch the error, which names the views the file does 
 
 
 <dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
-<dd><p>Path to a MetaMorpheus <code>.psmtsv</code> / <code>.osmtsv</code> or an MSFragger <code>psm.tsv</code>.</p></dd>
+<dd><p>Path to a MetaMorpheus <code>.psmtsv</code> / <code>.osmtsv</code>, an MSFragger <code>psm.tsv</code>, or a DIA-NN
+  <code>report.tsv</code> or DIA-NN 2.x <code>report.parquet</code>.</p></dd>
 
 
 <dt id="arg-limit">limit<a class="anchor" aria-label="anchor" href="#arg-limit"></a></dt>
@@ -103,9 +104,15 @@ readers_identify first, or catch the error, which names the views the file does 
   regardless of <code>limit</code> and <code>offset</code>; <code>returned_count</code> counts the records that came back,
   starting <code>offset</code> records in; <code>rows_not_read</code> counts data rows that did not become records.</p>
 <p><code>records</code> is a data.frame of the record view, one row per record, or <code>NULL</code> when <code>out</code> was
-  given. <code>retention_time</code> is in minutes for every quantifiable format today, and
-  <code>retention_time_unit</code> says so per file; <code>charge_state</code> is a charge; <code>monoisotopic_mass</code> is a
-  neutral mass in Da. <code>is_decoy</code> is <code>NA</code> where the format records no decoy label.</p>
+  given. <code>retention_time</code> is in minutes for every quantifiable format today, the DIA-NN
+  <code>report.parquet</code> included, and <code>retention_time_unit</code> says so per file; <code>charge_state</code> is a
+  charge; <code>monoisotopic_mass</code> is a neutral mass in Da. <code>is_decoy</code> is <code>NA</code> where the format
+  records no decoy label.</p>
+<p>A DIA-NN 2.x <code>report.parquet</code> reads into the same record as the TSV report, but 2.x no longer
+  writes some of its columns (<code>File.Name</code>, <code>PG.Quantity</code>, <code>MS2.Scan</code> and others). In
+  <code><a href="readers_read_records.html">readers_read_records</a></code> those are <code>NA</code>, except <code>ms2_scan_number</code>, which mzLib fills with 0,
+  and <code>absent_fields</code> does not name them: it is judged from a text header, which a parquet does
+  not have.</p>
     </div>
     <div class="section level2">
     <h2 id="two-fields-to-read-before-you-trust-the-table">Two fields to read before you trust the table<a class="anchor" aria-label="anchor" href="#two-fields-to-read-before-you-trust-the-table"></a></h2>
@@ -123,7 +130,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers read-results</code>. Generated from the bridge's verb spec <code>readers.read-results.yaml</code> (bridge commit <code>e76157831b15</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers read-results</code>. Generated from the bridge's verb spec <code>readers.read-results.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs" class="external-link"><code>FileReader.ReadQuantifiableResultFile</code></a> in <code>mzLib/Readers/FileReader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/IQuantifiableRecord.cs" class="external-link"><code>IQuantifiableRecord</code></a> in <code>mzLib/Readers/BaseClasses/IQuantifiableRecord.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -131,7 +138,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
     <h2 id="parameters-units-ranges-and-defaults">Parameters: units, ranges and defaults<a class="anchor" aria-label="anchor" href="#parameters-units-ranges-and-defaults"></a></h2>
 
 <dl><dt><code>path</code></dt>
-<dd><p>path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv or a DIA-NN report.tsv.</p></dd>
+<dd><p>path; required. A MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv, or a DIA-NN main report: report.tsv, or DIA-NN 2.x's report.parquet (mzLib 1.0.595, #1384).</p></dd>
 
 <dt><code>offset</code></dt>
 <dd><p>int; in <strong>records</strong>; default <code>0</code>; range <code>&gt;= 0</code>. Skip this many records. A window, not a cursor: mzLib parses the whole file on every call, so paging re-reads it.</p></dd>
@@ -163,7 +170,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 <dd><p>int; in <strong>rows</strong>; <code>NA</code> when the count is not meaningful for this format (only the psmtsv family and MSFragger are one line per record). Data rows that did not become records: mzLib drops a malformed line silently.</p></dd>
 
 <dt><code>retention_time_unit</code></dt>
-<dd><p>string; never <code>NA</code>. The unit of retention_time for THIS format: minutes for all four at mzLib 1.0.592, unknown when mzLib gives no basis.</p></dd>
+<dd><p>string; never <code>NA</code>. The unit of retention_time for THIS format: minutes for all five at mzLib 1.0.595 (DiaNnReportParquet shares DiaNnReport's record and RT column), unknown when mzLib gives no basis.</p></dd>
 
 <dt><code>caveats</code></dt>
 <dd><p>string[]; never <code>NA</code>. What this view cannot be trusted to mean for THIS file, each citing the mzLib source.</p></dd>
@@ -222,7 +229,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 <dd><p>float; in <strong>Da</strong>; <code>NA</code> when mzLib's -1 'absent' sentinel. THEORETICAL peptide mass, not the observed precursor.</p></dd>
 
 <dt><code>is_decoy</code></dt>
-<dd><p>bool; <code>NA</code> when the format cannot report decoys: MSFragger and DIA-NN, where is_decoy is also in absent_fields. Decoy flag where the format carries one.</p></dd>
+<dd><p>bool; <code>NA</code> when the format cannot report decoys: MSFragger and both DIA-NN report types, where is_decoy is also in absent_fields. Decoy flag where the format carries one.</p></dd>
 
 <dt><code>protein_accessions</code></dt>
 <dd><p>string; never <code>NA</code>. ';'-joined accessions.</p></dd>
@@ -263,7 +270,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
 <dd><p>out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened</p></dd>
 
 <dt><code>mzlib_usage_error</code> (usage)</dt>
-<dd><p>the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use <code>--limit</code>/<code>--offset</code> or <code>--out</code>', N the parsed record_count</p></dd>
+<dd><p>the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use <code>--limit</code>/<code>--offset</code> or <code>--out</code>', N the records this answer holds (its returned_count, or record_count where the envelope has none)</p></dd>
 
 <dt><code>mzlib_service_unavailable</code> (service_unavailable)</dt>
 <dd><p>Never raised by this verb.</p></dd>
@@ -274,9 +281,9 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
 <ul><li><p>No q-value, PEP or score: nothing here is FDR-filtered.</p></li>
-<li><p>is_decoy is absent for MSFragger and DIA-NN, which write no target/decoy label; null there means unknown, not target.</p></li>
+<li><p>is_decoy is absent for MSFragger and both DIA-NN report types, which give mzLib no per-row target/decoy label (a DIA-NN 2.x parquet written with <code>--report-decoys</code> has one, but mzLib skips its decoy rows); null there means unknown, not target.</p></li>
 <li><p>monoisotopic_mass is the theoretical mass in every format; the observed precursor is not in this view.</p></li>
-<li><p>psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:119, :194).</p></li>
+<li><p>psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:122, :197).</p></li>
 <li><p>A malformed psmtsv row is dropped silently by mzLib; rows_not_read counts them.</p></li>
 <li><p>Many files: <code>--paths-stdin</code> reads the list in ONE process, <code>--threads</code> at a time, into one long table with source_index and source_path first. The output does not depend on <code>--threads</code> (a tested property); the default of 1 is a memory choice, since every reader materialises the whole file.</p></li>
 </ul></div>
@@ -298,7 +305,7 @@ with <code><a href="readers_retention_time_in_minutes.html">readers_retention_ti
     <div class="section level2">
     <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
     <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.</p></li>
+<ul><li><p>PYB-3 part 2: refusing a too-large answer BEFORE serialising is not built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches the failure after serialising. A threshold per record will not work: dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04) measured 725 and 805 characters per record in two psmtsv files from one producer. It proposed source size instead, 0.63 to 0.71 output characters per source byte, which puts the limit at about 1.51 to 1.70 GB of source text. That is two files of one format, and no threshold has been agreed.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

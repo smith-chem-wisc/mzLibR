@@ -60,7 +60,7 @@ is 121.
 ## Wraps
 
 Wire verb `isobaric kits`. Generated from the bridge's verb spec
-`isobaric.kits.yaml` (bridge commit `e76157831b15`) by
+`isobaric.kits.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -215,8 +215,9 @@ The spec records these as open. They are listed rather than hidden:
 - A second verb could read reporter intensities out of spectra through
   IsobaricMassTag.GetReporterIonIntensities; not built.
 
-- Not yet ported: mzLibRust and mzLibR names above are proposals until
-  their ports land (parity order).
+- Ported, unreleased: mzLibRust \#31 and mzLibR \#28 (merged 2026-10-03)
+  ship mzlib::isobaric::kits and isobaric_kits as named above. Set
+  since.mzlibrust / since.mzlibr when they release.
 
 ## References
 

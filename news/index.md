@@ -6,13 +6,100 @@ The first release. Versions follow each wire verb’s `since.mzlibr` in
 the bridge’s verb specs, which every help page’s **Since** section
 renders.
 
-This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib
+This release projects mzLib 1.0.595. The verbs marked *needs the pyMzLib
 0.2.0 bridge*, *needs the pyMzLib 0.3.0 bridge* or *needs the pyMzLib
 0.4.0 bridge* below are new in the bridge that release publishes; with
 an older bridge they are refused, naming the release they need.
 [`mzlibr_install_bridge()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.md)
-installs the bridge pyMzLib 0.4.0 publishes (mzLib 1.0.593, `0a808fec`),
+installs the bridge pyMzLib 0.5.0 publishes (mzLib 1.0.595, `d10017ce`),
 verified against that release’s SHA256SUMS.
+
+### Defaults come from mzLib (the pyMzLib 0.5.0 bridge)
+
+- **[`peptidoform_fragments()`](https://smith-chem-wisc.github.io/mzLibR/reference/peptidoform_fragments.md)
+  takes its defaults from mzLib, so a call that names no protease or
+  dissociation type gives different peptides and ions.** Every digestion
+  argument (`protease`, `dissociation`, `missed_cleavages`,
+  `min_length`, `max_length`, `max_modifications`, `max_isoforms`,
+  `terminus`) now defaults to `NULL`, mzLibR sends nothing for it, and
+  mzLib’s `DigestionParams` default applies. Two of the old defaults
+  were mzLibR’s own and change:
+  - protease: mzLib’s default is `"trypsin"`, which also cuts before
+    proline. The old default was `"trypsin|P"`, which does not.
+    Albumin’s default digest goes from 303 to 310 peptidoforms, and from
+    195 to 202 distinct sequences.
+  - dissociation: mzLib names no default, so the bridge uses HCD (b and
+    y ions) until it does (smith-chem-wisc/mzLib#1488). The old default
+    was ETD (c and z-dot ions).
+
+  The other defaults (missed cleavages, the length window, the
+  modification and isoform caps, terminus) have the same values as
+  before, now set by mzLib. **To get the old answer, pass
+  `protease = "trypsin|P", dissociation = "ETD"`.** A digest records
+  `min_length`, `max_length` and `missed_cleavages` as `NA` when they
+  were left to mzLib, since the bridge does not report those three back,
+  and prints them as mzLib’s default. A `max_length` below `min_length`
+  is refused only when both are given. The help page’s counts are
+  re-measured at mzLib `d10017ce`.
+- **[`pride_list_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md)
+  and
+  [`pride_search()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_search.md)
+  leave the page size to mzLib.** `page_size` now defaults to `NULL` and
+  is sent only when given, so mzLib’s own paging default applies (100
+  today, as before). The results never depended on it. A given page size
+  is checked as before.
+- [`?stats_fit`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  no longer says the bridge’s spline default is 4. With `trend = TRUE`
+  and no `spline_basis`, mzLibR has always sent none; the 0.5.0 bridge
+  now asks mzLib for none either, so mzLib sizes the trend as limma does
+  and a trend fit on fewer than 30 features gets limma’s numbers.
+  `prior$spline_basis_count` says what was used.
+- The help pages are re-rendered from the bridge’s specs, re-checked
+  against mzLib `d10017ce`. PXD000001’s REST manifest listed 9 of the 14
+  files in its FTP tree on 2026-10-21, and
+  [`?pride_list_files`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md)
+  says so rather than 8 of 13.
+
+### mzLib 1.0.595
+
+Built from mzLib 1.0.595 (tag commit `d10017ce`), which carries mzLib
+1.0.594 as well.
+
+- **DIA-NN 2.x’s `report.parquet` reads** (mzLib
+  [\#1384](https://github.com/smith-chem-wisc/mzLibR/issues/1384), file
+  type `DiaNnReportParquet`). DIA-NN 2.x writes its main report only as
+  parquet. mzLib reads it into the same record as the 1.8/1.9
+  `report.tsv`, so it is a fifth quantifiable type:
+  [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md),
+  [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
+  and
+  [`flashlfq_quantify()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
+  take it.
+  **[`readers_formats()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_formats.md)
+  lists 39 types, up from 38, and 5 offer the `quantifiable` view, up
+  from 4**; 19 still offer none. Like the TSV report it is recognised by
+  its columns (`Precursor.Id`, `Stripped.Sequence`, `Run`), not its
+  name, and any other `.parquet` is an `mzlib_usage_error`. **Its
+  `retention_time_unit` is `"minutes"`**, as for the TSV report.
+  `absent_fields` is always empty for it, because there is no text
+  header to judge from, so the columns 2.x stopped writing (`File.Name`,
+  `PG.Quantity`, `MS2.Scan` and others) are `NA` in
+  [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
+  without being named there, and `ms2_scan_number` reads 0.
+- **`peptidoform_convert(target = "ProForma")` names UniProt
+  modifications by UNIMOD accession** (mzLib 1.0.594,
+  [\#1403](https://github.com/smith-chem-wisc/mzLibR/issues/1403)).
+  `[UniProt:N-acetylserine on S]SEQK` becomes `[UNIMOD:1]-SEQK`, where
+  it was written back by name; the caveat that said so is retired, so a
+  result carries five caveats, not six. The `pro_forma` column
+  [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
+  computes for a `.psmtsv` written without one gains the same
+  accessions.
+- The psmtsv caveat on
+  [`readers_read_results()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_results.md)
+  cites `SpectrumMatchFromTsv.cs:122` and `:197`; mzLib
+  [\#1371](https://github.com/smith-chem-wisc/mzLibR/issues/1371) moved
+  the lines it cited. The claim is unchanged.
 
 ### mzLib 1.0.593
 
@@ -189,16 +276,13 @@ verified against that release’s SHA256SUMS.
   (`converted`, `converted_with_warnings` or `failed`), the
   modifications it could not write, and its warnings. `source` and
   `target` take any notation mzLib has registered; every result lists
-  them. `mode` is mzLib’s `SequenceConversionHandlingMode`. **The
-  ProForma target does not resolve UniProt modifications** in this mzLib
-  build (mzLib#1401) and writes them back by name; convert to Unimod for
-  those. The `pro_forma` column of
-  [`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
-  has the same gap (pyMzLib
+  them. `mode` is mzLib’s `SequenceConversionHandlingMode`. The ProForma
+  target names UniProt modifications by UNIMOD accession too, since
+  mzLib [\#1403](https://github.com/smith-chem-wisc/mzLibR/issues/1403)
+  (see mzLib 1.0.595 above; at mzLib 1.0.593 it wrote them back by name,
+  mzLib#1401). (pyMzLib
   [\#75](https://github.com/smith-chem-wisc/mzLibR/issues/75); *needs
-  the pyMzLib 0.4.0 bridge*, which
-  [`mzlibr_install_bridge()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.md)
-  now installs).
+  the pyMzLib 0.4.0 bridge*.)
 - [`flashlfq_quantify()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
   runs FlashLFQ label-free quantification with match-between-runs.
 - [`flashlfq_median_polish()`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_median_polish.md)

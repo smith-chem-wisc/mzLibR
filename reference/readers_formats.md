@@ -35,19 +35,24 @@ cross-format projection of it.
 \- `"quantifiable"` — the cross-format record view, and the input
 [`flashlfq_quantify`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
 accepts. **Few file types have it**: MetaMorpheus `psmtsv` and `osmtsv`,
-`MsFraggerPsm`, and DIA-NN `DiaNnReport`. - `"ms1_features"` —
-deconvolved MS1 features (TopFD `_ms1.feature`, Dinosaur). - `"spectra"`
-— the file is spectra, not results. - `"spectral_match"` —
-identifications that share no file-level interface.
+`MsFraggerPsm`, DIA-NN's `report.tsv` (`DiaNnReport`), and DIA-NN 2.x's
+`report.parquet` (`DiaNnReportParquet`, mzLib \#1384). -
+`"ms1_features"` — deconvolved MS1 features (TopFD `_ms1.feature`,
+Dinosaur). - `"spectra"` — the file is spectra, not results. -
+`"spectral_match"` — identifications that share no file-level interface.
 
 Note also that `extension` is **not unique**: `BrukerD` and
 `BrukerTimsTof` are both `.d`, told apart by what the directory holds,
-and several formats share `.tsv`.
+and several formats share `.tsv`. Nor is it always how dispatch works: a
+DIA-NN report is recognised by its columns, not its name, so a renamed
+`report.tsv` still reads, and any `.parquet` whose columns include
+`Precursor.Id`, `Stripped.Sequence` and `Run` is a `DiaNnReportParquet`
+while any other `.parquet` is refused.
 
 ## Wraps
 
 Wire verb `readers formats`. Generated from the bridge's verb spec
-`readers.formats.yaml` (bridge commit `e76157831b15`) by
+`readers.formats.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -71,8 +76,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `format_count`:
 
   int; in **formats**; never `NA`. Number of entries in formats; equal
-  to the number of SupportedFileType members. 38 at mzLib 1.0.593 (36 at
-  1.0.592, 32 at 1.0.591).
+  to the number of SupportedFileType members. 39 at mzLib 1.0.595 (38 at
+  1.0.593 and 1.0.594, 36 at 1.0.592, 32 at 1.0.591).
 
 - `formats`:
 
@@ -93,8 +98,11 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   broken mzLib build); the listing reports it rather than failing. The
   suffix mzLib dispatches on, e.g. ".mzid.gz" or
   "QuantifiedProteinGroups.tsv". NOT unique: both Bruker types are ".d"
-  and several share ".tsv"; DiaNnReport and PytheasResult dispatch on
-  content, not on this value.
+  and several share ".tsv"; DiaNnReport, DiaNnReportParquet and
+  PytheasResult dispatch on content, not on this value ("report.parquet"
+  is only the conventional name: any .parquet with Precursor.Id,
+  Stripped.Sequence and Run columns is a DIA-NN report, and any other
+  .parquet is refused).
 
 - `reader`:
 
@@ -106,7 +114,7 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
   string\[\]; never `NA`. Cross-format views this type offers, from
   quantifiable, ms1_features, spectra, spectral_match. Empty is a real
-  answer: 19 of 38 types offer none and are readable only through
+  answer: 19 of 39 types offer none and are readable only through
   read-records.
 
 ## Errors
@@ -134,8 +142,9 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - An empty views list means mzLib parses the format into its own record
   type with no cross-format interface; read-records still reads it.
 
-- At mzLib 1.0.593 the view families are: quantifiable 4, ms1_features
-  2, spectral_match 6, spectra 7, none 19. These counts are the pin's,
+- At mzLib 1.0.595 the view families are: quantifiable 5, ms1_features
+  2, spectral_match 6, spectra 7, none 19 (quantifiable was 4 through
+  1.0.594; \#1384 added DiaNnReportParquet). These counts are the pin's,
   not the contract's: bindings should call formats rather than repeat
   them in prose.
 
@@ -166,13 +175,14 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 formats <- readers_formats()
 nrow(formats)
-#> [1] 38
+#> [1] 39
 formats[formats$is_quantifiable, c("file_type", "extension", "reader")]
-#>       file_type  extension           reader
-#> 12       psmtsv    .psmtsv   PsmFromTsvFile
-#> 13       osmtsv    .osmtsv   OsmFromTsvFile
-#> 18 MsFraggerPsm    psm.tsv MsFraggerPsmFile
-#> 30  DiaNnReport report.tsv  DiaNnReportFile
+#>             file_type      extension                 reader
+#> 12             psmtsv        .psmtsv         PsmFromTsvFile
+#> 13             osmtsv        .osmtsv         OsmFromTsvFile
+#> 18       MsFraggerPsm        psm.tsv       MsFraggerPsmFile
+#> 30        DiaNnReport     report.tsv        DiaNnReportFile
+#> 39 DiaNnReportParquet report.parquet DiaNnParquetReportFile
 
 # An empty `views` is a real answer: mzLib reads the file but offers no cross-format view.
 sum(lengths(formats$views) == 0)

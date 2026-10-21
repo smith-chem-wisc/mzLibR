@@ -107,7 +107,7 @@ them for you.
 ## Wraps
 
 Wire verb `genes resolve`. Generated from the bridge's verb spec
-`genes.resolve.yaml` (bridge commit `e76157831b15`) by
+`genes.resolve.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -408,15 +408,8 @@ Wire protocol 1; pyMzLib 0.2.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- The wire module is 'genes' but every binding projects it in its
-  proteins module (BULK.md §6); confirm.
-
 - No verb writes the compact gene set (EnsemblGeneSetWriter); callers
   need mzLib or a future 'genes gene-set' verb to make one.
-
-- The example gene set is a hand-built three-gene GTF in Ensembl's
-  layout; O43653 is off_primary_only only because PSCA is left out of
-  it.
 
 ## References
 

@@ -62,13 +62,15 @@ peptidoform_convert(sequences, source = "mzLib", target = "Unimod", mode = "Retu
 
 ## Details
 
-**Choose Unimod, not ProForma, for UniProt-sourced modifications.**
-mzLib's ProForma target does not resolve them and writes them back under
-their mzLib name, with status `"converted"` (mzLib#1401). In ProForma
-output, treat any bracket that is not a `UNIMOD:` term as unresolved.
-The `pro_forma` column
+Both targets name UniProt-sourced modifications by their UNIMOD
+accession (the ProForma one since mzLib \#1403). They differ on a
+modification no list mzLib loads knows: ProForma writes it back under
+its own name, with status `"converted"`, where Unimod fails the row or
+drops it, depending on `mode`. In ProForma output, treat any bracket
+that is not a `UNIMOD:` term as unresolved. The `pro_forma` column
 [`readers_read_records`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
-gives a `.psmtsv` comes from the same serializer and has the same gap.
+computes for a `.psmtsv` written without one comes from the same
+serializer.
 
 ## Value
 
@@ -98,7 +100,7 @@ The failed and warned rows are
 ## Wraps
 
 Wire verb `peptidoform convert`. Generated from the bridge's verb spec
-`peptidoform.convert.yaml` (bridge commit `e76157831b15`) by
+`peptidoform.convert.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -137,6 +139,8 @@ render the same ones.
   The notation the sequences are in, matched case-insensitively against
   the service's AvailableSourceFormats. Any other name, or the option
   without a value, is a usage error that lists the registered names.
+  mzLib's ConvertAutoDetect is not projected: the source is always a
+  named format, mzLib when `--from` is absent.
 
 - `target` (wire `--to`):
 
@@ -223,7 +227,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `caveats`:
 
-  string\[\]; never `NA`. Six static caveats.
+  string\[\]; never `NA`. Five static caveats (six through mzLib
+  1.0.593).
 
 ## Columns of `records`
 
@@ -294,16 +299,6 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 ## Caveats
 
-- ProForma does not resolve UniProt-sourced modifications at 0a808fec:
-  '\[UniProt:N-acetylserine on S\]SEQK' comes out as
-  '\[UniProt:N-acetylserine on S\]-SEQK', status converted, not
-  '\[UNIMOD:1\]-SEQK'. mzLib's ProForma serializer looks modifications
-  up in the MetaMorpheus list only (ProFormaSequenceSerializer.cs:34,
-  MzLibModificationLookup.cs:54); the Unimod target looks them up in
-  every list mzLib loads, UniProt's included
-  (GlobalModificationLookup.cs:23). Convert to Unimod when the sequences
-  carry UniProt modifications. mzLib#1401.
-
 - ProForma writes a modification it cannot resolve under its mzLib name
   and the row is still converted, so status converted does not mean
   every bracket in a ProForma output is a controlled-vocabulary term.
@@ -351,23 +346,14 @@ yet shipped.
 
 The spec records these as open. They are listed rather than hidden:
 
-- The ProForma target's UniProt gap is an mzLib defect (the serializer's
-  default lookup), mzLib#1401; close this when a pin carries its fix. A
-  bridge-side substitute
-  (ProFormaSequenceSerializer.WithLookup(GlobalModificationLookup))
-  composes serializer internals and is deliberately not used.
-
 - mzLib's MzLibSequenceParser joins '\|'-separated ambiguous candidates
   into one sequence with only a warning; whether it should refuse them
   (as SpectrumMatchFromTsv.ProFormaFromFullSequence does before calling
   it) is an mzLib question: mzLib#1405.
 
-- AutoDetect (SequenceConversionService.ConvertAutoDetect) is not
-  projected: `--from` is always explicit.
-
-- Ported, unreleased: mzLibRust \#32 and mzLibR \#32 (drafts until
-  pyMzLib 0.4.0 publishes the bridge). Set since.mzlibrust /
-  since.mzlibr when they release.
+- Ported, unreleased: mzLibRust \#32 and mzLibR \#32 merged on
+  2026-10-04, on the pyMzLib 0.4.0 bridge. Neither binding has cut a
+  release; set since.mzlibrust / since.mzlibr when they do.
 
 ## References
 

@@ -176,7 +176,7 @@ is 849; "could not be resolved" is 2.
 ## Wraps
 
 Wire verb `quant flashlfq`. Generated from the bridge's verb spec
-`quant.flashlfq.yaml` (bridge commit `e76157831b15`) by
+`quant.flashlfq.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -205,12 +205,15 @@ render the same ones.
 
   path; required. A quantifiable PSM result file mzLib can read: a
   MetaMorpheus .psmtsv/.osmtsv, an MSFragger psm.tsv (retention time
-  converted to minutes by the reader since mzLib#1116), or a DIA-NN
-  report.tsv (FileReader.ReadQuantifiableResultFile at the pin).
-  MSFragger combined results (MsFraggerCombinedResults) implement
-  IQuantifiableResultFile but are not reachable: the path must be a
-  file, and GetResultFileType never maps to that class. Every run the
-  file names must have an mzML on stdin, matched by base file name.
+  converted to minutes by the reader since mzLib#1116), or a DIA-NN main
+  report, report.tsv or (since mzLib 1.0.595, \#1384) DIA-NN 2.x's
+  report.parquet, whose runs are named by its Run column
+  (FileReader.ReadQuantifiableResultFile at the pin; the parquet is
+  checked as far as run matching, since mzLib ships no spectra for its
+  sample's run). MSFragger combined results (MsFraggerCombinedResults)
+  implement IQuantifiableResultFile but are not reachable: the path must
+  be a file, and GetResultFileType never maps to that class. Every run
+  the file names must have an mzML on stdin, matched by base file name.
 
 - `spectra` (wire `--stdin`):
 
@@ -559,16 +562,17 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 The spec records these as open. They are listed rather than hidden:
 
-- Re-measure the K562 MBR pair at threads -1 on the 23c2490e bridge
-  (G-flashlfq-stale-caveats) before any binding deletes its \#1111
-  warning; the caveat above states what mzLib#1155 claims, not a bridge
-  measurement. pyMzLib main already dropped its warning (#67,
-  unreleased) ahead of the re-measure.
+- Re-measure the K562 MBR pair at threads -1 on the current bridge
+  (mzLib pin d10017ce; G-flashlfq-stale-caveats). Until then the caveat
+  above states what mzLib#1155 claims, not a bridge measurement. All
+  three bindings already say so: \#1155 fixed it, it is not re-measured,
+  and 1 is the conservative choice (pyMzLib since 0.3.0). When the
+  re-measure passes, delete that sentence in all three.
 
-- Default divergence: the wire and pyMzLib and mzLibRust default threads
-  to -1, mzLibR defaults max_threads to 1 and warns on anything else.
-  The spec states the wire default; whether the bindings should agree is
-  a cross-binding decision.
+- Default divergence: the wire, pyMzLib and mzLibRust default threads to
+  -1; mzLibR defaults max_threads to 1. R no longer warns on other
+  values, and keeps 1 until the K562 re-measure above. Once that passes,
+  pick one default for all three (G-flashlfq-stale-caveats).
 
 - flashlfq_small.json is hand-shaped (paths '/abs/...', 4
   identifications), not recorded from a live bridge; a live recording
@@ -583,15 +587,6 @@ The spec records these as open. They are listed rather than hidden:
   correctness (mzLib's MzLibException from
   FileReader.ReadQuantifiableResultFile), though it is arguably the
   caller's mistake.
-
-- Most wire params project under FlashLFQ names in every binding (psms,
-  stdin -\> spectra, ppm -\> ppm_tolerance, isotope-ppm -\>
-  isotope_ppm_tolerance, mbr -\> match_between_runs, mbr-ppm -\>
-  mbr_ppm_tolerance, mbr-q -\> mbr_q_value_threshold, shared-peptides
-  -\> use_shared_peptides_for_protein_quant, bayesian -\>
-  bayesian_protein_quant, use-pep-q -\> use_pep_q_value, threads -\>
-  max_threads, out -\> output_directory); pyMzLib's spec lint will need
-  PYTHON_DEVIATIONS entries for them.
 
 ## References
 

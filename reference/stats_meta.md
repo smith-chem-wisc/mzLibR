@@ -59,7 +59,7 @@ to adjust across features.
 ## Wraps
 
 Wire verb `stats meta`. Generated from the bridge's verb spec
-`stats.meta.yaml` (bridge commit `e76157831b15`) by
+`stats.meta.yaml` (bridge commit `22638d4276ff`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -232,17 +232,6 @@ any work.
 
 Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not
 yet shipped.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- Rust and R spellings are proposals until those bindings ship the verb.
-
-- The example's studies are mzLib's metafor reference cases
-  (Test/StatisticalModels/ReferenceData/dl_inputs.tsv), copied verbatim
-  to pkg/python/tests/fixtures/stats/metafor_dl_inputs.tsv. They are
-  constructed cases, not proteomics data.
 
 ## References
 
