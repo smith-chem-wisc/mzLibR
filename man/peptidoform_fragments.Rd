@@ -113,7 +113,7 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}
@@ -216,6 +216,7 @@ The spec records these as open. They are listed rather than hidden:
 
 \itemize{
 \item Integer options are not range-checked by the bridge (negative min-length, max-isoforms 0); the bindings check them, not alike (min_length 0 passes pyMzLib and mzLibRust, not mzLibR). Enum.TryParse also accepts numeric strings: \code{--dissociation} 3 passes as SID, and \code{--dissociation} 99 or \code{--terminus} 7 pass as undefined members. mzLib's behaviour on those values is unverified.
+\item The envelope echoes the protease, dissociation, terminus and both caps it used, but not missed-cleavages, min-length or max-length. Since 2026-10-21 those can be mzLib's defaults, so a binding cannot show the values used (mzLibR prints NA as 'mzLib's default'). Echoing them, read from the DigestionParams the bridge built, would be additive and optional (CONTRACT.md).
 \item Unmeasured: mzLib caps isoforms per proteolytic peptide (ProteolyticPeptide.cs:62), so a position that two proteolysis products both produce (the mzLib#1108 duplicates) is capped twice but counted once. It could then read as at the cap when neither copy was cut.
 }
 }

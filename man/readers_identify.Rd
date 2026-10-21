@@ -43,7 +43,7 @@ returns.
 
 }
 \section{Wraps}{
-Wire verb \code{readers identify}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers identify}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}

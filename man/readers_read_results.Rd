@@ -76,7 +76,7 @@ with \code{\link{readers_retention_time_in_minutes}} rather than by hand.
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-results}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
