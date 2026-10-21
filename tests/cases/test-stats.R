@@ -10,7 +10,8 @@
 #      against stats::p.adjust(), which is base R;
 #   2. when limma or metafor is installed: the recorded bridge output against limma or metafor run
 #      HERE, on the same inputs - the check an R user would make;
-#   3. LIVE, with a 1.0.593 bridge: a fresh fit against both.
+#   3. LIVE, with a bridge that has the stats verbs: a fresh fit against both, and against the
+#      recordings to 1e-9.
 
 stats_fixture <- function(name) {
   parsed <- mz$json_parse(paste(readLines(fixture_path(name), warn = FALSE, encoding = "UTF-8"), collapse = "\n"))
@@ -281,7 +282,23 @@ test_that("LIVE: a fresh fit on limma's reference data agrees with limma's recor
   limma <- stats_reference("limma_ebayes_notrend.tsv")
   expect_true(stats_worst(fit$records$t, limma$t_age) < 1e-8)
   expect_true(stats_worst(fit$records$bh_adjusted, limma$bh_age) < 1e-8)
-  expect_identical(fit$records$t, stats_limma_fit()$records$t, info = "the same at any thread count")
+
+  # Bit for bit across thread counts: every core and one give the same answer.
+  single <- stats_fit(stats_reference_path("limma_reference_responses.tsv"),
+                      stats_reference_path("limma_reference_design.tsv"), "age_decades", threads = 1)
+  expect_identical(fit$records$t, single$records$t, info = "the same at any thread count")
+  expect_identical(fit$records$bh_adjusted, single$records$bh_adjusted, info = "the same at any thread count")
+
+  # Against the recording, to 1e-9 relative, the tolerance pyMzLib's live check uses: still far
+  # below the 1e-8 promised against limma, so drift between the recorded bridge and this one is
+  # caught. Not bit for bit, because the recording was made at mzLib 1.0.593, and 1.0.595's prior
+  # arithmetic differs from it by about 1e-14 relative (prior df 4.531798758719062 against
+  # 4.5317987587192796), with identical estimates.
+  recorded <- stats_limma_fit()
+  expect_true(stats_worst(fit$records$t, recorded$records$t) <= 1e-9, info = "t against the recording")
+  expect_true(stats_worst(fit$records$bh_adjusted, recorded$records$bh_adjusted) <= 1e-9,
+    info = "bh_adjusted against the recording"
+  )
 })
 
 test_that("LIVE: a fresh fit agrees with limma run here", {
