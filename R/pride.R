@@ -470,7 +470,12 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #'   and rejecting a valid future one would be worse.
 #' @param page_size How many files to request per underlying API call. Affects only how the
 #'   manifest is fetched, never what you get back. `NULL` means mzLib's default.
-#' @param timeout Seconds to allow for the whole fetch, or `NULL` to wait indefinitely.
+#' @param timeout Seconds to allow for the whole fetch.
+#'   `NULL`, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+#'   request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+#'   can take up to 100 s. An outage that hangs is therefore reported as
+#'   `mzlib_service_unavailable` after about 8 minutes per request. A number cuts the whole call
+#'   off after that many seconds with `mzlib_timeout`, which is not `mzlib_service_unavailable`.
 #'
 #' @return A data.frame with one row per file and the columns `file_name`, `file_size_bytes`,
 #'   `size_mb`, `extension`, `category`, `category_accession`, `checksum`, `https_url`,
@@ -493,7 +498,7 @@ pride_build_download_files_args <- function(files, destination, overwrite) {
 #' files[, c("file_name", "category", "size_mb", "downloadable")]
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
-pride_list_files <- function(accession, page_size = NULL, timeout = 300) {
+pride_list_files <- function(accession, page_size = NULL, timeout = NULL) {
   args <- pride_build_list_args(accession, page_size)
   canonical <- pride_normalise_accession(accession)
   data <- bridge_invoke(args, timeout = timeout)
@@ -513,6 +518,11 @@ pride_list_files <- function(accession, page_size = NULL, timeout = 300) {
 #'
 #' @param accession A project accession, e.g. `"PXD000001"`.
 #' @param timeout Seconds to allow for the whole walk, which spans one request per directory.
+#'   `NULL`, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+#'   request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+#'   can take up to 100 s. An outage that hangs is therefore reported as
+#'   `mzlib_service_unavailable` after about 8 minutes per request. A number cuts the whole call
+#'   off after that many seconds with `mzlib_timeout`, which is not `mzlib_service_unavailable`.
 #' @return A data.frame with one row per file and columns `relative_path`, `file_name`, `url`,
 #'   `approximate_size_bytes`, `approximate_size_mb`, and `extension`.
 #'
@@ -531,7 +541,7 @@ pride_list_files <- function(accession, page_size = NULL, timeout = 300) {
 #' pride_approximate_total_size_bytes(listing)
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
-pride_list_ftp_files <- function(accession, timeout = 300) {
+pride_list_ftp_files <- function(accession, timeout = NULL) {
   canonical <- pride_normalise_accession(accession)
   args <- c("pride", "ftp-files", "--accession", canonical)
 
@@ -690,7 +700,12 @@ pride_parse_search <- function(data) {
 #'   beginning with `-` is refused, since the bridge would read it as an option.
 #' @param page_size How many projects to request per underlying API call. Changes how many
 #'   requests the fetch takes, never what comes back. `NULL` means mzLib's default.
-#' @param timeout Seconds to allow for the whole fetch, or `NULL` to wait indefinitely.
+#' @param timeout Seconds to allow for the whole fetch.
+#'   `NULL`, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+#'   request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+#'   can take up to 100 s. An outage that hangs is therefore reported as
+#'   `mzlib_service_unavailable` after about 8 minutes per request. A number cuts the whole call
+#'   off after that many seconds with `mzlib_timeout`, which is not `mzlib_service_unavailable`.
 #'
 #' @return A data.frame with one row per matching project, in PRIDE's ranking order. **Zero rows
 #'   is a real answer** - PRIDE reports no hits as an empty result, and unlike [pride_list_files()]
@@ -743,7 +758,7 @@ pride_parse_search <- function(data) {
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @spec pride.search
 #' @export
-pride_search <- function(keyword, page_size = NULL, timeout = 300) {
+pride_search <- function(keyword, page_size = NULL, timeout = NULL) {
   args <- pride_build_search_args(keyword, page_size)
   pride_parse_search(bridge_invoke(args, timeout = timeout))
 }
@@ -751,7 +766,10 @@ pride_search <- function(keyword, page_size = NULL, timeout = 300) {
 #' Download files from a PRIDE Archive project
 #'
 #' Files are streamed to a temporary name and moved into place only once complete, so an
-#' interrupted download never leaves a truncated file behind.
+#' interrupted download never leaves a truncated file under its real name. A transfer that fails
+#' after mzLib's retries leaves `<name>.partial` and `<name>.partial.validator` in `destination` on
+#' purpose: the next call for that file resumes from them (mzLib #1412). Leave them in place, or
+#' delete both to start over.
 #'
 #' Prefer [pride_download_files()] when you can. `category` and `extensions` can only express
 #' what they were built to express; "under 5 MB", "the three newest", or "everything except the

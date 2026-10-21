@@ -67,7 +67,7 @@ MetaMorpheus's per-sample PTM occupancy cells have no column shape and are liste
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-protein-groups}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-protein-groups}. Generated from the bridge's verb spec \code{readers.read-protein-groups.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs}{\code{ProteinGroupFromTsvFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs} at mzLib \code{23c2490e}
@@ -114,8 +114,8 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{organism}}{string; \code{NA} when the file has no Organism column (then also in absent_fields) or the cell is blank. Organism as written.}
 \item{\code{decoy_contaminant_target}}{string; never \code{NA}. T, D, C, or entrapment ET/ED, as written.}
 \item{\code{is_decoy}}{bool; never \code{NA}. decoy_contaminant_target contains D (mzLib's IsDecoy).}
-\item{\code{is_contaminant}}{bool; never \code{NA}. decoy_contaminant_target is C.}
-\item{\code{is_entrapment}}{bool; never \code{NA}. decoy_contaminant_target starts with E.}
+\item{\code{is_contaminant}}{bool; never \code{NA}. Any |-joined parent label is C (DecoyContaminantTargetLabel.IsContaminant), so T|C is a contaminant. Before mzLib 1.0.595 (#1371) the label had to be exactly C.}
+\item{\code{is_entrapment}}{bool; never \code{NA}. Any |-joined parent label is entrapment, ET or ED (DecoyContaminantTargetLabel.IsEntrapment), so T|ET is entrapment. Before mzLib 1.0.595 (#1371) the label had to start with E.}
 \item{\code{q_value}}{float; in \strong{fraction (0 to 1)}; never \code{NA}. The group's q-value; the table is unfiltered and this is what filtering reads.}
 \item{\code{sample_label}}{string; \code{NA} when the file has no per-sample columns: the group is one row and this is in absent_fields. The sample group this row measures.}
 \item{\code{spectral_count}}{int; in \strong{PSMs}; \code{NA} when the cell is blank, or the file has no SpectralCount_ columns (then in absent_fields); an isobaric intensity-only label has none. PSMs from this sample group assigned to the group (SpectralCount_).}

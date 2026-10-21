@@ -4,7 +4,7 @@
 \alias{pride_list_files}
 \title{List the files in a PRIDE Archive project}
 \usage{
-pride_list_files(accession, page_size = NULL, timeout = 300)
+pride_list_files(accession, page_size = NULL, timeout = NULL)
 }
 \arguments{
 \item{accession}{A project accession, e.g. \code{"PXD000001"}. Case and surrounding whitespace are
@@ -15,7 +15,12 @@ pride_list_files(accession, page_size = NULL, timeout = 300)
 \item{page_size}{How many files to request per underlying API call. Affects only how the
   manifest is fetched, never what you get back. \code{NULL} means mzLib's default.}
 
-\item{timeout}{Seconds to allow for the whole fetch, or \code{NULL} to wait indefinitely.
+\item{timeout}{Seconds to allow for the whole fetch.
+  \code{NULL}, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+  request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+  can take up to 100 s. An outage that hangs is therefore reported as
+  \code{mzlib_service_unavailable} after about 8 minutes per request. A number cuts the whole call
+  off after that many seconds with \code{mzlib_timeout}, which is not \code{mzlib_service_unavailable}.
 }
 
 }
@@ -54,7 +59,7 @@ A data.frame with one row per file and the columns \code{file_name}, \code{file_
 
 }
 \section{Wraps}{
-Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -104,6 +109,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient failure, that request alone, after 5, 20 and 60 s (a 429 or 503 Retry-After of up to 60 s replaces the wait); transient means no HTTP status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk, EBI's rate limit. Each attempt can take up to the client's 100 s timeout, so a service that hangs takes up to about 485 s per request before the failure is reported. A binding's own timeout shorter than that reports a hanging outage as a timeout, not as service_unavailable.
 \item This is PRIDE's REST manifest, which is knowingly incomplete: for PXD000001 on 2026-10-21 it listed 9 of the 14 files in the FTP tree, omitting five including the two largest (on 2026-10-03, when the fixtures were recorded, it listed 8). Use pride ftp-files when completeness or the true project size matters.
 \item An unknown accession and a private project both return file_count 0, not an error. The bindings raise their not-found error on an empty manifest; the wire does not.
 \item total_size_bytes is not the number of bytes a download transfers: PRIDE reports some compressed files at their decompressed size, and the sum covers only the files the manifest lists. The two errors run in opposite directions and do not cancel.

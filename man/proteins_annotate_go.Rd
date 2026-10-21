@@ -101,7 +101,7 @@ An \code{mzlibr_go_annotations}:
 
 }
 \section{Wraps}{
-Wire verb \code{proteins annotate-go}. Generated from the bridge's verb spec \code{proteins.annotate-go.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins annotate-go}. Generated from the bridge's verb spec \code{proteins.annotate-go.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/UsefulProteomicsDatabases/GeneOntology/GoGroupAnnotator.cs}{\code{GoGroupAnnotator.AnnotateAll}} in \code{mzLib/UsefulProteomicsDatabases/GeneOntology/GoGroupAnnotator.cs} at mzLib \code{0a808fec}
@@ -134,7 +134,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{groups_file}}{string; never \code{NA}. Absolute path of the protein-group table.}
 \item{\code{groups_file_sha256}}{string; never \code{NA}. Lower-case hex sha256 of the table's bytes; also the header's source_file_sha256.}
 \item{\code{table_row_count}}{int; in \strong{rows}; never \code{NA}. Rows in the table, decoys included.}
-\item{\code{decoy_group_count}}{int; in \strong{groups}; never \code{NA}. Decoy rows (label contains D, so an entrapment decoy ED too), skipped: decoys carry no GO.}
+\item{\code{decoy_group_count}}{int; in \strong{groups}; never \code{NA}. Decoy rows, skipped: decoys carry no GO. A row is a decoy when any |-joined parent label is D or the entrapment decoy ED (DecoyContaminantTargetLabel.IsDecoy, mzLib 1.0.595 #1371).}
 \item{\code{group_count}}{int; in \strong{groups}; never \code{NA}. Groups annotated: every non-decoy group, contaminants included, each once even when MetaMorpheus wrote it twice (mzLib #1366).}
 \item{\code{annotation_database}}{object; never \code{NA}. \{path, file_type (UniProtXml), reader, protein_count, sha256 (of the DECOMPRESSED bytes), caveats\}.}
 \item{\code{go}}{object; never \code{NA}. \{source_file_name, sha256, release (the data-version; null when the file has none), term_count (obsolete terms included)\}.}

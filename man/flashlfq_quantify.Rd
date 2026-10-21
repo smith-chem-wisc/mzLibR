@@ -133,7 +133,7 @@ and \strong{847} are 0 in both runs. "No usable number" is 849; "could not be re
 
 }
 \section{Wraps}{
-Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -231,6 +231,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.595 (#1422), normalize and bayesian walk the biological replicates that exist, not 0 to the largest number, and normalize takes the first condition's lowest biorep and each fraction's lowest techrep as its reference, with techreps in numeric order. A design numbered from 1 is now normalized (before, biorep normalization silently did nothing); a gapped design with fractions, which threw, now quantifies; a replicate sharing no peptide with the reference no longer stops the rest of the step. Omitted bioreps are numbered by line across all conditions, so every condition after the first has a gap; that is handled the same way.
+\item Since mzLib 1.0.595 (#1424), condition A1 biorep 0 beside condition A biorep 10 quantifies: median polish keyed its samples by the two joined as one string, which threw IndexOutOfRangeException and crossed as correctness.
 \item THREADS AT THIS PIN: mzLib#1111 (peptide roll-up nondeterministically dropping MBR intensities at MaxThreads -1, flipping protein groups between null and a number) is fixed by mzLib#1155, which is in the pin: PEP training rows are now built in a fixed order, and its commit reports identical peptides and proteins across runs. The bindings' 'set threads to 1 to reproduce' warnings predate the fix. The bridge project has not re-measured the K562 case at -1 on this pin; until it does, 1 remains the conservative choice for published numbers.
 \item mzML only: .raw and .d are rejected up front; convert them first.
 \item For match-between-runs read peaks, not peptides: the peptide roll-up (as in QuantifiedPeptides.tsv) reports far fewer MBR transfers than happened (K562 pair: 140 MBR peaks, 52 MBR peptide entries).
@@ -256,6 +258,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
+\item An omitted biorep is the line's 0-based index across all lines, the convention MetaMorpheus uses for a run with no design. It is the bridge's own default: mzLib has no reader that says what a run without a design is (MetaMorpheus's ExperimentalDesign reader lives in MetaMorpheus). If mzLib gains one, the bridge should use it and send nothing for an omitted field.
 \item Re-measure the K562 MBR pair at threads -1 on the current bridge (mzLib pin d10017ce; G-flashlfq-stale-caveats). Until then the caveat above states what mzLib#1155 claims, not a bridge measurement. All three bindings already say so: #1155 fixed it, it is not re-measured, and 1 is the conservative choice (pyMzLib since 0.3.0). When the re-measure passes, delete that sentence in all three.
 \item Default divergence: the wire, pyMzLib and mzLibRust default threads to -1; mzLibR defaults max_threads to 1. R no longer warns on other values, and keeps 1 until the K562 re-measure above. Once that passes, pick one default for all three (G-flashlfq-stale-caveats).
 \item flashlfq_small.json is hand-shaped (paths '/abs/...', 4 identifications), not recorded from a live bridge; a live recording would make the example executable against real files.

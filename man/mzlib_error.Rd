@@ -31,9 +31,13 @@ the bridge (its \code{usage} kind, exit status 2). Fix the call; retrying will n
 raises \code{UsageError}, mzLibRust returns \code{MzLibError::Usage}.
 
 \code{mzlib_service_unavailable} - an external service is down, rate-limited, timing out or
-unreachable: HTTP 408, 429 and 5xx from PRIDE, UniProt or EBI. \strong{Retry later.} A 404 or 400 is
-deliberately not this class, because a wrong URL or a malformed request is a defect, and
-excusing it as an outage would hide it. The live tests skip on this class and nothing else.
+unreachable: HTTP 408, 429 and 5xx from PRIDE, UniProt or EBI. \strong{Retry later.} For PRIDE,
+mzLib has already retried each request three times, after 5, 20 and 60 s (mzLib #1412), so
+later means minutes, not seconds. A 404 or 400 is deliberately not this class, because a wrong
+URL or a malformed request is a defect, and excusing it as an outage would hide it. Two PRIDE
+failures are EBI's but arrive as \code{mzlib_bridge_error} with \code{error_type}
+\code{"HttpRequestException"}: an FTP listing still empty, and a 403 from EBI's FTP host, each after
+mzLib's retries. Treat those as an outage. The live tests skip on this class and nothing else.
 pyMzLib raises \code{ServiceUnavailableError}.
 
 \code{mzlib_bridge_error} - mzLib itself reported a failure (the spec's \code{correctness} kind): a file

@@ -103,7 +103,57 @@ tryCatch(pride_list_files("PXD999999999"),
          mzlib_project_not_found = function(e) conditionMessage(e))
 ```
 
-An EBI outage raises `mzlib_service_unavailable`, which is the one to retry. See `?mzlib_error`.
+An EBI outage raises `mzlib_service_unavailable`. See `?mzlib_error`, and the next section for
+what to do about one.
+
+## Retries, timeouts and outages
+
+**mzLib retries for you.** A PRIDE request that fails in a way that can pass (no answer, an HTTP
+408, 429 or 5xx, or a 403 from EBI's FTP host, its rate limit) is retried three times, after 5,
+20 and 60 seconds, and that request alone (mzLib #1412). A paged manifest retries only the page
+that failed, and a download resumes where it stopped.
+
+**mzLibR adds no timeout of its own by default**, on any `pride_` function. Each attempt is
+already limited to 100 seconds, so an outage that hangs is reported as
+`mzlib_service_unavailable` after about 8 minutes per request. Pass `timeout` to cut a call off
+sooner; it then raises `mzlib_timeout`, which is not `mzlib_service_unavailable`:
+
+```{r, eval = FALSE}
+# Not run: contacts PRIDE.
+pride_list_files("PXD000001", timeout = 60)   # give up after a minute
+```
+
+By the time `mzlib_service_unavailable` reaches you, mzLib has already retried, so retrying again
+at once rarely helps. Wait minutes, not seconds:
+
+```{r, eval = FALSE}
+# Not run: shows how to handle a PRIDE outage, which a recording cannot produce.
+files <- tryCatch(
+  pride_list_files("PXD000001"),
+  mzlib_service_unavailable = function(e) {
+    Sys.sleep(600)   # mzLib retried already; give EBI ten minutes
+    pride_list_files("PXD000001")
+  }
+)
+```
+
+Two failures look like a request PRIDE refused, `mzlib_bridge_error` with `error_type`
+`"HttpRequestException"`, but are EBI's: an FTP listing that came back empty, and a 403 from
+EBI's FTP host, each still failing after mzLib's retries. Treat those as an outage.
+
+## Interrupted and suspect downloads
+
+Each file streams to a temporary `.partial` name and moves into place only once complete, so a
+cancelled or crashed download leaves no truncated file under its real name. A transfer that fails
+after mzLib's retries leaves `<name>.partial` and `<name>.partial.validator` in the folder on
+purpose: the next call for that file resumes from them (mzLib #1412). Leave them in place, or
+delete both to start over.
+
+mzLib can check a download against PRIDE's checksums, and catch an EBI error page served at the
+right size (mzLib #1427, #1449). That check is not yet on the path `pride_download()` and
+`pride_download_files()` use, so a file can be reported as downloaded when its bytes are wrong.
+For files that matter, compare their sizes with `pride_list_files()` and their checksums with
+PRIDE's before you search them.
 
 ## What to cite
 

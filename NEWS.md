@@ -30,6 +30,14 @@ pyMzLib 0.5.0 publishes (mzLib 1.0.595, `d10017ce`), verified against that relea
 * **`pride_list_files()` and `pride_search()` leave the page size to mzLib.** `page_size` now
   defaults to `NULL` and is sent only when given, so mzLib's own paging default applies (100
   today, as before). The results never depended on it. A given page size is checked as before.
+* **`pride_list_files()`, `pride_list_ftp_files()` and `pride_search()` add no timeout of their
+  own.** They defaulted to `timeout = 300`, which turned a PRIDE outage that hangs into an
+  `mzlib_timeout`. mzLib already bounds each request (#1412: three retries after 5, 20 and 60 s,
+  each attempt up to 100 s), so they now default to `NULL` and a hang is reported as
+  `mzlib_service_unavailable`, after about 8 minutes per request. Pass `timeout = 300` for the old
+  limit; a number still cuts the call off with `mzlib_timeout`. The PRIDE article's outage
+  handling now waits minutes and tries once more, since mzLib has already retried, and
+  `?mzlib_error` says so.
 * `?stats_fit` no longer says the bridge's spline default is 4. With `trend = TRUE` and no
   `spline_basis`, mzLibR has always sent none; the 0.5.0 bridge now asks mzLib for none either,
   so mzLib sizes the trend as limma does and a trend fit on fewer than 30 features gets limma's
@@ -58,6 +66,85 @@ Built from mzLib 1.0.595 (tag commit `d10017ce`), which carries mzLib 1.0.594 as
   was written back by name; the caveat that said so is retired, so a result carries five caveats,
   not six. The `pro_forma` column `readers_read_records()` computes for a `.psmtsv` written
   without one gains the same accessions.
+
+Every other result mzLib 1.0.594 and 1.0.595 changed, listed after the fact: pyMzLib measured
+each with the bridge at `d10017ce`, and the conversions, the `stats_fit()` prior and the
+`entrapment_fraction` column were re-checked from R against the pyMzLib 0.5.0 bridge. The help
+pages carry them too, rendered from the bridge's specs.
+
+*Calls that used to succeed are now refused.*
+
+* **ProForma input that lost part of itself** (mzLib #1462).
+  `peptidoform_convert(..., source = "ProForma")` converted `PEPTIDE-[UNIMOD:2][UNIMOD:35]` with
+  one C-terminal modification dropped, and read `PEPTIDE-[UNIMOD:2]K` as `PEPTIDEK`. Stacked
+  terminal modifications now fail with `failure_reason` `"IncompatibleModifications"`
+  (`incompatible_items`: "Multiple C-terminal modifications (2 found)."), and a residue after a
+  C-terminal modification, a leading `-` or a modification with no sequence fail with
+  `"InvalidSequence"`.
+* **SUMO remnants named `... on D`** (mzLib #1432). mzLib's human SUMO-1 and SUMO-2/3 remnants
+  (`DVIEVYQEQTGG (SUMO-1 Site human)`, `DVFQQQTGG (SUMO-2/3 Site human)`) now target K, where
+  they targeted D. A full sequence that names the `on D` form no longer converts; the `on K` form
+  does.
+* **TMTpro on S, T, Y or H** (mzLib #1419). mzLib used to turn these into TMT, 224 Da, so
+  `PEPS[Common Fixed:TMTpro on S]K` converted at the wrong mass. They now fail to convert. TMTpro
+  on K is unchanged (+304.2071 Da).
+
+*Calls that used to fail now succeed.*
+
+* **`flashlfq_quantify()` with gapped replicate numbers** (mzLib #1422). A design whose
+  biological replicates skip a number, with fractions, raised an error; it now quantifies. So does
+  the numbering the bridge uses when `spectra` gives no `biological_replicate`, which skips at
+  every condition after the first. `bayesian_protein_quant = TRUE` on such a design now writes
+  `BayesianProteinQuant.tsv` to `output_directory`.
+* **A condition whose name ends in digits** (mzLib #1424). Condition `A1` biorep 0 beside
+  condition `A` biorep 10 raised an `mzlib_bridge_error` in `flashlfq_quantify()` and
+  `flashlfq_median_polish()`, because the two spell the same text. It now quantifies.
+
+*Same file, different value.*
+
+* **Entrapment and contaminant flags read every joined label** (mzLib #1371). In
+  `readers_read_records()` and `readers_read_protein_groups()`, `is_decoy`, `is_contaminant` and
+  `is_entrapment` are `TRUE` when any `|`-joined parent is D, C or E. A protein group labelled
+  `T|C` is now a contaminant and `T|ET` entrapment; on a `.psmtsv` the "E" in MetaMorpheus's
+  "Output too long for Excel" no longer reads as entrapment. Labels MetaMorpheus writes itself
+  read as before.
+* **`readers_read_records()` of a `.psmtsv` or `.osmtsv` gains an `entrapment_fraction` column**
+  (mzLib #1371): the share of each PSM that is an entrapment discovery, from 0 to 1. A shared
+  `T|ET` counts half when the sequences differ and nothing when both proteins carry the same
+  peptide. Use it, not `is_entrapment`, to count entrapment discoveries. It is `NA` where mzLib
+  cannot line the label up with the full sequence (mzLib's `NaN`).
+* **Lactylation on K weighs one hydrogen more** (mzLib #1417). mzLib's formula is now C3H4O2,
+  72.021129 Da, where it was C3H3O2, 71.013304 Da. `peptidoform_convert(..., target =
+  "MassShift")` of `PEPK[Less Common:Lactylation on K]R` gives `PEPK[+72.021129]R`, and the
+  `"ProForma"` and `"Unimod"` targets write `UNIMOD:2114`. A `.psmtsv`'s `pro_forma` column changes
+  the same way.
+* **`flashlfq_quantify(normalize = TRUE)`** (mzLib #1422). The reference is now the first
+  condition's lowest biological replicate, and each fraction's lowest technical replicate, taken
+  in numeric order. A design numbered from 1 is now normalized; before, biorep normalization did
+  nothing for it. A gapless design numbered from 0 and listed in order is unchanged.
+* **`stats_fit()` on fewer than 3 features** (mzLib 1.0.594, #1398). mzLib fits no prior, as
+  limma does: `prior$df` is 0, each feature keeps its own variance, and t and p are ordinary
+  per-feature t-tests. They used to borrow a prior fitted to the two features. The 0.5.0 bridge
+  still reports the first feature's own variance as `prior$scale` there; bridges from pyMzLib
+  0.5.1 report `NA`, and each feature's value is in the `prior_variance` column. `?stats_fit` says
+  both. Tables of 3 or more features are unchanged.
+* **`peptidoform_fragments()` with a `|P` protease** (mzLib #1320). `protease = "trypsin|P"` cut a
+  protein that begins `RP` or `KP` after its first residue; it no longer does, and the other `|P`
+  proteases change the same way. mzLib's default `"trypsin"`, and any protein that begins with M,
+  are unaffected.
+* **PRIDE: a failure that can pass is retried** (mzLib 1.0.594, #1412). Every `pride_` function
+  retries such a failure three times, after 5, 20 and 60 seconds, so an outage takes longer to
+  report. An FTP listing that comes back empty, which `pride_list_ftp_files()` used to return as
+  no files (and so `mzlib_project_not_found`), is retried and then raised as an
+  `mzlib_bridge_error` with `error_type` `"HttpRequestException"`. A failed download leaves
+  `<name>.partial` and `<name>.partial.validator` behind, so the next call resumes.
+* **PRIDE downloads are not checked yet.** mzLib can check a download against PRIDE's checksums
+  and catch an EBI error page served at the right size (#1427, #1449), but not on the path
+  `pride_download()` and `pride_download_files()` use, so a file can be reported as downloaded
+  when its bytes are wrong. `?pride_download` and the PRIDE article say to check large files
+  yourself.
+* `?stats_fit` no longer says contrasts are not implemented: mzLib has them
+  (`EmpiricalBayes.ModerateContrasts`, #1452), but `stats_fit()` does not expose them yet.
 * The psmtsv caveat on `readers_read_results()` cites `SpectrumMatchFromTsv.cs:122` and `:197`;
   mzLib #1371 moved the lines it cited. The claim is unchanged.
 

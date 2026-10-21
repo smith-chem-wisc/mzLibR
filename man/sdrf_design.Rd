@@ -66,7 +66,7 @@ Label-free only: an isobaric (TMT, iTRAQ) SDRF needs a channel design this does 
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesign.Read}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{0a808fec}
@@ -130,6 +130,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item The table is 0-based, as SpectraFileInfo and the quant verbs take it. ExperimentalDesign.tsv is 1-based; mzLib converts when it writes.
 \item notes is the only record of a renumbering; read it.
 \item A factor holding not available or not applicable is refused: it would pair samples nobody said were alike.
+\item A fraction or technical replicate of not available is refused as not an integer of 1 or more (SdrfDesignRules.ReadPositiveInteger). Since mzLib 1.0.594 (#1378) SdrfBuilder can write one, for a run with no design (MetaMorpheus #2816 will), so an SDRF mzLib itself wrote can be refused here.
 \item MetaMorpheus finds the design only as a file named ExperimentalDesign.tsv beside the spectra; \code{--out} writes any .tsv path.
 }
 }

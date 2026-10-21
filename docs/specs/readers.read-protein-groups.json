@@ -279,7 +279,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "decoy_contaminant_target is C."
+        "doc": "Any |-joined parent label is C (DecoyContaminantTargetLabel.IsContaminant), so T|C is a contaminant. Before mzLib 1.0.595 (#1371) the label had to be exactly C."
       },
       {
         "wire": "is_entrapment",
@@ -287,7 +287,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "decoy_contaminant_target starts with E."
+        "doc": "Any |-joined parent label is entrapment, ET or ED (DecoyContaminantTargetLabel.IsEntrapment), so T|ET is entrapment. Before mzLib 1.0.595 (#1371) the label had to start with E."
       },
       {
         "wire": "q_value",

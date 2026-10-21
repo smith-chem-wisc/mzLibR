@@ -70,20 +70,25 @@ An \code{mzlibr_moderated_fit}:
     reports different moderated statistics; these are \code{legacy = TRUE}.
   - \code{prior}, the fitted variance prior, shared by every coefficient: \code{df} (degrees of freedom,
     \code{NA} when infinite), \code{df_infinite}, \code{trended}, \code{spline_basis_count} (basis functions) and
-    \code{scale} (squared response units, \code{NA} when trended).
+    \code{scale} (squared response units), s0^2 when every fitted feature shares one. \code{scale} is \code{NA}
+    when it differs by feature, which is then in the \code{prior_variance} column: with a trend, or
+    with fewer than 3 features. Then mzLib fits no prior (mzLib #1398, as limma's \code{squeezeVar}
+    does): \code{df} is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.5.1
+    report the first feature's own variance as \code{scale} in that case.
   - \code{caveats}, including any that apply to this input.
 
 }
 \section{What it is not}{
 
 
-It is limma's *legacy* estimator. \code{robust = TRUE}, contrasts, the B-statistic and observation
-weights are not implemented; write a contrast as its own design column instead. \code{bh_adjusted}
+It is limma's *legacy* estimator. \code{robust = TRUE}, the B-statistic and observation weights are
+not implemented. mzLib has contrasts (\code{EmpiricalBayes.ModerateContrasts}, mzLib #1452), but this
+function does not expose them yet: write a contrast as its own design column instead. \code{bh_adjusted}
 controls the false discovery rate among the features tested; it is not a target-decoy q-value.
 
 }
 \section{Wraps}{
-Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs}{\code{LinearModel.Fit}} in \code{mzLib/StatisticalModels/LinearModel.cs} at mzLib \code{0a808fec}
@@ -139,7 +144,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{p_value}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not fitted. Two-sided p-value.}
 \item{\code{bh_adjusted}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not fitted (not in the family). Benjamini-Hochberg adjusted p-value over this coefficient's fitted features. Not a target-decoy q-value.}
 \item{\code{posterior_variance}}{float; in \strong{squared response units}; \code{NA} when not fitted. The moderated residual variance (d0 s0^2 + d s^2) / (d0 + d).}
-\item{\code{prior_variance}}{float; in \strong{squared response units}; \code{NA} when not fitted (the feature did not enter the prior). s0^2 for this feature: one value for every feature without \code{--trend}, varying with average_response with it.}
+\item{\code{prior_variance}}{float; in \strong{squared response units}; \code{NA} when not fitted (the feature did not enter the prior). s0^2 for this feature: one value for every feature without \code{--trend}, varying with average_response with it. With fewer than 3 features it is the feature's own variance, because no prior is fitted.}
 \item{\code{sigma}}{float; in \strong{response units}; \code{NA} when not fitted. Residual standard deviation, sqrt(RSS / df_residual), before moderation.}
 \item{\code{df_residual}}{int; \code{NA} when not fitted. Observed samples minus coefficients.}
 \item{\code{observed}}{int; in \strong{samples}; never \code{NA}. Samples with a finite response for this feature.}
@@ -148,11 +153,11 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 }
 \section{Fields of \code{prior}}{
 \describe{
-\item{\code{prior$df} (wire \code{df})}{float; in \strong{degrees of freedom}; \code{NA} when infinite: df_infinite is true. Prior degrees of freedom d0.}
+\item{\code{prior$df} (wire \code{df})}{float; in \strong{degrees of freedom}; \code{NA} when infinite: df_infinite is true. Prior degrees of freedom d0. 0 with fewer than 3 features, where mzLib fits no prior (mzLib#1398, as limma's squeezeVar), so moderation leaves each feature's variance and t as they are.}
 \item{\code{prior$df_infinite} (wire \code{df_infinite})}{bool; never \code{NA}. True when the residual variances are no more dispersed than sampling alone explains, so every feature takes the prior variance.}
 \item{\code{prior$trended} (wire \code{trended})}{bool; never \code{NA}. Whether s0^2 varies with average_response.}
 \item{\code{prior$spline_basis_count} (wire \code{spline_basis_count})}{int; in \strong{basis functions}; never \code{NA}. Basis functions the trend used, intercept included; 1 without a trend.}
-\item{\code{prior$scale} (wire \code{scale})}{float; in \strong{squared response units}; \code{NA} when trended: s0^2 is per feature, in the prior_variance column. s0^2, the prior variance.}
+\item{\code{prior$scale} (wire \code{scale})}{float; in \strong{squared response units}; \code{NA} when s0^2 differs by feature, so it is in the prior_variance column: trended, or no prior was fitted (fewer than 3 features; mzLib#1398, as limma's squeezeVar). s0^2, the prior variance, when every fitted feature shares one. With fewer than 3 features mzLib fits no prior: df is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.5.1 reported the first feature's own variance here in that case.}
 }
 }
 \section{Errors}{
@@ -169,7 +174,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \section{Caveats}{
 \itemize{
 \item This is limma's LEGACY empirical-Bayes estimator (eBayes(legacy = TRUE)). Since limma 3.61, eBayes defaults to a different estimator whenever residual df differ between features, which omitting missing values causes; residual_df_differ says when that applies.
-\item Not implemented: robust = TRUE, contrasts, the B-statistic, observation weights. Write a contrast as its own design column instead.
+\item Not implemented: robust = TRUE, the B-statistic, observation weights. mzLib has contrasts since 1.0.595 (EmpiricalBayes.ModerateContrasts, #1452), but this verb does not expose them yet: write a contrast as its own design column instead.
 \item A 0 is an observation. Log-transform intensities first, and blank any cell that means 'not measured'.
 \item bh_adjusted adjusts for the false discovery rate among the features tested. It is not a target-decoy q-value for identifications.
 }

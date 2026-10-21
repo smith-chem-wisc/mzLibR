@@ -179,7 +179,7 @@
         "unit": "groups",
         "nullable": false,
         "null_means": null,
-        "doc": "Decoy rows (label contains D, so an entrapment decoy ED too), skipped: decoys carry no GO."
+        "doc": "Decoy rows, skipped: decoys carry no GO. A row is a decoy when any |-joined parent label is D or the entrapment decoy ED (DecoyContaminantTargetLabel.IsDecoy, mzLib 1.0.595 #1371)."
       },
       {
         "wire": "group_count",

@@ -255,13 +255,18 @@ stats_parse_meta <- function(data) {
 #'     reports different moderated statistics; these are `legacy = TRUE`.
 #'   - `prior`, the fitted variance prior, shared by every coefficient: `df` (degrees of freedom,
 #'     `NA` when infinite), `df_infinite`, `trended`, `spline_basis_count` (basis functions) and
-#'     `scale` (squared response units, `NA` when trended).
+#'     `scale` (squared response units), s0^2 when every fitted feature shares one. `scale` is `NA`
+#'     when it differs by feature, which is then in the `prior_variance` column: with a trend, or
+#'     with fewer than 3 features. Then mzLib fits no prior (mzLib #1398, as limma's `squeezeVar`
+#'     does): `df` is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.5.1
+#'     report the first feature's own variance as `scale` in that case.
 #'   - `caveats`, including any that apply to this input.
 #'
 #' @section What it is not:
 #'
-#' It is limma's *legacy* estimator. `robust = TRUE`, contrasts, the B-statistic and observation
-#' weights are not implemented; write a contrast as its own design column instead. `bh_adjusted`
+#' It is limma's *legacy* estimator. `robust = TRUE`, the B-statistic and observation weights are
+#' not implemented. mzLib has contrasts (`EmpiricalBayes.ModerateContrasts`, mzLib #1452), but this
+#' function does not expose them yet: write a contrast as its own design column instead. `bh_adjusted`
 #' controls the false discovery rate among the features tested; it is not a target-decoy q-value.
 #'
 #' @seealso [stats_adjust()], [stats_meta()]
