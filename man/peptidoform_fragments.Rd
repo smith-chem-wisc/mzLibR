@@ -113,7 +113,7 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}
@@ -190,6 +190,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.595 (#1320), a protease with a preventing residue holds its rule at the ends of the sequence. trypsin|P used to cut a protein that begins RP or KP after its first residue (RPAAAAK became R and PAAAAK); it no longer does, and the other |P proteases (chymotrypsin|P, elastase|P, Lys-C|P, subtilisin|P) change the same way. mzLib's default trypsin has no preventing residue, so a default digest is unaffected, and so is any protein that begins with M.
 \item UniProt annotates more than mzLib applies: only 'modified residue' and 'lipid moiety-binding region' features load. Serum albumin: 14 of 38 annotated features applied, the 24 glycosylation-site features dropped on type (mzLib#1112). Read uniprot_features_by_type and unresolved_modifications before trusting a modification count.
 \item max-isoforms truncates silently in mzLib. Histone H3.1 at four modifications keeps 8,644 of its 12,808 peptidoforms at the default cap of 1024, losing about a third. Check peptides_at_isoform_cap before treating the list as exhaustive.
 \item Duplicate peptidoforms that mzLib's Digest emits where a chain boundary meets the initiator-Met cleavage site (mzLib#1108, open) are collapsed by the bridge on (start, end, full sequence).

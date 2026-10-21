@@ -4,12 +4,17 @@
 \alias{pride_list_ftp_files}
 \title{The complete file list of a PRIDE Archive project, from its FTP directory tree}
 \usage{
-pride_list_ftp_files(accession, timeout = 300)
+pride_list_ftp_files(accession, timeout = NULL)
 }
 \arguments{
 \item{accession}{A project accession, e.g. \code{"PXD000001"}.}
 
-\item{timeout}{Seconds to allow for the whole walk, which spans one request per directory.}
+\item{timeout}{Seconds to allow for the whole walk, which spans one request per directory.
+  \code{NULL}, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+  request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+  can take up to 100 s. An outage that hangs is therefore reported as
+  \code{mzlib_service_unavailable} after about 8 minutes per request. A number cuts the whole call
+  off after that many seconds with \code{mzlib_timeout}, which is not \code{mzlib_service_unavailable}.}
 
 }
 \description{
@@ -37,7 +42,7 @@ A data.frame with one row per file and columns \code{relative_path}, \code{file_
   resolves the project before walking, so a typo fails loudly rather than returning nothing.
 }
 \section{Wraps}{
-Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesFromFtpAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -56,7 +61,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 
 \describe{
 \item{\code{accession}}{string; never \code{NA}. The accession, echoed as given.}
-\item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Entries in files. 0 only if the resolved project's directory listed nothing (the bindings raise their not-found error on it).}
+\item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Entries in files. Since mzLib 1.0.594 (#1412) an empty root listing for a project that exists is retried and then thrown (see errors), so 0 means only that the root listed subdirectories that held no files. The bindings raise their not-found error on 0.}
 \item{\code{approximate_total_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Sum of approximate_size_bytes (mzLib TotalApproximateSizeBytes): an estimate over the COMPLETE file list. PXD000001 comes to about 1.44 GB.}
 \item{\code{files}}{object[]; never \code{NA}. One entry per file in walk order (each directory's autoindex order, depth first); fields under result.columns. mzLib does not sort, so the order is PRIDE's and is not promised stable across requests.}
 }
@@ -75,11 +80,12 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{accession missing or blank}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx on the project lookup or on any directory listing, or a body cut off in transit}
-\item{\code{mzlib_bridge_error} (correctness)}{no project has that accession, or it has no publication date to locate its directory (MzLibException; the bindings re-map it to their not-found error); a directory listing answering any other status; nesting deeper than 64 levels (MzLibException: the listing may be cyclic)}
+\item{\code{mzlib_bridge_error} (correctness)}{no project has that accession, or it has no publication date to locate its directory (MzLibException; the bindings re-map it to their not-found error); a directory listing answering any other status; nesting deeper than 64 levels (MzLibException: the listing may be cyclic); the project's root listing still empty after mzLib's retries (#1412: an HttpRequestException with no status and no cause, which mzLib treats as transient but the bridge cannot tell from a refusal, so it crosses as correctness until PRIDE-B3); a 403 from ftp.pride.ebi.ac.uk after mzLib's retries (mzLib retries it as EBI's rate limit, but the bridge classifies by status, so it crosses as correctness; PRIDE-B3 asks mzLib to mark such failures)}
 }
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient failure, that request alone, after 5, 20 and 60 s (a 429 or 503 Retry-After of up to 60 s replaces the wait); transient means no HTTP status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk, EBI's rate limit. Each attempt can take up to the client's 100 s timeout, so a service that hangs takes up to about 485 s per request before the failure is reported. A binding's own timeout shorter than that reports a hanging outage as a timeout, not as service_unavailable.
 \item This is the complete file list; pride files (PRIDE's REST manifest) omits files, for PXD000001 five of 14 on 2026-10-21, including the two largest. The price is metadata: no category, checksum or CV locations here.
 \item Sizes are approximate (rounded autoindex values), so approximate_total_size_bytes is an estimate, but an estimate over every file, unlike pride files' total_size_bytes.
 \item A listing surface only: pride download selects from the REST manifest, so a file that appears only here cannot be fetched by pride download. Fetch it from its url with an ordinary HTTPS client.

@@ -584,3 +584,60 @@ test_that("LIVE: a keyword search returns projects, each with an accession", {
   expect_true(all(nzchar(hits$accession)))
   expect_false(anyDuplicated(hits$accession) > 0L)
 })
+
+# ---------------------------------------------------------------- timeouts
+
+# The three metadata calls, each as a function of the timeout to pass (or none at all).
+pride_metadata_calls <- list(
+  pride_list_files = function(...) pride_list_files("PXD000001", ...),
+  pride_list_ftp_files = function(...) pride_list_ftp_files("PXD000001", ...),
+  pride_search = function(...) pride_search("phospho", ...)
+)
+
+# Call `call` with the namespace's `bridge_run` replaced by a runner that records the timeout it
+# was handed and answers as a PRIDE outage. The public pride_ functions take no runner, so this is
+# the one seam that sees the timeout they pass on. Returns that timeout, or "not run".
+timeout_reaching_the_bridge <- function(call, ...) {
+  path <- fake_bridge_file()
+  seen <- new.env(parent = emptyenv())
+  seen$timeout <- "not run"
+  outage <- function(exe, args, stdin = NULL, timeout = NULL) {
+    seen$timeout <- timeout
+    list(
+      stdout = '{"ok":false,"error":{"type":"ServiceUnavailable","message":"PRIDE is down"}}',
+      stderr = "", status = 1L, timed_out = FALSE
+    )
+  }
+  original <- mz$bridge_run
+  utils::assignInNamespace("bridge_run", outage, "mzLibR")
+  on.exit(
+    {
+      utils::assignInNamespace("bridge_run", original, "mzLibR")
+      unlink(path)
+    },
+    add = TRUE
+  )
+  with_bridge_config(option = path, {
+    expect_error(call(...), class = "mzlib_service_unavailable", contains = "PRIDE is down")
+  })
+  seen$timeout
+}
+
+test_that("PRIDE's metadata calls add no timeout of their own", {
+  # mzLib bounds each PRIDE request itself (#1412: retries after 5, 20 and 60 s, up to 100 s per
+  # attempt). A 300 s limit of mzLibR's own turned an outage that hangs into mzlib_timeout instead
+  # of mzlib_service_unavailable.
+  for (name in names(pride_metadata_calls)) {
+    expect_true("timeout" %in% names(formals(get(name))), info = name)
+    expect_true(is.null(formals(get(name))$timeout), info = name)
+    expect_true(is.null(timeout_reaching_the_bridge(pride_metadata_calls[[name]])), info = name)
+  }
+})
+
+test_that("an explicit timeout on a PRIDE metadata call still reaches the bridge", {
+  for (name in names(pride_metadata_calls)) {
+    expect_identical(timeout_reaching_the_bridge(pride_metadata_calls[[name]], timeout = 60), 60,
+      info = name)
+    expect_error(pride_metadata_calls[[name]](timeout = 0), class = "mzlib_usage_error")
+  }
+})

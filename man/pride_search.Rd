@@ -4,7 +4,7 @@
 \alias{pride_search}
 \title{Find PRIDE Archive projects by keyword}
 \usage{
-pride_search(keyword, page_size = NULL, timeout = 300)
+pride_search(keyword, page_size = NULL, timeout = NULL)
 }
 \arguments{
 \item{keyword}{What to search for, e.g. \code{"phosphoproteome"}, as one string of 1 to 1000
@@ -15,7 +15,12 @@ pride_search(keyword, page_size = NULL, timeout = 300)
 \item{page_size}{How many projects to request per underlying API call. Changes how many
   requests the fetch takes, never what comes back. \code{NULL} means mzLib's default.}
 
-\item{timeout}{Seconds to allow for the whole fetch, or \code{NULL} to wait indefinitely.
+\item{timeout}{Seconds to allow for the whole fetch.
+  \code{NULL}, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+  request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+  can take up to 100 s. An outage that hangs is therefore reported as
+  \code{mzlib_service_unavailable} after about 8 minutes per request. A number cuts the whole call
+  off after that many seconds with \code{mzlib_timeout}, which is not \code{mzlib_service_unavailable}.
 }
 
 }
@@ -77,7 +82,7 @@ one page cannot be affected.
 
 }
 \section{Wraps}{
-Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride.search.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride.search.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.SearchProjectsAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -151,6 +156,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient failure, that request alone, after 5, 20 and 60 s (a 429 or 503 Retry-After of up to 60 s replaces the wait); transient means no HTTP status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk, EBI's rate limit. Each attempt can take up to the client's 100 s timeout, so a service that hangs takes up to about 485 s per request before the failure is reported. A binding's own timeout shorter than that reports a hanging outage as a timeout, not as service_unavailable.
 \item A hit is NOT a project's metadata: PRIDE serves search from an Elasticsearch projection in which every controlled-vocabulary field is flattened to a display string, contacts to names and references to citation strings. Follow the accession for the vocabulary.
 \item A zero or an empty list means 'not reported', never a measured zero. Several fields are genuinely sparse (sampled over 1,600 hits: project_tags 2.6\%, sdrf 2.4\%, other_omics_links 18\%, the bot/hub/organic trio under half).
 \item Dates are bare calendar dates, unlike pride files' timestamps with offsets; a binding must not widen them to a midnight timestamp.

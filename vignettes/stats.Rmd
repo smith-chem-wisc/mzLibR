@@ -134,7 +134,7 @@ whether the answer means what you think:
 - **A 0 is an observation.** Many quantification tables write 0 for "not measured". Make those
   cells `NA`, or they are fitted as a real zero; `zero_count` counts them and a caveat says so.
 - **The design is used as written.** Include the intercept column yourself, and write each
-  comparison as its own column: contrasts are not implemented.
+  comparison as its own column: `stats_fit()` does not expose mzLib's contrasts yet.
 
 ## P-values from anywhere
 

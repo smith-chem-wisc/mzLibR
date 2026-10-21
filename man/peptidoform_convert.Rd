@@ -70,7 +70,7 @@ An \code{mzlibr_sequence_conversions}:
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs}{\code{SequenceConversionService.Default}} in \code{mzLib/Omics/SequenceConversion/SequenceConversionService.cs} at mzLib \code{0a808fec}
@@ -131,6 +131,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.595 (#1462), \code{--from} ProForma refuses input it used to convert with part of it lost. Two modifications stacked on one terminus (UNIMOD:2 and UNIMOD:35 both after PEPTIDE-, or UNIMOD:1 and UNIMOD:2 both before -PEPTIDE) were converted with one of them dropped; they now fail with IncompatibleModifications, and incompatible_items says Multiple C-terminal modifications (2 found). A residue after a C-terminal modification (PEPTIDE-[UNIMOD:2]K, which read as PEPTIDEK), a leading - and a modification with no sequence ([UNIMOD:1]) now fail with InvalidSequence. Measured with the bridge at d10017ce on 2026-10-21.
 \item ProForma writes a modification it cannot resolve under its mzLib name and the row is still converted, so status converted does not mean every bracket in a ProForma output is a controlled-vocabulary term. Unimod either names a modification by its UNIMOD accession or reports it in incompatible_items.
 \item A modification the target cannot write: under ReturnNull the row fails (output null); under RemoveIncompatibleElements and UsePrimarySequence it is dropped from output, named in incompatible_items, and the row is converted_with_warnings; under ThrowException the first such input fails the whole call as a usage error.
 \item status is mzLib's verdict read off ConversionWarnings; failure_reason can be null on a failed row (the Unimod target under ReturnNull records only incompatible_items).

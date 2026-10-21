@@ -46,7 +46,7 @@ dispatch works: a DIA-NN report is recognised by its columns, not its name, so a
 
 }
 \section{Wraps}{
-Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileType}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}

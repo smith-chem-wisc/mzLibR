@@ -68,10 +68,11 @@ peaks, retention times - are not available here. Use \code{\link{flashlfq_quanti
 
 }
 \section{Wraps}{
-Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant median-polish}. Generated from the bridge's verb spec \code{quant.median-polish.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.CalculateProteinResultsMedianPolish}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{23c2490e}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.CalculateProteinResultsMedianPolish}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/Strategies/RollUp/MedianPolishRollUp.cs}{\code{MedianPolishRollUp.QuantifyGroup}} in \code{mzLib/Quantification/Strategies/RollUp/MedianPolishRollUp.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs}{\code{FlashLfqResults.WriteResults}} in \code{mzLib/FlashLFQ/FlashLFQResults.cs} at mzLib \code{23c2490e}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/ProteinGroup.cs}{\code{ProteinGroup}} in \code{mzLib/FlashLFQ/ProteinGroup.cs} at mzLib \code{23c2490e}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/MassSpectrometry/SpectraFileInfo.cs}{\code{SpectraFileInfo}} in \code{mzLib/MassSpectrometry/SpectraFileInfo.cs} at mzLib \code{23c2490e}
@@ -125,6 +126,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
+\item Since mzLib 1.0.595 (#1424), the sample matrix is keyed by condition and biorep as a pair, not as one joined string, so condition A1 biorep 0 beside condition A biorep 10 quantifies; it threw IndexOutOfRangeException, which crossed as correctness.
 \item Detection types: where the table has no Detection Type_ column for a run (or the cell is blank), a positive intensity is treated as MSMS and 0 as NotDetected. That is this verb's only inference; a present but unrecognised value is an error, not a guess.
 \item Protein intensity null means unquantifiable, 0 means not measured; neither is a measured zero.
 \item Runs are names, not files: nothing but the peptide table is opened, and peak-level information (MBR peaks, retention times) is not available here. Use quant flashlfq for those.

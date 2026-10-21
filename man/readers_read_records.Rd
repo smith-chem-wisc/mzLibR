@@ -76,7 +76,7 @@ mass difference, a delta, TopPIC's \code{feature_score} - and nulling those woul
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{22638d4276ff}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-records}. Generated from the bridge's verb spec \code{readers.read-records.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -158,6 +158,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item Since mzLib 1.0.592 (#1345), mbr_score on FlashLFQQuantifiedPeak is null, not 0, when a peak has no score, and current-format peaks tables (no MBR Score column) read, with seven more columns.
 \item offset/limit window after a full parse; memory and time scale with the file, not the window.
 \item pro_forma is never absent at mzLib 1.0.592: when a psmtsv has no ProForma column it is computed from Full Sequence, which the reader REQUIRES (SpectrumMatchFromTsv.cs:197), so a file without both fails to read instead.
+\item Since mzLib 1.0.595 (#1371), psmtsv and osmtsv records carry entrapment_fraction: the share of the PSM that is an entrapment discovery (DecoyContaminantTargetLabel.EntrapmentFraction), from 0 to 1. A shared T|ET row counts half when its sequences differ and 0 when both proteins carry the same peptide, so count entrapment discoveries for an FDP estimate with this column, not is_entrapment. It is null where mzLib returns NaN: the Decoy/Contaminant/Target and Full Sequence columns name different numbers of candidates, or the full sequence is blank or MetaMorpheus's Output too long for Excel placeholder beside an entrapment target.
+\item Since mzLib 1.0.595 (#1371), is_decoy, is_contaminant and is_entrapment read every |-joined parent label: true when any parent is D, C or E (DecoyContaminantTargetLabel.IsDecoy, IsContaminant, IsEntrapment). On a protein-group table T|C is now a contaminant and T|ET entrapment; on a psmtsv the E in Output too long for Excel no longer reads as entrapment. Labels MetaMorpheus writes read as before.
 \item Since mzLib 1.0.594 (#1403), a computed pro_forma names UniProt-sourced modifications by UNIMOD accession: BottomUpExample.psmtsv's first row reads YPIEH[UNIMOD:34]GIVTNWDDMEK where it read YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDMEK. A pro_forma column the file carries is passed through as written.
 \item A DIA-NN 2.x report.parquet (DiaNnReportParquet, mzLib #1384) reads into the TSV report's record type, DiaNnPrecursor, so the columns are the same; those for fields 2.x no longer writes (File.Name, PG.Quantity, MS2.Scan and others, DiaNnParquetReportFile.cs:16) hold mzLib's not-reported default: null, except ms2_scan_number, which reads 0. absent_fields does not name them (see absent_fields). Decoy rows (\code{--report-decoys}) are skipped by mzLib, so record_count counts targets.
 \item Many files: \code{--paths-stdin} needs every input to have the same record type (the long table has one column set); a mixed list is a usage error naming the groups. Otherwise as every bulk verb: one process, \code{--threads} at a time, output identical at any thread count.
