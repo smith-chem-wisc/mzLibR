@@ -129,25 +129,29 @@ unimod$source_formats
 unimod$target_formats
 ```
 
-### ProForma does not resolve UniProt modifications yet
+### ProForma gives the same accessions
 
-Ask for ProForma and the same file gives a different answer. Carbamidomethyl and oxidation become
-UNIMOD accessions. The UniProt modification is written back under its mzLib name, and the row
-still says `converted`:
+Ask for ProForma and this file gives the same accessions. The UniProt modification is `UNIMOD:34`
+here too:
 
 ```{r}
 proforma <- peptidoform_convert(psms$records$full_sequence, target = "ProForma")
 proforma$records$output[c(1, 5)]
-proforma$records$status[1]
+identical(proforma$records$output, unimod$records$output)
 ```
 
-The cause is in mzLib, not in mzLibR (mzLib#1401). mzLib's ProForma serializer looks modifications
-up only in MetaMorpheus's own list, which has no UniProt entries; the Unimod serializer looks them
-up in every list mzLib loads. Until mzLib fixes this, **convert to Unimod when your sequences carry
-UniProt modifications**, and in ProForma output treat any bracket that is not a `UNIMOD:` term as
-unresolved. mzLibR does not patch around the gap: a patch here would leave the same gap in
-pyMzLib, mzLibRust and MetaMorpheus. The `pro_forma` column that `readers_read_records()` gives a
-`.psmtsv` comes from the same serializer, so it has the same gap.
+That is new with mzLib#1403. Before it, mzLib's ProForma serializer looked modifications up only
+in MetaMorpheus's own list, which has no UniProt entries, so it wrote
+`[UniProt:Tele-methylhistidine on H]` back by name (mzLib#1401). It now falls back to every list
+mzLib loads, as the Unimod serializer does. mzLibR never patched around the gap, so the fix
+reached it, pyMzLib, mzLibRust and MetaMorpheus at once. The `pro_forma` column that
+`readers_read_records()` computes for a `.psmtsv` written without one comes from the same
+serializer, so it gained the accessions too.
+
+The two targets still differ on a modification that no list mzLib loads knows. ProForma writes it
+back under its own name and the row says `converted`; Unimod fails the row, or drops the
+modification, depending on `mode`. In ProForma output, treat any bracket that is not a `UNIMOD:`
+term as unresolved.
 
 ### When mzLib cannot convert a sequence
 

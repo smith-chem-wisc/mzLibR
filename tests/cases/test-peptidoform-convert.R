@@ -107,8 +107,10 @@ test_that("the envelope names the formats mzLib registered", {
   expect_identical(result$target_formats, c("Chronologer", "Essential", "MassShift", "ProForma", "Unimod", "mzLib"))
   expect_identical(result$column_names, mz$PEPTIDOFORM_CONVERT_COLUMNS)
   expect_identical(names(result$records), result$column_names)
-  expect_identical(length(result$caveats), 6L)
-  expect_true(any(grepl("ProForma", result$caveats) & grepl("UniProt", result$caveats)))
+  # Six until the pin carrying mzLib #1403, which retired "ProForma does not resolve UniProt-sourced
+  # modifications": the ProForma serializer now falls back to the lookup the Unimod one uses.
+  expect_identical(length(result$caveats), 5L)
+  expect_false(any(grepl("UniProt", result$caveats, fixed = TRUE)))
 })
 
 test_that("the array columns are list columns of character vectors, empty ones kept", {
@@ -131,14 +133,18 @@ test_that("real psmtsv sequences convert to Unimod", {
   expect_false(any(grepl("UniProt:", result$records$output, fixed = TRUE)))
 })
 
-test_that("ProForma leaves UniProt modifications unresolved", {
-  # The mzLib gap the caveats describe (mzLib#1401), pinned so a fix upstream is noticed when the
-  # fixture is re-recorded.
+test_that("ProForma resolves UniProt modifications as Unimod does", {
+  # This pinned the gap until mzLib #1403 closed it (it was "ProForma leaves UniProt modifications
+  # unresolved", mzLib#1401). Re-recorded at the pin that carries #1403: tele-methylhistidine,
+  # written back by name before, is UNIMOD:34 in ProForma too, so on this file the two targets now
+  # agree row for row.
   result <- convert_recorded("peptidoform_convert_psmtsv_proforma.json")
   expect_identical(result$target_format, "ProForma")
-  expect_identical(result$records$output[[1L]], "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDMEK")
+  expect_identical(result$records$output[[1L]], "YPIEH[UNIMOD:34]GIVTNWDDMEK")
   expect_identical(result$records$output[[3L]], "AYHEQLSVAEITNAC[UNIMOD:4]FEPANQMVK")
   expect_identical(result$records$status[[1L]], "converted")
+  expect_false(any(grepl("UniProt:", result$records$output, fixed = TRUE)))
+  expect_identical(result$records$output, convert_recorded("peptidoform_convert_psmtsv.json")$records$output)
 })
 
 test_that("an older bridge without the new fields still projects", {
@@ -173,7 +179,7 @@ test_that("all three recordings replay end to end, and each answers only its own
   expect_identical(psms$records$full_sequence, psmtsv_full_sequences())
   expect_identical(peptidoform_convert(psms$records$full_sequence)$converted_count, 8)
   proforma <- peptidoform_convert(psms$records$full_sequence, target = "ProForma")
-  expect_identical(proforma$records$output[[1L]], "YPIEH[UniProt:Tele-methylhistidine on H]GIVTNWDDMEK")
+  expect_identical(proforma$records$output[[1L]], "YPIEH[UNIMOD:34]GIVTNWDDMEK")
   expect_error(peptidoform_convert(rev(CONVERT_PROBE)), class = "mzlib_usage_error", contains = "replay bridge")
   expect_error(peptidoform_convert(CONVERT_PROBE, mode = "UsePrimarySequence"), class = "mzlib_usage_error",
                contains = "replay bridge")

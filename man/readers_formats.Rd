@@ -32,13 +32,17 @@ cross-format projection of it.
 
 - \code{"quantifiable"} — the cross-format record view, and the input \code{\link{flashlfq_quantify}}
   accepts. \strong{Few file types have it}: MetaMorpheus \code{psmtsv} and \code{osmtsv},
-  \code{MsFraggerPsm}, and DIA-NN \code{DiaNnReport}.
+  \code{MsFraggerPsm}, DIA-NN's \code{report.tsv} (\code{DiaNnReport}), and DIA-NN 2.x's \code{report.parquet}
+  (\code{DiaNnReportParquet}, mzLib #1384).
 - \code{"ms1_features"} — deconvolved MS1 features (TopFD \code{_ms1.feature}, Dinosaur).
 - \code{"spectra"} — the file is spectra, not results.
 - \code{"spectral_match"} — identifications that share no file-level interface.
 
 Note also that \code{extension} is \strong{not unique}: \code{BrukerD} and \code{BrukerTimsTof} are both \code{.d},
-told apart by what the directory holds, and several formats share \code{.tsv}.
+told apart by what the directory holds, and several formats share \code{.tsv}. Nor is it always how
+dispatch works: a DIA-NN report is recognised by its columns, not its name, so a renamed
+\code{report.tsv} still reads, and any \code{.parquet} whose columns include \code{Precursor.Id},
+\code{Stripped.Sequence} and \code{Run} is a \code{DiaNnReportParquet} while any other \code{.parquet} is refused.
 
 }
 \section{Wraps}{

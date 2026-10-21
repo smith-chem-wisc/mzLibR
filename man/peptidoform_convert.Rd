@@ -42,11 +42,12 @@ accessions: \code{[UniProt:N-acetylserine on S]SEQK} becomes \code{[UNIMOD:1]SEQ
 in R or in the bridge; every output and every status is mzLib's.
 }
 \details{
-\strong{Choose Unimod, not ProForma, for UniProt-sourced modifications.} mzLib's ProForma target does
-not resolve them and writes them back under their mzLib name, with status \code{"converted"}
-(mzLib#1401). In ProForma output, treat any bracket that is not a \code{UNIMOD:} term as unresolved.
-The \code{pro_forma} column \code{\link{readers_read_records}} gives a \code{.psmtsv} comes from the same serializer
-and has the same gap.
+Both targets name UniProt-sourced modifications by their UNIMOD accession (the ProForma one since
+mzLib #1403). They differ on a modification no list mzLib loads knows: ProForma writes it back
+under its own name, with status \code{"converted"}, where Unimod fails the row or drops it, depending
+on \code{mode}. In ProForma output, treat any bracket that is not a \code{UNIMOD:} term as unresolved. The
+\code{pro_forma} column \code{\link{readers_read_records}} computes for a \code{.psmtsv} written without one comes
+from the same serializer.
 }
 \value{
 An \code{mzlibr_sequence_conversions}:

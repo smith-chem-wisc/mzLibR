@@ -7,7 +7,8 @@
 readers_read_results(path, limit = NULL, offset = 0, out = NULL, timeout = NULL)
 }
 \arguments{
-\item{path}{Path to a MetaMorpheus \code{.psmtsv} / \code{.osmtsv} or an MSFragger \code{psm.tsv}.}
+\item{path}{Path to a MetaMorpheus \code{.psmtsv} / \code{.osmtsv}, an MSFragger \code{psm.tsv}, or a DIA-NN
+  \code{report.tsv} or DIA-NN 2.x \code{report.parquet}.}
 
 \item{limit}{Maximum records to return. \code{NULL}, the default, returns all of them.
 
@@ -47,9 +48,16 @@ An \code{mzlibr_result_records}, carrying the file's \code{reader}, \code{absent
   starting \code{offset} records in; \code{rows_not_read} counts data rows that did not become records.
 
   \code{records} is a data.frame of the record view, one row per record, or \code{NULL} when \code{out} was
-  given. \code{retention_time} is in minutes for every quantifiable format today, and
-  \code{retention_time_unit} says so per file; \code{charge_state} is a charge; \code{monoisotopic_mass} is a
-  neutral mass in Da. \code{is_decoy} is \code{NA} where the format records no decoy label.
+  given. \code{retention_time} is in minutes for every quantifiable format today, the DIA-NN
+  \code{report.parquet} included, and \code{retention_time_unit} says so per file; \code{charge_state} is a
+  charge; \code{monoisotopic_mass} is a neutral mass in Da. \code{is_decoy} is \code{NA} where the format
+  records no decoy label.
+
+  A DIA-NN 2.x \code{report.parquet} reads into the same record as the TSV report, but 2.x no longer
+  writes some of its columns (\code{File.Name}, \code{PG.Quantity}, \code{MS2.Scan} and others). In
+  \code{\link{readers_read_records}} those are \code{NA}, except \code{ms2_scan_number}, which mzLib fills with 0,
+  and \code{absent_fields} does not name them: it is judged from a text header, which a parquet does
+  not have.
 
 }
 \section{Two fields to read before you trust the table}{
