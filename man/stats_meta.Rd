@@ -46,7 +46,7 @@ Send \code{records$p_value} to \code{\link{stats_adjust}} to adjust across featu
 
 }
 \section{Wraps}{
-Wire verb \code{stats meta}. Generated from the bridge's verb spec \code{stats.meta.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats meta}. Generated from the bridge's verb spec \code{stats.meta.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/RandomEffectsMeta.cs}{\code{RandomEffectsMeta.Pool}} in \code{mzLib/StatisticalModels/RandomEffectsMeta.cs} at mzLib \code{0a808fec}
@@ -116,14 +116,6 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not yet shipped.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item Rust and R spellings are proposals until those bindings ship the verb.
-\item The example's studies are mzLib's metafor reference cases (Test/StatisticalModels/ReferenceData/dl_inputs.tsv), copied verbatim to pkg/python/tests/fixtures/stats/metafor_dl_inputs.tsv. They are constructed cases, not proteomics data.
-}
 }
 \references{
 \itemize{

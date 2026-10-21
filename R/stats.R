@@ -228,8 +228,9 @@ stats_parse_meta <- function(data) {
 #'   Benjamini-Hochberg family.
 #' @param trend Let the prior variance follow average response (limma's `trend = TRUE`), for data
 #'   whose low-abundance features are noisier.
-#' @param spline_basis Basis functions of the trend spline, intercept included (the bridge's
-#'   default is 4). Only with `trend = TRUE`; mzLib may use fewer, and `prior$spline_basis_count`
+#' @param spline_basis Basis functions of the trend spline, intercept included. Only with
+#'   `trend = TRUE`. Leave it `NULL` to let mzLib choose, as limma does, for the number of
+#'   features; mzLib may also use fewer than you ask for. Either way `prior$spline_basis_count`
 #'   reports what it used.
 #' @param threads Features fitted at once (threads), or `-1` for every core. The answer is identical
 #'   at any value.

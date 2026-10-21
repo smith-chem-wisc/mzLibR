@@ -64,9 +64,6 @@ PARENT_OMISSIONS[c(
   "meaningless in R: the data.frame is already the record"
 )
 
-# pride ftp-files: the spec lists no example; this is the recording the offline tests use.
-REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "pride ftp-files", fixture = "pride_PXD000001_ftp_files.json")
-
 FIELD_CHECKS[["pride files"]] <- list("pride_PXD000001_files.json", function(d) mz$pride_parse_manifest(d, "PXD000001"))
 FIELD_CHECKS[["pride ftp-files"]] <- list("pride_ftp_PXD000001.json", function(d) mz$pride_parse_ftp_files(d, "PXD000001"))
 FIELD_CHECKS[["pride search"]] <- list("pride_search_plasmodium.json", function(d) mz$pride_parse_search(d))

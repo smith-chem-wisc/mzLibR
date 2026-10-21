@@ -48,9 +48,9 @@ test_that("file sizes are doubles, never integers", {
   expect_equal(files$size_mb, files$file_size_bytes / 1e6)
 })
 
-test_that("the recorded manifest holds the eight files PRIDE's API publishes", {
-  # Eight, while the FTP tree holds thirteen. The number is quoted in ?pride_list_files, so it
-  # is pinned here.
+test_that("the recorded manifest holds the eight files PRIDE's API published", {
+  # Eight on 2026-10-03, when it was recorded, while the FTP tree held fourteen; on 2026-10-21 the
+  # API listed nine. ?pride_list_files quotes both, and says its example replays this recording.
   expect_identical(nrow(recorded_files()), 8L)
 })
 
@@ -241,6 +241,21 @@ test_that("the list args carry the canonical accession and page size", {
   )
 })
 
+test_that("a page size left out is not sent, so mzLib's own paging default applies", {
+  # pyMzLib #85: the bridge no longer sends 100 of its own, and neither does a binding. Built from
+  # the functions' own formals, so a default that crept back into a signature fails here.
+  expect_true(is.null(formals(pride_list_files)$page_size))
+  expect_true(is.null(formals(pride_search)$page_size))
+  expect_identical(
+    mz$pride_build_list_args("PXD000001", eval(formals(pride_list_files)$page_size)),
+    c("pride", "files", "--accession", "PXD000001")
+  )
+  expect_identical(
+    mz$pride_build_search_args("plasmodium", eval(formals(pride_search)$page_size)),
+    c("pride", "search", "--keyword", "plasmodium")
+  )
+})
+
 test_that("an impossible page size is refused", {
   expect_error(mz$pride_build_list_args("PXD000001", 0),
     class = "mzlib_usage_error", contains = "must be positive"
@@ -251,6 +266,7 @@ test_that("an impossible page size is refused", {
   )
   expect_error(mz$pride_build_list_args("PXD000001", 1.5), class = "mzlib_usage_error")
   expect_error(mz$pride_build_list_args("PXD000001", "100"), class = "mzlib_usage_error")
+  expect_error(mz$pride_build_list_args("PXD000001", NA), class = "mzlib_usage_error")
 })
 
 test_that("a large page size is not written in scientific notation", {

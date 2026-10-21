@@ -37,7 +37,7 @@ A data.frame with one row per file and columns \code{relative_path}, \code{file_
   resolves the project before walking, so a typo fails loudly rather than returning nothing.
 }
 \section{Wraps}{
-Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesFromFtpAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -58,7 +58,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{accession}}{string; never \code{NA}. The accession, echoed as given.}
 \item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Entries in files. 0 only if the resolved project's directory listed nothing (the bindings raise their not-found error on it).}
 \item{\code{approximate_total_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Sum of approximate_size_bytes (mzLib TotalApproximateSizeBytes): an estimate over the COMPLETE file list. PXD000001 comes to about 1.44 GB.}
-\item{\code{files}}{object[]; never \code{NA}. One entry per file in walk order (each directory's autoindex order, depth first); fields under result.columns.}
+\item{\code{files}}{object[]; never \code{NA}. One entry per file in walk order (each directory's autoindex order, depth first); fields under result.columns. mzLib does not sort, so the order is PRIDE's and is not promised stable across requests.}
 }
 }
 \section{Columns}{
@@ -80,7 +80,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
-\item This is the complete file list; pride files (PRIDE's REST manifest) omits files, for PXD000001 five of 13 including the two largest. The price is metadata: no category, checksum or CV locations here.
+\item This is the complete file list; pride files (PRIDE's REST manifest) omits files, for PXD000001 five of 14 on 2026-10-21, including the two largest. The price is metadata: no category, checksum or CV locations here.
 \item Sizes are approximate (rounded autoindex values), so approximate_total_size_bytes is an estimate, but an estimate over every file, unlike pride files' total_size_bytes.
 \item A listing surface only: pride download selects from the REST manifest, so a file that appears only here cannot be fetched by pride download. Fetch it from its url with an ordinary HTTPS client.
 \item One HTTP request per directory: the walk's cost grows with the tree, not the file count.
@@ -103,10 +103,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item No recorded fixture: the verb needs a pride_PXD000001_ftp_files.json recording (live, 13 files) before it can have a checked example, and before the bindings' doctests can drop +SKIP.
-\item An unknown accession crosses as correctness (MzLibException), not usage, although it is the caller's mistake. Every binding re-maps it to its not-found error; the wire itself does not say 'not found'.
-\item Directory order is whatever PRIDE's Apache autoindex serves; not verified to be stable across requests, so files order is not promised.
-\item mzlib::pride::list_ftp_files_with takes the timeout as its second argument rather than an options struct; no Rust options type exists for this verb.
+\item An unknown accession crosses as correctness (MzLibException), not usage, although it is the caller's mistake; the wire has no 'not found'. Each binding re-maps it, but not alike: pyMzLib matches mzLib's two not-found messages, while mzLibRust and mzLibR re-map every MzLibException, so the 64-level cyclic-listing failure also reads as not found there.
 }
 }
 \references{

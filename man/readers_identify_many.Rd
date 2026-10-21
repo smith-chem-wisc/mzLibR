@@ -33,7 +33,7 @@ An \code{mzlibr_identify_batch}. \code{files} is a data.frame with one row per p
 
 }
 \section{Wraps}{
-Wire verb \code{readers identify} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers identify} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -68,7 +68,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
-\item Cheap but not pure: mzLib reads a bare .tsv's first line, a .mztab's first five and a .d directory's listing to dispatch them.
+\item Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and a .mztab's first five, a .parquet's column schema and a .d directory's listing to dispatch them. A .parquet without the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run) is a usage error, 'Parquet file type not supported' (mzLib 1.0.595, #1384).
 \item No software field: mzLib's Software property is Unspecified for everything its factory builds; file_type already names the tool.
 \item Many paths: \code{--paths-stdin} (newline-delimited paths on stdin) with \code{--threads} N (default 1, -1 = one per core; the answer is identical at any value) and \code{--on-error} fail|skip answers \{file_count, read_count, failed_count, on_error, files\}, files[i] being path i's answer in input order with error set when it could not be identified under skip (readers_many_identify.json). There is no table and no \code{--out}.
 }

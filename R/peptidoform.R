@@ -76,32 +76,40 @@ peptidoform_normalise_count <- function(name, value, minimum) {
 
 # ---------------------------------------------------------------- argument assembly
 
+# Only what the caller chose goes on the wire. Every digestion option is NULL unless given, and a
+# NULL one is not sent, so mzLib's DigestionParams default applies - and for dissociation, which
+# mzLib gives no default, the bridge's HCD until mzLib#1488 names one. mzLibR keeps no copy of
+# either: a copy here is what let this package's defaults drift from mzLib's before. A value that
+# IS given is still checked here, before a subprocess.
 peptidoform_build_args <- function(accession, protease, dissociation, terminus, modifications,
                                    missed_cleavages, min_length, max_length, max_modifications,
                                    max_isoforms) {
   canonical <- peptidoform_normalise_accession(accession)
 
-  wanted_terminus <- peptidoform_normalise_option("terminus", terminus)
-  match <- PEPTIDOFORM_TERMINI[tolower(PEPTIDOFORM_TERMINI) == tolower(wanted_terminus)]
-  if (length(match) != 1L) {
-    stop(mzlib_usage_error(paste0(
-      "terminus must be one of ", paste(PEPTIDOFORM_TERMINI, collapse = ", "),
-      "; got '", terminus, "'."
-    )))
+  if (!is.null(terminus)) {
+    wanted_terminus <- peptidoform_normalise_option("terminus", terminus)
+    match <- PEPTIDOFORM_TERMINI[tolower(PEPTIDOFORM_TERMINI) == tolower(wanted_terminus)]
+    if (length(match) != 1L) {
+      stop(mzlib_usage_error(paste0(
+        "terminus must be one of ", paste(PEPTIDOFORM_TERMINI, collapse = ", "),
+        "; got '", terminus, "'."
+      )))
+    }
+    terminus <- match
   }
 
-  minimum <- peptidoform_normalise_count("min_length", min_length, 1)
+  minimum <- if (!is.null(min_length)) peptidoform_normalise_count("min_length", min_length, 1)
 
-  # `--max-length 0` is the wire's spelling of "unbounded", so NULL and 0 are the same request.
-  # Anything else must not be below min_length, which would silently return nothing.
-  if (is.null(max_length)) {
-    maximum <- "0"
-  } else {
+  # `--max-length 0` is the wire's spelling of "unbounded". A bound below a min_length the caller
+  # also gave can only return nothing, so it is refused. Below mzLib's own min_length it is not
+  # checked: that would need mzLib's default restated here.
+  maximum <- NULL
+  if (!is.null(max_length)) {
     maximum <- peptidoform_normalise_count("max_length", max_length, 0)
-    if (as.numeric(maximum) > 0 && as.numeric(maximum) < as.numeric(minimum)) {
+    if (!is.null(minimum) && as.numeric(maximum) > 0 && as.numeric(maximum) < as.numeric(minimum)) {
       stop(mzlib_usage_error(paste0(
         "max_length (", maximum, ") is below min_length (", minimum,
-        "), which can only return nothing. Pass max_length = NULL for no upper bound."
+        "), which can only return nothing. Pass max_length = 0 for no upper bound."
       )))
     }
   }
@@ -110,19 +118,31 @@ peptidoform_build_args <- function(accession, protease, dissociation, terminus, 
     stop(mzlib_usage_error("modifications must be TRUE or FALSE."))
   }
 
-  args <- c(
-    "peptidoform", "fragments",
-    "--accession", canonical,
-    "--protease", peptidoform_normalise_option("protease", protease),
-    "--dissociation", peptidoform_normalise_option("dissociation", dissociation),
-    "--terminus", match,
-    "--missed-cleavages", peptidoform_normalise_count("missed_cleavages", missed_cleavages, 0),
-    "--min-length", minimum,
-    "--max-length", maximum,
-    "--max-mods", peptidoform_normalise_count("max_modifications", max_modifications, 0),
-    "--max-isoforms", peptidoform_normalise_count("max_isoforms", max_isoforms, 1)
+  chosen <- list(
+    "--protease" = if (!is.null(protease)) peptidoform_normalise_option("protease", protease),
+    "--dissociation" = if (!is.null(dissociation)) {
+      peptidoform_normalise_option("dissociation", dissociation)
+    },
+    "--terminus" = terminus,
+    "--missed-cleavages" = if (!is.null(missed_cleavages)) {
+      peptidoform_normalise_count("missed_cleavages", missed_cleavages, 0)
+    },
+    "--min-length" = minimum,
+    "--max-length" = maximum,
+    "--max-mods" = if (!is.null(max_modifications)) {
+      peptidoform_normalise_count("max_modifications", max_modifications, 0)
+    },
+    "--max-isoforms" = if (!is.null(max_isoforms)) {
+      peptidoform_normalise_count("max_isoforms", max_isoforms, 1)
+    }
   )
 
+  args <- c("peptidoform", "fragments", "--accession", canonical)
+  for (option in names(chosen)) {
+    if (!is.null(chosen[[option]])) {
+      args <- c(args, option, chosen[[option]])
+    }
+  }
   if (!modifications) {
     args <- c(args, "--no-modifications")
   }
@@ -308,65 +328,85 @@ peptidoform_parse <- function(data) {
 #' Fetches a UniProt entry, applies its annotated modifications, digests it with the named
 #' protease, and computes fragment ions for every resulting peptidoform.
 #'
+#' **The defaults are mzLib's, not this package's.** Every digestion option you leave as `NULL`
+#' is not sent, and mzLib's own default (its `DigestionParams`) applies; the Parameters table
+#' below gives each value at the pinned mzLib. mzLib names no default dissociation type, so the
+#' bridge uses HCD until it does (smith-chem-wisc/mzLib#1488). The result says which protease,
+#' dissociation type, terminus and caps were used.
+#'
 #' @param accession A UniProt accession, e.g. `"P02768"` (serum albumin).
-#' @param protease The protease, in **mzLib's naming**.
+#' @param protease A protease name, as mzLib names it. `NULL` means mzLib's default protease.
 #'
-#'   **Read this if you are coming from MaxQuant or Mascot.** mzLib's `"trypsin|P"` *applies* the
-#'   Keil rule - it does not cleave before proline - while plain `"trypsin"` cleaves everywhere.
-#'   That is the **reverse** of the MaxQuant and Mascot convention, where the `/P` suffix means
-#'   "do cleave before proline". On albumin the two give **195** and **202** peptides, so the
-#'   mistake is quiet and small enough to survive review (smith-chem-wisc/mzLib#1106).
-#' @param dissociation The dissociation type, e.g. `"ETD"`, `"HCD"`, `"CID"`, `"ECD"`.
+#'   **Read this if you are coming from MaxQuant or Mascot.** The names and what each one cuts
+#'   are mzLib's. mzLib's `"trypsin"` cuts after K and R even before proline, and `"trypsin|P"`
+#'   does not cut before proline: the `P` names a residue that prevents the cut. That is the
+#'   **reverse** of MaxQuant's and Mascot's `Trypsin/P`, which ignores the proline rule. On serum
+#'   albumin the two give **202** and **195** distinct peptides, a small count hiding a large
+#'   difference: which peptides you get changes wherever K or R precedes a proline
+#'   (smith-chem-wisc/mzLib#1106).
+#' @param dissociation `"HCD"` or `"CID"` (b and y ions), `"ETD"`, `"ECD"`, and the rest of
+#'   mzLib's dissociation types. `NULL` means `"HCD"`: mzLib names no default here, so HCD is the
+#'   bridge's choice until mzLib names one (smith-chem-wisc/mzLib#1488).
 #'
-#'   **`"ETD"` and `"ECD"` return the `c` and `zDot` series** (radical N-Ca cleavage yields
-#'   c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the spurious `y`
-#'   series ETD used to emit.
+#'   `"ETD"` and `"ECD"` **return the c and z-dot series**, `c` and `zDot` (radical N-Ca
+#'   cleavage yields c/z-dot, not the b/y of vibrational activation). mzLib PR #1114 removed the
+#'   spurious `y` series ETD used to emit.
 #' @param modifications Whether to apply UniProt's annotated modifications.
 #'
 #'   `FALSE` gives the bare sequences - a clean control, since the digest's distinct backbones
 #'   are unchanged and only the modified variants of them go away. The peptidoform count drops
-#'   a long way; on albumin from **303** to **195**.
+#'   a long way; on albumin from **310** to **202**.
 #'
 #'   This once carried a caveat saying `FALSE` also discarded **proteolysis products**, so that
 #'   the peptide list itself changed and albumin lost two signal-peptide peptides
-#'   (smith-chem-wisc/pyMzLib#8). That was true and is no longer: verified against the published
-#'   bridge, both peptides are present either way and albumin gives 195 distinct base sequences
-#'   with modifications on or off.
-#' @param missed_cleavages Maximum missed cleavage sites per peptide.
-#' @param min_length Shortest peptide to keep, in residues.
+#'   (smith-chem-wisc/pyMzLib#8). That was true and is no longer: both peptides are present
+#'   either way, and albumin gives 202 distinct base sequences with modifications on or off.
+#' @param missed_cleavages Maximum missed cleavage sites per peptide. `NULL` means mzLib's
+#'   default.
+#' @param min_length Shortest peptide to keep, in residues. `NULL` means mzLib's default.
 #'
-#'   The default of 7 **silently discards** everything shorter. Albumin goes from **195**
-#'   distinct sequences at `min_length = 7` to **243** at `min_length = 1` - a fifth of the
-#'   digest lives below the default. If you are looking for a short peptide and not finding it,
-#'   look here first.
-#' @param max_length Longest peptide to keep, in residues, or `NULL` for no limit.
-#' @param max_modifications Maximum modifications considered per peptide.
-#' @param max_isoforms Maximum modification isoforms (peptidoforms) generated per peptide.
+#'   mzLib's default **silently discards** everything shorter. Albumin goes from **202** distinct
+#'   sequences at the default to **257** at `min_length = 1` - a fifth of the digest lives below
+#'   it - and histone H3.1 keeps 49 of the 96 peptides, by start and end, that it gives at
+#'   `min_length = 1`. If you are looking for a short peptide and not finding it, look here
+#'   first, and pass `min_length = 1` when you mean every peptide.
+#' @param max_length Longest peptide to keep, in residues. `NULL` means mzLib's default, which is
+#'   unbounded; `0` asks for no bound.
+#' @param max_modifications Maximum modifications considered per peptide. `NULL` means mzLib's
+#'   default. Modification isoforms are enumerated combinatorially: histone H3.1's 49 peptides
+#'   give 2,419 peptidoforms at two modifications and 6,580 at three.
+#' @param max_isoforms Maximum modification isoforms (peptidoforms) generated per peptide
+#'   position. `NULL` means mzLib's default.
 #'
 #'   **This cap truncates silently.** A truncated result and a genuinely short one look
-#'   identical from the outside - histone H3.1 at four modifications loses about **30%**. Check
-#'   [digest_truncated()] before treating a peptide list as exhaustive.
-#' @param terminus Which terminus to fragment: `"N"`, `"C"`, `"Both"` or `"None"`.
+#'   identical from the outside - on histone H3.1 at four modifications the default cap keeps
+#'   8,644 of 12,808 peptidoforms, losing about a third. Check [digest_truncated()] before
+#'   treating a peptide list as exhaustive.
+#' @param terminus Which terminus to fragment: `"N"`, `"C"`, `"Both"` or `"None"`. `NULL` means
+#'   mzLib's default.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_digest`: a list with the scalars describing the run, a `census` (see
 #'   [census_explain()]), and three data.frames that join on `peptide_index` -
 #'   `peptides`, `fragments` and `modifications`.
 #'
-#'   The scalars: `sequence_length`, the protein's length in residues; `max_modifications`, the
-#'   cap in modifications per peptidoform; `max_modification_isoforms`, the cap in peptidoforms
-#'   per peptide position; and `peptides_at_isoform_cap`, the peptide positions that reached it -
-#'   non-zero means the list is truncated. The census counts `sites` in residues (distinct
-#'   positions carrying a modification), `applied` in modifications and `annotated` in UniProt
-#'   features.
+#'   The scalars: `sequence_length`, the protein's length in residues; `protease`,
+#'   `dissociation` and `terminus`, each the one passed or the default used; `max_modifications`,
+#'   the cap in modifications per peptidoform, and `max_modification_isoforms`, the cap in
+#'   peptidoforms per peptide position, each the value passed or mzLib's default;
+#'   `peptides_at_isoform_cap`, the peptide positions that reached it - non-zero means the list
+#'   is truncated; and `min_length` and `max_length` in residues and `missed_cleavages` in
+#'   cleavage sites, as passed, or `NA` when left to mzLib, since the bridge does not report
+#'   those three back. The census counts `sites` in residues (distinct positions carrying a
+#'   modification), `applied` in modifications and `annotated` in UniProt features.
 #'
 #'   `peptides` has `monoisotopic_mass`, the neutral mass in Da; `length` in residues;
 #'   `missed_cleavages` in cleavage sites; `modification_count` in modifications; and
 #'   `fixed_charges`, the formal charge the intact peptide carries before protonation.
 #'
-#'   **`peptides` holds peptidoforms, not distinct sequences.** One row per
-#'   sequence-and-modification-placement, so albumin at two modifications is **303** rows over
-#'   **195** distinct sequences. Both are legitimate answers to "how many peptides" and they are
+#'   `peptides` **holds peptidoforms, not distinct sequences.** One row per
+#'   sequence-and-modification-placement, so albumin's default digest is **310** rows over
+#'   **202** distinct sequences. Both are legitimate answers to "how many peptides" and they are
 #'   not interchangeable; quoting one for the other is a large error, not a rounding one. See
 #'   [digest_distinct_base_sequences()].
 #'
@@ -380,24 +420,26 @@ peptidoform_parse <- function(data) {
 #' digest_fragments_by_series(digest)
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @export
-peptidoform_fragments <- function(accession, protease = "trypsin|P", dissociation = "ETD",
-                                  modifications = TRUE, missed_cleavages = 2, min_length = 7,
-                                  max_length = NULL, max_modifications = 2, max_isoforms = 1024,
-                                  terminus = "Both", timeout = 300) {
+peptidoform_fragments <- function(accession, protease = NULL, dissociation = NULL,
+                                  modifications = TRUE, missed_cleavages = NULL, min_length = NULL,
+                                  max_length = NULL, max_modifications = NULL, max_isoforms = NULL,
+                                  terminus = NULL, timeout = 300) {
   args <- peptidoform_build_args(
     accession, protease, dissociation, terminus, modifications,
     missed_cleavages, min_length, max_length, max_modifications, max_isoforms
   )
   digest <- peptidoform_parse(bridge_invoke(args, timeout = timeout))
 
-  # The bridge reports max_modifications and max_modification_isoforms back, but not the three
-  # settings that decide which peptides exist at all. They are stamped on here so that a digest
-  # sitting in a workspace, or printed six months later, says what produced it - min_length in
-  # particular, since its default of 7 silently removes a fifth of the digest and is the first
-  # thing to check when an expected peptide is missing.
-  digest$min_length <- as.numeric(min_length)
+  # The bridge reports the protease, dissociation, terminus and both caps it used, but not the
+  # three settings that decide which peptides exist at all. What the caller gave is stamped on
+  # here, so that a digest sitting in a workspace, or printed six months later, says what produced
+  # it - min_length in particular, since mzLib's default silently removes a fifth of the digest
+  # and is the first thing to check when an expected peptide is missing. NA means it was left to
+  # mzLib: writing mzLib's value in here would be this package restating a default it does not
+  # own, and the first one to go stale when mzLib changes it.
+  digest$min_length <- if (is.null(min_length)) NA_real_ else as.numeric(min_length)
   digest$max_length <- if (is.null(max_length)) NA_real_ else as.numeric(max_length)
-  digest$missed_cleavages <- as.numeric(missed_cleavages)
+  digest$missed_cleavages <- if (is.null(missed_cleavages)) NA_real_ else as.numeric(missed_cleavages)
   digest
 }
 
@@ -422,8 +464,7 @@ digest_truncated <- function(digest) {
 #' How many distinct base sequences a digest produced
 #'
 #' `nrow(digest$peptides)` counts **peptidoforms** - one per sequence-and-modification-placement.
-#' This counts distinct sequences. On albumin at two modifications the two are **303** and
-#' **195**.
+#' This counts distinct sequences. On albumin's default digest the two are **310** and **202**.
 #'
 #' @param digest An [peptidoform_fragments()] result.
 #' @return A single count.
@@ -467,7 +508,8 @@ digest_modified_peptides <- function(digest) {
 #'
 #' Note also that `zDot` counts come in **below** `length` per peptide rather than above it,
 #' because z-dot ions are suppressed N-terminal to proline while the complementary `c` ions are
-#' not. On albumin that is 138 proline sites, 138 suppressed `z-dot` and **0** suppressed `c`
+#' not. On albumin with `dissociation = "ETD"` that is 135 proline sites across its 202 distinct
+#' sequences, 135 suppressed `z-dot` and **0** suppressed `c`
 #' (smith-chem-wisc/mzLib#1110).
 #'
 #' @param digest An [peptidoform_fragments()] result.
@@ -661,9 +703,12 @@ print.mzlibr_digest <- function(x, ...) {
     sep = ""
   )
   if (!is.null(x$min_length)) {
-    cat("  min_length ", format(x$min_length),
+    # NA is a setting left to mzLib, which the bridge does not report back: say so, rather than
+    # print a number mzLibR would have had to make up.
+    setting <- function(value) if (is.na(value)) "mzLib's default" else format(value)
+    cat("  min_length ", setting(x$min_length),
       if (is.na(x$max_length)) "" else paste0(", max_length ", format(x$max_length)),
-      ", ", format(x$missed_cleavages), " missed cleavages",
+      ", missed cleavages ", setting(x$missed_cleavages),
       ", max ", format(x$max_modifications), " modifications\n",
       sep = ""
     )

@@ -237,11 +237,11 @@
     "rust": {
       "name": "mzlib::stats::meta_with",
       "options": "MetaOptions",
-      "note": "planned; not yet shipped"
+      "note": "on main (mzLibRust #31), not yet released"
     },
     "r": {
       "name": "stats_meta",
-      "note": "in mzLibR #29, not yet released. Takes a data.frame with feature, estimate and standard_error columns."
+      "note": "on main (mzLibR #31), not yet released. Takes a data.frame with feature, estimate and standard_error columns."
     }
   },
   "examples": [
@@ -252,8 +252,5 @@
       "r": "pooled <- stats_meta(studies)"
     }
   ],
-  "open_questions": [
-    "Rust and R spellings are proposals until those bindings ship the verb.",
-    "The example's studies are mzLib's metafor reference cases (Test/StatisticalModels/ReferenceData/dl_inputs.tsv), copied verbatim to pkg/python/tests/fixtures/stats/metafor_dl_inputs.tsv. They are constructed cases, not proteomics data."
-  ]
+  "open_questions": []
 }

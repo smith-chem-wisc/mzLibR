@@ -54,7 +54,7 @@ uniqueness rule. Use \code{\link{sdrf_source_documents}} as part of any key.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs}{\code{SdrfCollection.Merge}} in \code{mzLib/Readers/Sdrf/SdrfCollection.cs} at mzLib \code{23c2490e}
@@ -119,7 +119,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item out has no extension check, unlike the reader verbs, sdrf design and proteins annotate-go (PYB-1). It writes an SDRF, conventionally .sdrf.tsv; should it share their .tsv-only rule? Behaviour unchanged until decided (noted on pyMzLib #76).
+\item Decided in bridge 010 (PYB-4): out takes the .tsv-only rule, through Program.RequireTsvOutput, before any input is read. Not built yet: at pyMzLib main b18f013, Sdrf.Pool reads \code{--out} with no check. When PYB-4 merges, delete this, and add the rule to out's doc and to the usage errors.
 }
 }
 \references{

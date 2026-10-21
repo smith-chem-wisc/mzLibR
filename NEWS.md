@@ -6,7 +6,37 @@ which every help page's **Since** section renders.
 This release projects mzLib 1.0.593. The verbs marked *needs the pyMzLib 0.2.0 bridge*, *needs
 the pyMzLib 0.3.0 bridge* or *needs the pyMzLib 0.4.0 bridge* below are new in the bridge that
 release publishes; with an older bridge they are refused, naming the release they need. `mzlibr_install_bridge()` installs the bridge
-pyMzLib 0.4.0 publishes (mzLib 1.0.593, `0a808fec`), verified against that release's SHA256SUMS.
+pyMzLib 0.5.0 publishes (mzLib 1.0.595, `d10017ce`), verified against that release's SHA256SUMS.
+
+## Defaults come from mzLib (the pyMzLib 0.5.0 bridge)
+
+* **`peptidoform_fragments()` takes its defaults from mzLib, so a call that names no protease or
+  dissociation type gives different peptides and ions.** Every digestion argument (`protease`,
+  `dissociation`, `missed_cleavages`, `min_length`, `max_length`, `max_modifications`,
+  `max_isoforms`, `terminus`) now defaults to `NULL`, mzLibR sends nothing for it, and mzLib's
+  `DigestionParams` default applies. Two of the old defaults were mzLibR's own and change:
+  - protease: mzLib's default is `"trypsin"`, which also cuts before proline. The old default was
+    `"trypsin|P"`, which does not. Albumin's default digest goes from 303 to 310 peptidoforms, and
+    from 195 to 202 distinct sequences.
+  - dissociation: mzLib names no default, so the bridge uses HCD (b and y ions) until it does
+    (smith-chem-wisc/mzLib#1488). The old default was ETD (c and z-dot ions).
+
+  The other defaults (missed cleavages, the length window, the modification and isoform caps,
+  terminus) have the same values as before, now set by mzLib. **To get the old answer, pass
+  `protease = "trypsin|P", dissociation = "ETD"`.** A digest records `min_length`, `max_length`
+  and `missed_cleavages` as `NA` when they were left to mzLib, since the bridge does not report
+  those three back, and prints them as mzLib's default. A `max_length` below `min_length` is
+  refused only when both are given. The help page's counts are re-measured at mzLib `d10017ce`.
+* **`pride_list_files()` and `pride_search()` leave the page size to mzLib.** `page_size` now
+  defaults to `NULL` and is sent only when given, so mzLib's own paging default applies (100
+  today, as before). The results never depended on it. A given page size is checked as before.
+* `?stats_fit` no longer says the bridge's spline default is 4. With `trend = TRUE` and no
+  `spline_basis`, mzLibR has always sent none; the 0.5.0 bridge now asks mzLib for none either,
+  so mzLib sizes the trend as limma does and a trend fit on fewer than 30 features gets limma's
+  numbers. `prior$spline_basis_count` says what was used.
+* The help pages are re-rendered from the bridge's specs, re-checked against mzLib `d10017ce`.
+  PXD000001's REST manifest listed 9 of the 14 files in its FTP tree on 2026-10-21, and
+  `?pride_list_files` says so rather than 8 of 13.
 
 ## mzLib 1.0.593
 

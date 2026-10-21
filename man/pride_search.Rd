@@ -4,7 +4,7 @@
 \alias{pride_search}
 \title{Find PRIDE Archive projects by keyword}
 \usage{
-pride_search(keyword, page_size = 100, timeout = 300)
+pride_search(keyword, page_size = NULL, timeout = 300)
 }
 \arguments{
 \item{keyword}{What to search for, e.g. \code{"phosphoproteome"}, as one string of 1 to 1000
@@ -13,7 +13,7 @@ pride_search(keyword, page_size = 100, timeout = 300)
   beginning with \code{-} is refused, since the bridge would read it as an option.}
 
 \item{page_size}{How many projects to request per underlying API call. Changes how many
-  requests the fetch takes, never what comes back.}
+  requests the fetch takes, never what comes back. \code{NULL} means mzLib's default.}
 
 \item{timeout}{Seconds to allow for the whole fetch, or \code{NULL} to wait indefinitely.
 }
@@ -77,7 +77,7 @@ one page cannot be affected.
 
 }
 \section{Wraps}{
-Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride.search.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride.search.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.SearchProjectsAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -89,7 +89,7 @@ Wire verb \code{pride search}. Generated from the bridge's verb spec \code{pride
 \section{Parameters: units, ranges and defaults}{
 \describe{
 \item{\code{keyword}}{string; required; range \code{1 to 1000 characters}. What to search for, matched by PRIDE across titles, descriptions, keywords, organisms, references and more. Longer than 1000 characters (mzLib MaxKeywordLength) is a usage error, because PRIDE answers one with HTTP 500, which cannot be told apart from an outage.}
-\item{\code{page_size} (wire \code{--page-size})}{int; in \strong{projects}; default \code{100}; range \code{>= 1}. Hits requested per underlying API call. Changes how many requests the fetch takes, never what comes back.}
+\item{\code{page_size} (wire \code{--page-size})}{int; in \strong{projects}; default absent; range \code{>= 1}. Hits requested per underlying API call. Changes how many requests the fetch takes, never what comes back. Absent, the bridge sends none and SearchProjectsAsync's default applies (100 at d10017ce).}
 }
 }
 \section{Returned fields}{
@@ -98,7 +98,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \describe{
 \item{\code{keyword}}{string; never \code{NA}. The keyword, echoed.}
 \item{\code{result_count}}{int; in \strong{projects}; never \code{NA}. Entries in results. 0 is a real answer (no hits), not an error.}
-\item{\code{results}}{object[]; never \code{NA}. One entry per matching project, deduplicated by accession, in PRIDE's ranking order; fields under result.columns.}
+\item{\code{results}}{object[]; never \code{NA}. One entry per matching project, deduplicated by accession, in PRIDE's ranking order, which is not promised stable across calls; fields under result.columns.}
 }
 }
 \section{Columns}{
@@ -144,7 +144,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
 
 \describe{
-\item{\code{mzlib_usage_error} (usage)}{keyword missing or blank; keyword longer than 1000 characters; page-size not an integer or <= 0 (both checked by the bridge before mzLib)}
+\item{\code{mzlib_usage_error} (usage)}{keyword missing or blank; keyword longer than 1000 characters; page-size not an integer, given without a value, or <= 0 (all checked by the bridge before mzLib)}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{the bridge's own classification (Program.ClassifyError; since mzLib 1.0.593 (#1350) PRIDE raises every transport failure as an HttpRequestException carrying the cause or the status, and messages name the file and host, never the URL): a timeout or cancellation, a socket failure, a request that never got a response (refused connection, DNS, TLS), an HTTP 408, 429 or 5xx, or a body cut off in transit}
 \item{\code{mzlib_bridge_error} (correctness)}{any other HTTP status; a paging contract violation (MzLibException: an identical page while total_records says more remain); the page limit (mzLib MaxPages) exceeded}
 }
@@ -174,9 +174,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item Shape difference: mzlib::pride::search / search_with return Vec<PrideProjectSearchResult> and R pride_search() returns the hits data.frame, so neither carries the envelope's keyword or result_count (the caller has the keyword; the count is len() / nrow()). pyMzLib returns the hits list likewise. Declare it as a deviation or drop the two fields from the wire?
-\item The bindings also refuse a keyword beginning with '-' (it would be parsed as an option); the bridge cannot, since a value starting with '--' reaches it as a flag and the keyword then reads as missing.
-\item The ranking order of results is PRIDE's and is not promised stable across calls.
+\item The bindings refuse a keyword beginning with '-', but the bridge misreads only one beginning with '--': its parser takes the next argument as the value unless that starts with '--'. So '-x' reaches PRIDE as given, while '\code{--x}' turns \code{--keyword} into a flag and the call fails as 'Missing required option \code{--keyword}.' Whether the bindings should narrow their check to '--' is undecided.
 }
 }
 \references{

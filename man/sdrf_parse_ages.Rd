@@ -42,7 +42,7 @@ An \code{mzlibr_sdrf_ages}: \code{cell_count} cells given, \code{parsed_count} c
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf parse-age}. Generated from the bridge's verb spec \code{sdrf.parse-age.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf parse-age}. Generated from the bridge's verb spec \code{sdrf.parse-age.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfAge.cs}{\code{SdrfAge.TryParse}} in \code{mzLib/Readers/Sdrf/SdrfAge.cs} at mzLib \code{23c2490e}
@@ -110,7 +110,6 @@ The spec records these as open. They are listed rather than hidden:
 
 \itemize{
 \item The refusal reason is a bridge-side classification of TryParse's false; see sdrf.samples.yaml. An upstream TryParse(cell, out age, out reason) would retire it.
-\item Binding name is parse_ages (plural) for the verb parse-age (one cell per line). Kept because the function takes a list; revisit if a binding wants the wire name.
 }
 }
 \references{

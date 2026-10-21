@@ -35,7 +35,7 @@
         "unit": "formats",
         "nullable": false,
         "null_means": null,
-        "doc": "Number of entries in formats; equal to the number of SupportedFileType members. 38 at mzLib 1.0.593 (36 at 1.0.592, 32 at 1.0.591)."
+        "doc": "Number of entries in formats; equal to the number of SupportedFileType members. 39 at mzLib 1.0.595 (38 at 1.0.593 and 1.0.594, 36 at 1.0.592, 32 at 1.0.591)."
       },
       {
         "wire": "formats",
@@ -61,7 +61,7 @@
         "unit": null,
         "nullable": true,
         "null_means": "mzLib has no extension mapping for this member (a broken mzLib build); the listing reports it rather than failing",
-        "doc": "The suffix mzLib dispatches on, e.g. \".mzid.gz\" or \"QuantifiedProteinGroups.tsv\". NOT unique: both Bruker types are \".d\" and several share \".tsv\"; DiaNnReport and PytheasResult dispatch on content, not on this value."
+        "doc": "The suffix mzLib dispatches on, e.g. \".mzid.gz\" or \"QuantifiedProteinGroups.tsv\". NOT unique: both Bruker types are \".d\" and several share \".tsv\"; DiaNnReport, DiaNnReportParquet and PytheasResult dispatch on content, not on this value (\"report.parquet\" is only the conventional name: any .parquet with Precursor.Id, Stripped.Sequence and Run columns is a DIA-NN report, and any other .parquet is refused)."
       },
       {
         "wire": "reader",
@@ -77,7 +77,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "Cross-format views this type offers, from quantifiable, ms1_features, spectra, spectral_match. Empty is a real answer: 19 of 38 types offer none and are readable only through read-records."
+        "doc": "Cross-format views this type offers, from quantifiable, ms1_features, spectra, spectral_match. Empty is a real answer: 19 of 39 types offer none and are readable only through read-records."
       }
     ]
   },
@@ -98,7 +98,7 @@
   "caveats": [
     "Extensions are not unique and not always how dispatch works: identify a real path rather than matching on extension.",
     "An empty views list means mzLib parses the format into its own record type with no cross-format interface; read-records still reads it.",
-    "At mzLib 1.0.593 the view families are: quantifiable 4, ms1_features 2, spectral_match 6, spectra 7, none 19. These counts are the pin's, not the contract's: bindings should call formats rather than repeat them in prose."
+    "At mzLib 1.0.595 the view families are: quantifiable 5, ms1_features 2, spectral_match 6, spectra 7, none 19 (quantifiable was 4 through 1.0.594; #1384 added DiaNnReportParquet). These counts are the pin's, not the contract's: bindings should call formats rather than repeat them in prose."
   ],
   "bindings": {
     "py": {

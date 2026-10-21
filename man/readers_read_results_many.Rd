@@ -40,7 +40,7 @@ An \code{mzlibr_read_batch}. \code{records} begins with \code{source_index} (1-b
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-results} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-results} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.read-results.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -83,7 +83,7 @@ The first two columns say which input each row came from - \code{source_index} i
 \item{\code{retention_time}}{float; in \strong{min}; \code{NA} when mzLib's -1 'absent' sentinel, or a non-finite value. Retention time, in retention_time_unit.}
 \item{\code{charge_state}}{int; in \strong{charge}; never \code{NA}. Precursor charge.}
 \item{\code{monoisotopic_mass}}{float; in \strong{Da}; \code{NA} when mzLib's -1 'absent' sentinel. THEORETICAL peptide mass, not the observed precursor.}
-\item{\code{is_decoy}}{bool; \code{NA} when the format cannot report decoys: MSFragger and DIA-NN, where is_decoy is also in absent_fields. Decoy flag where the format carries one.}
+\item{\code{is_decoy}}{bool; \code{NA} when the format cannot report decoys: MSFragger and both DIA-NN report types, where is_decoy is also in absent_fields. Decoy flag where the format carries one.}
 \item{\code{protein_accessions}}{string; never \code{NA}. ';'-joined accessions.}
 \item{\code{gene_name}}{string; never \code{NA}. ';'-joined gene names.}
 \item{\code{organism}}{string; never \code{NA}. ';'-joined organisms.}
@@ -101,16 +101,16 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
-\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the records this answer holds (its returned_count, or record_count where the envelope has none)}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
 \section{Caveats}{
 \itemize{
 \item No q-value, PEP or score: nothing here is FDR-filtered.
-\item is_decoy is absent for MSFragger and DIA-NN, which write no target/decoy label; null there means unknown, not target.
+\item is_decoy is absent for MSFragger and both DIA-NN report types, which give mzLib no per-row target/decoy label (a DIA-NN 2.x parquet written with \code{--report-decoys} has one, but mzLib skips its decoy rows); null there means unknown, not target.
 \item monoisotopic_mass is the theoretical mass in every format; the observed precursor is not in this view.
-\item psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:119, :194).
+\item psmtsv: monoisotopic_mass keeps the first candidate of an ambiguous row while full_sequence keeps them all (SpectrumMatchFromTsv.cs:122, :197).
 \item A malformed psmtsv row is dropped silently by mzLib; rows_not_read counts them.
 \item Many files: \code{--paths-stdin} reads the list in ONE process, \code{--threads} at a time, into one long table with source_index and source_path first. The output does not depend on \code{--threads} (a tested property); the default of 1 is a memory choice, since every reader materialises the whole file.
 }
@@ -132,7 +132,7 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising is not built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches the failure after serialising. A threshold per record will not work: dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04) measured 725 and 805 characters per record in two psmtsv files from one producer. It proposed source size instead, 0.63 to 0.71 output characters per source byte, which puts the limit at about 1.51 to 1.70 GB of source text. That is two files of one format, and no threshold has been agreed.
 }
 }
 \seealso{

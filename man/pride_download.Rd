@@ -55,7 +55,7 @@ MGF" cannot be said in that vocabulary at all - and can all be said with \code{[
 A character vector of the paths where the files now are.
 }
 \section{Wraps}{
-Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.DownloadProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -121,12 +121,9 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item No recorded fixture, so no checked example: a replay needs a stub bridge that also fakes the written files. The envelope keys above are from ToWire in PrideDownloadAsync, not from a recording.
+\item No recorded fixture, so no checked example: a replay needs a stub bridge that also fakes the written files. The envelope keys above are read from the object PrideDownloadAsync returns, not from a recording.
 \item The unmatched-selection check runs after the download, so a typo in one name still downloads every other selected file before failing. Checking the manifest first would need the bridge to fetch it separately from DownloadProjectFilesAsync.
-\item downloaded_count counts skipped files under no-overwrite; the wire has no separate skipped count.
-\item 'selection' under bindings names the names-from-stdin projection (download_files in every binding); tools/check_verbs.py does not read it.
 \item A zero-match filter is a usage error in the bindings but a success on the wire; whether the wire should raise it (as it does for an unmatched names-from-stdin selection) is undecided.
-\item Wire params dest, ext, no-overwrite, names-from-stdin and stdin project as destination, extensions, overwrite (inverted) and download_files(files) in every binding; pyMzLib's spec lint will need PYTHON_DEVIATIONS entries.
 }
 }
 \references{

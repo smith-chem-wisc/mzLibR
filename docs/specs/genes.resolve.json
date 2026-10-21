@@ -436,8 +436,6 @@
     }
   ],
   "open_questions": [
-    "The wire module is 'genes' but every binding projects it in its proteins module (BULK.md §6); confirm.",
-    "No verb writes the compact gene set (EnsemblGeneSetWriter); callers need mzLib or a future 'genes gene-set' verb to make one.",
-    "The example gene set is a hand-built three-gene GTF in Ensembl's layout; O43653 is off_primary_only only because PSCA is left out of it."
+    "No verb writes the compact gene set (EnsemblGeneSetWriter); callers need mzLib or a future 'genes gene-set' verb to make one."
   ]
 }

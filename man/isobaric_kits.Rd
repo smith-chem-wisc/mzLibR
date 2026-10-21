@@ -48,7 +48,7 @@ channel (the phenylalanine immonium ion sits there); its eighth reagent is 121.
 
 }
 \section{Wraps}{
-Wire verb \code{isobaric kits}. Generated from the bridge's verb spec \code{isobaric.kits.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{isobaric kits}. Generated from the bridge's verb spec \code{isobaric.kits.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/Modifications/IsobaricMassTag.cs}{\code{IsobaricMassTag.TryGetIsobaricMassTag}} in \code{mzLib/Omics/Modifications/IsobaricMassTag.cs} at mzLib \code{0a808fec}
@@ -120,7 +120,7 @@ The spec records these as open. They are listed rather than hidden:
 
 \itemize{
 \item A second verb could read reporter intensities out of spectra through IsobaricMassTag.GetReporterIonIntensities; not built.
-\item Not yet ported: mzLibRust and mzLibR names above are proposals until their ports land (parity order).
+\item Ported, unreleased: mzLibRust #31 and mzLibR #28 (merged 2026-10-03) ship mzlib::isobaric::kits and isobaric_kits as named above. Set since.mzlibrust / since.mzlibr when they release.
 }
 }
 \references{

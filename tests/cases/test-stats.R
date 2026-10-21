@@ -147,6 +147,12 @@ test_that("the fit request names the files, threads and coefficients on stdin", 
   expect_identical(request$stdin, "a\nb")
   trended <- mz$stats_build_fit_request("r.tsv", "d.tsv", "a", TRUE, 3, -1)
   expect_identical(utils::tail(trended$args, 5L), c("--threads", "-1", "--trend", "--spline-basis", "3"))
+  # A trend with no spline_basis asks for none: mzLib then sizes the spline as limma does
+  # (pyMzLib #82). Nothing in mzLibR may fill in a number of its own.
+  expect_true(is.null(formals(stats_fit)$spline_basis))
+  unsized <- mz$stats_build_fit_request("r.tsv", "d.tsv", "a", TRUE, NULL, 1)
+  expect_identical(utils::tail(unsized$args, 1L), "--trend")
+  expect_false("--spline-basis" %in% unsized$args)
 })
 
 test_that("bad fit arguments are refused before the bridge", {
@@ -287,6 +293,25 @@ test_that("LIVE: a fresh fit agrees with limma run here", {
                    stats_reference_path("limma_reference_design.tsv"), "age_decades")
   expect_true(stats_worst(fit$records$t, here$t) < 1e-8)
   expect_true(stats_worst(fit$records$p_value, here$p) < 1e-8)
+})
+
+test_that("LIVE: a small trend fit sizes its spline as limma does", {
+  # mzLib 1.0.594 (#1398) follows limma's fitFDist rule, 1 + (n >= 3) + (n >= 6) + (n >= 30) basis
+  # functions for n features, when it is not asked for a number. The bridge used to ask for 4 every
+  # time (pyMzLib #82). Twelve features of limma's reference table must therefore get 3.
+  skip_unless_bridge_has("stats fit")
+  options(mzlibr.bridge = Sys.getenv("MZLIB_BRIDGE"))
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+  responses <- stats_reference("limma_reference_responses.tsv")[1:12, ]
+  path <- tempfile(fileext = ".tsv")
+  on.exit(unlink(path), add = TRUE)
+  utils::write.table(responses, path, sep = "\t", quote = FALSE, row.names = FALSE, na = "")
+  fit <- stats_fit(path, stats_reference_path("limma_reference_design.tsv"), "age_decades", trend = TRUE)
+  expect_true(fit$prior$trended)
+  expect_identical(fit$prior$spline_basis_count, 3)
+  asked <- stats_fit(path, stats_reference_path("limma_reference_design.tsv"), "age_decades",
+                     trend = TRUE, spline_basis = 2)
+  expect_identical(asked$prior$spline_basis_count, 2)
 })
 
 test_that("LIVE: adjust and meta agree with p.adjust and metafor's recorded output", {

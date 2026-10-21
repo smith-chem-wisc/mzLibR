@@ -19,7 +19,9 @@
 #   * a `--paths-stdin` call fits only a bulk recording (per-input `files[]` entries carrying `path`,
 #     and no top-level `path`), and a one-path call only a one-document recording;
 #   * a recording with a `written` key fits an `--out` call only if `written` is set, and a call
-#     without `--out` only if it is null.
+#     without `--out` only if it is null;
+#   * a recording listed in `REPLAY_RECORDED_WITH` fits only a call that sends the options it was
+#     made with.
 #
 # No fit, or more than one, is answered as a usage error naming every recording and why it did not
 # fit - so the example fails and says why, rather than printing something plausible.
@@ -95,6 +97,25 @@ REPLAY_ECHOED_AS <- c(
   "from" = "source_format",
   "to" = "target_format"
 )
+
+# Recordings made with an option the call must send as well. The echo alone cannot say so: a call
+# that leaves the option out takes a default (mzLib's) that the replay does not know, and the echo
+# of a value that was given looks the same as the echo of a default. So a call without --max-mods
+# cannot be answered from the max-mods 1 albumin digest.
+REPLAY_RECORDED_WITH <- list(
+  "peptidoform_P02768_small.json" = c("max-mods" = "1")
+)
+
+# Why a recording made with `recorded_with` cannot answer a call with these options, or "".
+replay_recorded_with_mismatch <- function(recorded_with, options) {
+  for (name in names(recorded_with)) {
+    sent <- options[[name]]
+    if (is.null(sent) || !identical(as.character(sent), recorded_with[[name]])) {
+      return(paste0("recorded with --", name, " ", recorded_with[[name]], ", which the call does not send"))
+    }
+  }
+  ""
+}
 
 # Verbs whose input travels on stdin and is echoed in the recording, so a recording answers only a
 # call that sent the same input. Read only for these: other verbs may be given a terminal's stdin.
@@ -289,6 +310,9 @@ replay_answer <- function(argv, dir = replay_dir(), stdin = character(0)) {
     enveloped <- is.list(parsed) && !is.null(parsed[["ok"]]) && "data" %in% names(parsed)
     data <- if (enveloped) parsed[["data"]] else parsed
     why <- if (is.list(data) && !is.null(names(data))) replay_mismatch(data, call$options) else ""
+    if (!nzchar(why) && !is.null(REPLAY_RECORDED_WITH[[fixture]])) {
+      why <- replay_recorded_with_mismatch(REPLAY_RECORDED_WITH[[fixture]], call$options)
+    }
     if (!nzchar(why) && call$verb %in% REPLAY_STDIN_ECHO && is.list(data)) {
       why <- replay_stdin_mismatch(data, stdin, call$verb)
     }

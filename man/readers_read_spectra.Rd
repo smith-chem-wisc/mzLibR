@@ -84,7 +84,7 @@ msalign files hold \strong{deconvolved neutral masses}, not raw m/z - do not re-
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-spectra}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-spectra}. Generated from the bridge's verb spec \code{readers.read-spectra.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs}{\code{MsDataFileReader.GetDataFile}} in \code{mzLib/Readers/MsDataFileReader.cs} at mzLib \code{23c2490e}
@@ -121,7 +121,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{column_names}}{string[]; never \code{NA}. Column order.}
 \item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to out instead. Column name to per-scan values.}
 \item{\code{output}}{object; \code{NA} when out was not given. \{path, format: "tsv", row_count\} when out was given.}
-\item{\code{source}}{object; \code{NA} when the reader built no source-file description at all (inner fields are null individually when the file does not record them). \{instrument_model, instrument_model_accession, instrument_serial_number, acquisition_start_time, acquisition_start_time_is_utc\} from mzLib SourceFile (#1349). instrument_model is the model NAME and instrument_model_accession its PSI-MS accession (mzML has both; Thermo .raw only the name, so the accession is null - match on the accession, never the name). acquisition_start_time is ISO-8601 text, ending in Z only when the source fixed the instant (mzML startTimeStamp with an offset); otherwise the acquisition PC's wall-clock time. acquisition_start_time_is_utc is never null: false means local instrument-PC time or absent, and is always false for Thermo .raw. Each inner field is null when the file does not record it (MGF and msalign record none).}
+\item{\code{source}}{object; \code{NA} when the reader built no source-file description at all (inner fields are null individually when the file does not record them). \{instrument_model, instrument_model_accession, instrument_serial_number, acquisition_start_time, acquisition_start_time_is_utc\} from mzLib SourceFile (#1349). instrument_model is the model NAME and instrument_model_accession its PSI-MS accession (mzML has both; Thermo .raw only the name, so the accession is null - match on the accession, never the name). acquisition_start_time is ISO-8601 text, ending in Z only when the source fixed the instant (mzML startTimeStamp with an offset); otherwise the acquisition PC's wall-clock time. acquisition_start_time_is_utc is never null: false means local instrument-PC time or absent, and is always false for Thermo .raw. Each inner field is null when the file does not record it (MGF, msalign, Bruker .d and timsTOF .d record none: their readers build a SourceFile with no instrument fields).}
 \item{\code{rows_not_read}}{int; in \strong{rows}; \code{NA} when never counted for this verb. Always null.}
 \item{\code{absent_fields}}{string[]; never \code{NA}. Always empty for this verb: an unrecorded scan field is null per scan.}
 \item{\code{failed_fields}}{string[]; never \code{NA}. 'field: ExceptionType' for each column whose read threw on some scans; those cells are null.}
@@ -138,7 +138,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{mz_analyzer}}{string; never \code{NA}. mzLib MZAnalyzerType enum name.}
 \item{\code{is_centroid}}{bool; never \code{NA}. Whether the spectrum is centroided.}
 \item{\code{total_ion_current}}{float; in \strong{intensity (instrument units)}; never \code{NA}. Total ion current.}
-\item{\code{injection_time}}{float; in \strong{ms}; \code{NA} when the file did not record it. Ion injection time.}
+\item{\code{injection_time}}{float; in \strong{ms}; \code{NA} when the file did not record it. Ion injection time. Two readers write a placeholder instead of null: every MGF scan crosses 0, and a timsTOF TSF (MRM) scan crosses -1 (mzLib#1489 asks for null). Treat 0 from an MGF file as not recorded.}
 \item{\code{peak_count}}{int; in \strong{peaks}; never \code{NA}. Peaks in the scan; 0 when it has no spectrum.}
 \item{\code{scan_window_lower_mz}}{float; in \strong{m/z}; \code{NA} when no scan window recorded. Lower scan-window bound. DERIVED for MGF (first observed peak).}
 \item{\code{scan_window_upper_mz}}{float; in \strong{m/z}; \code{NA} when no scan window recorded. Upper scan-window bound. DERIVED for MGF (last observed peak).}
@@ -171,7 +171,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_bridge_error} (correctness)}{with on-error fail, mzLib failing to parse an input: that input's own error type, message prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_usage_error} (usage)}{out (with path or paths-stdin) whose extension is not .tsv, any case, including none (PYB-1); checked before any input is opened}
-\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the parsed record_count}
+\item{\code{mzlib_usage_error} (usage)}{the answer is too large to return as one JSON document (PYB-3 part 1; measured: past the ~1.07 G-character .NET string ceiling, not RAM). Message: 'this read (N records) is too large to return as one document; use \code{--limit}/\code{--offset} or \code{--out}', N the records this answer holds (its returned_count, or record_count where the envelope has none)}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
@@ -204,9 +204,8 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item injection_time unit 'ms' is from the mzML CV term (MS:1000927); not yet confirmed that every mzLib vendor reader (Thermo, Bruker, timsTOF, MGF) emits ms.
-\item source is read from MsDataFile.SourceFile after LoadAllStaticData; Bruker .d and timsTOF .d have not been checked for which of its fields they fill.
-\item PYB-3 part 2: refusing a too-large answer BEFORE serialising, when the parsed record count already predicts it, is not built. It needs a characters-per-record threshold measured per format (dataRepo's ~805 per record is one file type); part 1 catches the failure after serialising.
+\item injection_time is declared ms from the mzML CV term (MS:1000927). Checked at d10017ce: Thermo .raw reads the 'Ion Injection Time (ms)' trailer and reads 0 as null (ThermoRawFileReader.cs:425); Bruker .d (BAF) is always null (BrukerFileReader.cs:325). Still open: timsTOF reads Frames.AccumulationTime (timsTOF/Tables.cs:73), summed over a PASEF precursor's frames (TimsTofFileReader.cs:734), and its unit is not confirmed as ms; a TSF MRM scan gets -1 (TimsTofFileReader.cs:660), which crosses unchanged. MGF records none, but mzLib sets 0 (Mgf.cs:378, :383), so every MGF scan crosses 0, not null (mzLib#1489).
+\item PYB-3 part 2: refusing a too-large answer BEFORE serialising is not built (pyMzLib main b18f013, Program.cs SuccessJson); part 1 catches the failure after serialising. A threshold per record will not work: dataRepo's re-run on 0.4.0 (dataRepo to pyMzLib 018, 2026-10-04) measured 725 and 805 characters per record in two psmtsv files from one producer. It proposed source size instead, 0.63 to 0.71 output characters per source byte, which puts the limit at about 1.51 to 1.70 GB of source text. That is two files of one format, and no threshold has been agreed.
 }
 }
 \seealso{

@@ -52,8 +52,8 @@
       "required": false,
       "unit": "projects",
       "range": ">= 1",
-      "default": 100,
-      "doc": "Hits requested per underlying API call. Changes how many requests the fetch takes, never what comes back."
+      "default": null,
+      "doc": "Hits requested per underlying API call. Changes how many requests the fetch takes, never what comes back. Absent, the bridge sends none and SearchProjectsAsync's default applies (100 at d10017ce)."
     }
   ],
   "result": {
@@ -80,7 +80,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "One entry per matching project, deduplicated by accession, in PRIDE's ranking order; fields under result.columns."
+        "doc": "One entry per matching project, deduplicated by accession, in PRIDE's ranking order, which is not promised stable across calls; fields under result.columns."
       }
     ],
     "columns": [
@@ -369,7 +369,7 @@
   "errors": [
     {
       "kind": "usage",
-      "when": "keyword missing or blank; keyword longer than 1000 characters; page-size not an integer or <= 0 (both checked by the bridge before mzLib)"
+      "when": "keyword missing or blank; keyword longer than 1000 characters; page-size not an integer, given without a value, or <= 0 (all checked by the bridge before mzLib)"
     },
     {
       "kind": "service_unavailable",
@@ -388,7 +388,8 @@
   ],
   "bindings": {
     "py": {
-      "name": "pymzlib.pride.search"
+      "name": "pymzlib.pride.search",
+      "note": "Returns the hits list itself: no keyword or result_count."
     },
     "rust": {
       "name": "mzlib::pride::search_with",
@@ -409,8 +410,6 @@
     }
   ],
   "open_questions": [
-    "Shape difference: mzlib::pride::search / search_with return Vec<PrideProjectSearchResult> and R pride_search() returns the hits data.frame, so neither carries the envelope's keyword or result_count (the caller has the keyword; the count is len() / nrow()). pyMzLib returns the hits list likewise. Declare it as a deviation or drop the two fields from the wire?",
-    "The bindings also refuse a keyword beginning with '-' (it would be parsed as an option); the bridge cannot, since a value starting with '--' reaches it as a flag and the keyword then reads as missing.",
-    "The ranking order of results is PRIDE's and is not promised stable across calls."
+    "The bindings refuse a keyword beginning with '-', but the bridge misreads only one beginning with '--': its parser takes the next argument as the value unless that starts with '--'. So '-x' reaches PRIDE as given, while '--x' turns --keyword into a flag and the call fails as 'Missing required option --keyword.' Whether the bindings should narrow their check to '--' is undecided."
   ]
 }

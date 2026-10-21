@@ -69,7 +69,7 @@ An \code{mzlibr_sequence_conversions}:
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{e76157831b15}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{27887027cf70}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs}{\code{SequenceConversionService.Default}} in \code{mzLib/Omics/SequenceConversion/SequenceConversionService.cs} at mzLib \code{0a808fec}
@@ -82,7 +82,7 @@ Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \cod
 }
 \section{Parameters: units, ranges and defaults}{
 \describe{
-\item{\code{source} (wire \code{--from})}{string; default \code{mzLib}; range \code{a registered source format: MassShift, Modomics, ProForma, mzLib (at 0a808fec)}. The notation the sequences are in, matched case-insensitively against the service's AvailableSourceFormats. Any other name, or the option without a value, is a usage error that lists the registered names.}
+\item{\code{source} (wire \code{--from})}{string; default \code{mzLib}; range \code{a registered source format: MassShift, Modomics, ProForma, mzLib (at 0a808fec)}. The notation the sequences are in, matched case-insensitively against the service's AvailableSourceFormats. Any other name, or the option without a value, is a usage error that lists the registered names. mzLib's ConvertAutoDetect is not projected: the source is always a named format, mzLib when \code{--from} is absent.}
 \item{\code{target} (wire \code{--to})}{string; default \code{Unimod}; range \code{a registered target format: Chronologer, Essential, MassShift, ProForma, Unimod, mzLib (at 0a808fec)}. The notation to write, matched case-insensitively against the service's AvailableTargetFormats. Any other name, or the option without a value, is a usage error that lists the registered names.}
 \item{\code{mode}}{string; default \code{ReturnNull}; range \code{ThrowException | ReturnNull | RemoveIncompatibleElements | UsePrimarySequence}. mzLib's SequenceConversionHandlingMode, by name, case-insensitive. ReturnNull: an input mzLib cannot convert is a failed row. RemoveIncompatibleElements and UsePrimarySequence: what the target cannot write is dropped and the row is converted_with_warnings. ThrowException: the first input mzLib cannot convert (in input order) fails the whole call as a usage error naming it. A number or any other name is a usage error.}
 \item{\code{threads}}{int; default \code{1}; range \code{>= 1, or -1 for every core}. Sequences converted at once. Rows are identical, in input order, at any value.}
@@ -104,7 +104,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{failed_count}}{int; in \strong{sequences}; never \code{NA}. Rows with status failed.}
 \item{\code{column_names}}{string[]; never \code{NA}. The table's columns in order.}
 \item{\code{records} (wire \code{columns})}{table; never \code{NA}. Column name to one value per input, in input order.}
-\item{\code{caveats}}{string[]; never \code{NA}. Six static caveats.}
+\item{\code{caveats}}{string[]; never \code{NA}. Five static caveats (six through mzLib 1.0.593).}
 }
 }
 \section{Columns of \code{records}}{
@@ -130,7 +130,6 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 }
 \section{Caveats}{
 \itemize{
-\item ProForma does not resolve UniProt-sourced modifications at 0a808fec: '[UniProt:N-acetylserine on S]SEQK' comes out as '[UniProt:N-acetylserine on S]-SEQK', status converted, not '[UNIMOD:1]-SEQK'. mzLib's ProForma serializer looks modifications up in the MetaMorpheus list only (ProFormaSequenceSerializer.cs:34, MzLibModificationLookup.cs:54); the Unimod target looks them up in every list mzLib loads, UniProt's included (GlobalModificationLookup.cs:23). Convert to Unimod when the sequences carry UniProt modifications. mzLib#1401.
 \item ProForma writes a modification it cannot resolve under its mzLib name and the row is still converted, so status converted does not mean every bracket in a ProForma output is a controlled-vocabulary term. Unimod either names a modification by its UNIMOD accession or reports it in incompatible_items.
 \item A modification the target cannot write: under ReturnNull the row fails (output null); under RemoveIncompatibleElements and UsePrimarySequence it is dropped from output, named in incompatible_items, and the row is converted_with_warnings; under ThrowException the first such input fails the whole call as a usage error.
 \item status is mzLib's verdict read off ConversionWarnings; failure_reason can be null on a failed row (the Unimod target under ReturnNull records only incompatible_items).
@@ -155,10 +154,8 @@ Wire protocol 1; pyMzLib 0.4.0; mzLibRust not yet shipped; mzLibR not yet shippe
 The spec records these as open. They are listed rather than hidden:
 
 \itemize{
-\item The ProForma target's UniProt gap is an mzLib defect (the serializer's default lookup), mzLib#1401; close this when a pin carries its fix. A bridge-side substitute (ProFormaSequenceSerializer.WithLookup(GlobalModificationLookup)) composes serializer internals and is deliberately not used.
 \item mzLib's MzLibSequenceParser joins '|'-separated ambiguous candidates into one sequence with only a warning; whether it should refuse them (as SpectrumMatchFromTsv.ProFormaFromFullSequence does before calling it) is an mzLib question: mzLib#1405.
-\item AutoDetect (SequenceConversionService.ConvertAutoDetect) is not projected: \code{--from} is always explicit.
-\item Ported, unreleased: mzLibRust #32 and mzLibR #32 (drafts until pyMzLib 0.4.0 publishes the bridge). Set since.mzlibrust / since.mzlibr when they release.
+\item Ported, unreleased: mzLibRust #32 and mzLibR #32 merged on 2026-10-04, on the pyMzLib 0.4.0 bridge. Neither binding has cut a release; set since.mzlibrust / since.mzlibr when they do.
 }
 }
 \references{

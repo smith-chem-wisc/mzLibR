@@ -156,7 +156,8 @@
   ],
   "bindings": {
     "py": {
-      "name": "pymzlib.sdrf.parse_ages"
+      "name": "pymzlib.sdrf.parse_ages",
+      "note": "Plural in all three bindings because it takes a list of cells; the verb is singular because each stdin line is one cell."
     },
     "rust": {
       "name": "mzlib::sdrf::parse_ages"
@@ -175,7 +176,6 @@
     }
   ],
   "open_questions": [
-    "The refusal reason is a bridge-side classification of TryParse's false; see sdrf.samples.yaml. An upstream TryParse(cell, out age, out reason) would retire it.",
-    "Binding name is parse_ages (plural) for the verb parse-age (one cell per line). Kept because the function takes a list; revisit if a binding wants the wire name."
+    "The refusal reason is a bridge-side classification of TryParse's false; see sdrf.samples.yaml. An upstream TryParse(cell, out age, out reason) would retire it."
   ]
 }
