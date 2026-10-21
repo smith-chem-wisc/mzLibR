@@ -63,7 +63,7 @@ matches with `scores = TRUE`.
 
 Wire verb `readers read-matches` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-matches.yaml` (bridge commit
-`22638d4276ff`) by `scripts/build-man.R`; the spec owns these facts, and
+`f85fef72f651`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`ISpectralMatch`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/ISpectralMatch.cs)

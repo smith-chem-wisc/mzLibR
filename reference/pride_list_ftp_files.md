@@ -14,7 +14,7 @@ a true project size matters.
 ## Usage
 
 ``` r
-pride_list_ftp_files(accession, timeout = 300)
+pride_list_ftp_files(accession, timeout = NULL)
 ```
 
 ## Arguments
@@ -26,7 +26,13 @@ pride_list_ftp_files(accession, timeout = 300)
 - timeout:
 
   Seconds to allow for the whole walk, which spans one request per
-  directory.
+  directory. `NULL`, the default, adds no limit of mzLibR's own, because
+  mzLib already bounds every request: it retries a transient failure
+  three times, after 5, 20 and 60 s, and each attempt can take up to
+  100 s. An outage that hangs is therefore reported as
+  `mzlib_service_unavailable` after about 8 minutes per request. A
+  number cuts the whole call off after that many seconds with
+  `mzlib_timeout`, which is not `mzlib_service_unavailable`.
 
 ## Details
 
@@ -57,7 +63,7 @@ rather than returning nothing.
 ## Wraps
 
 Wire verb `pride ftp-files`. Generated from the bridge's verb spec
-`pride.ftp-files.yaml` (bridge commit `22638d4276ff`) by
+`pride.ftp-files.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -96,9 +102,11 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `file_count`:
 
-  int; in **files**; never `NA`. Entries in files. 0 only if the
-  resolved project's directory listed nothing (the bindings raise their
-  not-found error on it).
+  int; in **files**; never `NA`. Entries in files. Since mzLib 1.0.594
+  (#1412) an empty root listing for a project that exists is retried and
+  then thrown (see errors), so 0 means only that the root listed
+  subdirectories that held no files. The bindings raise their not-found
+  error on 0.
 
 - `approximate_total_size_bytes`:
 
@@ -163,9 +171,25 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   its directory (MzLibException; the bindings re-map it to their
   not-found error); a directory listing answering any other status;
   nesting deeper than 64 levels (MzLibException: the listing may be
-  cyclic)
+  cyclic); the project's root listing still empty after mzLib's retries
+  (#1412: an HttpRequestException with no status and no cause, which
+  mzLib treats as transient but the bridge cannot tell from a refusal,
+  so it crosses as correctness until PRIDE-B3); a 403 from
+  ftp.pride.ebi.ac.uk after mzLib's retries (mzLib retries it as EBI's
+  rate limit, but the bridge classifies by status, so it crosses as
+  correctness; PRIDE-B3 asks mzLib to mark such failures)
 
 ## Caveats
+
+- Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient
+  failure, that request alone, after 5, 20 and 60 s (a 429 or 503
+  Retry-After of up to 60 s replaces the wait); transient means no HTTP
+  status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk,
+  EBI's rate limit. Each attempt can take up to the client's 100 s
+  timeout, so a service that hangs takes up to about 485 s per request
+  before the failure is reported. A binding's own timeout shorter than
+  that reports a hanging outage as a timeout, not as
+  service_unavailable.
 
 - This is the complete file list; pride files (PRIDE's REST manifest)
   omits files, for PXD000001 five of 14 on 2026-10-21, including the two

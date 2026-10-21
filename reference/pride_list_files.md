@@ -10,7 +10,7 @@ one data.frame.
 ## Usage
 
 ``` r
-pride_list_files(accession, page_size = NULL, timeout = 300)
+pride_list_files(accession, page_size = NULL, timeout = NULL)
 ```
 
 ## Arguments
@@ -31,7 +31,13 @@ pride_list_files(accession, page_size = NULL, timeout = 300)
 
 - timeout:
 
-  Seconds to allow for the whole fetch, or `NULL` to wait indefinitely.
+  Seconds to allow for the whole fetch. `NULL`, the default, adds no
+  limit of mzLibR's own, because mzLib already bounds every request: it
+  retries a transient failure three times, after 5, 20 and 60 s, and
+  each attempt can take up to 100 s. An outage that hangs is therefore
+  reported as `mzlib_service_unavailable` after about 8 minutes per
+  request. A number cuts the whole call off after that many seconds with
+  `mzlib_timeout`, which is not `mzlib_service_unavailable`.
 
 ## What this manifest is, and is not
 
@@ -70,7 +76,7 @@ sum as an upper bound on transfer, and see
 ## Wraps
 
 Wire verb `pride files`. Generated from the bridge's verb spec
-`pride.files.yaml` (bridge commit `22638d4276ff`) by
+`pride.files.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -216,6 +222,16 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   deliberately does not excuse as an outage)
 
 ## Caveats
+
+- Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient
+  failure, that request alone, after 5, 20 and 60 s (a 429 or 503
+  Retry-After of up to 60 s replaces the wait); transient means no HTTP
+  status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk,
+  EBI's rate limit. Each attempt can take up to the client's 100 s
+  timeout, so a service that hangs takes up to about 485 s per request
+  before the failure is reported. A binding's own timeout shorter than
+  that reports a hanging outage as a timeout, not as
+  service_unavailable.
 
 - This is PRIDE's REST manifest, which is knowingly incomplete: for
   PXD000001 on 2026-10-21 it listed 9 of the 14 files in the FTP tree,

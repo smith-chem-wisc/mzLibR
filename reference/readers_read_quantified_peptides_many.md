@@ -58,7 +58,7 @@ the peptides returned; `row_count` counts rows.
 
 Wire verb `readers read-quantified-peptides` with `--paths-stdin`.
 Generated from the bridge's verb spec
-`readers.read-quantified-peptides.yaml` (bridge commit `22638d4276ff`)
+`readers.read-quantified-peptides.yaml` (bridge commit `f85fef72f651`)
 by `scripts/build-man.R`; the spec owns these facts, and all three
 bindings render the same ones.
 

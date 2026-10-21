@@ -75,9 +75,13 @@ there, a file with no such view. Raised before any work happens, either by mzLib
 the bridge (its <code>usage</code> kind, exit status 2). Fix the call; retrying will not help. pyMzLib
 raises <code>UsageError</code>, mzLibRust returns <code>MzLibError::Usage</code>.</p>
 <p><code>mzlib_service_unavailable</code> - an external service is down, rate-limited, timing out or
-unreachable: HTTP 408, 429 and 5xx from PRIDE, UniProt or EBI. <strong>Retry later.</strong> A 404 or 400 is
-deliberately not this class, because a wrong URL or a malformed request is a defect, and
-excusing it as an outage would hide it. The live tests skip on this class and nothing else.
+unreachable: HTTP 408, 429 and 5xx from PRIDE, UniProt or EBI. <strong>Retry later.</strong> For PRIDE,
+mzLib has already retried each request three times, after 5, 20 and 60 s (mzLib #1412), so
+later means minutes, not seconds. A 404 or 400 is deliberately not this class, because a wrong
+URL or a malformed request is a defect, and excusing it as an outage would hide it. Two PRIDE
+failures are EBI's but arrive as <code>mzlib_bridge_error</code> with <code>error_type</code>
+<code>"HttpRequestException"</code>: an FTP listing still empty, and a 403 from EBI's FTP host, each after
+mzLib's retries. Treat those as an outage. The live tests skip on this class and nothing else.
 pyMzLib raises <code>ServiceUnavailableError</code>.</p>
 <p><code>mzlib_bridge_error</code> - mzLib itself reported a failure (the spec's <code>correctness</code> kind): a file
 it could not parse, a vendor library that will not load on this platform. Its <code>error_type</code>

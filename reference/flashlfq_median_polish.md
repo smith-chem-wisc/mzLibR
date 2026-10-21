@@ -91,12 +91,16 @@ for those.
 ## Wraps
 
 Wire verb `quant median-polish`. Generated from the bridge's verb spec
-`quant.median-polish.yaml` (bridge commit `22638d4276ff`) by
+`quant.median-polish.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
-- [`FlashLfqResults.CalculateProteinResultsMedianPolish`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs)
-  in `mzLib/FlashLFQ/FlashLFQResults.cs` at mzLib `23c2490e`
+- [`FlashLfqResults.CalculateProteinResultsMedianPolish`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/FlashLFQ/FlashLFQResults.cs)
+  in `mzLib/FlashLFQ/FlashLFQResults.cs` at mzLib `d10017ce`
+
+- [`MedianPolishRollUp.QuantifyGroup`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/Strategies/RollUp/MedianPolishRollUp.cs)
+  in `mzLib/Quantification/Strategies/RollUp/MedianPolishRollUp.cs` at
+  mzLib `d10017ce`
 
 - [`FlashLfqResults.WriteResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/FlashLFQ/FlashLFQResults.cs)
   in `mzLib/FlashLFQ/FlashLFQResults.cs` at mzLib `23c2490e`
@@ -260,6 +264,11 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   Never raised by this verb.
 
 ## Caveats
+
+- Since mzLib 1.0.595 (#1424), the sample matrix is keyed by condition
+  and biorep as a pair, not as one joined string, so condition A1 biorep
+  0 beside condition A biorep 10 quantifies; it threw
+  IndexOutOfRangeException, which crossed as correctness.
 
 - Detection types: where the table has no Detection Type\_ column for a
   run (or the cell is blank), a positive intensity is treated as MSMS

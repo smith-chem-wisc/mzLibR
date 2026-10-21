@@ -140,7 +140,11 @@ feature seen in only one group cannot have a group effect).</p>
     reports different moderated statistics; these are <code>legacy = TRUE</code>.
   - <code>prior</code>, the fitted variance prior, shared by every coefficient: <code>df</code> (degrees of freedom,
     <code>NA</code> when infinite), <code>df_infinite</code>, <code>trended</code>, <code>spline_basis_count</code> (basis functions) and
-    <code>scale</code> (squared response units, <code>NA</code> when trended).
+    <code>scale</code> (squared response units), s0^2 when every fitted feature shares one. <code>scale</code> is <code>NA</code>
+    when it differs by feature, which is then in the <code>prior_variance</code> column: with a trend, or
+    with fewer than 3 features. Then mzLib fits no prior (mzLib #1398, as limma's <code>squeezeVar</code>
+    does): <code>df</code> is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.5.1
+    report the first feature's own variance as <code>scale</code> in that case.
   - <code>caveats</code>, including any that apply to this input.</p>
     </div>
     <div class="section level2">
@@ -148,13 +152,14 @@ feature seen in only one group cannot have a group effect).</p>
 
 
 
-<p>It is limma's *legacy* estimator. <code>robust = TRUE</code>, contrasts, the B-statistic and observation
-weights are not implemented; write a contrast as its own design column instead. <code>bh_adjusted</code>
+<p>It is limma's *legacy* estimator. <code>robust = TRUE</code>, the B-statistic and observation weights are
+not implemented. mzLib has contrasts (<code>EmpiricalBayes.ModerateContrasts</code>, mzLib #1452), but this
+function does not expose them yet: write a contrast as its own design column instead. <code>bh_adjusted</code>
 controls the false discovery rate among the features tested; it is not a target-decoy q-value.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>stats fit</code>. Generated from the bridge's verb spec <code>stats.fit.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>stats fit</code>. Generated from the bridge's verb spec <code>stats.fit.yaml</code> (bridge commit <code>f85fef72f651</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs" class="external-link"><code>LinearModel.Fit</code></a> in <code>mzLib/StatisticalModels/LinearModel.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs" class="external-link"><code>EmpiricalBayes.Moderate</code></a> in <code>mzLib/StatisticalModels/EmpiricalBayes.cs</code> at mzLib <code>d10017ce</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs" class="external-link"><code>EmpiricalBayes.FitPrior</code></a> in <code>mzLib/StatisticalModels/EmpiricalBayes.cs</code> at mzLib <code>0a808fec</code></p></li>
@@ -277,7 +282,7 @@ controls the false discovery rate among the features tested; it is not a target-
 <dd><p>float; in <strong>squared response units</strong>; <code>NA</code> when not fitted. The moderated residual variance (d0 s0^2 + d s^2) / (d0 + d).</p></dd>
 
 <dt><code>prior_variance</code></dt>
-<dd><p>float; in <strong>squared response units</strong>; <code>NA</code> when not fitted (the feature did not enter the prior). s0^2 for this feature: one value for every feature without <code>--trend</code>, varying with average_response with it.</p></dd>
+<dd><p>float; in <strong>squared response units</strong>; <code>NA</code> when not fitted (the feature did not enter the prior). s0^2 for this feature: one value for every feature without <code>--trend</code>, varying with average_response with it. With fewer than 3 features it is the feature's own variance, because no prior is fitted.</p></dd>
 
 <dt><code>sigma</code></dt>
 <dd><p>float; in <strong>response units</strong>; <code>NA</code> when not fitted. Residual standard deviation, sqrt(RSS / df_residual), before moderation.</p></dd>
@@ -297,7 +302,7 @@ controls the false discovery rate among the features tested; it is not a target-
     <h2 id="fields-of-prior">Fields of <code>prior</code><a class="anchor" aria-label="anchor" href="#fields-of-prior"></a></h2>
 
 <dl><dt><code>prior$df</code> (wire <code>df</code>)</dt>
-<dd><p>float; in <strong>degrees of freedom</strong>; <code>NA</code> when infinite: df_infinite is true. Prior degrees of freedom d0.</p></dd>
+<dd><p>float; in <strong>degrees of freedom</strong>; <code>NA</code> when infinite: df_infinite is true. Prior degrees of freedom d0. 0 with fewer than 3 features, where mzLib fits no prior (mzLib#1398, as limma's squeezeVar), so moderation leaves each feature's variance and t as they are.</p></dd>
 
 <dt><code>prior$df_infinite</code> (wire <code>df_infinite</code>)</dt>
 <dd><p>bool; never <code>NA</code>. True when the residual variances are no more dispersed than sampling alone explains, so every feature takes the prior variance.</p></dd>
@@ -309,7 +314,7 @@ controls the false discovery rate among the features tested; it is not a target-
 <dd><p>int; in <strong>basis functions</strong>; never <code>NA</code>. Basis functions the trend used, intercept included; 1 without a trend.</p></dd>
 
 <dt><code>prior$scale</code> (wire <code>scale</code>)</dt>
-<dd><p>float; in <strong>squared response units</strong>; <code>NA</code> when trended: s0^2 is per feature, in the prior_variance column. s0^2, the prior variance.</p></dd>
+<dd><p>float; in <strong>squared response units</strong>; <code>NA</code> when s0^2 differs by feature, so it is in the prior_variance column: trended, or no prior was fitted (fewer than 3 features; mzLib#1398, as limma's squeezeVar). s0^2, the prior variance, when every fitted feature shares one. With fewer than 3 features mzLib fits no prior: df is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.5.1 reported the first feature's own variance here in that case.</p></dd>
 
 
 </dl></div>
@@ -337,7 +342,7 @@ controls the false discovery rate among the features tested; it is not a target-
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
 <ul><li><p>This is limma's LEGACY empirical-Bayes estimator (eBayes(legacy = TRUE)). Since limma 3.61, eBayes defaults to a different estimator whenever residual df differ between features, which omitting missing values causes; residual_df_differ says when that applies.</p></li>
-<li><p>Not implemented: robust = TRUE, contrasts, the B-statistic, observation weights. Write a contrast as its own design column instead.</p></li>
+<li><p>Not implemented: robust = TRUE, the B-statistic, observation weights. mzLib has contrasts since 1.0.595 (EmpiricalBayes.ModerateContrasts, #1452), but this verb does not expose them yet: write a contrast as its own design column instead.</p></li>
 <li><p>A 0 is an observation. Log-transform intensities first, and blank any cell that means 'not measured'.</p></li>
 <li><p>bh_adjusted adjusts for the false discovery rate among the features tested. It is not a target-decoy q-value for identifications.</p></li>
 </ul></div>

@@ -176,7 +176,7 @@ is 849; "could not be resolved" is 2.
 ## Wraps
 
 Wire verb `quant flashlfq`. Generated from the bridge's verb spec
-`quant.flashlfq.yaml` (bridge commit `22638d4276ff`) by
+`quant.flashlfq.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -515,6 +515,22 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 ## Caveats
 
+- Since mzLib 1.0.595 (#1422), normalize and bayesian walk the
+  biological replicates that exist, not 0 to the largest number, and
+  normalize takes the first condition's lowest biorep and each
+  fraction's lowest techrep as its reference, with techreps in numeric
+  order. A design numbered from 1 is now normalized (before, biorep
+  normalization silently did nothing); a gapped design with fractions,
+  which threw, now quantifies; a replicate sharing no peptide with the
+  reference no longer stops the rest of the step. Omitted bioreps are
+  numbered by line across all conditions, so every condition after the
+  first has a gap; that is handled the same way.
+
+- Since mzLib 1.0.595 (#1424), condition A1 biorep 0 beside condition A
+  biorep 10 quantifies: median polish keyed its samples by the two
+  joined as one string, which threw IndexOutOfRangeException and crossed
+  as correctness.
+
 - THREADS AT THIS PIN: mzLib#1111 (peptide roll-up nondeterministically
   dropping MBR intensities at MaxThreads -1, flipping protein groups
   between null and a number) is fixed by mzLib#1155, which is in the
@@ -561,6 +577,13 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
+
+- An omitted biorep is the line's 0-based index across all lines, the
+  convention MetaMorpheus uses for a run with no design. It is the
+  bridge's own default: mzLib has no reader that says what a run without
+  a design is (MetaMorpheus's ExperimentalDesign reader lives in
+  MetaMorpheus). If mzLib gains one, the bridge should use it and send
+  nothing for an omitted field.
 
 - Re-measure the K562 MBR pair at threads -1 on the current bridge
   (mzLib pin d10017ce; G-flashlfq-stale-caveats). Until then the caveat

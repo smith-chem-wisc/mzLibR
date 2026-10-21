@@ -53,7 +53,7 @@ Paging is handled for you: however many pages the project spans, you get one dat
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pride_list_files</span><span class="op">(</span><span class="va">accession</span>, page_size <span class="op">=</span> <span class="cn">NULL</span>, timeout <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pride_list_files</span><span class="op">(</span><span class="va">accession</span>, page_size <span class="op">=</span> <span class="cn">NULL</span>, timeout <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,7 +73,12 @@ Paging is handled for you: however many pages the project spans, you get one dat
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>Seconds to allow for the whole fetch, or <code>NULL</code> to wait indefinitely.</p></dd>
+<dd><p>Seconds to allow for the whole fetch.
+  <code>NULL</code>, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+  request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+  can take up to 100 s. An outage that hangs is therefore reported as
+  <code>mzlib_service_unavailable</code> after about 8 minutes per request. A number cuts the whole call
+  off after that many seconds with <code>mzlib_timeout</code>, which is not <code>mzlib_service_unavailable</code>.</p></dd>
 
 
 </dl></div>
@@ -107,7 +112,7 @@ budgeting a download, proving you analysed everything - cross-check the FTP dire
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>pride files</code>. Generated from the bridge's verb spec <code>pride.files.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>pride files</code>. Generated from the bridge's verb spec <code>pride.files.yaml</code> (bridge commit <code>f85fef72f651</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs" class="external-link"><code>PrideArchiveClient.GetProjectFilesAsync</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveFile.cs" class="external-link"><code>PrideArchiveFile</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveFile.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs" class="external-link"><code>PrideArchiveExtensions.TotalSizeBytes</code></a> in <code>mzLib/UsefulProteomicsDatabases/PrideArchiveExtensions.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -193,7 +198,8 @@ budgeting a download, proving you analysed everything - cross-check the FTP dire
     <div class="section level2">
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
-<ul><li><p>This is PRIDE's REST manifest, which is knowingly incomplete: for PXD000001 on 2026-10-21 it listed 9 of the 14 files in the FTP tree, omitting five including the two largest (on 2026-10-03, when the fixtures were recorded, it listed 8). Use pride ftp-files when completeness or the true project size matters.</p></li>
+<ul><li><p>Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient failure, that request alone, after 5, 20 and 60 s (a 429 or 503 Retry-After of up to 60 s replaces the wait); transient means no HTTP status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk, EBI's rate limit. Each attempt can take up to the client's 100 s timeout, so a service that hangs takes up to about 485 s per request before the failure is reported. A binding's own timeout shorter than that reports a hanging outage as a timeout, not as service_unavailable.</p></li>
+<li><p>This is PRIDE's REST manifest, which is knowingly incomplete: for PXD000001 on 2026-10-21 it listed 9 of the 14 files in the FTP tree, omitting five including the two largest (on 2026-10-03, when the fixtures were recorded, it listed 8). Use pride ftp-files when completeness or the true project size matters.</p></li>
 <li><p>An unknown accession and a private project both return file_count 0, not an error. The bindings raise their not-found error on an empty manifest; the wire does not.</p></li>
 <li><p>total_size_bytes is not the number of bytes a download transfers: PRIDE reports some compressed files at their decompressed size, and the sum covers only the files the manifest lists. The two errors run in opposite directions and do not cancel.</p></li>
 <li><p>Dates are timestamps with an offset here, unlike pride search, whose dates are bare calendar dates.</p></li>

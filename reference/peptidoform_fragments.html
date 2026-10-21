@@ -177,7 +177,7 @@ dissociation type, terminus and caps were used.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>peptidoform fragments</code>. Generated from the bridge's verb spec <code>peptidoform.fragments.yaml</code> (bridge commit <code>22638d4276ff</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>peptidoform fragments</code>. Generated from the bridge's verb spec <code>peptidoform.fragments.yaml</code> (bridge commit <code>f85fef72f651</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs" class="external-link"><code>ProteinDbLoader.LoadProteinXML</code></a> in <code>mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Loaders.cs" class="external-link"><code>Loaders.LoadUniprot</code></a> in <code>mzLib/UsefulProteomicsDatabases/Loaders.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/Protein.cs" class="external-link"><code>Protein.Digest</code></a> in <code>mzLib/Proteomics/Protein/Protein.cs</code> at mzLib <code>23c2490e</code></p></li>
@@ -338,7 +338,8 @@ dissociation type, terminus and caps were used.</p>
     <div class="section level2">
     <h2 id="caveats">Caveats<a class="anchor" aria-label="anchor" href="#caveats"></a></h2>
 
-<ul><li><p>UniProt annotates more than mzLib applies: only 'modified residue' and 'lipid moiety-binding region' features load. Serum albumin: 14 of 38 annotated features applied, the 24 glycosylation-site features dropped on type (mzLib#1112). Read uniprot_features_by_type and unresolved_modifications before trusting a modification count.</p></li>
+<ul><li><p>Since mzLib 1.0.595 (#1320), a protease with a preventing residue holds its rule at the ends of the sequence. trypsin|P used to cut a protein that begins RP or KP after its first residue (RPAAAAK became R and PAAAAK); it no longer does, and the other |P proteases (chymotrypsin|P, elastase|P, Lys-C|P, subtilisin|P) change the same way. mzLib's default trypsin has no preventing residue, so a default digest is unaffected, and so is any protein that begins with M.</p></li>
+<li><p>UniProt annotates more than mzLib applies: only 'modified residue' and 'lipid moiety-binding region' features load. Serum albumin: 14 of 38 annotated features applied, the 24 glycosylation-site features dropped on type (mzLib#1112). Read uniprot_features_by_type and unresolved_modifications before trusting a modification count.</p></li>
 <li><p>max-isoforms truncates silently in mzLib. Histone H3.1 at four modifications keeps 8,644 of its 12,808 peptidoforms at the default cap of 1024, losing about a third. Check peptides_at_isoform_cap before treating the list as exhaustive.</p></li>
 <li><p>Duplicate peptidoforms that mzLib's Digest emits where a chain boundary meets the initiator-Met cleavage site (mzLib#1108, open) are collapsed by the bridge on (start, end, full sequence).</p></li>
 <li><p>Fragment masses are neutral. Converting one to m/z needs the fixed charge within that fragment's span, which the wire does not report; fixed_charges is whole-peptide only.</p></li>

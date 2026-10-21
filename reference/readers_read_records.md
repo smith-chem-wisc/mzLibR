@@ -106,7 +106,7 @@ destroy data.
 ## Wraps
 
 Wire verb `readers read-records`. Generated from the bridge's verb spec
-`readers.read-records.yaml` (bridge commit `22638d4276ff`) by
+`readers.read-records.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -422,6 +422,24 @@ only from
   ProForma column it is computed from Full Sequence, which the reader
   REQUIRES (SpectrumMatchFromTsv.cs:197), so a file without both fails
   to read instead.
+
+- Since mzLib 1.0.595 (#1371), psmtsv and osmtsv records carry
+  entrapment_fraction: the share of the PSM that is an entrapment
+  discovery (DecoyContaminantTargetLabel.EntrapmentFraction), from 0
+  to 1. A shared T\|ET row counts half when its sequences differ and 0
+  when both proteins carry the same peptide, so count entrapment
+  discoveries for an FDP estimate with this column, not is_entrapment.
+  It is null where mzLib returns NaN: the Decoy/Contaminant/Target and
+  Full Sequence columns name different numbers of candidates, or the
+  full sequence is blank or MetaMorpheus's Output too long for Excel
+  placeholder beside an entrapment target.
+
+- Since mzLib 1.0.595 (#1371), is_decoy, is_contaminant and
+  is_entrapment read every \|-joined parent label: true when any parent
+  is D, C or E (DecoyContaminantTargetLabel.IsDecoy, IsContaminant,
+  IsEntrapment). On a protein-group table T\|C is now a contaminant and
+  T\|ET entrapment; on a psmtsv the E in Output too long for Excel no
+  longer reads as entrapment. Labels MetaMorpheus writes read as before.
 
 - Since mzLib 1.0.594 (#1403), a computed pro_forma names
   UniProt-sourced modifications by UNIMOD accession:

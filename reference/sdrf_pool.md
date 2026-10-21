@@ -70,7 +70,7 @@ as part of any key.
 ## Wraps
 
 Wire verb `sdrf pool`. Generated from the bridge's verb spec
-`sdrf.pool.yaml` (bridge commit `22638d4276ff`) by
+`sdrf.pool.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

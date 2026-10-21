@@ -59,7 +59,7 @@ to adjust across features.
 ## Wraps
 
 Wire verb `stats meta`. Generated from the bridge's verb spec
-`stats.meta.yaml` (bridge commit `22638d4276ff`) by
+`stats.meta.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

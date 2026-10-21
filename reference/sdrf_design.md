@@ -94,7 +94,7 @@ for the channels themselves.
 ## Wraps
 
 Wire verb `sdrf design`. Generated from the bridge's verb spec
-`sdrf.design.yaml` (bridge commit `22638d4276ff`) by
+`sdrf.design.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -287,6 +287,12 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - A factor holding not available or not applicable is refused: it would
   pair samples nobody said were alike.
+
+- A fraction or technical replicate of not available is refused as not
+  an integer of 1 or more (SdrfDesignRules.ReadPositiveInteger). Since
+  mzLib 1.0.594 (#1378) SdrfBuilder can write one, for a run with no
+  design (MetaMorpheus \#2816 will), so an SDRF mzLib itself wrote can
+  be refused here.
 
 - MetaMorpheus finds the design only as a file named
   ExperimentalDesign.tsv beside the spectra; `--out` writes any .tsv

@@ -94,7 +94,7 @@ is `NA` and in `absent_fields` here too.
 ## Wraps
 
 Wire verb `readers read-matches`. Generated from the bridge's verb spec
-`readers.read-matches.yaml` (bridge commit `22638d4276ff`) by
+`readers.read-matches.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

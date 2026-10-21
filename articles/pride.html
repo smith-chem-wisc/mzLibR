@@ -258,8 +258,64 @@ rather than returning nothing:</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu"><a href="../reference/pride_list_files.html">pride_list_files</a></span><span class="op">(</span><span class="st">"PXD999999999"</span><span class="op">)</span>,</span>
 <span>         mzlib_project_not_found <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">conditionMessage</a></span><span class="op">(</span><span class="va">e</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "PRIDE returned no files for 'PXD999999999'. Either the accession does not exist (check for a typo) or the project is private. PRIDE does not distinguish the two, so neither can mzLibR."</span></span></code></pre></div>
-<p>An EBI outage raises <code>mzlib_service_unavailable</code>, which is
-the one to retry. See <code><a href="../reference/mzlib_error.html">?mzlib_error</a></code>.</p>
+<p>An EBI outage raises <code>mzlib_service_unavailable</code>. See
+<code><a href="../reference/mzlib_error.html">?mzlib_error</a></code>, and the next section for what to do about
+one.</p>
+</div>
+<div class="section level2">
+<h2 id="retries-timeouts-and-outages">Retries, timeouts and outages<a class="anchor" aria-label="anchor" href="#retries-timeouts-and-outages"></a>
+</h2>
+<p><strong>mzLib retries for you.</strong> A PRIDE request that fails in
+a way that can pass (no answer, an HTTP 408, 429 or 5xx, or a 403 from
+EBI’s FTP host, its rate limit) is retried three times, after 5, 20 and
+60 seconds, and that request alone (mzLib #1412). A paged manifest
+retries only the page that failed, and a download resumes where it
+stopped.</p>
+<p><strong>mzLibR adds no timeout of its own by default</strong>, on any
+<code>pride_</code> function. Each attempt is already limited to 100
+seconds, so an outage that hangs is reported as
+<code>mzlib_service_unavailable</code> after about 8 minutes per
+request. Pass <code>timeout</code> to cut a call off sooner; it then
+raises <code>mzlib_timeout</code>, which is not
+<code>mzlib_service_unavailable</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Not run: contacts PRIDE.</span></span>
+<span><span class="fu"><a href="../reference/pride_list_files.html">pride_list_files</a></span><span class="op">(</span><span class="st">"PXD000001"</span>, timeout <span class="op">=</span> <span class="fl">60</span><span class="op">)</span>   <span class="co"># give up after a minute</span></span></code></pre></div>
+<p>By the time <code>mzlib_service_unavailable</code> reaches you, mzLib
+has already retried, so retrying again at once rarely helps. Wait
+minutes, not seconds:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Not run: shows how to handle a PRIDE outage, which a recording cannot produce.</span></span>
+<span><span class="va">files</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/pride_list_files.html">pride_list_files</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span>,</span>
+<span>  mzlib_service_unavailable <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep</a></span><span class="op">(</span><span class="fl">600</span><span class="op">)</span>   <span class="co"># mzLib retried already; give EBI ten minutes</span></span>
+<span>    <span class="fu"><a href="../reference/pride_list_files.html">pride_list_files</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Two failures look like a request PRIDE refused,
+<code>mzlib_bridge_error</code> with <code>error_type</code>
+<code>"HttpRequestException"</code>, but are EBI’s: an FTP listing that
+came back empty, and a 403 from EBI’s FTP host, each still failing after
+mzLib’s retries. Treat those as an outage.</p>
+</div>
+<div class="section level2">
+<h2 id="interrupted-and-suspect-downloads">Interrupted and suspect downloads<a class="anchor" aria-label="anchor" href="#interrupted-and-suspect-downloads"></a>
+</h2>
+<p>Each file streams to a temporary <code>.partial</code> name and moves
+into place only once complete, so a cancelled or crashed download leaves
+no truncated file under its real name. A transfer that fails after
+mzLib’s retries leaves <code>&lt;name&gt;.partial</code> and
+<code>&lt;name&gt;.partial.validator</code> in the folder on purpose:
+the next call for that file resumes from them (mzLib #1412). Leave them
+in place, or delete both to start over.</p>
+<p>mzLib can check a download against PRIDE’s checksums, and catch an
+EBI error page served at the right size (mzLib #1427, #1449). That check
+is not yet on the path <code><a href="../reference/pride_download.html">pride_download()</a></code> and
+<code><a href="../reference/pride_download_files.html">pride_download_files()</a></code> use, so a file can be reported as
+downloaded when its bytes are wrong. For files that matter, compare
+their sizes with <code><a href="../reference/pride_list_files.html">pride_list_files()</a></code> and their checksums
+with PRIDE’s before you search them.</p>
 </div>
 <div class="section level2">
 <h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>

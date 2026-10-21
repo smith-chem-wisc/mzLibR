@@ -87,7 +87,7 @@ which reads them one row per site.
 
 Wire verb `readers read-protein-groups`. Generated from the bridge's
 verb spec `readers.read-protein-groups.yaml` (bridge commit
-`22638d4276ff`) by `scripts/build-man.R`; the spec owns these facts, and
+`f85fef72f651`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`ProteinGroupFromTsvFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs)
@@ -258,11 +258,15 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `is_contaminant`:
 
-  bool; never `NA`. decoy_contaminant_target is C.
+  bool; never `NA`. Any \|-joined parent label is C
+  (DecoyContaminantTargetLabel.IsContaminant), so T\|C is a contaminant.
+  Before mzLib 1.0.595 (#1371) the label had to be exactly C.
 
 - `is_entrapment`:
 
-  bool; never `NA`. decoy_contaminant_target starts with E.
+  bool; never `NA`. Any \|-joined parent label is entrapment, ET or ED
+  (DecoyContaminantTargetLabel.IsEntrapment), so T\|ET is entrapment.
+  Before mzLib 1.0.595 (#1371) the label had to start with E.
 
 - `q_value`:
 

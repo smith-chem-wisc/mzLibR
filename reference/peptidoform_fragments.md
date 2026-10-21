@@ -159,7 +159,7 @@ one for the other is a large error, not a rounding one. See
 ## Wraps
 
 Wire verb `peptidoform fragments`. Generated from the bridge's verb spec
-`peptidoform.fragments.yaml` (bridge commit `22638d4276ff`) by
+`peptidoform.fragments.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -471,6 +471,15 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   it
 
 ## Caveats
+
+- Since mzLib 1.0.595 (#1320), a protease with a preventing residue
+  holds its rule at the ends of the sequence. trypsin\|P used to cut a
+  protein that begins RP or KP after its first residue (RPAAAAK became R
+  and PAAAAK); it no longer does, and the other \|P proteases
+  (chymotrypsin\|P, elastase\|P, Lys-C\|P, subtilisin\|P) change the
+  same way. mzLib's default trypsin has no preventing residue, so a
+  default digest is unaffected, and so is any protein that begins with
+  M.
 
 - UniProt annotates more than mzLib applies: only 'modified residue' and
   'lipid moiety-binding region' features load. Serum albumin: 14 of 38

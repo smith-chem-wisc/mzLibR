@@ -94,21 +94,28 @@ later) uses a different prior estimator and reports different moderated
 statistics; these are `legacy = TRUE`. - `prior`, the fitted variance
 prior, shared by every coefficient: `df` (degrees of freedom, `NA` when
 infinite), `df_infinite`, `trended`, `spline_basis_count` (basis
-functions) and `scale` (squared response units, `NA` when trended). -
-`caveats`, including any that apply to this input.
+functions) and `scale` (squared response units), s0^2 when every fitted
+feature shares one. `scale` is `NA` when it differs by feature, which is
+then in the `prior_variance` column: with a trend, or with fewer than 3
+features. Then mzLib fits no prior (mzLib \#1398, as limma's
+`squeezeVar` does): `df` is 0 and each feature keeps its own variance.
+Bridges before pyMzLib 0.5.1 report the first feature's own variance as
+`scale` in that case. - `caveats`, including any that apply to this
+input.
 
 ## What it is not
 
-It is limma's \*legacy\* estimator. `robust = TRUE`, contrasts, the
-B-statistic and observation weights are not implemented; write a
-contrast as its own design column instead. `bh_adjusted` controls the
-false discovery rate among the features tested; it is not a target-decoy
-q-value.
+It is limma's \*legacy\* estimator. `robust = TRUE`, the B-statistic and
+observation weights are not implemented. mzLib has contrasts
+(`EmpiricalBayes.ModerateContrasts`, mzLib \#1452), but this function
+does not expose them yet: write a contrast as its own design column
+instead. `bh_adjusted` controls the false discovery rate among the
+features tested; it is not a target-decoy q-value.
 
 ## Wraps
 
 Wire verb `stats fit`. Generated from the bridge's verb spec
-`stats.fit.yaml` (bridge commit `22638d4276ff`) by
+`stats.fit.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -331,7 +338,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   float; in **squared response units**; `NA` when not fitted (the
   feature did not enter the prior). s0^2 for this feature: one value for
   every feature without `--trend`, varying with average_response with
-  it.
+  it. With fewer than 3 features it is the feature's own variance,
+  because no prior is fitted.
 
 - `sigma`:
 
@@ -358,7 +366,9 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `prior$df` (wire `df`):
 
   float; in **degrees of freedom**; `NA` when infinite: df_infinite is
-  true. Prior degrees of freedom d0.
+  true. Prior degrees of freedom d0. 0 with fewer than 3 features, where
+  mzLib fits no prior (mzLib#1398, as limma's squeezeVar), so moderation
+  leaves each feature's variance and t as they are.
 
 - `prior$df_infinite` (wire `df_infinite`):
 
@@ -377,8 +387,13 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `prior$scale` (wire `scale`):
 
-  float; in **squared response units**; `NA` when trended: s0^2 is per
-  feature, in the prior_variance column. s0^2, the prior variance.
+  float; in **squared response units**; `NA` when s0^2 differs by
+  feature, so it is in the prior_variance column: trended, or no prior
+  was fitted (fewer than 3 features; mzLib#1398, as limma's squeezeVar).
+  s0^2, the prior variance, when every fitted feature shares one. With
+  fewer than 3 features mzLib fits no prior: df is 0 and each feature
+  keeps its own variance. Bridges before pyMzLib 0.5.1 reported the
+  first feature's own variance here in that case.
 
 ## Errors
 
@@ -421,9 +436,10 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   whenever residual df differ between features, which omitting missing
   values causes; residual_df_differ says when that applies.
 
-- Not implemented: robust = TRUE, contrasts, the B-statistic,
-  observation weights. Write a contrast as its own design column
-  instead.
+- Not implemented: robust = TRUE, the B-statistic, observation weights.
+  mzLib has contrasts since 1.0.595 (EmpiricalBayes.ModerateContrasts,
+  \#1452), but this verb does not expose them yet: write a contrast as
+  its own design column instead.
 
 - A 0 is an observation. Log-transform intensities first, and blank any
   cell that means 'not measured'.

@@ -169,8 +169,9 @@ things decide whether the answer means what you think:
   measured”. Make those cells `NA`, or they are fitted as a real zero;
   `zero_count` counts them and a caveat says so.
 - **The design is used as written.** Include the intercept column
-  yourself, and write each comparison as its own column: contrasts are
-  not implemented.
+  yourself, and write each comparison as its own column:
+  [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  does not expose mzLib’s contrasts yet.
 
 ## P-values from anywhere
 

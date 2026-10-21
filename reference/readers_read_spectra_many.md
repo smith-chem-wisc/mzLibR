@@ -76,7 +76,7 @@ scans over the files read; `row_count` counts the rows of `records`.
 
 Wire verb `readers read-spectra` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-spectra.yaml` (bridge commit
-`22638d4276ff`) by `scripts/build-man.R`; the spec owns these facts, and
+`f85fef72f651`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`MsDataFileReader.GetDataFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/MsDataFileReader.cs)

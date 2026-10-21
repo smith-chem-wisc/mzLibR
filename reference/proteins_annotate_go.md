@@ -138,7 +138,7 @@ entry in cellular component, which is why the row says so.
 ## Wraps
 
 Wire verb `proteins annotate-go`. Generated from the bridge's verb spec
-`proteins.annotate-go.yaml` (bridge commit `22638d4276ff`) by
+`proteins.annotate-go.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -253,8 +253,10 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `decoy_group_count`:
 
-  int; in **groups**; never `NA`. Decoy rows (label contains D, so an
-  entrapment decoy ED too), skipped: decoys carry no GO.
+  int; in **groups**; never `NA`. Decoy rows, skipped: decoys carry no
+  GO. A row is a decoy when any \|-joined parent label is D or the
+  entrapment decoy ED (DecoyContaminantTargetLabel.IsDecoy, mzLib
+  1.0.595 \#1371).
 
 - `group_count`:
 

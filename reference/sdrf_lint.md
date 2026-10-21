@@ -65,7 +65,7 @@ The majority spelling is not advice: it is only the most common.
 ## Wraps
 
 Wire verb `sdrf lint`. Generated from the bridge's verb spec
-`sdrf.lint.yaml` (bridge commit `22638d4276ff`) by
+`sdrf.lint.yaml` (bridge commit `f85fef72f651`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
