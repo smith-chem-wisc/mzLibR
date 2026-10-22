@@ -49,6 +49,50 @@ skip_if <- function(condition, reason) {
   invisible(NULL)
 }
 
+# A recorded payload's `data`, from tests/fixtures/. Used by the stats, diff and ptmqtl files.
+recorded_data <- function(name) {
+  path <- fixture_path(name)
+  text <- rawToChar(readBin(path, what = "raw", n = file.info(path)$size))
+  Encoding(text) <- "UTF-8"
+  parsed <- mz$json_parse(text)
+  if (is.list(parsed) && !is.null(parsed$ok) && "data" %in% names(parsed)) parsed$data else parsed
+}
+
+# Two tables equal column by column, except that numbers may differ by `relative` - the last digits
+# a platform's math library moves (1e-9 for closed-form fits, 1e-6 for iterative optimisers, as
+# pyMzLib's live tests hold them). List columns are compared cell by cell. Returns "" or what differs.
+records_disagree <- function(live, recorded, relative = 1e-9) {
+  if (!identical(names(live), names(recorded))) {
+    return(paste0("columns ", paste(names(live), collapse = ","), " vs ", paste(names(recorded), collapse = ",")))
+  }
+  if (nrow(live) != nrow(recorded)) {
+    return(paste0(nrow(live), " rows vs ", nrow(recorded)))
+  }
+  close <- function(a, b) {
+    if (is.null(a) || is.null(b)) {
+      return(is.null(a) && is.null(b))
+    }
+    if (is.numeric(a) && is.numeric(b)) {
+      known <- !is.na(b)
+      return(length(a) == length(b) && identical(is.na(a), is.na(b)) &&
+        all(abs(a[known] - b[known]) <= relative * pmax(abs(b[known]), 1e-300)))
+    }
+    identical(a, b)
+  }
+  for (name in names(recorded)) {
+    a <- live[[name]]
+    b <- recorded[[name]]
+    if (is.list(b)) {
+      for (i in seq_along(b)) {
+        if (!close(a[[i]], b[[i]])) return(paste0(name, "[", i, "]"))
+      }
+    } else if (!close(a, b)) {
+      return(name)
+    }
+  }
+  ""
+}
+
 # The live tests skip on this and nothing else. See `conditions.R` for why a timeout must not
 # be widened into it.
 skip_if_no_bridge <- function() {
