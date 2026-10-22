@@ -46,6 +46,88 @@ pyMzLib 0.5.0 publishes (mzLib 1.0.595, `d10017ce`), verified against that relea
   PXD000001's REST manifest listed 9 of the 14 files in its FTP tree on 2026-10-21, and
   `?pride_list_files` says so rather than 8 of 13.
 
+## Data: checksums, alignment, orthology, spectral libraries and SDRF scoping (the pyMzLib 0.6.0 bridge)
+
+Ported from pyMzLib 0.6.0, verb for verb; each *needs the pyMzLib 0.6.0 bridge* and is refused,
+naming that release, by an older one. Every option left out is not sent, so mzLib's default
+applies and the result says what was used. Every recording the help pages and articles replay is
+pyMzLib's, byte for byte. A new article, `vignette("library")`; the PRIDE, protein-database and
+SDRF articles gain a section for each new verb.
+
+* **`pride_file_checksums()`: the MD5 and exact size PRIDE recorded for each deposited file**
+  (mzLib #1427, wire `pride checksums`). A data.frame of `file_name`, `md5`, `size_bytes` and
+  `project_accession`, its row names the file names, so `checksums["README.txt", ]` looks a file
+  up by the name it was downloaded under. `size_bytes` is the exact download length, which neither
+  other listing gives (PXD000001's `.xml.gz`: 10,668,000 bytes, where `pride_list_files()` says
+  10,677,205), and `md5` is not the manifest's `checksum` (a SHA-1 where present). It is a third
+  list: PRIDE's `generated/` files have no row. Zero rows is an answer; an unknown accession, or a
+  project not yet published, raises `mzlib_project_not_found`; a list mzLib cannot read stays an
+  `mzlib_bridge_error` (`MzLibException`). No timeout of mzLibR's own. `pride_download()` and
+  `pride_download_files()` still check no bytes, and now say so; the PRIDE article shows the check
+  with `file.size()` and `tools::md5sum()`.
+* **`proteins_align()`: map a residue onto an isoform, an ortholog or another release** (mzLib
+  #1428, wire `proteins align`). A global affine alignment scored with BLOSUM62, for a list of
+  `c(source, target)` pairs in one bridge call: `records` (one row per pair: score in half-bits,
+  identical and substituted residues, residues facing a gap, the aligned rows) and `residue_map`
+  (one row per residue, its counterpart's position and letter, `NA` facing a gap, never the
+  nearest residue). `pair_index` is 1-based. `proteins_map_source_to_target()` and
+  `proteins_map_target_to_source()` look positions up, and `proteins_alignments()` splits a result
+  into one alignment per pair. `gap_open`, `gap_extend`, `end_gaps` and `max_cells` default to
+  `NULL`, mzLib's (11, 1, `"free"`, 200,000,000); `residue_map = FALSE` sends `--no-residue-map`.
+  One pair is `proteins_align(list(c(source, target)))`, as the spec spells it: there is no
+  separate one-pair function, which is pyMzLib's `proteins.align()`.
+* **`proteins_parse_accessions()`: entry, isoform or version, and applied variants** (mzLib #1382,
+  wire `proteins parse-accession`). `P04637-2_S70N` is entry `P04637`, isoform 2, with `S70N`;
+  `NP_000537.3_R72P` is RefSeq `NP_000537`, version 3. It parses and never repairs: a FASTA header,
+  a `DECOY_` prefix, a `|`-joined group or mzLib's `P04637_2` collision counter is `unrecognized`
+  and kept verbatim, and every accession is sent exactly as given, not trimmed.
+* **`proteins_build_orthology()`: an Ensembl Compara orthology snapshot** (mzLib #1381, wire
+  `genes orthology`). From each species' GTF (or gene table), every species' homology dump - mzLib
+  refuses a call without one - and the gene-tree file, all local; `gtfs` and `gene_sets` are named
+  character vectors, production name to path. It reports what went in (`gene_sets`, `gene_trees`,
+  `dumps`), the relationships per species pair (`pairs`; `proteins_orthology_pair()` finds one in
+  either order), a `snapshot_id` to record with any result, with `pair_status` every gene's status
+  in one other species (`has_ortholog`, `no_edge_in_shared_tree`, `tree_lacks_target_species`,
+  `not_in_any_tree`), and with `out` the Parquet snapshot it wrote (`written`). mzLibR reads no
+  Parquet; the proteins article queries it with `arrow`. mzLib's three-species test world is
+  copied into `tests/orthology/`, kept byte-exact by `.gitattributes` because the
+  recordings' sha256s are over its bytes.
+* **`library_read()` and `library_read_many()`: mzLib's `.msl` spectral libraries** (wire `library
+  read`). One row per precursor, or per fragment ion with `fragments = TRUE`, in the library's
+  stored order; `retention_time_unit` is per row (iRT or minutes, never converted), and mzLib's
+  "not available" values (ion mobility 0.0, a NaN q-value, NCE 0, an empty protein) are `NA`.
+  `precursor_index` is 1-based. `index_only_threshold` defaults to `NULL`, mzLib's 1 GiB;
+  `limit` and `offset` count precursors. The many-libraries form returns one long table and a
+  `files` data.frame, in one bridge call.
+* **`sdrf_isobaric_design()`: a TMT, TMTpro, iTRAQ or DiLeu design from an SDRF** (wire `sdrf
+  isobaric-design`). One row per file and annotated channel, or every reason there is none. It
+  guesses neither the kit nor the plex: declare exactly one of `plex_column`,
+  `plex_file_name_pattern` and `single_plex`. **Its numbers are 1-based, as the SDRF writes
+  them**, where `sdrf_design()`'s are 0-based; the split is mzLib's, and mzLibR converts neither.
+  `out` names a folder for MetaMorpheus's `TmtDesign.txt`.
+* **`sdrf_restrict()`: an SDRF cut to the files one search read** (wire `sdrf restrict`). mzLib
+  joins `X-calib.mzML` to the row naming `X.raw` by stem, adds `comment[searched data file]`, and
+  reports what it could not place (`searched_without_row`, `dropped_data_files`, `ambiguous`,
+  `shared_stem`). Name an element of `searched_files` by its acquired file to override the
+  suffix rule. The result is an `mzlibr_sdrf`; `sdrf_searched_data_files()` reads the new column.
+  Restrict first, then read a design: both design readers key on that column.
+
+*Same file, different value.*
+
+* **`sdrf_pool(out = )`'s `written$path` names the file mzLib wrote.** mzLib adds `.sdrf.tsv` to a
+  name that does not already end in it, so `out = "x.tsv"` writes `x.tsv.sdrf.tsv`. With the
+  pyMzLib 0.6.0 bridge `written$path` says `x.tsv.sdrf.tsv`; older bridges reported `x.tsv`, a
+  file that does not exist. The file written is the same, and an `out` already ending in
+  `.sdrf.tsv` is unchanged. `sdrf_restrict(out = )` reports its file the same way.
+
+*For contributors.* The replay bridge (`R/replay.R`) gains pyMzLib 0.6.0's rules for these verbs:
+a recording answers only a call with the same pairs, accessions, searched files or species on
+stdin, the same `--sequences`, `--no-residue-map`, `--pair-status` and `--restrict-gene-trees`
+choice, and the options it was recorded with; and, as in pyMzLib, a recording whose echo of an
+option is null never answers a call that sends it. The test harness gains
+`recorded_bridge_call()`, which runs a public function through the real transport and verb check
+against a recording and returns what it sent.
+
 ## mzLib 1.0.595
 
 Built from mzLib 1.0.595 (tag commit `d10017ce`), which carries mzLib 1.0.594 as well.

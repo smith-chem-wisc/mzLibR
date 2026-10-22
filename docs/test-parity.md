@@ -45,6 +45,27 @@ Two things the port established that are worth carrying back to the other bindin
 **mzLibRust should get this module too.** Everything above is a property of mzLib and the wire,
 not of R.
 
+## pyMzLib 0.6.0's data verbs
+
+Ported with pyMzLib 0.6.0's tests, case for case, from the same recordings, byte for byte. The
+offline cases run each public function through the package's own transport and verb check against
+a recording (`recorded_bridge_call()` in `tests/cases/harness.R`), where pyMzLib monkeypatches
+`invoke`; the live cases run against the 0.6.0 bridge.
+
+| pyMzLib | mzLibR | what differs, and why |
+|---|---|---|
+| `test_pride.py` (checksums), `test_pride_live.py` (checksums) | `test-pride-checksums.R` | The checksums are a data.frame with the file names as row names, not a dict; a row missing its MD5 or size is an `mzlib_protocol_error` where pyMzLib raises `KeyError`. |
+| `test_proteins_align.py` | `test-proteins-align.R` | `align()` and `align_many()` are one function, `proteins_align()`, over a list of pairs; the one-pair cases pass a list of one. `pair_index` is 1-based. The DYNC1I2 and albumin sequences come from the recorded `proteins_read_sequences.json`, not the FASTA files, which mzLibR does not carry. |
+| `test_proteins_orthology.py`, `test_proteins_live.py` (align, parse-accession, orthology) | `test-proteins-orthology.R`, `test-proteins-align.R` | The species maps are named character vectors; `gene_sets` and `dumps` are data.frames. The orthology inputs are copied into `tests/orthology/` (outside `tests/fixtures/`, so no path in the tarball passes 100 bytes), and a test holds them byte-exact. |
+| `test_library.py`, `test_library_live.py` | `test-library.R` | `precursor_index` and `source_index` are 1-based. The live cases read the two `.msl` libraries from pyMzLib's `tests/fixtures/library/` (`MZLIBR_SDRF_FIXTURES`): an `.msl` begins with the bytes R CMD check takes for a Windows executable, so they are not copied. |
+| `test_sdrf_isobaric_design.py`, `test_sdrf_restrict.py` | `test-sdrf-isobaric.R` | The searched files of `sdrf_restrict()` are a character vector named by acquired file, not a dict. The design's searched files on stdin carry no trailing newline, as `sdrf_design()`'s do. |
+
+Eliminated by R's semantics: `test_bad_accession_lists_are_refused_before_the_bridge`'s bare-string
+case and the bare-string pair cases of `test_bad_pairs_are_refused_before_the_bridge`. A
+length-one character vector is the correct input for `proteins_parse_accessions()`; a bare
+character vector given as `pairs` is refused as not a list. `test_an_int_release_is_sent_as_its_digits`
+becomes "a whole-number release", since R's `116` is a double.
+
 ## Eliminated by R's semantics
 
 These parent tests defend against something R cannot express. Porting them would have added
