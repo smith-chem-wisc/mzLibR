@@ -70,6 +70,66 @@ skip_unless_bridge_has <- function(verb) {
   invisible(NULL)
 }
 
+# A recorded payload, unwrapped from its envelope if it has one.
+recorded_data <- function(name) {
+  path <- fixture_path(name)
+  text <- rawToChar(readBin(path, what = "raw", n = file.info(path)$size))
+  Encoding(text) <- "UTF-8"
+  parsed <- mz$json_parse(text)
+  if (is.list(parsed) && !is.null(parsed$ok) && "data" %in% names(parsed)) parsed$data else parsed
+}
+
+# Run `call()` against a stand-in for the bridge, through the package's own transport and verb
+# check, and return what it sent and what it returned.
+#
+# `version` answers the verb check with pyMzLib's recorded `version` payload (every verb of the
+# bridge this package pins), and every other call is answered by `answer`: a recorded fixture's
+# name, or a function(args, stdin) returning the bridge's stdout. The bridge path is a fresh file,
+# so the verb check's per-bridge cache cannot leak between tests.
+recorded_bridge_call <- function(answer, call, version = "bridge_version.json") {
+  path <- tempfile("mzlib-bridge-", fileext = if (.Platform$OS.type == "windows") ".exe" else "")
+  writeLines("not a real executable", path)
+  seen <- new.env(parent = emptyenv())
+  seen$calls <- list()
+  envelope <- function(name) {
+    path <- fixture_path(name)
+    text <- rawToChar(readBin(path, what = "raw", n = file.info(path)$size))
+    if (startsWith(trimws(text), "{\"ok\"")) text else paste0("{\"ok\":true,\"data\":", text, ",\"error\":null}")
+  }
+  runner <- function(exe, args, stdin = NULL, timeout = NULL) {
+    seen$calls[[length(seen$calls) + 1L]] <- list(args = args, stdin = stdin, timeout = timeout)
+    stdout <- if (identical(args, "version")) {
+      envelope(version)
+    } else {
+      seen$args <- args
+      seen$stdin <- stdin
+      seen$timeout <- timeout
+      if (is.function(answer)) answer(args, stdin) else envelope(answer)
+    }
+    list(stdout = stdout, stderr = "", status = 0L, timed_out = FALSE)
+  }
+  original <- mz$bridge_run
+  utils::assignInNamespace("bridge_run", runner, "mzLibR")
+  old <- options(mzlibr.bridge = path)
+  on.exit(
+    {
+      utils::assignInNamespace("bridge_run", original, "mzLibR")
+      options(old)
+      unlink(path)
+    },
+    add = TRUE
+  )
+  seen$result <- call()
+  seen
+}
+
+# A bridge error envelope, as `recorded_bridge_call()` takes an answer.
+bridge_error_answer <- function(type, message) {
+  function(args, stdin) {
+    paste0("{\"ok\":false,\"data\":null,\"error\":{\"type\":\"", type, "\",\"message\":\"", message, "\"}}")
+  }
+}
+
 test_that <- function(description, code) {
   outcome <- tryCatch(
     {

@@ -47,7 +47,8 @@ Files are streamed to a temporary name and moved into place only once complete, 
 interrupted download never leaves a truncated file under its real name. A transfer that fails
 after mzLib's retries leaves \code{<name>.partial} and \code{<name>.partial.validator} in \code{destination} on
 purpose: the next call for that file resumes from them (mzLib #1412). Leave them in place, or
-delete both to start over.
+delete both to start over. Their bytes are \strong{not} checked against PRIDE's record: compare a
+file that matters with \code{\link{pride_file_checksums}}.
 }
 \details{
 Prefer \code{\link{pride_download_files}} when you can. \code{category} and \code{extensions} can only express
