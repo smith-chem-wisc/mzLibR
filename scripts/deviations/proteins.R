@@ -62,3 +62,109 @@ FIELD_CHECKS[["proteins update-go"]] <- list("proteins_update_go.json", function
 
 # Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "proteins read", fixture = "proteins_read_accessions.json")
+
+# ---------------------------------------------------------------- align, parse-accession (pyMzLib 0.6.0)
+
+R_TABLE["proteins align"] <- "records"
+PROTEINS_PAIR_INDEX <- as_r("pair_index", "1-based in R, so it indexes `pairs` directly")
+R_DEVIATIONS[["proteins align"]] <- list(
+  "param.no-residue-map" = as_r("residue_map", "stated positively: residue_map = FALSE sends --no-residue-map"),
+  "field.columns" = RECORDS,
+  "field.pair_index" = PROTEINS_PAIR_INDEX,
+  "field.residue_map.pair_index" = PROTEINS_PAIR_INDEX
+)
+R_TABLE["proteins parse-accession"] <- "records"
+R_DEVIATIONS[["proteins parse-accession"]] <- list("field.columns" = RECORDS)
+
+PARENT_MAP[c(
+  "proteins_align", "proteins_alignments", "proteins_map_source_to_target",
+  "proteins_map_target_to_source", "proteins_parse_accessions"
+)] <- c(
+  "proteins.align_many", "Alignments.alignments", "Alignment.map_source_to_target",
+  "Alignment.map_target_to_source", "proteins.parse_accessions"
+)
+PARENT_OMISSIONS[c("proteins.align", "ParsedAccessions.entry_of")] <- c(
+  "proteins_align(list(c(source, target))): one pair is a list of one, as the spec spells the R call",
+  "two columns of `records`: `setNames(parsed$records$entry_accession, parsed$records$input)`"
+)
+
+FIELD_CHECKS[["proteins align"]] <- list("proteins_align_many.json", function(d) mz$proteins_parse_alignments(d))
+FIELD_CHECKS[["proteins parse-accession"]] <- list("proteins_parse_accession.json", function(d) mz$proteins_parse_accessions_result(d))
+
+# The proteins article reads the DYNC1I2 isoforms and both albumins with their sequences, which its
+# alignment section aligns.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "proteins read", fixture = "proteins_read_sequences.json")
+
+# ---------------------------------------------------------------- genes orthology (pyMzLib 0.6.0)
+
+# A list in R rather than a data.frame: one gene-tree file, one written snapshot, one pair status.
+orthology_in <- function(element, why) {
+  function(field) as_r(paste0(element, "$", field), why)
+}
+orthology_trees <- orthology_in("gene_trees", "an element of the gene_trees list")
+orthology_written <- orthology_in("written", "an element of the written list, NULL without out")
+orthology_status <- orthology_in("pair_status", "an element of the pair_status list, NULL without pair_status")
+ORTHOLOGY_FILES <- not_here("a column of the written$files data.frame")
+ORTHOLOGY_STATUS_ROWS <- not_here("a column of the pair_status$records data.frame")
+ORTHOLOGY_PARQUET <- not_here("a column of the Parquet files out = writes, which mzLibR does not read")
+
+R_DEVIATIONS[["genes orthology"]] <- c(
+  list(
+    "param.species" = not_here(paste(
+      "rendered from gtfs and gene_sets, two named character vectors from Ensembl production name",
+      "to path, one stdin line per species"
+    )),
+    "field.gene_sets" = as_r("gene_sets", "a data.frame, one row per species, `species` first"),
+    "field.dumps" = as_r("dumps", "a data.frame, one row per species, `species` first"),
+    "field.pairs" = as_r("pairs", "a data.frame, one row per species pair"),
+    "field.gene_trees.source_file_name" = orthology_trees("source_file_name"),
+    "field.gene_trees.sha256" = orthology_trees("sha256"),
+    "field.gene_trees.release" = orthology_trees("release"),
+    "field.gene_trees.collection" = orthology_trees("collection"),
+    "field.gene_trees.member_count" = orthology_trees("member_count"),
+    "field.gene_trees.restricted_to_gene_sets" = orthology_trees("restricted_to_gene_sets"),
+    "field.written.directory" = orthology_written("directory"),
+    "field.written.files" = orthology_written("files"),
+    "field.pair_status.from_species" = orthology_status("from_species"),
+    "field.pair_status.to_species" = orthology_status("to_species"),
+    "field.pair_status.row_count" = orthology_status("row_count"),
+    "field.pair_status.status_counts" = orthology_status("status_counts"),
+    "field.pair_status.column_names" = orthology_status("column_names"),
+    "field.pair_status.columns" = as_r("pair_status$records", "the gene table is a data.frame, so it is `records`"),
+    "table.written_files" = as_r("written$files", "a data.frame, one row per file written but manifest.json"),
+    "table.pair_status_columns" = as_r("pair_status$records", "a data.frame, one row per gene"),
+    "table.parquet_genes" = not_here("the columns of genes/SPECIES.parquet in a written snapshot; mzLibR does not read Parquet"),
+    "table.parquet_members" = not_here("the columns of members/SPECIES.parquet in a written snapshot"),
+    "table.parquet_pairs" = not_here("the columns of pairs/A__B.parquet in a written snapshot")
+  ),
+  stats::setNames(rep(list(ORTHOLOGY_FILES), 4L), paste0("field.written_files.", c("path", "rows", "bytes", "sha256"))),
+  stats::setNames(rep(list(ORTHOLOGY_STATUS_ROWS), 4L), paste0("field.pair_status_columns.", c("gene_id", "gene_name", "gene_biotype", "status"))),
+  stats::setNames(rep(list(ORTHOLOGY_PARQUET), 6L), paste0("field.parquet_genes.", c(
+    "gene_id", "gene_version", "gene_biotype", "gene_name", "seq_region", "species"
+  ))),
+  stats::setNames(rep(list(ORTHOLOGY_PARQUET), 5L), paste0("field.parquet_members.", c(
+    "gene_id", "species", "group_id", "source_group_id", "canonical_protein_id"
+  ))),
+  stats::setNames(rep(list(ORTHOLOGY_PARQUET), 17L), paste0("field.parquet_pairs.", c(
+    "homology_id", "relationship_type", "relationship_class", "species_a", "species_b", "gene_a",
+    "protein_a", "identity_a", "gene_b", "protein_b", "identity_b", "dn", "ds", "goc_score",
+    "wga_coverage", "is_high_confidence", "source_dump"
+  )))
+)
+rm(orthology_in, orthology_trees, orthology_written, orthology_status)
+
+PARENT_MAP[c("proteins_build_orthology", "proteins_orthology_pair")] <- c(
+  "proteins.build_orthology", "OrthologySnapshot.pair"
+)
+PARENT_OMISSIONS[c("PairStatus.genes", "WrittenSnapshot.manifest")] <- c(
+  "a row filter on `records`: `ps$records$gene_id[ps$records$status == status]`",
+  "an element, `written$manifest`, not a function"
+)
+
+# The pair-status recording has no written snapshot and the written one no pair status, so the
+# check of the spec's fields reads the one and takes `written` from the other.
+FIELD_CHECKS[["genes orthology"]] <- list("genes_orthology_pair_status.json", function(d) {
+  snapshot <- mz$proteins_parse_orthology(d)
+  snapshot$written <- mz$proteins_parse_orthology(read_fixture("genes_orthology_written.json"))$written
+  snapshot
+})
