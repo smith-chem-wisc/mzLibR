@@ -42,7 +42,7 @@ A data.frame with one row per file and columns \code{relative_path}, \code{file_
   resolves the project before walking, so a typo fails loudly rather than returning nothing.
 }
 \section{Wraps}{
-Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride ftp-files}. Generated from the bridge's verb spec \code{pride.ftp-files.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesFromFtpAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}

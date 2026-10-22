@@ -54,7 +54,7 @@ uniqueness rule. Use \code{\link{sdrf_source_documents}} as part of any key.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs}{\code{SdrfCollection.Merge}} in \code{mzLib/Readers/Sdrf/SdrfCollection.cs} at mzLib \code{23c2490e}
@@ -82,7 +82,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{offset}}{int; in \strong{rows}; never \code{NA}. The offset applied.}
 \item{\code{truncated}}{bool; never \code{NA}. True whenever rows were left out.}
 \item{\code{rows}}{string[][]; never \code{NA}. Row-major raw cells, as for sdrf read.}
-\item{\code{written}}{object; \code{NA} when out was not given. \{path, row_count\}; row_count is the whole merged document.}
+\item{\code{written}}{object; \code{NA} when out was not given. \{path, row_count\}; row_count is the whole merged document. path is the file mzLib wrote: SdrfDocument.WriteResults adds .sdrf.tsv to a name it would not read back as an SDRF, so out x.tsv writes x.tsv.sdrf.tsv. Bridges before pyMzLib 0.6.0 reported the name as given (SDRF-B3 asks mzLib to return the path).}
 \item{\code{caveats}}{string[]; never \code{NA}. Four static caveats, plus a fifth when no labels were supplied.}
 }
 }

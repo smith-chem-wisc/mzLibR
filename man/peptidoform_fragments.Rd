@@ -113,7 +113,7 @@ An \code{mzlibr_digest}: a list with the scalars describing the run, a \code{cen
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform fragments}. Generated from the bridge's verb spec \code{peptidoform.fragments.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs}{\code{ProteinDbLoader.LoadProteinXML}} in \code{mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs} at mzLib \code{23c2490e}

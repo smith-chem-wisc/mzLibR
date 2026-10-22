@@ -59,7 +59,7 @@ A data.frame with one row per file and the columns \code{file_name}, \code{file_
 
 }
 \section{Wraps}{
-Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride files}. Generated from the bridge's verb spec \code{pride.files.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -87,8 +87,8 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \section{Columns}{
 \describe{
 \item{\code{file_name}}{string; never \code{NA}. The file's name as PRIDE lists it, e.g. TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw.}
-\item{\code{file_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Size as PRIDE reports it. For compressed files PRIDE often reports the DECOMPRESSED size (PXD000001's .mgf.gz: 16448103 reported vs 5984662 transferred).}
-\item{\code{checksum}}{string; never \code{NA}. The repository's checksum; the empty string when PRIDE provides none (never null).}
+\item{\code{file_size_bytes}}{int; in \strong{bytes}; never \code{NA}. Size as PRIDE reports it, which is not the download length. For compressed files PRIDE often reports the DECOMPRESSED size (PXD000001's .mgf.gz: 16448103 reported vs 5984662 transferred; its .xml.gz: 10,677,205 reported vs 10,668,000). pride checksums gives the exact length.}
+\item{\code{checksum}}{string; never \code{NA}. The repository's checksum; the empty string when PRIDE provides none (never null). It is a SHA-1 where PRIDE gives one (40 hex digits; measured 2026-10-21 by hashing PXD010820's Maxquant_Output.zip), not the MD5 that pride checksums lists, and it is empty for every PXD000001 file.}
 \item{\code{category}}{string; never \code{NA}. PRIDE file category value, e.g. RAW, PEAK, SEARCH, RESULT, OTHER.}
 \item{\code{category_accession}}{string; never \code{NA}. The category's PRIDE CV accession, e.g. PRIDE:0000410.}
 \item{\code{https_url}}{string; \code{NA} when the file has no location reachable over HTTPS (for example Aspera-only); pride download cannot fetch it. Direct HTTPS URL: the FTP location scheme-upgraded to HTTPS on PRIDE's FTP host.}

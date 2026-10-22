@@ -36,7 +36,7 @@ stats_fit(responses, design, coefficients, trend = FALSE, spline_basis = NULL,
 
 }
 \description{
-Fit one linear model per feature of a feature-by-sample table and test each named coefficient with limma's empirical-Bayes moderated t, Benjamini-Hochberg adjusted, in one call.
+Fit one linear model per feature of a feature-by-sample table and test each named coefficient, and each contrast of a contrasts file with its confidence interval, with limma's empirical-Bayes moderated t, Benjamini-Hochberg adjusted, in one call.
 
 Runs mzLib's \code{LinearModel.Fit} once - every design column is fitted - and then
 \code{EmpiricalBayes.Moderate} for each coefficient you name, which also applies Benjamini-Hochberg
@@ -88,11 +88,15 @@ controls the false discovery rate among the features tested; it is not a target-
 
 }
 \section{Wraps}{
-Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fit.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/LinearModel.cs}{\code{LinearModel.Fit}} in \code{mzLib/StatisticalModels/LinearModel.cs} at mzLib \code{0a808fec}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.Moderate}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.ModerateContrasts}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{ContrastWeights}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{ModeratedContrast}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{VariancePriorEstimator}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.FitPrior}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{0a808fec}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EmpiricalBayes.cs}{\code{EmpiricalBayes.DefaultSplineBasisCount}} in \code{mzLib/StatisticalModels/EmpiricalBayes.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/MultipleTesting.cs}{\code{MultipleTesting.BenjaminiHochberg}} in \code{mzLib/StatisticalModels/MultipleTesting.cs} at mzLib \code{0a808fec}
@@ -101,8 +105,11 @@ Wire verb \code{stats fit}. Generated from the bridge's verb spec \code{stats.fi
 \section{Parameters: units, ranges and defaults}{
 \describe{
 \item{\code{responses}}{path; required. A TSV with a header row. The first column is the feature id (unique, any header); every other column is one sample, named by its header. Cells are used as given, so log-transform intensities first. A blank cell, NA or NaN (any case) is missing and is omitted from that feature's fit, never imputed. A 0 is an OBSERVATION. Blank lines are skipped.}
-\item{\code{design}}{path; required. A TSV with a header row and one row per sample. The first column is the sample name and must match the responses header exactly (rows are matched by name, so their order does not matter); every other column is one coefficient, named by its header, and every cell must be a finite number. The design is used as written: include an intercept column if you want one.}
-\item{\code{coefficients} (wire \code{--stdin})}{string[]; required; range \code{>= 1 line; each a design column name, none repeated}. The coefficients to test, one design column name per line. Each gets its own moderated test and its own Benjamini-Hochberg family. The model always fits every design column.}
+\item{\code{design}}{path; required. A TSV with a header row and one row per sample. The first column is the sample name and must match the responses header exactly (rows are matched by name, so their order does not matter); every other column is one coefficient, named by its header, and every cell must be a finite number. The design is used as written: include an intercept column if you want one. diff design \code{--out} writes one (design_i.tsv).}
+\item{\code{coefficients} (wire \code{--stdin})}{string[]; default absent; range \code{>= 1 line, or none with --contrasts; each a design column name, none repeated}. The coefficients to test, one design column name per line. Each gets its own moderated test and its own Benjamini-Hochberg family. The model always fits every design column. With \code{--contrasts} it may be empty, and the coefficient table then has no rows.}
+\item{\code{contrasts}}{path; default absent. A TSV of contrasts to test, as diff design \code{--out} writes it (contrasts_i.tsv, beside its design_i.tsv). A header row: the contrast id column (any header; diff design writes contrast), then exactly the design's coefficient columns, matched by name, so in any order. Then one row per contrast: a non-empty id (diff design's c1, c2, ...), then one finite weight per coefficient; the contrast is the weighted sum of the coefficients, e.g. -1 and 1 for the second minus the first. A design column the file lacks, or a column the design lacks, is refused. mzLib refuses a contrast whose weights are all 0, and two contrasts with one id. Each contrast is moderated with the same prior as the coefficients (EmpiricalBayes.ModerateContrasts) and has its own Benjamini-Hochberg family; its rows are the contrasts table. Absent, there is no contrasts table. Needs the pyMzLib 0.6.0 bridge; an older bridge ignores the option.}
+\item{\code{confidence}}{float; in \strong{fraction (0 to 1)}; default absent; range \samp{strictly between 0 and 1 (mzLib's rule); only with --contrasts}. The two-sided level of each contrast's confidence interval. Absent, the bridge sends none and ModerateContrasts' own default applies (confidenceLevel = 0.95 at d10017ce); contrasts.confidence_level reports the level used either way. A value mzLib refuses is a usage error with mzLib's message. Needs the pyMzLib 0.6.0 bridge.}
+\item{\code{estimator}}{string; default absent; range \code{moments_legacy | marginal_likelihood}. How the variance prior (d0, s0^2) is estimated, mzLib's VariancePriorEstimator by a wire name. moments_legacy is MomentsLegacy: the method of moments on log variances (Smyth 2004), limma's eBayes(legacy = TRUE), exact when every feature has the same residual df. marginal_likelihood is MarginalLikelihood: maximum marginal likelihood with each feature's own residual df, which handles the unequal df that omitting missing values causes exactly (mzLib #1368); it is mzLib's own estimator, not limma's default fitFDistUnequalDF1, so its numbers are close to default limma's but not equal. The one estimator serves the coefficients and the contrasts. Absent, the bridge sends none and mzLib's default applies (MomentsLegacy at d10017ce, kept for limma legacy parity); prior.estimator reports the estimator used either way. Needs the pyMzLib 0.6.0 bridge.}
 \item{\code{trend}}{flag; default \code{FALSE}. Let the prior variance trend with each feature's average response (limma's trend = TRUE), as a natural cubic spline.}
 \item{\code{spline_basis} (wire \code{--spline-basis})}{int; in \strong{basis functions}; default absent; range \code{>= 1; only with --trend}. Basis functions of the trend spline, intercept included. Absent, the bridge sends none and mzLib chooses by limma's fitFDist rule (EmpiricalBayes.DefaultSplineBasisCount, mzLib 1.0.594 #1398): 1 + (n >= 3) + (n >= 6) + (n >= 30) for n fitted features, so 4 only from 30 features. A given value is capped at the fitted features minus one. mzLib caps either at the distinct average responses and may merge coinciding knots; prior.spline_basis_count reports what was used.}
 \item{\code{threads}}{int; in \strong{threads}; default \code{1}; range \code{>= 1, or -1 for every core}. Features fitted at once. The bridge default is 1 (BULK.md); mzLib's own default is -1. Results are identical at any value.}
@@ -114,22 +121,24 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \describe{
 \item{\code{responses_file}}{string; never \code{NA}. Absolute path of the responses table.}
 \item{\code{design_file}}{string; never \code{NA}. Absolute path of the design table.}
+\item{\code{contrasts_file}}{string; \code{NA} when no \code{--contrasts} was given. Absolute path of the contrasts table. Absent from bridges before pyMzLib 0.6.0 (optional forever).}
 \item{\code{feature_count}}{int; in \strong{features}; never \code{NA}. Feature rows read.}
 \item{\code{sample_count}}{int; in \strong{samples}; never \code{NA}. Sample columns read.}
 \item{\code{sample_names}}{string[]; never \code{NA}. In responses header order, which is the order the design rows were put in.}
-\item{\code{coefficient_names}}{string[]; never \code{NA}. Every design column, in order.}
-\item{\code{tested_coefficients}}{string[]; never \code{NA}. The stdin coefficients, in order; the table holds one block of feature_count rows per entry.}
+\item{\code{coefficient_names}}{string[]; never \code{NA}. Every design column, in order: the order of each contrast's weights.}
+\item{\code{tested_coefficients}}{string[]; never \code{NA}. The stdin coefficients, in order; the table holds one block of feature_count rows per entry. Empty when only \code{--contrasts} was given.}
 \item{\code{trend}}{bool; never \code{NA}. Whether \code{--trend} was given.}
 \item{\code{threads}}{int; in \strong{threads}; never \code{NA}. The thread count used.}
 \item{\code{missing_count}}{int; in \strong{cells}; never \code{NA}. Response cells that were blank, NA or NaN.}
 \item{\code{zero_count}}{int; in \strong{cells}; never \code{NA}. Response cells that are exactly 0, fitted as observations.}
 \item{\code{status_counts}}{map<string,int>; in \strong{features}; never \code{NA}. Features per status: fitted, too_few_observations, rank_deficient.}
-\item{\code{residual_df_differ}}{bool; never \code{NA}. True when the fitted features do not all have the same residual df (missing values omitted). Then default limma (>= 3.61, eBayes legacy = FALSE) would use a different prior estimator and report different moderated statistics; these follow legacy = TRUE. A caveat says so.}
-\item{\code{prior}}{object; never \code{NA}. The fitted variance prior, shared by every tested coefficient; fields under result.tables.prior.}
+\item{\code{residual_df_differ}}{bool; never \code{NA}. True when the fitted features do not all have the same residual df (missing values omitted). Then default limma (>= 3.61, eBayes legacy = FALSE) would use a different prior estimator and report different moderated statistics; under moments_legacy these follow legacy = TRUE, and marginal_likelihood is mzLib's estimator for this case. A caveat says so.}
+\item{\code{prior}}{object; never \code{NA}. The fitted variance prior, shared by every tested coefficient and contrast; fields under result.tables.prior.}
 \item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. feature_count x the number of tested coefficients.}
-\item{\code{column_names}}{string[]; never \code{NA}. The table's columns, in order.}
-\item{\code{records} (wire \code{columns})}{table; never \code{NA}. One row per (tested coefficient, feature): coefficient blocks in stdin order, features in file order.}
-\item{\code{caveats}}{string[]; never \code{NA}. Three static caveats, plus one each when residual_df_differ, when any feature was not fitted (with counts), when any cell is 0, and when the prior df is infinite.}
+\item{\code{column_names}}{string[]; never \code{NA}. The coefficient table's columns, in order.}
+\item{\code{records} (wire \code{columns})}{table; never \code{NA}. One row per (tested coefficient, feature): coefficient blocks in stdin order, features in file order. The same with or without \code{--contrasts}.}
+\item{\code{contrasts}}{object; \code{NA} when no \code{--contrasts} was given. The tested contrasts, as a second table beside the coefficient table: fields under result.tables.contrasts, its rows' columns under result.tables.contrasts.columns. A separate table because a contrast row is keyed by a contrast id and carries a confidence interval, which a coefficient row has neither of; one table holding both would leave half of every row's keys null, and the coefficient table stays as it was without \code{--contrasts}. Absent from bridges before pyMzLib 0.6.0 (optional forever).}
+\item{\code{caveats}}{string[]; never \code{NA}. Three static caveats (the first names the prior estimator), plus one each when residual_df_differ, when any feature was not fitted (with counts), when any cell is 0, and when the prior df is infinite; and two more with \code{--contrasts}.}
 }
 }
 \section{Columns of \code{records}}{
@@ -153,28 +162,61 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 }
 \section{Fields of \code{prior}}{
 \describe{
-\item{\code{prior$df} (wire \code{df})}{float; in \strong{degrees of freedom}; \code{NA} when infinite: df_infinite is true. Prior degrees of freedom d0. 0 with fewer than 3 features, where mzLib fits no prior (mzLib#1398, as limma's squeezeVar), so moderation leaves each feature's variance and t as they are.}
+\item{\code{estimator}}{string; never \code{NA}. moments_legacy or marginal_likelihood: the estimator mzLib reports it fitted the prior with (VariancePrior.Estimator), its default when \code{--estimator} was absent. Absent from bridges before pyMzLib 0.6.0.}
+\item{\code{prior$df} (wire \code{df})}{float; in \strong{degrees of freedom}; \code{NA} when infinite: df_infinite is true. Prior degrees of freedom d0. 0 with fewer than 3 features, where mzLib fits no prior (mzLib#1398, as limma's squeezeVar), so moderation leaves each feature's variance and t as they are. Under marginal_likelihood mzLib searches d0 from about 0.05 (e^-3) upward, so a d0 there is the search's floor, not an optimum.}
 \item{\code{prior$df_infinite} (wire \code{df_infinite})}{bool; never \code{NA}. True when the residual variances are no more dispersed than sampling alone explains, so every feature takes the prior variance.}
 \item{\code{prior$trended} (wire \code{trended})}{bool; never \code{NA}. Whether s0^2 varies with average_response.}
 \item{\code{prior$spline_basis_count} (wire \code{spline_basis_count})}{int; in \strong{basis functions}; never \code{NA}. Basis functions the trend used, intercept included; 1 without a trend.}
-\item{\code{prior$scale} (wire \code{scale})}{float; in \strong{squared response units}; \code{NA} when s0^2 differs by feature, so it is in the prior_variance column: trended, or no prior was fitted (fewer than 3 features; mzLib#1398, as limma's squeezeVar). s0^2, the prior variance, when every fitted feature shares one. With fewer than 3 features mzLib fits no prior: df is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.5.1 reported the first feature's own variance here in that case.}
+\item{\code{prior$scale} (wire \code{scale})}{float; in \strong{squared response units}; \code{NA} when s0^2 differs by feature, so it is in the prior_variance column: trended, or no prior was fitted (fewer than 3 features; mzLib#1398, as limma's squeezeVar). s0^2, the prior variance, when every fitted feature shares one. With fewer than 3 features mzLib fits no prior: df is 0 and each feature keeps its own variance. Bridges before pyMzLib 0.6.0 reported the first feature's own variance here in that case.}
+}
+}
+\section{Fields of \code{contrasts}}{
+\describe{
+\item{\code{confidence_level}}{float; in \strong{fraction (0 to 1)}; never \code{NA}. The two-sided level of every confidence_low and confidence_high: \code{--confidence}, or mzLib's default when it was absent (ModeratedContrast.ConfidenceLevel).}
+\item{\code{tested_contrasts}}{string[]; never \code{NA}. The contrast ids, in file order; the table holds one block of feature_count rows per entry.}
+\item{\code{weights}}{map<string,float[]>; in \strong{contrast weight per coefficient (unitless)}; never \code{NA}. Each contrast id's weights, one per coefficient_names entry, in that order (the file's columns matched by name): what mzLib tested.}
+\item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. feature_count x the number of contrasts.}
+\item{\code{column_names}}{string[]; never \code{NA}. The contrasts table's columns, in order (result.tables.contrasts.columns).}
+\item{\code{columns}}{table; never \code{NA}. One row per (contrast, feature): contrast blocks in file order, features in file order.}
+}
+}
+\section{Fields of \code{contrasts.columns}}{
+\describe{
+\item{\code{feature}}{string; never \code{NA}. The feature id from the responses file's first column.}
+\item{\code{contrast}}{string; never \code{NA}. The contrast id this row tests, from the contrasts file's first column. diff design numbers its contrasts within each stratum; its label column says what each id compares.}
+\item{\code{status}}{string; never \code{NA}. The feature's fit status, as in the coefficient table. Only fitted rows carry statistics or enter the contrast's BH family.}
+\item{\code{estimate}}{float; in \strong{response units per contrast unit (e.g. log2 fold change for a level-against-level contrast on log2 intensities)}; \code{NA} when not fitted. The contrast's least-squares estimate, the weighted sum of the coefficients; moderation does not change it.}
+\item{\code{standard_error}}{float; in \strong{response units per contrast unit}; \code{NA} when not fitted. Moderated standard error: sqrt(posterior_variance) x sqrt(c'(X'X)^-1 c), with the feature's own (X'X)^-1 over its observed samples.}
+\item{\code{confidence_low}}{float; in \strong{response units per contrast unit}; \code{NA} when not fitted. Lower bound of the two-sided confidence_level interval: estimate - t-quantile((1 + level) / 2, df_total) x standard_error. Per feature, not adjusted across features.}
+\item{\code{confidence_high}}{float; in \strong{response units per contrast unit}; \code{NA} when not fitted. Upper bound: estimate + the same half-width.}
+\item{\code{t}}{float; in \strong{standard errors}; \code{NA} when not fitted. Moderated t-statistic.}
+\item{\code{df_total}}{float; in \strong{degrees of freedom}; \code{NA} when not fitted. df_residual + prior df, capped at the pooled residual df, as for a coefficient.}
+\item{\code{p_value}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not fitted. Two-sided p-value.}
+\item{\code{bh_adjusted}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not fitted (not in the family). Benjamini-Hochberg adjusted p-value over this contrast's fitted features. Not a target-decoy q-value.}
+\item{\code{posterior_variance}}{float; in \strong{squared response units}; \code{NA} when not fitted. The moderated residual variance, as in the coefficient table.}
+\item{\code{prior_variance}}{float; in \strong{squared response units}; \code{NA} when not fitted (the feature did not enter the prior). s0^2 for this feature, as in the coefficient table.}
+\item{\code{sigma}}{float; in \strong{response units}; \code{NA} when not fitted. Residual standard deviation before moderation.}
+\item{\code{df_residual}}{int; \code{NA} when not fitted. Observed samples minus coefficients.}
+\item{\code{observed}}{int; in \strong{samples}; never \code{NA}. Samples with a finite response for this feature.}
+\item{\code{average_response}}{float; in \strong{response units}; \code{NA} when the feature has no finite response at all. Mean of the feature's observed responses.}
 }
 }
 \section{Errors}{
 Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
 
 \describe{
-\item{\code{mzlib_usage_error} (usage)}{responses or design missing, blank or not found; a table empty, header-only or with too few columns; a row whose field count differs from its header; an empty or repeated feature id, sample or coefficient name; a response cell that is not a number (other than blank, NA, NaN); a design cell that is not a finite number}
-\item{\code{mzlib_usage_error} (usage)}{the design's samples are not exactly the responses' sample columns (both differences are named); no coefficient on stdin, one named twice, or one not in the design; \code{--spline-basis} without \code{--trend}, or below 1; \code{--threads} 0 or below -1}
-\item{\code{mzlib_usage_error} (usage)}{mzLib refuses the input: the design is not of full column rank, or fewer than 2 features could be fitted, so no variance prior exists (mzLib's ArgumentException, reclassified)}
+\item{\code{mzlib_usage_error} (usage)}{responses, design or contrasts missing, blank or not found (or \code{--contrasts} without a value); a table empty, header-only or with too few columns; a row whose field count differs from its header; an empty or repeated feature id, sample, coefficient name or contrasts column; a response cell that is not a number (other than blank, NA, NaN); a design cell or contrast weight that is not a finite number}
+\item{\code{mzlib_usage_error} (usage)}{the design's samples are not exactly the responses' sample columns, or the contrasts file's columns are not exactly the design's coefficients (both differences are named); an empty contrast id; no coefficient on stdin without \code{--contrasts}, one named twice, or one not in the design; \code{--spline-basis} without \code{--trend}, or below 1; \code{--confidence} without \code{--contrasts}, without a value or not a number; \code{--estimator} other than moments_legacy or marginal_likelihood, or without a value; \code{--threads} 0 or below -1}
+\item{\code{mzlib_usage_error} (usage)}{mzLib refuses the input (its ArgumentException, reclassified, with mzLib's message): the design is not of full column rank; fewer than 2 features could be fitted, so no variance prior exists; a contrast whose weights are all 0; two contrasts with one id; a confidence level not strictly between 0 and 1}
 \item{\code{mzlib_bridge_error} (correctness)}{never expected}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
 \section{Caveats}{
 \itemize{
-\item This is limma's LEGACY empirical-Bayes estimator (eBayes(legacy = TRUE)). Since limma 3.61, eBayes defaults to a different estimator whenever residual df differ between features, which omitting missing values causes; residual_df_differ says when that applies.
-\item Not implemented: robust = TRUE, the B-statistic, observation weights. mzLib has contrasts since 1.0.595 (EmpiricalBayes.ModerateContrasts, #1452), but this verb does not expose them yet: write a contrast as its own design column instead.
+\item Under the default estimator, moments_legacy, this is limma's LEGACY empirical-Bayes estimator (eBayes(legacy = TRUE)). Since limma 3.61, eBayes defaults to a different estimator whenever residual df differ between features, which omitting missing values causes; residual_df_differ says when that applies. For that case mzLib offers marginal_likelihood, which handles unequal df exactly (VariancePriorEstimator.MarginalLikelihood, 'this library's answer to that gap' in mzLib's EmpiricalBayes docs). It is mzLib's own estimator, not limma's fitFDistUnequalDF1, so its numbers differ from default limma's too; mzLib keeps moments_legacy the default for limma legacy parity.
+\item Not implemented: robust = TRUE, the B-statistic, observation weights.
+\item Contrasts (\code{--contrasts}) use the same prior as the coefficients, and each has its own Benjamini-Hochberg family. confidence_low and confidence_high are per feature, not adjusted across features. With missing values a contrast's standard error is exact per feature, where limma's contrasts.fit approximates it, so on such data the contrasts differ from limma's by design; with complete data they agree, and a contrast of one coefficient gives exactly that coefficient's row.
 \item A 0 is an observation. Log-transform intensities first, and blank any cell that means 'not measured'.
 \item bh_adjusted adjusts for the false discovery rate among the features tested. It is not a target-decoy q-value for identifications.
 }
@@ -194,8 +236,8 @@ Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not yet shippe
 }
 \references{
 \itemize{
-\item \href{https://doi.org/10.2202/1544-6115.1027}{doi:10.2202/1544-6115.1027}: the empirical-Bayes moderated t this verb computes (Smyth, Stat Appl Genet Mol Biol 3:3, 2004)
-\item \href{https://doi.org/10.1093/nar/gkv007}{doi:10.1093/nar/gkv007}: limma, whose eBayes(legacy = TRUE) mzLib reproduces to 1e-8 relative (Ritchie et al., Nucleic Acids Res 43:e47, 2015)
+\item \href{https://doi.org/10.2202/1544-6115.1027}{doi:10.2202/1544-6115.1027}: the empirical-Bayes moderated t this verb computes, for coefficients and contrasts (Smyth, Stat Appl Genet Mol Biol 3:3, 2004)
+\item \href{https://doi.org/10.1093/nar/gkv007}{doi:10.1093/nar/gkv007}: limma, whose eBayes(legacy = TRUE), and contrasts.fit with topTable(confint), mzLib reproduces to 1e-8 relative (Ritchie et al., Nucleic Acids Res 43:e47, 2015)
 \item \href{https://doi.org/10.1111/j.2517-6161.1995.tb02031.x}{doi:10.1111/j.2517-6161.1995.tb02031.x}: the Benjamini-Hochberg adjustment in bh_adjusted (J R Stat Soc B 57:289, 1995)
 }
 }
