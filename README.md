@@ -35,7 +35,9 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 | `proteins_*` | What an accession is (organism, taxon, GO terms, Ensembl ids) with `proteins_read()`, which gene it resolves to against a pinned Ensembl release with `proteins_resolve_genes()`, whether a peptide is unique to one protein or gene with `proteins_classify_peptides()`, and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with `proteins_annotate_go()` |
 | `sdrf_*` | Read SDRF-Proteomics experimental-design files with `sdrf_read()`, and pool several into one table with provenance with `sdrf_pool()`; check them with `sdrf_validate()`, `sdrf_assess()` and `sdrf_lint()`, get each sample's ages in years with `sdrf_samples()`, and read the label-free design a quantification takes, or every reason there is none, with `sdrf_design()`. Use these rather than `readers_read_records()`, which joins each SDRF row into one string that cannot be split back apart |
 | `isobaric_*` | TMT, TMTpro, iTRAQ and DiLeu kits with every channel's label and theoretical reporter-ion m/z, from mzLib's own table, with `isobaric_kits()` |
-| `stats_*` | limma's moderated t-test (`lmFit` + `eBayes(legacy = TRUE)`) with `stats_fit()`, Benjamini-Hochberg with `stats_adjust()` and DerSimonian-Laird random-effects meta-analysis with `stats_meta()`, computed by mzLib and held to limma and metafor to 1e-8 |
+| `stats_*` | limma's moderated t-test (`lmFit` + `eBayes(legacy = TRUE)`) with `stats_fit()`, which also tests contrasts with confidence intervals and offers mzLib's marginal-likelihood prior; Benjamini-Hochberg with `stats_adjust()`; DerSimonian-Laird random-effects meta-analysis with `stats_meta()`; Fisher and Stouffer p-value combination with `stats_combine_p()`; Spearman correlation with a trait, plain or partial, with `stats_correlate()`; a logistic model per feature of a detection table with `stats_fit_logistic()`; a mixed model per feature with a random intercept per group with `stats_fit_mixed()`; and entrapment FDP estimates with `stats_entrapment_fdp()` - computed by mzLib and held to limma, metafor, `glm()`, nlme and `cor.test()` |
+| `diff_*` | A sample sheet to mzLib's design matrix per stratum, equal to R's `model.matrix()`, with every default contrast and whether these samples can estimate it, and the design and contrasts files `stats_fit()` reads, with `diff_design()`; a FlashLFQ or MetaMorpheus peptide table to every peptide in every sample, log2 intensity or `NA` with the reason, with mzLib's shared-peptide normalization, with `diff_observations()` |
+| `ptmqtl_*` | PTM site occupancy in every run with each cell's state (a censored cell is never a 0) with `ptmqtl_occupancy()`, modification pairs on one molecule or co-varying across runs with `ptmqtl_pairs()`, and a per-run trait's effect on logit occupancy with a random intercept per replicate with `ptmqtl_trait_effects()` |
 
 ## Installing
 
@@ -111,7 +113,8 @@ that `R CMD check` runs. `?mzlib_error` explains the condition classes.
 
 - **[The documentation site](https://smith-chem-wisc.github.io/mzLibR/)** - the help pages and an
   article per module: reading files, SDRF, isobaric kits, PRIDE, protein databases and GO,
-  peptidoforms, FlashLFQ, and differential abundance. The articles are also the package's
+  peptidoforms, FlashLFQ, differential abundance, differential design and observations, and PTM
+  occupancy. The articles are also the package's
   vignettes, `browseVignettes("mzLibR")`, and `R CMD check` runs every one.
 - [`docs/reference-facts.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/reference-facts.md) - for contributors: how the
   help pages are generated from the specs and checked against them.
