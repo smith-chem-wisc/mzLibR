@@ -50,6 +50,8 @@ if (!dir.exists(python_src)) {
 }
 
 modules <- c("pride", "peptidoform", "flashlfq", "readers", "sdrf", "proteins", "isobaric", "stats")
+# pyMzLib 0.6.0's spectral-library module.
+modules <- c(modules, "library")
 
 suppressMessages(library(mzLibR))
 mz <- asNamespace("mzLibR")
