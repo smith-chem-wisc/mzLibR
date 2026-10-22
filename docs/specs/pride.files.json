@@ -106,7 +106,7 @@
         "unit": "bytes",
         "nullable": false,
         "null_means": null,
-        "doc": "Size as PRIDE reports it. For compressed files PRIDE often reports the DECOMPRESSED size (PXD000001's .mgf.gz: 16448103 reported vs 5984662 transferred)."
+        "doc": "Size as PRIDE reports it, which is not the download length. For compressed files PRIDE often reports the DECOMPRESSED size (PXD000001's .mgf.gz: 16448103 reported vs 5984662 transferred; its .xml.gz: 10,677,205 reported vs 10,668,000). pride checksums gives the exact length."
       },
       {
         "wire": "checksum",
@@ -114,7 +114,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "The repository's checksum; the empty string when PRIDE provides none (never null)."
+        "doc": "The repository's checksum; the empty string when PRIDE provides none (never null). It is a SHA-1 where PRIDE gives one (40 hex digits; measured 2026-10-21 by hashing PXD010820's Maxquant_Output.zip), not the MD5 that pride checksums lists, and it is empty for every PXD000001 file."
       },
       {
         "wire": "category",
