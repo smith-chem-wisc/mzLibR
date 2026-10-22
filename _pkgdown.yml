@@ -70,10 +70,25 @@ reference:
       - starts_with("flashlfq_")
   - title: Differential abundance
     desc: >
-      limma's moderated t-test, Benjamini-Hochberg adjustment and random-effects meta-analysis,
-      computed by mzLib.
+      limma's moderated t-test with contrasts, Benjamini-Hochberg adjustment, random-effects
+      meta-analysis, combined p-values, Spearman correlation, logistic and mixed models per feature,
+      and entrapment FDP estimates, computed by mzLib.
     contents:
       - starts_with("stats_")
+  - title: Differential design and observations
+    desc: >
+      A sample sheet to mzLib's design matrix and contrasts per stratum, and a peptide table to
+      every peptide in every sample, with the reason for each missing value.
+    contents:
+      - starts_with("diff_")
+      - factor_spec
+      - covariate_spec
+  - title: PTM site occupancy and PTM-QTL
+    desc: >
+      Every site's occupancy in every run, pairs of modifications, and a trait's effect on
+      occupancy, computed by mzLib.
+    contents:
+      - starts_with("ptmqtl_")
   - title: The bridge
     desc: Installing and locating the bridge every function runs, and asking it what it is.
     contents:
@@ -97,3 +112,5 @@ articles:
       - peptidoforms
       - flashlfq
       - stats
+      - diff
+      - ptmqtl

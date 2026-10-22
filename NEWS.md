@@ -6,7 +6,84 @@ which every help page's **Since** section renders.
 This release projects mzLib 1.0.595. The verbs marked *needs the pyMzLib 0.2.0 bridge*, *needs
 the pyMzLib 0.3.0 bridge* or *needs the pyMzLib 0.4.0 bridge* below are new in the bridge that
 release publishes; with an older bridge they are refused, naming the release they need. `mzlibr_install_bridge()` installs the bridge
-pyMzLib 0.5.0 publishes (mzLib 1.0.595, `d10017ce`), verified against that release's SHA256SUMS.
+pyMzLib 0.6.0 publishes (mzLib 1.0.595, `d10017ce`), verified against that release's SHA256SUMS.
+
+## Statistics, designs and PTM-QTL (the pyMzLib 0.6.0 bridge)
+
+Ported from pyMzLib 0.6.0, verb for verb; each *needs the pyMzLib 0.6.0 bridge*. Every number is
+mzLib's, and every recording the help pages and articles replay is pyMzLib's, byte for byte. New
+articles: `vignette("diff")` and `vignette("ptmqtl")`; the differential-abundance article gains a
+section for each new statistic.
+
+* **`stats_fit(contrasts = )`: any comparison, with a confidence interval** (mzLib #1452,
+  `EmpiricalBayes.ModerateContrasts`). Give the contrasts file `diff_design(out = )` writes beside
+  the design (`contrasts_<i>.tsv`), or your own: a contrast id column, then exactly the design's
+  coefficient columns, one weight each. Each contrast is moderated with the same prior as the
+  coefficients, has its own Benjamini-Hochberg family, and carries `confidence_low` and
+  `confidence_high`, as limma's `contrasts.fit()`, `eBayes()` and `topTable(confint = )`. The answers
+  are a second table, `fit$contrasts` (an `mzlibr_moderated_contrasts` with `confidence_level`,
+  `tested_contrasts`, `weights` and `records`), so the coefficient table is unchanged;
+  `coefficients` may now be empty and defaults to `character(0)`. `confidence` sets the level, as
+  a fraction; left `NULL`, it is mzLib's default (0.95). `fit$contrasts_file` names the file.
+* **`stats_fit(estimator = )`: mzLib's marginal-likelihood variance prior** (mzLib #1368).
+  `"marginal_likelihood"` fits the prior with each feature's own residual df, so the unequal df that
+  missing values cause are handled exactly; `"moments_legacy"` (limma's `eBayes(legacy = TRUE)`)
+  stays mzLib's default, and the new `fit$prior$estimator` reports which was used. On the MALAT1
+  dilution series it lowers the prior df from 19.6 to 11.0 and drops the false FLuc call at half
+  load.
+* **An older bridge is named, not trusted.** A bridge before pyMzLib 0.6.0 lists `stats fit` but
+  ignores `--contrasts` and `--estimator`; `stats_fit()` then raises an `mzlib_usage_error` naming
+  the 0.6.0 bridge instead of returning a fit that did not do what was asked.
+* **`stats_fit()`'s caveats name the variance-prior estimator.** The first caveat now begins
+  `moments_legacy:` (or `marginal_likelihood:`), the `residual_df_differ` caveat names
+  `estimator = "marginal_likelihood"`, and the `bh_adjusted` caveat says "per coefficient and per
+  contrast". Every number is unchanged; only code that matches caveat text needs a look. On fewer
+  than 3 features `prior$scale` is `NA` and `prior$df` 0 (mzLib #1398); `?stats_fit` now says
+  bridges before pyMzLib 0.6.0, not 0.5.1, reported the first feature's variance there.
+* **`stats_combine_p()`**: one p-value per feature from several independent studies, by Fisher's
+  method or Stouffer's, weighted or not (mzLib #1367, `PValueCombination`). `method` is required.
+  Give each test's `effect` and every p-value is read as two-sided and converted to the one-sided
+  p-value for effect > 0 first, so opposite effects cancel. The tests hold the recordings to R's
+  `pchisq()` and `qnorm()`, recorded and computed here.
+* **`stats_correlate()`**: Spearman's rho of every feature with a per-sample trait, optionally
+  partial given covariates (`given`; mzLib #1367, #1446, `SpearmanCorrelation`). Each row carries
+  rho, a two-sided p-value, the samples used and how the p-value was computed (`"exact"`,
+  `"asymptotic"` or `"not_estimable"`, with rho and p `NA`). The tests hold every recorded row to
+  `stats::cor.test()` run here.
+* **`stats_fit_logistic()`**: a logistic regression per feature of a 0/1 table, as R's
+  `glm(family = binomial)` (mzLib #1367): is a feature's detection related to the condition? A
+  feature the design separates is `"separated"`, with `NA` statistics, instead of R's huge
+  coefficient. `max_iterations` and `tolerance` are mzLib's when left `NULL`. The tests hold the
+  recording to R 4.6.1's `glm()` output and to `glm.fit()` run here.
+* **`stats_fit_mixed()`**: a linear mixed model per feature with a random intercept per group of
+  samples, as `nlme::lme(random = ~ 1 | group)` (mzLib #1367), tested by Wald t on nlme's
+  containment df. `estimator = "reml"` or `"ml"`; left `NULL`, mzLib's default (REML), which the
+  result reports. The tests hold the recordings to nlme 3.1.169's output and to `nlme::lme()` run
+  here.
+* **`stats_entrapment_fdp()`**: the lower bound, combined and paired estimates of a search's false
+  discovery proportion at each q-value threshold (mzLib #1385, Wen et al. 2025, as FDRBench).
+  `ratio` is required; `paired` is reported only at a ratio of exactly 1; `thresholds` left `NULL`
+  is mzLib's default sweep, 0.001 to 0.100.
+* **`diff_design()`, with `factor_spec()` and `covariate_spec()`**: a sample sheet to mzLib's design
+  matrix per stratum (mzLib #1450, `AnalysisDesign`), equal to R's `model.matrix()` (the tests run
+  it here), with its rank, aliased terms, warnings and the contrasts it cannot run; one row per
+  default contrast with **mzLib's verdict on whether these samples can estimate it at all**. Each
+  stratum's `matrix` is an R matrix named by sample id, and `strata` is a list named by stratum key.
+  With `out` it writes `design_<i>.tsv` and `contrasts_<i>.tsv`, which `stats_fit()` reads.
+* **`diff_observations()`**: every peptide in every biological sample from a FlashLFQ or
+  MetaMorpheus peptide table (mzLib #1455): log2 intensity, fractions summed and technical
+  replicates averaged, or **`NA`, never 0, with the reason in `state`**. `runs` is a data.frame of
+  `file` and `sample`, and optionally `fraction` and `technical_replicate`; `basis` has no default.
+  mzLib's shared-peptide normalization is always measured and reported, and subtracted with
+  `normalize = TRUE`. `responses_out` writes the table `stats_fit()` reads.
+* **`ptmqtl_occupancy()`, `ptmqtl_pairs()` and `ptmqtl_trait_effects()`**: PTM site occupancy per
+  run with each cell's state (a censored cell has no `fraction`, never a 0), physical and
+  co-varying PTM pairs (`type` is required; `remove_run_level` takes out a batch shift), and a
+  per-run trait's effect on logit occupancy with a random intercept per biological replicate
+  (mzLib #1369, #1430, #1446). **Positions are 1-based, unlike `readers_read_occupancy()`**.
+* The vendored specs are re-synced from bridge `60b1d259`. `scripts/sync-specs.R` now reads a bare
+  `y` or `n` in a spec as the string the bridge's own YAML reader takes it for, where R's `yaml`
+  package read it as a boolean (`stats correlate`'s and `ptmqtl pairs`' `n` column).
 
 ## Defaults come from mzLib (the pyMzLib 0.5.0 bridge)
 

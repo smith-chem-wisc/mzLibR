@@ -58,6 +58,35 @@ unreachable branches, and unreachable checks rot.
 | `test_spectra_must_be_a_list_not_a_string` | Same reason: a character vector of paths is the idiomatic input, and one path is a vector of length one. mzLibR does still refuse a non-character, non-data.frame `spectra`. |
 | `test_boolean_max_threads_raises` | Python's `bool` is an `int`, so `max_threads=True` silently means 1. R's `TRUE` is not numeric and `is.numeric()` rejects it, which the existing type check already covers. |
 
+## `stats` (new verbs), `diff` and `ptmqtl` — the pyMzLib 0.6.0 port
+
+Every offline test of `test_stats.py` (contrasts and the estimator), `test_stats_combine_correlate.py`,
+`test_stats_models.py`, `test_diff.py` and `test_ptmqtl.py` has a counterpart in `test-stats.R`,
+`test-stats-combine.R`, `test-stats-models.R`, `test-diff.R` and `test-ptmqtl.R`: what each call sends
+(and that an option left out is not sent, so mzLib's default applies), what the recording parses to,
+and every refusal before the bridge. Every live test of their `_live.py` files is a `LIVE:` test
+here: each recording is what the 0.6.0 bridge returns today (closed-form fits to 1e-9 relative,
+`stats fit-mixed` and the marginal-likelihood prior to 1e-6, as pyMzLib holds them), the caveats
+are unchanged, and each refusal crosses as `mzlib_usage_error`. Each module also has a replay test:
+the stand-in bridge must pick the one recording a call fits, by its coefficients, model, runs,
+tests or options (the rules pyMzLib 0.6.0's `replay_bridge.py` added, ported to `R/replay.R`).
+
+Adapted for R's semantics: pyMzLib's `TypeError` for a missing `method`, `ratio`, `type` or
+`basis` is an `mzlib_usage_error` here, raised before the bridge; `FactorSpec`/`CovariateSpec` are
+`factor_spec()`/`covariate_spec()`; tuples of runs or tests are data.frames; `Design.stratum(key)` is
+`strata[[key]]`. The old-bridge guard is tested through `stats_fit_answer()`'s `invoke` seam, the R
+counterpart of pyMzLib's monkeypatched `_bridge.invoke`.
+
+Present here and not in pyMzLib, because R has the reference implementations at hand:
+
+| mzLibR test | what it holds |
+|---|---|
+| `the recorded combinations are R's pchisq() and qnorm() answers, to 1e-8` | Fisher and weighted Stouffer written in base R, against the recordings |
+| `the recorded Spearman correlations are stats::cor.test()'s, run here, to 1e-8` | every estimable row of the limma reference correlation, exact and asymptotic, against `cor.test()`; rho = ±1 rows, where mzLib's p is 0, noted |
+| `the recorded logistic fit is glm(family = binomial) run here, feature by feature` | `glm.fit(epsilon = 1e-14)` per fitted feature |
+| `the recorded REML fit is nlme::lme() run here, to 1e-5` | the first ten features of mzLib's reference input, when nlme is installed |
+| `the recorded design matrix is R's model.matrix(), run here and as recorded` | `model.matrix(~ condition + batch + I((age - 50)/10))` |
+
 ## Deliberately not ported
 
 | pyMzLib test | why |

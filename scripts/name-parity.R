@@ -50,6 +50,8 @@ if (!dir.exists(python_src)) {
 }
 
 modules <- c("pride", "peptidoform", "flashlfq", "readers", "sdrf", "proteins", "isobaric", "stats")
+# pyMzLib 0.6.0's new modules (the stats group).
+modules <- c(modules, "diff", "ptmqtl")
 
 suppressMessages(library(mzLibR))
 mz <- asNamespace("mzLibR")
@@ -398,6 +400,17 @@ object_names <- function(object) {
     }
     if (is.list(element) && !is.null(names(element))) {
       out <- c(out, paste0(n, "$", names(element)))
+    }
+    # One level further for two shapes: a nested table (stats fit's `contrasts$records`), whose
+    # columns are named by their bare names, and a list of records (diff design's `strata`), whose
+    # fields are.
+    if (is.list(element) && !is.data.frame(element)) {
+      for (child in element) {
+        if (is.data.frame(child)) out <- c(out, names(child))
+      }
+      if (length(element) > 0L && all(vapply(element, function(e) is.list(e) && !is.data.frame(e) && !is.null(names(e)), logical(1L)))) {
+        out <- c(out, unlist(lapply(element, names), use.names = FALSE))
+      }
     }
   }
   unique(out)
