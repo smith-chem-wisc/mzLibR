@@ -1,0 +1,47 @@
+Where the tables in extdata/ come from
+
+Every file here is pyMzLib's, byte for byte (pkg/python/tests/fixtures/{stats,diff,ptmqtl}/ at the
+pyMzLib commit named in scripts/pymzlib-ref), and every one is mzLib's own test data or derived
+from it by a rule a C# test in pyMzLib's bridge holds. None is hand-written. pyMzLib's README in
+each of those folders has the full table; in short:
+
+stats/
+  malat_dilution_log2_vs_fluc.tsv, malat_dilution_design.tsv
+      mzLib's MetaMorpheus_RNA_AllQuantifiedOligos.tsv (mzLib #1388): 27 runs of the MALAT1
+      500/250/125 ng series at constant FLuc; log2 intensity minus the run's median FLuc oligo.
+  malat_dilution_load_ng.tsv, malat_dilution_detected.tsv, malat_dilution_day.tsv
+      the same series' MALAT1 load in ng, detection table (1 = measured), and acquisition day.
+  limma_reference_*.tsv, limma_ebayes_notrend.tsv, limma_metafor_PROVENANCE.txt
+      mzLib's limma reference input and limma 3.68.5's eBayes(legacy = TRUE) output;
+      limma_reference_age.tsv and limma_reference_sex.tsv are two of its design columns.
+  metafor_dl_inputs.tsv, metafor_dl_results.tsv
+      metafor 5.2.1's DerSimonian-Laird reference cases and results (constructed numbers).
+  combination_inputs.tsv, combination_results.tsv, combination_PROVENANCE.txt
+      mzLib's p-value combination cases and R 4.6.1's Fisher and Stouffer answers.
+  glm_reference_*.tsv
+      mzLib's logistic reference (80 simulated features, 40 samples) and R 4.6.1's glm() output.
+  lmm_reference_*.tsv
+      mzLib's mixed-model reference (120 simulated features, 29 samples, 7 groups) and nlme
+      3.1.169's lme() output, REML and ML.
+  entrapment_reference_*.tsv
+      mzLib's hand-built entrapment search (EntrapmentFdpTests.cs) and the entrapment project's
+      reference script output at r = 1.
+
+diff/
+  malat_dilution_samples.tsv
+      the MALAT1 dilution series as a sample sheet: each run and its load.
+  design_factor_batch_covariate_samples.tsv, design_factor_batch_covariate_matrix.tsv,
+  design_confounded_samples.tsv, stratified_samples.tsv
+      mzLib's AnalysisDesign reference sheets, and base R's model.matrix() for the first.
+  MetaMorpheus_1.1.11_AllQuantifiedPeptides.tsv, MetaMorpheus_1.1.11_AllQuantifiedProteinGroups.tsv
+      mzLib's MetaMorpheus 1.1.11 tables, as its FlashLfqObservationsTests read them.
+  EcoliSpikeIn_QuantifiedPeptides.tsv
+      a slice of FlashLFQ's E. coli spike-in vignette (two runs, 1x and 2x).
+
+ptmqtl/
+  cases.tsv, fractions.tsv, fractions_samples.tsv, batch.tsv, trait.tsv, trait_runs.tsv
+      mzLib's hand-computed PtmQtl test cases (PtmQtlTests.cs), one protein per case.
+  trait_occupancy.tsv
+      what ptmqtl occupancy --out writes from trait.tsv.
+
+mzLib is LGPL-3.0; see licenses/.
