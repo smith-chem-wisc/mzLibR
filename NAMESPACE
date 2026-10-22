@@ -69,6 +69,10 @@ S3method(print, mzlibr_protein_group_records)
 S3method(print, mzlibr_quantified_peptide_records)
 S3method(print, mzlibr_occupancy_records)
 
+export(library_read)
+export(library_read_many)
+S3method(print, mzlibr_library_records)
+
 export(sdrf_all)
 export(sdrf_assess)
 export(sdrf_assess_many)

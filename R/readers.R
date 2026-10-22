@@ -143,8 +143,10 @@ readers_normalise_path <- function(path, name = "path") {
   trimws(path)
 }
 
-readers_build_read_args <- function(path, limit, offset, out, verb = "read-results") {
-  args <- c("readers", verb, "--path", readers_normalise_path(path))
+# `module` is the verb's first word: "library" for library_read(), whose verb lives in another
+# module but takes the same window, as pyMzLib's readers._window does.
+readers_build_read_args <- function(path, limit, offset, out, verb = "read-results", module = "readers") {
+  args <- c(module, verb, "--path", readers_normalise_path(path))
 
   if (!is.null(limit)) {
     # Zero is allowed, as the bridge allows it: the envelope alone, with record_count.

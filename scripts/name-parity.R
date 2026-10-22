@@ -50,8 +50,8 @@ if (!dir.exists(python_src)) {
 }
 
 modules <- c("pride", "peptidoform", "flashlfq", "readers", "sdrf", "proteins", "isobaric", "stats")
-# pyMzLib 0.6.0's new modules (the stats group).
-modules <- c(modules, "diff", "ptmqtl")
+# pyMzLib 0.6.0's new modules: the stats group, and the spectral library.
+modules <- c(modules, "diff", "ptmqtl", "library")
 
 suppressMessages(library(mzLibR))
 mz <- asNamespace("mzLibR")
