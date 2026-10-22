@@ -1,5 +1,14 @@
 # Written by scripts/stage-replay.R from the verb specs' examples. Do not edit; re-run it.
 # verb<TAB>recording: the recordings the stand-in bridge (R/replay.R) may answer each verb with.
+diff design	diff_design_confounded.json
+diff design	diff_design_factor_batch_covariate.json
+diff design	diff_design_malat.json
+diff design	diff_design_malat_pairs.json
+diff design	diff_design_strata.json
+diff observations	diff_observations_mm_mbr_kept.json
+diff observations	diff_observations_mm_msms_only.json
+diff observations	diff_observations_spike_in.json
+diff observations	diff_observations_spike_in_normalized.json
 genes resolve	genes_resolve_human.json
 isobaric kits	isobaric_kits.json
 isobaric kits	isobaric_kits_TMT18.json
@@ -18,6 +27,14 @@ proteins classify-peptides	proteins_classify_peptides.json
 proteins read	proteins_read_accessions.json
 proteins read	proteins_read_human.json
 proteins update-go	proteins_update_go.json
+ptmqtl occupancy	ptmqtl_occupancy_cases.json
+ptmqtl occupancy	ptmqtl_occupancy_fractions.json
+ptmqtl occupancy	ptmqtl_occupancy_trait_out.json
+ptmqtl pairs	ptmqtl_pairs_batch.json
+ptmqtl pairs	ptmqtl_pairs_batch_run_level.json
+ptmqtl pairs	ptmqtl_pairs_physical.json
+ptmqtl trait-effects	ptmqtl_trait_effects.json
+ptmqtl trait-effects	ptmqtl_trait_effects_strict.json
 quant flashlfq	flashlfq_k562_mbr.json
 quant flashlfq	flashlfq_small.json
 quant median-polish	median_polish_k562.json
@@ -64,7 +81,25 @@ sdrf validate	sdrf_validate_bulk.json
 sdrf validate	sdrf_validate_cohort.json
 sdrf validate	sdrf_validate_skeleton.json
 stats adjust	stats_adjust.json
+stats combine-p	stats_combine_p_fisher.json
+stats combine-p	stats_combine_p_signed.json
+stats combine-p	stats_combine_p_unsigned.json
+stats combine-p	stats_combine_p_weighted.json
+stats correlate	stats_correlate_limma_age.json
+stats correlate	stats_correlate_limma_age_given_sex.json
+stats correlate	stats_correlate_malat.json
+stats entrapment-fdp	stats_entrapment_fdp_reference.json
+stats entrapment-fdp	stats_entrapment_fdp_reference_r2.json
 stats fit	stats_fit_limma.json
 stats fit	stats_fit_malat.json
+stats fit	stats_fit_malat_contrasts.json
+stats fit	stats_fit_malat_diff_design.json
+stats fit	stats_fit_malat_diff_design_contrasts.json
+stats fit	stats_fit_malat_marginal.json
+stats fit-logistic	stats_fit_logistic_glm.json
+stats fit-logistic	stats_fit_logistic_malat.json
+stats fit-mixed	stats_fit_mixed_lmm_ml.json
+stats fit-mixed	stats_fit_mixed_lmm_reml.json
+stats fit-mixed	stats_fit_mixed_malat.json
 stats meta	stats_meta_metafor.json
 version	bridge_version.json

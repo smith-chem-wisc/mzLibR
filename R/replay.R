@@ -125,6 +125,9 @@ REPLAY_STDIN_ECHO <- c("quant flashlfq", "peptidoform convert")
 # name. peptidoform convert: the same sequences, in the same order, as the recording's `input`
 # column.
 replay_stdin_mismatch <- function(data, stdin, verb = "quant flashlfq") {
+  if (verb %in% REPLAY_MODEL_STDIN) {
+    return(replay_model_stdin_mismatch(data, stdin, verb))
+  }
   lines <- stdin[nzchar(trimws(stdin))]
   if (identical(verb, "peptidoform convert")) {
     columns <- data[["columns"]]
@@ -149,8 +152,197 @@ replay_stdin_mismatch <- function(data, stdin, verb = "quant flashlfq") {
   ""
 }
 
+# ---------------------------------------------------------------- stats, diff and ptmqtl
+
+# The rules pyMzLib 0.6.0's replay_bridge.py added for these verbs, ported as they are there.
+
+# Recordings made with an option a call must send too: a call that leaves it out takes mzLib's
+# default, which the echo cannot tell apart from a value that was given.
+REPLAY_RECORDED_WITH[c(
+  "stats_fit_mixed_lmm_ml.json", "stats_fit_malat_marginal.json",
+  "diff_observations_spike_in_normalized.json", "ptmqtl_pairs_batch_run_level.json",
+  "ptmqtl_trait_effects_strict.json"
+)] <- list(
+  c(estimator = "ml"),
+  c(estimator = "marginal_likelihood"),
+  c("min-peptides" = "50", normalize = "TRUE"),
+  c("remove-run-level" = "TRUE"),
+  c("min-replicates" = "6")
+)
+
+# Their input travels on stdin and is echoed: the coefficients, the model, the runs, the tests.
+REPLAY_MODEL_STDIN <- c(
+  "stats combine-p", "stats fit", "stats fit-logistic", "stats fit-mixed", "diff design", "diff observations"
+)
+REPLAY_STDIN_ECHO <- c(REPLAY_STDIN_ECHO, REPLAY_MODEL_STDIN)
+
+# Optional input files a verb echoes as `<name>_file`, null when the option was not given. A
+# recording made with one answers only a call that gives one, and the reverse, or a plain
+# correlation could print a partial one.
+REPLAY_OPTIONAL_FILES <- c("given", "protein-groups", "samples", "run-level-groups", "contrasts")
+
+# Options echoed inside an object rather than at the top level (stats fit --estimator as
+# prior.estimator, --confidence as contrasts.confidence_level).
+REPLAY_NESTED_ECHOES <- list(estimator = c("prior", "estimator"), confidence = c("contrasts", "confidence_level"))
+
+# Optional outputs reported in their own field, null when not asked for (as `written` is for --out).
+REPLAY_OPTIONAL_OUTPUTS <- c("responses-out" = "responses_written")
+
+# Echoes that say whether an option was given when its value echo cannot (stats entrapment-fdp
+# echoes mzLib's default thresholds when --thresholds was absent).
+REPLAY_GIVEN_ECHOES <- c(thresholds_given = "thresholds")
+
+# Why the presence or absence of an option rules this recording out, or "".
+replay_presence_mismatch <- function(data, options) {
+  for (name in names(REPLAY_NESTED_ECHOES)) {
+    where <- REPLAY_NESTED_ECHOES[[name]]
+    echo <- data[[where[1L]]]
+    sent <- options[[name]]
+    if (!is.null(sent) && is.list(echo) && where[2L] %in% names(echo) && replay_scalar(echo[[where[2L]]])) {
+      recorded <- echo[[where[2L]]]
+      same <- if (is.numeric(recorded)) {
+        isTRUE(all.equal(suppressWarnings(as.numeric(sent)), as.numeric(recorded), tolerance = 1e-12))
+      } else {
+        identical(as.character(recorded), as.character(sent))
+      }
+      if (!same) {
+        return(paste0("recorded with ", where[1L], ".", where[2L], "=", replay_show(recorded), ", not ", sent))
+      }
+    }
+  }
+  for (key in names(REPLAY_GIVEN_ECHOES)) {
+    given <- data[[key]]
+    if (is.logical(given) && length(given) == 1L && !is.na(given) &&
+      !is.null(options[[REPLAY_GIVEN_ECHOES[[key]]]]) != given) {
+      return(paste0("recorded ", if (given) "with" else "without", " --", REPLAY_GIVEN_ECHOES[[key]]))
+    }
+  }
+  for (name in REPLAY_OPTIONAL_FILES) {
+    key <- paste0(gsub("-", "_", name, fixed = TRUE), "_file")
+    if (key %in% names(data)) {
+      used <- !wire_null(data[[key]])
+      if (!is.null(options[[name]]) != used) {
+        return(paste0("recorded ", if (used) "with" else "without", " --", name))
+      }
+    }
+  }
+  for (name in names(REPLAY_OPTIONAL_OUTPUTS)) {
+    key <- REPLAY_OPTIONAL_OUTPUTS[[name]]
+    if (key %in% names(data)) {
+      used <- !wire_null(data[[key]])
+      if (!is.null(options[[name]]) != used) {
+        return(paste0("recorded ", if (used) "with" else "without", " --", name))
+      }
+    }
+  }
+  ""
+}
+
+# The model a diff design call sent, in the shape the recording echoes it.
+replay_diff_model <- function(stdin) {
+  model <- list(factors = list(), covariates = list(), interactions = list(), stratum_columns = character(0),
+    batch_column = NA_character_)
+  number <- function(text) if (nzchar(trimws(text))) as.numeric(text) else NA_real_
+  for (line in stdin[nzchar(trimws(stdin))]) {
+    f <- trimws(strsplit(line, "\t", fixed = TRUE)[[1L]])
+    f <- c(f, rep("", 6L - length(f)))
+    if (f[1L] == "factor") {
+      model$factors[[length(model$factors) + 1L]] <- c(f[2L], if (nzchar(f[3L])) f[3L] else NA_character_)
+    } else if (f[1L] == "covariate") {
+      model$covariates[[length(model$covariates) + 1L]] <- list(f[2L], f[3L], number(f[4L]),
+        if (nzchar(f[5L])) f[5L] else NA_character_, number(f[6L]))
+    } else if (f[1L] == "interaction") {
+      model$interactions[[length(model$interactions) + 1L]] <- c(f[2L], f[3L])
+    } else if (f[1L] == "stratum") {
+      model$stratum_columns <- c(model$stratum_columns, f[2L])
+    } else if (f[1L] == "batch") {
+      model$batch_column <- f[2L]
+    }
+  }
+  model
+}
+
+replay_recorded_diff_model <- function(data) {
+  text <- function(v) if (wire_null(v)) NA_character_ else as.character(v)
+  value <- function(v) if (wire_null(v)) NA_real_ else as.numeric(v)
+  list(
+    factors = lapply(if (is.list(data$factors)) data$factors else list(), function(x) c(text(x$name), text(x$reference_level))),
+    covariates = lapply(if (is.list(data$covariates)) data$covariates else list(), function(x) {
+      list(text(x$name), text(x$unit), value(x$scale), text(x$scaled_unit), value(x$centre))
+    }),
+    interactions = lapply(if (is.list(data$interactions)) data$interactions else list(), function(x) c(text(x$first), text(x$second))),
+    stratum_columns = wire_strings(data$stratum_columns),
+    batch_column = text(data$batch_column)
+  )
+}
+
+# The call's stdin must be the recording's input. stats fit, fit-logistic and fit-mixed: the same
+# coefficients, in the same order, as `tested_coefficients` (none, for a fit of contrasts alone).
+# diff design: the same model. diff observations: the same runs (with --samples, among those sent).
+# stats combine-p: the same features in first-appearance order, the same number of tests, and
+# weights and effects given or not as `weighted` and `signed` say.
+replay_model_stdin_mismatch <- function(data, stdin, verb) {
+  lines <- stdin[nzchar(trimws(stdin))]
+  if (verb %in% c("stats fit", "stats fit-logistic", "stats fit-mixed")) {
+    sent <- trimws(lines)
+    recorded <- wire_strings(data$tested_coefficients)
+    if (!identical(sent, recorded)) {
+      return(paste0("recorded for coefficients ", paste(recorded, collapse = ", "), ", not ", paste(sent, collapse = ", ")))
+    }
+    return("")
+  }
+  if (identical(verb, "diff design")) {
+    sent <- replay_diff_model(lines)
+    recorded <- replay_recorded_diff_model(data)
+    if (!isTRUE(all.equal(sent, recorded, tolerance = 1e-12))) {
+      return("recorded for another model")
+    }
+    return("")
+  }
+  if (identical(verb, "diff observations")) {
+    key <- function(file, sample, fraction, replicate) {
+      paste(file, sample, if (nzchar(fraction)) as.numeric(fraction) else 0, if (nzchar(replicate)) as.numeric(replicate) else 0, sep = "\r")
+    }
+    sent <- unique(vapply(lines, function(line) {
+      f <- c(trimws(strsplit(line, "\t", fixed = TRUE)[[1L]]), "", "")
+      key(f[1L], f[2L], f[3L], f[4L])
+    }, character(1L), USE.NAMES = FALSE))
+    recorded <- vapply(if (is.list(data$runs)) data$runs else list(), function(r) {
+      key(as.character(r$file_name), as.character(r$sample_id), format(r$fraction), format(r$technical_replicate))
+    }, character(1L))
+    fits <- if (wire_null(data$samples_file)) setequal(recorded, sent) else all(recorded %in% sent)
+    if (!fits) {
+      return("recorded for other runs")
+    }
+    return("")
+  }
+  # stats combine-p
+  fields <- lapply(lines, function(line) strsplit(line, "\t", fixed = TRUE)[[1L]])
+  sent <- unique(vapply(fields, function(f) trimws(f[1L]), character(1L)))
+  columns <- data$columns
+  recorded <- if (is.list(columns)) wire_strings(columns$feature) else character(0)
+  if (!identical(sent, recorded)) {
+    return(paste0("recorded for features ", paste(recorded, collapse = ", "), ", not ", paste(sent, collapse = ", ")))
+  }
+  if (!identical(as.numeric(length(lines)), as.numeric(data$line_count))) {
+    return(paste0("recorded for ", format(data$line_count), " tests, not ", length(lines)))
+  }
+  # strsplit drops a trailing empty field, so a line "A\t0.1\t" has length 2: a blank weight.
+  weighted <- any(vapply(fields, function(f) length(f) >= 3L && !tolower(trimws(f[3L])) %in% c("", "na", "nan"), logical(1L)))
+  signed <- any(vapply(lines, function(line) lengths(regmatches(line, gregexpr("\t", line, fixed = TRUE))) == 3L, logical(1L)))
+  if (!identical(c(weighted, signed), c(isTRUE(data$weighted), isTRUE(data$signed)))) {
+    return(paste0("recorded with weighted=", replay_show(isTRUE(data$weighted)), " signed=",
+      replay_show(isTRUE(data$signed)), ", not weighted=", replay_show(weighted), " signed=", replay_show(signed)))
+  }
+  ""
+}
+
 # Why this recording cannot be the answer to these options, or "" when it can.
 replay_mismatch <- function(data, options) {
+  presence <- replay_presence_mismatch(data, options)
+  if (nzchar(presence)) {
+    return(presence)
+  }
   for (name in names(options)) {
     value <- options[[name]]
     key <- if (name %in% names(REPLAY_ECHOED_AS)) REPLAY_ECHOED_AS[[name]] else gsub("-", "_", name, fixed = TRUE)
