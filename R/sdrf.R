@@ -228,15 +228,19 @@ sdrf_read <- function(path, limit = NULL, offset = 0, timeout = 60) {
 #'   label: `c(malaria = "PXD000070.sdrf.tsv", colon = "PXD026824.sdrf.tsv")`. Name every element
 #'   or none.
 #' @param out Write the merged document here as SDRF. The **whole** document is written regardless
-#'   of `limit` and `offset`.
+#'   of `limit` and `offset`. A name that does not end in `.sdrf.tsv` gets it added by mzLib, so
+#'   `out = "x.tsv"` writes `x.tsv.sdrf.tsv`; `written$path` says which file was written.
 #' @param limit Maximum rows to return. `NULL`, the default, returns all of them.
 #' @param offset Rows to skip.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_pooled_sdrf`, which is also an `mzlibr_sdrf`: everything [sdrf_read()]
 #'   returns, plus `document_count`, `paths`, `labels`, and `written` (a list of `path` and
-#'   `row_count`, or `NULL` when `out` was not given). `row_count` counts the rows of the whole
-#'   pooled document; `returned_count` the rows returned, starting `offset` rows in.
+#'   `row_count`, or `NULL` when `out` was not given). `written$path` is the file mzLib actually
+#'   wrote, which is not always the name you gave (see `out`); bridges before pyMzLib 0.6.0 reported
+#'   the name as given. `written$row_count` counts the rows written, the whole merged document.
+#'   `row_count` counts the rows of the whole pooled document; `returned_count` the rows returned,
+#'   starting `offset` rows in.
 #'
 #' @section Give your documents names:
 #'
