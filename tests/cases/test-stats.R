@@ -162,7 +162,7 @@ test_that("bad fit arguments are refused before the bridge", {
     given[names(list(...))] <- list(...)
     do.call(mz$stats_build_fit_request, given)
   }
-  expect_error(build(coefficients = character(0)), class = "mzlib_usage_error", contains = "coefficients must be")
+  expect_error(build(coefficients = character(0)), class = "mzlib_usage_error", contains = "or a contrasts file")
   expect_error(build(coefficients = 1), class = "mzlib_usage_error", contains = "coefficients must be")
   expect_error(build(coefficients = c("a", "")), class = "mzlib_usage_error", contains = "non-empty")
   expect_error(build(coefficients = "a\nb"), class = "mzlib_usage_error", contains = "newline")
@@ -170,6 +170,133 @@ test_that("bad fit arguments are refused before the bridge", {
   expect_error(build(threads = 1.5), class = "mzlib_usage_error", contains = "threads must be a whole number")
   expect_error(build(spline_basis = 2.5), class = "mzlib_usage_error", contains = "spline_basis must be")
   expect_error(build(responses = ""), class = "mzlib_usage_error")
+})
+
+# ---------------------------------------------------------------- stats_fit: contrasts and the estimator
+
+stats_malat_contrasts <- function() mz$stats_parse_fit(stats_fixture("stats_fit_malat_contrasts.json"))
+
+test_that("contrasts, confidence and estimator are sent only when given, and contrasts alone send no stdin", {
+  request <- mz$stats_build_fit_request("r.tsv", "d.tsv", character(0), FALSE, NULL, 1,
+    contrasts = "contrasts_1.tsv", confidence = 0.9, estimator = "marginal_likelihood"
+  )
+  args <- request$args
+  expect_identical(args[match("--contrasts", args) + 1L], "contrasts_1.tsv")
+  expect_identical(as.numeric(args[match("--confidence", args) + 1L]), 0.9)
+  expect_identical(args[match("--estimator", args) + 1L], "marginal_likelihood")
+  expect_true(is.null(request$stdin), info = "contrasts alone: no coefficient on stdin, not even a blank line")
+  plain <- mz$stats_build_fit_request("r.tsv", "d.tsv", "malat_250ng", FALSE, NULL, 1)
+  expect_false(any(c("--contrasts", "--confidence", "--estimator") %in% plain$args),
+    info = "left out, they are not sent, so mzLib's defaults apply"
+  )
+  for (name in c("contrasts", "confidence", "estimator")) {
+    expect_true(is.null(formals(stats_fit)[[name]]), info = paste(name, "defaults to NULL: mzLib's default"))
+  }
+})
+
+test_that("the recorded contrasts parse into their own table, the coefficient table empty", {
+  fit <- stats_malat_contrasts()
+  expect_identical(fit$tested_coefficients, character(0))
+  expect_identical(c(fit$row_count, nrow(fit$records)), c(0, 0))
+  expect_identical(names(fit$records), fit$column_names)
+  expect_true(endsWith(fit$contrasts_file, "contrasts_1.tsv"))
+  pairs <- fit$contrasts
+  expect_true(inherits(pairs, "mzlibr_moderated_contrasts"))
+  expect_identical(pairs$tested_contrasts, c("c1", "c2", "c3"))
+  expect_identical(pairs$confidence_level, 0.95)
+  expect_identical(fit$coefficient_names, c("intercept", "malat_load=250ng", "malat_load=500ng"))
+  expect_identical(pairs$weights, list(c1 = c(0, 1, 0), c2 = c(0, 0, 1), c3 = c(0, -1, 1)))
+  expect_identical(pairs$row_count, 3 * fit$feature_count)
+  expect_identical(nrow(pairs$records), as.integer(pairs$row_count))
+  expect_identical(names(pairs$records)[1:7], c(
+    "feature", "contrast", "status", "estimate", "standard_error", "confidence_low", "confidence_high"
+  ))
+  rows <- pairs$records[pairs$records$contrast == "c3", ]
+  expect_identical(nrow(rows), as.integer(fit$feature_count))
+  expect_identical(rows$feature, pairs$records$feature[seq_len(fit$feature_count)])
+  fitted <- rows$status == "fitted"
+  expect_identical(!is.na(rows$confidence_low), fitted)
+  expect_identical(!is.na(rows$bh_adjusted), fitted)
+  expect_true(all(rows$confidence_low[fitted] < rows$estimate[fitted] & rows$estimate[fitted] < rows$confidence_high[fitted]))
+  expect_true(any(startsWith(fit$caveats, "Contrasts are tested with the same variance prior")))
+})
+
+test_that("a fit without contrasts has none, and reports mzLib's default estimator", {
+  fit <- stats_malat_fit()
+  expect_true(is.null(fit$contrasts))
+  expect_true(is.na(fit$contrasts_file))
+  expect_identical(fit$prior$estimator, "moments_legacy")
+  expect_true(startsWith(fit$caveats[[1L]], "moments_legacy:"))
+})
+
+test_that("the marginal-likelihood recording reports its estimator and a lower prior df", {
+  fit <- mz$stats_parse_fit(stats_fixture("stats_fit_malat_marginal.json"))
+  expect_identical(fit$prior$estimator, "marginal_likelihood")
+  expect_true(fit$prior$estimator %in% mz$STATS_PRIOR_ESTIMATORS)
+  expect_true(startsWith(fit$caveats[[1L]], "marginal_likelihood:"))
+  expect_identical(round(fit$prior$df, 1), 11)
+  expect_identical(round(stats_malat_fit()$prior$df, 1), 19.6)
+  expect_identical(mz$STATS_PRIOR_ESTIMATORS, c("moments_legacy", "marginal_likelihood"))
+})
+
+test_that("bad contrast options are refused before the bridge", {
+  build <- function(...) mz$stats_build_fit_request("r.tsv", "d.tsv", "x", FALSE, NULL, 1, ...)
+  expect_error(build(estimator = "reml"), class = "mzlib_usage_error",
+    contains = "estimator must be one of moments_legacy, marginal_likelihood")
+  expect_error(build(estimator = 1), class = "mzlib_usage_error", contains = "estimator must be one of")
+  expect_error(build(confidence = "0.9"), class = "mzlib_usage_error", contains = "confidence must be a number")
+  expect_error(build(confidence = TRUE), class = "mzlib_usage_error", contains = "confidence must be a number")
+  expect_error(build(contrasts = 3), class = "mzlib_usage_error", contains = "contrasts must be")
+  expect_error(stats_fit("r.tsv", "d.tsv"), class = "mzlib_usage_error", contains = "or a contrasts file")
+})
+
+# What a bridge from before pyMzLib 0.6.0 answers: no contrasts, no estimator.
+stats_older <- function(name) {
+  data <- stats_fixture(name)
+  data$contrasts_file <- NULL
+  data$contrasts <- NULL
+  data$prior$estimator <- NULL
+  data
+}
+
+test_that("an older bridge that ignored contrasts or the estimator is named, not trusted", {
+  older <- function(...) stats_older("stats_fit_malat.json")
+  request <- mz$stats_build_fit_request("r.tsv", "d.tsv", "malat_250ng", FALSE, NULL, 1, contrasts = "c.tsv")
+  expect_error(mz$stats_fit_answer(request, "c.tsv", NULL, 60, invoke = older), class = "mzlib_usage_error",
+    contains = c("stats_fit(contrasts = ...) needs the bridge from pyMzLib 0.6.0", "ignored --contrasts"))
+  expect_error(mz$stats_fit_answer(request, NULL, "moments_legacy", 60, invoke = older), class = "mzlib_usage_error",
+    contains = "stats_fit(estimator = ...) needs the bridge from pyMzLib 0.6.0")
+  # Without the new options, an older bridge's answer is read as it always was.
+  plain <- mz$stats_parse_fit(mz$stats_fit_answer(request, NULL, NULL, 60, invoke = older))
+  expect_true(is.na(plain$prior$estimator))
+  expect_true(is.null(plain$contrasts))
+})
+
+test_that("an older bridge that wanted a coefficient is told apart from a real refusal", {
+  refuse <- function(...) stop(mz$mzlib_usage_error("No coefficient to test was given on stdin. Give one name per line."))
+  contrasts_only <- mz$stats_build_fit_request("r.tsv", "d.tsv", character(0), FALSE, NULL, 1, contrasts = "c.tsv")
+  expect_error(mz$stats_fit_answer(contrasts_only, "c.tsv", NULL, 60, invoke = refuse), class = "mzlib_usage_error",
+    contains = "needs the bridge from pyMzLib 0.6.0")
+  other <- function(...) stop(mz$mzlib_usage_error("The design is not of full column rank."))
+  expect_error(mz$stats_fit_answer(contrasts_only, "c.tsv", NULL, 60, invoke = other), class = "mzlib_usage_error",
+    contains = "not of full column rank")
+})
+
+test_that("the contrasts chain replays end to end: diff_design(out = ), then stats_fit(contrasts = )", {
+  skip_if(!nzchar(mz$replay_dir()), "the package's replay recordings are not installed")
+  old <- mz$replay_bridge_start()
+  on.exit(mz$replay_bridge_stop(old), add = TRUE)
+  samples <- system.file("extdata", "diff", "malat_dilution_samples.tsv", package = "mzLibR")
+  design <- diff_design(samples, factors = list(factor_spec("malat_load")), out = file.path(tempdir(), "malat_pairs"))
+  stratum <- design$strata[[1L]]
+  pairs <- stats_fit("malat_dilution_log2_vs_fluc.tsv", stratum$design_file, contrasts = stratum$contrasts_file)
+  expect_identical(pairs$contrasts$tested_contrasts, c("c1", "c2", "c3"))
+  marginal <- stats_fit("malat_dilution_log2_vs_fluc.tsv", "malat_dilution_design.tsv", c("malat_250ng", "malat_125ng"),
+    estimator = "marginal_likelihood")
+  expect_identical(marginal$prior$estimator, "marginal_likelihood")
+  # Without the estimator the default recording answers, never the marginal one.
+  default <- stats_fit("malat_dilution_log2_vs_fluc.tsv", "malat_dilution_design.tsv", c("malat_250ng", "malat_125ng"))
+  expect_identical(default$prior$estimator, "moments_legacy")
 })
 
 # ---------------------------------------------------------------- stats_adjust
@@ -347,4 +474,96 @@ test_that("LIVE: adjust and meta agree with p.adjust and metafor's recorded outp
   expect_true(stats_worst(r$standard_error, reference$se) < 1e-8)
   expect_error(stats_adjust(1.5), class = "mzlib_usage_error")
   expect_error(stats_meta(data.frame(feature = "a", estimate = 0.1, standard_error = 0)), class = "mzlib_usage_error")
+})
+
+# ---------------------------------------------------------------- LIVE: contrasts and the prior estimator
+
+stats_live_bridge <- function(verb) {
+  skip_unless_bridge_has(verb)
+  options(mzlibr.bridge = Sys.getenv("MZLIB_BRIDGE"))
+}
+
+# diff design on the dilution series with no reference level: every pair of loads a contrast.
+stats_pairs_design <- function() {
+  samples <- system.file("extdata", "diff", "malat_dilution_samples.tsv", package = "mzLibR")
+  out <- tempfile("malat_pairs")
+  diff_design(samples, factors = list(factor_spec("malat_load")), out = out)$strata[[1L]]
+}
+
+test_that("LIVE: the contrasts recording is what the chain returns today", {
+  stats_live_bridge("diff design")
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+  stratum <- stats_pairs_design()
+  live <- stats_fit(stats_reference_path("malat_dilution_log2_vs_fluc.tsv"), stratum$design_file,
+    contrasts = stratum$contrasts_file)
+  recorded <- stats_malat_contrasts()
+  expect_identical(live$contrasts$tested_contrasts, recorded$contrasts$tested_contrasts)
+  expect_identical(live$contrasts$weights, recorded$contrasts$weights)
+  expect_identical(live$contrasts$confidence_level, recorded$contrasts$confidence_level)
+  expect_identical(records_disagree(live$contrasts$records, recorded$contrasts$records), "")
+  expect_identical(live$caveats, recorded$caveats)
+})
+
+test_that("LIVE: the recorded fits are what the bridge returns today, the repinned caveats included", {
+  stats_live_bridge("stats fit")
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+  data <- system.file("extdata", "stats", package = "mzLibR")
+  cases <- list(
+    stats_fit_malat.json = list(estimator = NULL, relative = 1e-9),
+    stats_fit_malat_marginal.json = list(estimator = "marginal_likelihood", relative = 1e-6)
+  )
+  for (name in names(cases)) {
+    live <- stats_fit(file.path(data, "malat_dilution_log2_vs_fluc.tsv"), file.path(data, "malat_dilution_design.tsv"),
+      c("malat_250ng", "malat_125ng"), estimator = cases[[name]]$estimator)
+    recorded <- mz$stats_parse_fit(stats_fixture(name))
+    # The marginal-likelihood prior is a minimum found by Brent's search over log d0, flat near the
+    # minimum, so the last bits of Math.Log move it by about sqrt(eps) across platforms: 1e-6.
+    expect_identical(records_disagree(live$records, recorded$records, cases[[name]]$relative), "", info = name)
+    expect_identical(live$caveats, recorded$caveats, info = name)
+    expect_identical(live$prior$estimator, recorded$prior$estimator, info = name)
+  }
+})
+
+test_that("LIVE: a contrast of one coefficient is that coefficient's test", {
+  stats_live_bridge("diff design")
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+  stratum <- stats_pairs_design()
+  fit <- stats_fit(stats_reference_path("malat_dilution_log2_vs_fluc.tsv"), stratum$design_file,
+    "malat_load=250ng", contrasts = stratum$contrasts_file)
+  expect_identical(fit$contrasts$weights$c1, c(0, 1, 0))
+  coefficient <- fit$records
+  contrast <- fit$contrasts$records[fit$contrasts$records$contrast == "c1", ]
+  for (column in c("estimate", "standard_error", "t", "p_value", "bh_adjusted")) {
+    expect_identical(coefficient[[column]], contrast[[column]], info = column)
+  }
+})
+
+test_that("LIVE: a lower confidence gives narrower intervals, and mzLib refuses one outside 0 to 1", {
+  stats_live_bridge("diff design")
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+  stratum <- stats_pairs_design()
+  responses <- stats_reference_path("malat_dilution_log2_vs_fluc.tsv")
+  wide <- stats_fit(responses, stratum$design_file, contrasts = stratum$contrasts_file)
+  narrow <- stats_fit(responses, stratum$design_file, contrasts = stratum$contrasts_file, confidence = 0.8)
+  expect_identical(narrow$contrasts$confidence_level, 0.8)
+  w <- wide$contrasts$records
+  n <- narrow$contrasts$records
+  fitted <- w$status == "fitted"
+  expect_true(all(w$confidence_low[fitted] < n$confidence_low[fitted] & n$confidence_low[fitted] < n$confidence_high[fitted] &
+    n$confidence_high[fitted] < w$confidence_high[fitted]))
+  expect_error(stats_fit(responses, stratum$design_file, contrasts = stratum$contrasts_file, confidence = 1.5),
+    class = "mzlib_usage_error", contains = "strictly between 0 and 1")
+  expect_error(stats_fit(responses, stratum$design_file, "malat_load=250ng", confidence = 0.8),
+    class = "mzlib_usage_error", contains = "give --contrasts as well")
+})
+
+test_that("LIVE: the default estimator is the one mzLib reports, and gives the legacy numbers", {
+  stats_live_bridge("stats fit")
+  on.exit(options(mzlibr.bridge = NULL), add = TRUE)
+  args <- list(stats_reference_path("malat_dilution_log2_vs_fluc.tsv"), stats_reference_path("malat_dilution_design.tsv"),
+    "malat_250ng")
+  default <- do.call(stats_fit, args)
+  legacy <- do.call(stats_fit, c(args, list(estimator = "moments_legacy")))
+  expect_identical(default$prior$estimator, "moments_legacy")
+  expect_identical(default$records$t, legacy$records$t)
 })
