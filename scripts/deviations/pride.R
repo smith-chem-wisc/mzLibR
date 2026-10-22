@@ -70,3 +70,17 @@ FIELD_CHECKS[["pride search"]] <- list("pride_search_plasmodium.json", function(
 
 # Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "pride files", fixture = "pride_PXD999999999_files.json")
+
+# ---------------------------------------------------------------- checksums (pyMzLib 0.6.0)
+
+R_TABLE["pride checksums"] <- "(the returned data.frame itself)"
+R_DEVIATIONS[["pride checksums"]] <- list(
+  "field.accession" = as_r("project_accession", "stamped on every row, as pride_list_files() does"),
+  "field.file_count" = not_here("the result is the checksum data.frame; this is nrow() of it"),
+  "field.files" = not_here("the result is this list itself, as a data.frame, one row per file, its row names the file names")
+)
+PARENT_MAP["pride_file_checksums"] <- "pride.file_checksums"
+PARENT_OMISSIONS["PrideFileChecksum.as_dict"] <- "meaningless in R: the data.frame is already the record"
+FIELD_CHECKS[["pride checksums"]] <- list(
+  "pride_PXD000001_checksums.json", function(d) mz$pride_parse_checksums(d, "PXD000001")
+)

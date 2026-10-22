@@ -23,7 +23,8 @@ pride_download_files(files, destination, overwrite = TRUE, timeout = NULL)
 Download a PRIDE project's files, all of them or a selection, into a directory and report the paths written.
 
 The counterpart to \code{\link{pride_list_files}}, and usually the one you want: filter the data.frame
-however you like, then pass the rows.
+however you like, then pass the rows. As with \code{\link{pride_download}}, the bytes are not checked
+against PRIDE's record; compare a file that matters with \code{\link{pride_file_checksums}}.
 }
 \details{
 ``\code{r

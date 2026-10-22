@@ -17,6 +17,7 @@ peptidoform convert	peptidoform_convert_psmtsv_proforma.json
 peptidoform convert	peptidoform_convert_unimod.json
 peptidoform fragments	peptidoform_P02768.json
 peptidoform fragments	peptidoform_P02768_small.json
+pride checksums	pride_PXD000001_checksums.json
 pride files	pride_PXD000001_files.json
 pride files	pride_PXD999999999_files.json
 pride ftp-files	pride_PXD000001_ftp_files.json
