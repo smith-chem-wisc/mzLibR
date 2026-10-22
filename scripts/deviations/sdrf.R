@@ -121,3 +121,23 @@ FIELD_CHECKS[["sdrf design"]] <- list("sdrf_design_PXD067622.json", function(d) 
 # Real-data recordings the articles replay (pyMzLib #72), beyond the spec's examples.
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "sdrf assess", fixture = "sdrf_assess_PXD000070.json")
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "sdrf assess", fixture = "sdrf_assess_skeleton.json")
+
+# ---------------------------------------------------------------- isobaric design, restrict (pyMzLib 0.6.0)
+
+R_TABLE["sdrf isobaric-design"] <- "records"
+R_DEVIATIONS[["sdrf isobaric-design"]] <- list(
+  "param.searched-files-stdin" = as_r("searched_files", "the file vector itself; giving it sets the flag and fills stdin"),
+  "field.columns" = RECORDS
+)
+R_DEVIATIONS[["sdrf restrict"]] <- list(
+  "param.stdin" = as_r("searched_files", "the character vector itself, named by acquired file where known; one stdin line each"),
+  "field.column_names" = as_r("columns", "the header, duplicates kept, is `columns`")
+)
+
+PARENT_MAP[c("sdrf_isobaric_design", "sdrf_restrict", "sdrf_searched_data_files")] <- c(
+  "sdrf.isobaric_design", "sdrf.restrict", "RestrictedSdrf.searched_data_files"
+)
+PARENT_OMISSIONS["SdrfIsobaricDesign.channels"] <- "the rows are `records`, a data.frame; its rows are the channels"
+
+FIELD_CHECKS[["sdrf isobaric-design"]] <- list("sdrf_isobaric_design_PXD008841.json", function(d) mz$sdrf_parse_isobaric_design(d))
+FIELD_CHECKS[["sdrf restrict"]] <- list("sdrf_restrict_PXD008841.json", function(d) mz$sdrf_parse_restricted(d))

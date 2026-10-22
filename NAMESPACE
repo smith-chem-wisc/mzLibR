@@ -105,6 +105,12 @@ export(sdrf_design_run_design)
 export(sdrf_design_spectra)
 S3method(print, mzlibr_sdrf_design)
 
+export(sdrf_isobaric_design)
+export(sdrf_restrict)
+export(sdrf_searched_data_files)
+S3method(print, mzlibr_sdrf_isobaric_design)
+S3method(print, mzlibr_restricted_sdrf)
+
 export(isobaric_kits)
 S3method(print, mzlibr_isobaric_kits)
 
