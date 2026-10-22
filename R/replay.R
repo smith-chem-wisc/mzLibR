@@ -106,6 +106,13 @@ REPLAY_RECORDED_WITH <- list(
   "peptidoform_P02768_small.json" = c("max-mods" = "1")
 )
 
+# proteins align, library read and sdrf isobaric-design (pyMzLib 0.6.0): each echoes the option,
+# but a call that leaves it out takes mzLib's default, which the echo cannot tell apart.
+REPLAY_RECORDED_WITH[["proteins_align_charged.json"]] <- c("end-gaps" = "charged")
+REPLAY_RECORDED_WITH[["library_read_fragments.json"]] <- c("fragments" = "TRUE")
+REPLAY_RECORDED_WITH[["library_read_index_only.json"]] <- c("index-only-threshold" = "0")
+REPLAY_RECORDED_WITH[["sdrf_isobaric_design_PXD008841.json"]] <- c("plex-file-name-pattern" = "TMT_?pool(?<plex>\\d+)")
+
 # Why a recording made with `recorded_with` cannot answer a call with these options, or "".
 replay_recorded_with_mismatch <- function(recorded_with, options) {
   for (name in names(recorded_with)) {
@@ -121,11 +128,77 @@ replay_recorded_with_mismatch <- function(recorded_with, options) {
 # call that sent the same input. Read only for these: other verbs may be given a terminal's stdin.
 REPLAY_STDIN_ECHO <- c("quant flashlfq", "peptidoform convert")
 
+# The data verbs of pyMzLib 0.6.0, each with its own check of the call's stdin against the
+# recording: the same accessions, the same pairs, the same searched files, the same species.
+REPLAY_STDIN_CHECKS <- list(
+  # The same lines, in the same order, as the recording's `input` column.
+  "proteins parse-accession" = function(data, lines) {
+    columns <- data[["columns"]]
+    recorded <- if (is.list(columns)) wire_strings(columns[["input"]]) else character(0)
+    if (!identical(lines, recorded)) {
+      return(paste0("recorded for inputs ", paste(recorded, collapse = ", "), ", not ", paste(lines, collapse = ", ")))
+    }
+    ""
+  },
+  # The same pairs, in order, as the recording's aligned rows with their gaps removed (mzLib
+  # refuses a '-' in an input sequence, so removing them is exact).
+  "proteins align" = function(data, lines) {
+    columns <- data[["columns"]]
+    recorded <- if (is.list(columns)) {
+      paste0(gsub("-", "", wire_strings(columns[["aligned_source"]]), fixed = TRUE), "\t",
+        gsub("-", "", wire_strings(columns[["aligned_target"]]), fixed = TRUE))
+    } else {
+      character(0)
+    }
+    if (!identical(lines, recorded)) {
+      return(paste0("recorded for pairs starting ", paste(substr(recorded, 1L, 12L), collapse = ", "), ", not these"))
+    }
+    ""
+  },
+  # The same searched files, in order, as `searched_files`, and as many acquired names as
+  # `acquired_name_count`.
+  "sdrf restrict" = function(data, lines) {
+    fields <- strsplit(lines, "\t", fixed = TRUE)
+    sent <- vapply(fields, function(f) trimws(f[[1L]]), character(1L))
+    recorded <- wire_strings(data[["searched_files"]])
+    if (!identical(sent, recorded)) {
+      return(paste0("recorded for searched files ", paste(recorded, collapse = ", "), ", not ", paste(sent, collapse = ", ")))
+    }
+    acquired <- sum(vapply(fields, function(f) length(f) > 1L && nzchar(trimws(f[[2L]])), logical(1L)))
+    if (!identical(as.numeric(acquired), as.numeric(data[["acquired_name_count"]]))) {
+      return(paste0("recorded with ", format(data[["acquired_name_count"]]), " acquired names, not ", acquired))
+    }
+    ""
+  },
+  # The same species (the first field of each line before `--`) as `species`, and as many dump
+  # paths after it as the recording has `dumps`.
+  "genes orthology" = function(data, lines) {
+    lines <- trimws(lines)
+    cut <- match("--", lines)
+    if (is.na(cut)) cut <- length(lines) + 1L
+    species <- sort(vapply(strsplit(lines[seq_len(cut - 1L)], "\t", fixed = TRUE), function(f) trimws(f[[1L]]),
+      character(1L)), method = "radix")
+    recorded <- wire_strings(data[["species"]])
+    if (!identical(species, recorded)) {
+      return(paste0("recorded for species ", paste(recorded, collapse = ", "), ", not ", paste(species, collapse = ", ")))
+    }
+    dumps <- length(lines) - cut
+    if (dumps != length(data[["dumps"]])) {
+      return(paste0("recorded with ", length(data[["dumps"]]), " dumps, not ", dumps))
+    }
+    ""
+  }
+)
+REPLAY_STDIN_ECHO <- c(REPLAY_STDIN_ECHO, names(REPLAY_STDIN_CHECKS))
+
 # The call's stdin must be the recording's input. quant flashlfq: the same mzML runs, by file
 # name. peptidoform convert: the same sequences, in the same order, as the recording's `input`
 # column.
 replay_stdin_mismatch <- function(data, stdin, verb = "quant flashlfq") {
   lines <- stdin[nzchar(trimws(stdin))]
+  if (verb %in% names(REPLAY_STDIN_CHECKS)) {
+    return(REPLAY_STDIN_CHECKS[[verb]](data, lines))
+  }
   if (identical(verb, "peptidoform convert")) {
     columns <- data[["columns"]]
     recorded <- if (is.list(columns)) wire_strings(columns[["input"]]) else character(0)
@@ -151,6 +224,7 @@ replay_stdin_mismatch <- function(data, stdin, verb = "quant flashlfq") {
 
 # Why this recording cannot be the answer to these options, or "" when it can.
 replay_mismatch <- function(data, options) {
+  null_echo <- ""
   for (name in names(options)) {
     value <- options[[name]]
     key <- if (name %in% names(REPLAY_ECHOED_AS)) REPLAY_ECHOED_AS[[name]] else gsub("-", "_", name, fixed = TRUE)
@@ -175,6 +249,13 @@ replay_mismatch <- function(data, options) {
       next
     }
     recorded <- data[[key]]
+    # As in pyMzLib, a null echo of an option the call sends never fits: the recording was made
+    # without it (sdrf isobaric-design echoes plex_file_name_pattern null when none was given).
+    # Kept for last, so a rule below that names the difference better is the reason given.
+    if (key %in% names(data) && !is.list(recorded) && length(recorded) == 1L && is.na(recorded)) {
+      if (!nzchar(null_echo)) null_echo <- paste0("recorded with ", key, "=null, not ", value)
+      next
+    }
     if (is.null(recorded) || !replay_scalar(recorded)) {
       next
     }
@@ -219,6 +300,36 @@ replay_mismatch <- function(data, options) {
     return("a recording with the other accession filter (filtered vs unfiltered)")
   }
 
+  # proteins read --sequences adds a sequence column: a recording with it and one without never
+  # stand in for each other, or an example would print sequences it did not ask for (or lack them).
+  if ("accession_filter_count" %in% names(data) &&
+    !is.null(options[["sequences"]]) != ("sequence" %in% wire_strings(data[["column_names"]]))) {
+    return("a recording with the other --sequences choice")
+  }
+  # proteins align: --no-residue-map leaves residue_map null, and only then.
+  if ("residue_map" %in% names(data) && !is.null(options[["no-residue-map"]]) != !is.list(data[["residue_map"]])) {
+    return("a recording with the other --no-residue-map choice")
+  }
+  # genes orthology: --pair-status FROM,TO fills pair_status for that direction, and only then; and
+  # only a --restrict-gene-trees call says which gene sets its gene trees were restricted to.
+  if ("pair_status" %in% names(data)) {
+    status <- data[["pair_status"]]
+    if (!is.null(options[["pair-status"]]) != is.list(status)) {
+      return("a recording with the other --pair-status choice")
+    }
+    if (is.list(status)) {
+      direction <- paste0(status[["from_species"]], ",", status[["to_species"]])
+      if (!identical(options[["pair-status"]], direction)) {
+        return(paste0("recorded for --pair-status ", direction))
+      }
+    }
+  }
+  trees <- data[["gene_trees"]]
+  if (is.list(trees) && "restricted_to_gene_sets" %in% names(trees) &&
+    !is.null(options[["restrict-gene-trees"]]) != is.list(trees[["restricted_to_gene_sets"]])) {
+    return("a recording with the other --restrict-gene-trees choice")
+  }
+
   # A filter the recording applied that the call did not ask for.
   ms_order <- data[["ms_order"]]
   if (!is.null(ms_order) && replay_scalar(ms_order) && is.null(options[["ms-order"]])) {
@@ -258,7 +369,7 @@ replay_mismatch <- function(data, options) {
   if (isTRUE(data[["peaks_included"]]) && is.null(options[["peaks"]])) {
     return("recorded with peaks, but the call did not ask for them")
   }
-  ""
+  null_echo
 }
 
 replay_json_string <- function(text) {
