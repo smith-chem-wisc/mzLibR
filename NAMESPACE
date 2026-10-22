@@ -123,6 +123,16 @@ S3method(print, mzlibr_logistic_model_fit)
 S3method(print, mzlibr_mixed_model_fit)
 S3method(print, mzlibr_entrapment_fdp_estimates)
 
+export(covariate_spec)
+export(diff_design)
+export(diff_observations)
+export(factor_spec)
+S3method(print, mzlibr_factor_spec)
+S3method(print, mzlibr_covariate_spec)
+S3method(print, mzlibr_diff_design)
+S3method(print, mzlibr_design_stratum)
+S3method(print, mzlibr_observations)
+
 
 export(proteins_annotate_go)
 export(proteins_classify_peptides)
