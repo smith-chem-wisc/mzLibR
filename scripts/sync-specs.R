@@ -40,13 +40,20 @@ if (!requireNamespace("yaml", quietly = TRUE)) {
 
 # Every YAML sequence becomes an R list, never an atomic vector, so `[a]` stays an array of one
 # rather than collapsing into the scalar `a` - the distinction the specs' `views: [spectra]` needs.
+#
+# A bare y, Y, n or N stays a string. The specs are written for, and checked by, the bridge's own
+# YAML reader (PyYAML), for which those are strings; R's yaml package follows YAML 1.1 to the letter
+# and reads them as booleans, so `wire: n` (the `n` column of stats correlate and ptmqtl pairs)
+# would arrive as `wire: false`. Every other boolean spelling reads the same in both.
 read_spec <- function(path) {
   yaml::read_yaml(
     path,
     fileEncoding = "UTF-8",
     handlers = list(
       seq = function(x) as.list(x),
-      map = function(x) if (length(x) == 0L) structure(list(), names = character(0)) else x
+      map = function(x) if (length(x) == 0L) structure(list(), names = character(0)) else x,
+      "bool#yes" = function(x) if (x %in% c("y", "Y")) x else TRUE,
+      "bool#no" = function(x) if (x %in% c("n", "N")) x else FALSE
     )
   )
 }
