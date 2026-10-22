@@ -34,10 +34,16 @@ reference:
       recognised format in its own fields.
     contents:
       - starts_with("readers_")
+  - title: Spectral libraries
+    desc: >
+      mzLib's .msl spectral libraries, read with mzLib's own reader: every precursor, and its
+      fragment ions on request.
+    contents:
+      - starts_with("library_")
   - title: SDRF-Proteomics experimental designs
     desc: >
       Read one design file or pool several, ask whether each is well-formed and informative, and
-      read the label-free design a quantification takes.
+      read the label-free or isobaric design a quantification takes, restricted to one search's files.
     contents:
       - starts_with("sdrf_")
   - title: Isobaric kits
@@ -47,11 +53,14 @@ reference:
   - title: Protein databases
     desc: >
       What an accession is, which gene it resolves to, whether a peptide is unique, and what each
-      protein group does in Gene Ontology terms.
+      protein group does in Gene Ontology terms; where a residue is in another sequence, which
+      entry an accession names, and which genes are orthologous across species.
     contents:
       - starts_with("proteins_")
   - title: PRIDE Archive
-    desc: List a project's files and download the ones you choose.
+    desc: >
+      List a project's files, download the ones you choose, and check a download against the
+      MD5 and exact size PRIDE recorded.
     contents:
       - starts_with("pride_")
   - title: Peptidoforms
@@ -105,6 +114,7 @@ articles:
     navbar: ~
     contents:
       - readers
+      - library
       - sdrf
       - isobaric
       - pride

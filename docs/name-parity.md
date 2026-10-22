@@ -31,6 +31,8 @@ is the only renaming mzLibR is entitled to do.
 | `flashlfq_protein_count()` | `FlashLfqResults.protein_count` | 0 identical |
 | `flashlfq_quantify()` | `flashlfq.quantify` | 15 identical |
 | `isobaric_kits()` | `isobaric.kits` | 2 identical |
+| `library_read()` | `library.read` | 7 identical |
+| `library_read_many()` | `library.read_many` | 7 identical |
 | `mzlibr_bridge_path()` | *none* | transport; pyMzLib's equivalent is private (_bridge) |
 | `mzlibr_bridge_version()` | *none* | transport; pyMzLib's equivalent is pymzlib.bridge_version, outside the modules compared here |
 | `mzlibr_install_bridge()` | *none* | no pyMzLib counterpart: a wheel carries the payload, so Python never has to fetch one. CRAN forbids downloading at install time and writing outside tempdir() without consent, so here the download has to be a function the user calls. |
@@ -40,13 +42,21 @@ is the only renaming mzLibR is entitled to do.
 | `pride_approximate_total_size_bytes()` | `pride.approximate_total_size_bytes` | 1 identical |
 | `pride_download()` | `pride.download` | 6 identical |
 | `pride_download_files()` | `pride.download_files` | 4 identical |
+| `pride_file_checksums()` | `pride.file_checksums` | 2 identical |
 | `pride_list_files()` | `pride.list_files` | 3 identical |
 | `pride_list_ftp_files()` | `pride.list_ftp_files` | 2 identical |
 | `pride_locations()` | *none* | R-only: unnests the `locations` list column, which is pyMzLib's PrideFile.locations field |
 | `pride_search()` | `pride.search` | 3 identical |
 | `pride_total_size_bytes()` | `pride.total_size_bytes` | 1 identical |
+| `proteins_align()` | `proteins.align_many` | 7 identical |
+| `proteins_alignments()` | `Alignments.alignments` | 0 identical |
 | `proteins_annotate_go()` | `proteins.annotate_go` | 10 identical |
+| `proteins_build_orthology()` | `proteins.build_orthology` | 9 identical |
 | `proteins_classify_peptides()` | `proteins.classify_peptides` | 5 identical |
+| `proteins_map_source_to_target()` | `Alignment.map_source_to_target` | 1 identical |
+| `proteins_map_target_to_source()` | `Alignment.map_target_to_source` | 1 identical |
+| `proteins_orthology_pair()` | `OrthologySnapshot.pair` | 2 identical |
+| `proteins_parse_accessions()` | `proteins.parse_accessions` | 2 identical |
 | `proteins_read()` | `proteins.read` | 8 identical |
 | `proteins_resolve_genes()` | `proteins.resolve_genes` | 8 identical |
 | `proteins_update_go()` | `proteins.update_go` | 2 identical |
@@ -82,14 +92,17 @@ is the only renaming mzLibR is entitled to do.
 | `sdrf_has_repeated_columns()` | `SdrfDocument.has_repeated_columns` | 0 identical |
 | `sdrf_index_of()` | `SdrfDocument.index_of` | 1 identical |
 | `sdrf_indexes_of()` | `SdrfDocument.indexes_of` | 1 identical |
+| `sdrf_isobaric_design()` | `sdrf.isobaric_design` | 9 identical |
 | `sdrf_lint()` | `sdrf.lint` | 2 identical |
 | `sdrf_parse_ages()` | `sdrf.parse_ages` | 2 identical |
 | `sdrf_pool()` | `sdrf.pool` | 5 identical |
 | `sdrf_ragged_row_count()` | `SdrfDocument.ragged_row_count` | 0 identical |
 | `sdrf_read()` | `sdrf.read` | 4 identical |
 | `sdrf_records()` | `SdrfDocument.records` | 0 identical |
+| `sdrf_restrict()` | `sdrf.restrict` | 6 identical |
 | `sdrf_samples()` | `sdrf.samples` | 2 identical |
 | `sdrf_samples_many()` | `sdrf.samples_many` | 4 identical |
+| `sdrf_searched_data_files()` | `RestrictedSdrf.searched_data_files` | 0 identical |
 | `sdrf_source_documents()` | `PooledSdrf.source_documents` | 0 identical |
 | `sdrf_validate()` | `sdrf.validate` | 2 identical |
 | `sdrf_validate_many()` | `sdrf.validate_many` | 4 identical |
@@ -113,6 +126,8 @@ is the only renaming mzLibR is entitled to do.
 | `IsobaricKits.channels` | the channels are `records`, a data.frame |
 | `IsobaricKits.kits` | `split(records, records$kit)`, and the per-kit summaries are `kits` |
 | `IsobaricKits.kit_named` | `records[records$kit == name, ]` |
+| `LibraryFileReport.ok` | a column test on `files`: `is.na(error_kind)` |
+| `LibraryBatch.failed_files` | a row filter on `files`: `batch$files[!is.na(batch$files$error_kind), ]` |
 | `Peptide.is_modified` | a column comparison, `modification_count > 0` |
 | `Digest.fragment_count` | `nrow(digest$fragments)`; not promoted to a function because, for ETD, a bare total folds in the extra full-length z-dot per peptide — see ?digest_fragments_by_series |
 | `SequenceConversions.outputs` | `records$output` |
@@ -128,9 +143,14 @@ is the only renaming mzLibR is entitled to do.
 | `PrideFtpFile.as_dict` | meaningless in R: the data.frame is already the record |
 | `PrideProjectSearchResult.matched_fields` | a list column of pride_search(), `matched_fields`: the sorted names of `highlights` |
 | `PrideProjectSearchResult.as_dict` | meaningless in R: the data.frame is already the record |
+| `PrideFileChecksum.as_dict` | meaningless in R: the data.frame is already the record |
 | `ProteinDatabase.taxonomy` | two columns of `proteins`: `setNames(db$proteins$ncbi_taxonomy_id, db$proteins$accession)` |
 | `ProteinDatabase.organisms` | two columns of `proteins`: `setNames(db$proteins$organism, db$proteins$accession)` |
 | `PeptideClassification.sharing_of` | two columns of `peptides`: `setNames(calls$peptides$sharing, calls$peptides$peptide)` |
+| `proteins.align` | proteins_align(list(c(source, target))): one pair is a list of one, as the spec spells the R call |
+| `ParsedAccessions.entry_of` | two columns of `records`: `setNames(parsed$records$entry_accession, parsed$records$input)` |
+| `PairStatus.genes` | a row filter on `records`: `ps$records$gene_id[ps$records$status == status]` |
+| `WrittenSnapshot.manifest` | an element, `written$manifest`, not a function |
 | `Peptide.intensity` | a row of the long `peptides` frame |
 | `Peptide.detection_type` | a column of the long `peptides` frame |
 | `ProteinGroup.intensity` | a row of the long `proteins` frame |
@@ -155,28 +175,12 @@ is the only renaming mzLibR is entitled to do.
 | `SdrfSamples.ages` | `records[records$column_name == "characteristics[age]", ]` |
 | `SdrfSamples.conflicts` | `records[records$status == "conflicting", c("source_name", "column_name")]` |
 | `SdrfDesign.files` | the runs are `records`, a data.frame; its rows are the files |
+| `SdrfIsobaricDesign.channels` | the rows are `records`, a data.frame; its rows are the channels |
 | `ModeratedFit.rows` | `records[records$coefficient == name, ]` |
 | `ModeratedContrasts.rows` | `contrasts$records[contrasts$records$contrast == id, ]` |
 | `Adjusted.bh_adjusted` | `records$bh_adjusted` |
 | `CombinedPValues.p_values` | `setNames(records$p_value, records$feature)` |
 | `EntrapmentFdpEstimates.at` | `records[records$q_value_threshold == threshold, ]`, zero rows where nothing was discovered |
-| `PrideFileChecksum.as_dict` | **UNACCOUNTED FOR** |
-| `pride.file_checksums` | **UNACCOUNTED FOR** |
-| `RestrictedSdrf.searched_data_files` | **UNACCOUNTED FOR** |
-| `sdrf.restrict` | **UNACCOUNTED FOR** |
-| `SdrfIsobaricDesign.channels` | **UNACCOUNTED FOR** |
-| `sdrf.isobaric_design` | **UNACCOUNTED FOR** |
-| `Alignment.map_source_to_target` | **UNACCOUNTED FOR** |
-| `Alignment.map_target_to_source` | **UNACCOUNTED FOR** |
-| `Alignments.alignments` | **UNACCOUNTED FOR** |
-| `ParsedAccessions.entry_of` | **UNACCOUNTED FOR** |
-| `WrittenSnapshot.manifest` | **UNACCOUNTED FOR** |
-| `PairStatus.genes` | **UNACCOUNTED FOR** |
-| `OrthologySnapshot.pair` | **UNACCOUNTED FOR** |
-| `proteins.align_many` | **UNACCOUNTED FOR** |
-| `proteins.align` | **UNACCOUNTED FOR** |
-| `proteins.parse_accessions` | **UNACCOUNTED FOR** |
-| `proteins.build_orthology` | **UNACCOUNTED FOR** |
 
 ## data.frame columns against the wire
 
@@ -320,22 +324,22 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 |---|---|---|---|---|---|
 | `diff design` | `diff_design()` | — | 2 params, 11 fields with units | `diff_design_malat.json` | ok |
 | `diff observations` | `diff_observations()` | — | 9 params, 11 fields with units | `diff_observations_mm_mbr_kept.json` | ok |
-| `genes orthology` | `proteins_build_orthology` | — | *not projected yet* | | |
+| `genes orthology` | `proteins_build_orthology()` | — | 6 params, 11 fields with units | `genes_orthology_pair_status.json` | ok |
 | `genes resolve` | `proteins_resolve_genes()` | 0.1.0 | 7 params, 8 fields with units | `genes_resolve_human.json` | ok |
 | `isobaric kits` | `isobaric_kits()` | — | 1 params, 6 fields with units | `isobaric_kits.json` | ok |
-| `library read` | `library_read` | — | *not projected yet* | | |
+| `library read` | `library_read()`, `library_read_many()` | — | 12 params, 40 fields with units | `library_read_synthetic.json` | ok |
 | `modifications resolve` | `modifications_resolve` | — | *not projected yet* | | |
 | `peptidoform convert` | `peptidoform_convert()` | — | 5 params, 4 fields with units | `peptidoform_convert_unimod.json` | ok |
 | `peptidoform fragments` | `peptidoform_fragments()` | 0.1.0 | 10 params, 12 fields with units | `peptidoform_P02768_small.json` | ok |
-| `pride checksums` | `pride_file_checksums` | — | *not projected yet* | | |
+| `pride checksums` | `pride_file_checksums()` | — | 1 params, 1 fields with units | `pride_PXD000001_checksums.json` | ok |
 | `pride download` | `pride_download()`, `pride_download_files()` | 0.1.0 | 8 params, 0 fields with units | no fixture | ok |
 | `pride files` | `pride_list_files()` | 0.1.0 | 2 params, 1 fields with units | `pride_PXD000001_files.json` | ok |
 | `pride ftp-files` | `pride_list_ftp_files()` | 0.1.0 | 1 params, 1 fields with units | `pride_ftp_PXD000001.json` | ok |
 | `pride search` | `pride_search()` | 0.1.0 | 2 params, 6 fields with units | `pride_search_plasmodium.json` | ok |
-| `proteins align` | `proteins_align` | — | *not projected yet* | | |
+| `proteins align` | `proteins_align()` | — | 6 params, 11 fields with units | `proteins_align_many.json` | ok |
 | `proteins annotate-go` | `proteins_annotate_go()` | — | 9 params, 9 fields with units | `proteins_annotate_go_pxd036557.json` | ok |
 | `proteins classify-peptides` | `proteins_classify_peptides()` | 0.1.0 | 4 params, 6 fields with units | `proteins_classify_peptides.json` | ok |
-| `proteins parse-accession` | `proteins_parse_accessions` | — | *not projected yet* | | |
+| `proteins parse-accession` | `proteins_parse_accessions()` | — | 1 params, 3 fields with units | `proteins_parse_accession.json` | ok |
 | `proteins read` | `proteins_read()` | 0.1.0 | 7 params, 7 fields with units | `proteins_read_human.json` | ok |
 | `proteins update-go` | `proteins_update_go()` | — | 1 params, 0 fields with units | `proteins_update_go.json` | ok |
 | `ptmqtl occupancy` | `ptmqtl_occupancy()` | — | 5 params, 9 fields with units | `ptmqtl_occupancy_fractions.json` | ok |
@@ -355,12 +359,12 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 | `readers read-spectra` | `readers_read_spectra()`, `readers_read_spectra_many()` | 0.1.0 | 12 params, 41 fields with units | `readers_spectra_mzml.json` | ok |
 | `sdrf assess` | `sdrf_assess()`, `sdrf_assess_many()` | 0.1.0 | 4 params, 16 fields with units | `sdrf_assess_cohort.json` | ok |
 | `sdrf design` | `sdrf_design()` | — | 4 params, 1 fields with units | `sdrf_design_PXD067622.json` | ok |
-| `sdrf isobaric-design` | `sdrf_isobaric_design` | — | *not projected yet* | | |
+| `sdrf isobaric-design` | `sdrf_isobaric_design()` | — | 8 params, 3 fields with units | `sdrf_isobaric_design_PXD008841.json` | ok |
 | `sdrf lint` | `sdrf_lint()` | 0.1.0 | 1 params, 3 fields with units | `sdrf_lint_cohort.json` | ok |
 | `sdrf parse-age` | `sdrf_parse_ages()` | 0.1.0 | 1 params, 5 fields with units | `sdrf_parse_age.json` | ok |
 | `sdrf pool` | `sdrf_pool()` | 0.1.0 | 4 params, 4 fields with units | `sdrf_pool_two.json` | ok |
 | `sdrf read` | `sdrf_read()` | 0.1.0 | 3 params, 3 fields with units | `sdrf_read_PXD000070.json` | ok |
-| `sdrf restrict` | `sdrf_restrict` | — | *not projected yet* | | |
+| `sdrf restrict` | `sdrf_restrict()` | — | 5 params, 5 fields with units | `sdrf_restrict_PXD008841.json` | ok |
 | `sdrf samples` | `sdrf_samples()`, `sdrf_samples_many()` | 0.1.0 | 4 params, 15 fields with units | `sdrf_samples_cohort.json` | ok |
 | `sdrf validate` | `sdrf_validate()`, `sdrf_validate_many()` | 0.1.0 | 4 params, 10 fields with units | `sdrf_validate_cohort.json` | ok |
 | `stats adjust` | `stats_adjust()` | — | 1 params, 5 fields with units | `stats_adjust.json` | ok |
@@ -379,20 +383,5 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 
 ## Anything needing a reason
 
-- PrideFileChecksum.as_dict: pyMzLib callable with no mzLibR function and no reason given
-- pride.file_checksums: pyMzLib callable with no mzLibR function and no reason given
-- RestrictedSdrf.searched_data_files: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.restrict: pyMzLib callable with no mzLibR function and no reason given
-- SdrfIsobaricDesign.channels: pyMzLib callable with no mzLibR function and no reason given
-- sdrf.isobaric_design: pyMzLib callable with no mzLibR function and no reason given
-- Alignment.map_source_to_target: pyMzLib callable with no mzLibR function and no reason given
-- Alignment.map_target_to_source: pyMzLib callable with no mzLibR function and no reason given
-- Alignments.alignments: pyMzLib callable with no mzLibR function and no reason given
-- ParsedAccessions.entry_of: pyMzLib callable with no mzLibR function and no reason given
-- WrittenSnapshot.manifest: pyMzLib callable with no mzLibR function and no reason given
-- PairStatus.genes: pyMzLib callable with no mzLibR function and no reason given
-- OrthologySnapshot.pair: pyMzLib callable with no mzLibR function and no reason given
-- proteins.align_many: pyMzLib callable with no mzLibR function and no reason given
-- proteins.align: pyMzLib callable with no mzLibR function and no reason given
-- proteins.parse_accessions: pyMzLib callable with no mzLibR function and no reason given
-- proteins.build_orthology: pyMzLib callable with no mzLibR function and no reason given
+None. Every parameter matches its parent, every column is either a wire field or a
+declared derivation, and every help page states the units its spec gives.
