@@ -133,6 +133,12 @@ S3method(print, mzlibr_diff_design)
 S3method(print, mzlibr_design_stratum)
 S3method(print, mzlibr_observations)
 
+export(ptmqtl_occupancy)
+export(ptmqtl_pairs)
+export(ptmqtl_trait_effects)
+S3method(print, mzlibr_site_occupancy)
+S3method(print, mzlibr_ptm_pairs)
+S3method(print, mzlibr_trait_effects)
 
 export(proteins_annotate_go)
 export(proteins_classify_peptides)
