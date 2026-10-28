@@ -116,9 +116,9 @@ pyMzLib and mzLibRust - generated from the bridge's per-verb specs, and every pa
 that `R CMD check` runs. `?mzlib_error` explains the condition classes.
 
 - **[The documentation site](https://smith-chem-wisc.github.io/mzLibR/)** - the help pages and an
-  article per module: reading files, SDRF, isobaric kits, PRIDE, protein databases and GO,
-  peptidoforms, FlashLFQ, differential abundance, differential design and observations, and PTM
-  occupancy. The articles are also the package's
+  article per module: reading files, spectral libraries, SDRF, isobaric kits, PRIDE, protein
+  databases and GO, peptidoforms, FlashLFQ, differential abundance, differential design and
+  observations, and PTM occupancy. The articles are also the package's
   vignettes, `browseVignettes("mzLibR")`, and `R CMD check` runs every one.
 - [`docs/reference-facts.md`](https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/reference-facts.md) - for contributors: how the
   help pages are generated from the specs and checked against them.
