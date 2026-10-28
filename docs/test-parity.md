@@ -45,6 +45,27 @@ Two things the port established that are worth carrying back to the other bindin
 **mzLibRust should get this module too.** Everything above is a property of mzLib and the wire,
 not of R.
 
+## pyMzLib 0.6.0's data verbs
+
+Ported with pyMzLib 0.6.0's tests, case for case, from the same recordings, byte for byte. The
+offline cases run each public function through the package's own transport and verb check against
+a recording (`recorded_bridge_call()` in `tests/cases/harness.R`), where pyMzLib monkeypatches
+`invoke`; the live cases run against the 0.6.0 bridge.
+
+| pyMzLib | mzLibR | what differs, and why |
+|---|---|---|
+| `test_pride.py` (checksums), `test_pride_live.py` (checksums) | `test-pride-checksums.R` | The checksums are a data.frame with the file names as row names, not a dict; a row missing its MD5 or size is an `mzlib_protocol_error` where pyMzLib raises `KeyError`. |
+| `test_proteins_align.py` | `test-proteins-align.R` | `align()` and `align_many()` are one function, `proteins_align()`, over a list of pairs; the one-pair cases pass a list of one. `pair_index` is 1-based. The DYNC1I2 and albumin sequences come from the recorded `proteins_read_sequences.json`, not the FASTA files, which mzLibR does not carry. |
+| `test_proteins_orthology.py`, `test_proteins_live.py` (align, parse-accession, orthology) | `test-proteins-orthology.R`, `test-proteins-align.R` | The species maps are named character vectors; `gene_sets` and `dumps` are data.frames. The orthology inputs are copied into `tests/orthology/` (outside `tests/fixtures/`, so no path in the tarball passes 100 bytes), and a test holds them byte-exact. |
+| `test_library.py`, `test_library_live.py` | `test-library.R` | `precursor_index` and `source_index` are 1-based. The live cases read the two `.msl` libraries from pyMzLib's `tests/fixtures/library/` (`MZLIBR_SDRF_FIXTURES`): an `.msl` begins with the bytes R CMD check takes for a Windows executable, so they are not copied. |
+| `test_sdrf_isobaric_design.py`, `test_sdrf_restrict.py` | `test-sdrf-isobaric.R` | The searched files of `sdrf_restrict()` are a character vector named by acquired file, not a dict. The design's searched files on stdin carry no trailing newline, as `sdrf_design()`'s do. |
+
+Eliminated by R's semantics: `test_bad_accession_lists_are_refused_before_the_bridge`'s bare-string
+case and the bare-string pair cases of `test_bad_pairs_are_refused_before_the_bridge`. A
+length-one character vector is the correct input for `proteins_parse_accessions()`; a bare
+character vector given as `pairs` is refused as not a list. `test_an_int_release_is_sent_as_its_digits`
+becomes "a whole-number release", since R's `116` is a double.
+
 ## Eliminated by R's semantics
 
 These parent tests defend against something R cannot express. Porting them would have added
@@ -57,6 +78,35 @@ unreachable branches, and unreachable checks rot.
 | `test_as_dict_includes_the_computed_properties` | `PrideFile.as_dict()` has no meaning in R: the data.frame row already is the record, and the computed properties are columns. |
 | `test_spectra_must_be_a_list_not_a_string` | Same reason: a character vector of paths is the idiomatic input, and one path is a vector of length one. mzLibR does still refuse a non-character, non-data.frame `spectra`. |
 | `test_boolean_max_threads_raises` | Python's `bool` is an `int`, so `max_threads=True` silently means 1. R's `TRUE` is not numeric and `is.numeric()` rejects it, which the existing type check already covers. |
+
+## `stats` (new verbs), `diff` and `ptmqtl` — the pyMzLib 0.6.0 port
+
+Every offline test of `test_stats.py` (contrasts and the estimator), `test_stats_combine_correlate.py`,
+`test_stats_models.py`, `test_diff.py` and `test_ptmqtl.py` has a counterpart in `test-stats.R`,
+`test-stats-combine.R`, `test-stats-models.R`, `test-diff.R` and `test-ptmqtl.R`: what each call sends
+(and that an option left out is not sent, so mzLib's default applies), what the recording parses to,
+and every refusal before the bridge. Every live test of their `_live.py` files is a `LIVE:` test
+here: each recording is what the 0.6.0 bridge returns today (closed-form fits to 1e-9 relative,
+`stats fit-mixed` and the marginal-likelihood prior to 1e-6, as pyMzLib holds them), the caveats
+are unchanged, and each refusal crosses as `mzlib_usage_error`. Each module also has a replay test:
+the stand-in bridge must pick the one recording a call fits, by its coefficients, model, runs,
+tests or options (the rules pyMzLib 0.6.0's `replay_bridge.py` added, ported to `R/replay.R`).
+
+Adapted for R's semantics: pyMzLib's `TypeError` for a missing `method`, `ratio`, `type` or
+`basis` is an `mzlib_usage_error` here, raised before the bridge; `FactorSpec`/`CovariateSpec` are
+`factor_spec()`/`covariate_spec()`; tuples of runs or tests are data.frames; `Design.stratum(key)` is
+`strata[[key]]`. The old-bridge guard is tested through `stats_fit_answer()`'s `invoke` seam, the R
+counterpart of pyMzLib's monkeypatched `_bridge.invoke`.
+
+Present here and not in pyMzLib, because R has the reference implementations at hand:
+
+| mzLibR test | what it holds |
+|---|---|
+| `the recorded combinations are R's pchisq() and qnorm() answers, to 1e-8` | Fisher and weighted Stouffer written in base R, against the recordings |
+| `the recorded Spearman correlations are stats::cor.test()'s, run here, to 1e-8` | every estimable row of the limma reference correlation, exact and asymptotic, against `cor.test()`; rho = ±1 rows, where mzLib's p is 0, noted |
+| `the recorded logistic fit is glm(family = binomial) run here, feature by feature` | `glm.fit(epsilon = 1e-14)` per fitted feature |
+| `the recorded REML fit is nlme::lme() run here, to 1e-5` | the first ten features of mzLib's reference input, when nlme is installed |
+| `the recorded design matrix is R's model.matrix(), run here and as recorded` | `model.matrix(~ condition + batch + I((age - 50)/10))` |
 
 ## Deliberately not ported
 

@@ -47,7 +47,8 @@ Files are streamed to a temporary name and moved into place only once complete, 
 interrupted download never leaves a truncated file under its real name. A transfer that fails
 after mzLib's retries leaves \code{<name>.partial} and \code{<name>.partial.validator} in \code{destination} on
 purpose: the next call for that file resumes from them (mzLib #1412). Leave them in place, or
-delete both to start over.
+delete both to start over. Their bytes are \strong{not} checked against PRIDE's record: compare a
+file that matters with \code{\link{pride_file_checksums}}.
 }
 \details{
 Prefer \code{\link{pride_download_files}} when you can. \code{category} and \code{extensions} can only express
@@ -58,7 +59,7 @@ MGF" cannot be said in that vocabulary at all - and can all be said with \code{[
 A character vector of the paths where the files now are.
 }
 \section{Wraps}{
-Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.DownloadProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}
@@ -104,7 +105,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item Since mzLib 1.0.594 (#1412), PrideArchiveClient retries a transient failure, that request alone, after 5, 20 and 60 s (a 429 or 503 Retry-After of up to 60 s replaces the wait); transient means no HTTP status at all, 408, 429, any 5xx, or a 403 from ftp.pride.ebi.ac.uk, EBI's rate limit. Each attempt can take up to the client's 100 s timeout, so a service that hangs takes up to about 485 s per request before the failure is reported. A binding's own timeout shorter than that reports a hanging outage as a timeout, not as service_unavailable.
 \item Selects from PRIDE's REST manifest (pride files), which omits some files; a file listed only by pride ftp-files cannot be downloaded by this verb.
 \item Files are fetched one at a time, in manifest order. Each streams to '<name>.partial' and is moved into place only when complete, so an interrupted transfer never leaves a truncated file under its final name; files finished before a failure stay on disk. Since mzLib 1.0.594 (#1412), a transfer that fails after its retries leaves '<name>.partial' and '<name>.partial.validator' in dest on purpose: the next call resumes from them. dest can therefore hold these pairs after a failed call.
-\item No size, MD5 or EBI error-page check reaches this verb. mzLib 1.0.595 verifies a download against PRIDE's checksums and the announced size, and scans a small body for EBI's error text (#1427, #1449: on 2026-10-07 and 08 about 23 of about 70 large transfers came back at the right size holding an error page), but only on the DownloadFileAsync overload that takes a PrideFileChecksum. DownloadProjectFilesAsync, which this verb calls, uses the overload without one, so such a file is reported as downloaded. Verify large files yourself until the bridge can ask for the check.
+\item No size, MD5 or EBI error-page check reaches this verb. mzLib 1.0.595 verifies a download against PRIDE's checksums and the announced size, and scans a small body for EBI's error text (#1427, #1449: on 2026-10-07 and 08 about 23 of about 70 large transfers came back at the right size holding an error page), but only on the DownloadFileAsync overload that takes a PrideFileChecksum. DownloadProjectFilesAsync, which this verb calls, uses the overload without one, so such a file is reported as downloaded. Verify large files yourself, against the size and MD5 pride checksums lists, until the bridge can ask for the check.
 \item A filter that matches nothing, or an unknown accession, succeeds with downloaded_count 0 on the wire. The bindings raise a usage error when a category or ext filter matched nothing.
 \item Downloads can be very large (PXD000001's single .raw is about 220 MB); list first and filter or select.
 }
