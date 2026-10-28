@@ -149,7 +149,9 @@ test_that("trait_effects sends only what was given", {
     c("ptmqtl", "trait-effects", "--occupancy", "occ.tsv", "--runs", "runs.tsv"))
   every <- mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", 8, 5, 1e-6, TRUE)
   expect_identical(every[7:11], c("--min-runs", "8", "--min-replicates", "5", "--logit-epsilon"))
-  expect_identical(as.numeric(every[[12L]]), 1e-6)
+  # The wire text itself, not as.numeric() of it: R reads 17-digit text through long double, which is only
+  # double on Apple silicon, so the round trip lands a bit off there while mzLib (C#) parses it exactly.
+  expect_identical(every[[12L]], "9.9999999999999995e-07")
   expect_identical(every[[13L]], "--keep-ceiling")
   expect_error(mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", 6.5, NULL, NULL, FALSE), class = "mzlib_usage_error",
     contains = "min_runs must be a whole number")
