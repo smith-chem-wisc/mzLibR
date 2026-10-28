@@ -52,6 +52,10 @@ failure at once.
 not the plex, which you declare with exactly one of \code{plex_column}, \code{plex_file_name_pattern} and
 \code{single_plex}. Giving none, or several, is mzLib's refusal.
 
+Channel labels are read by mzLib's \code{SdrfIsobaricLabels}, the rule \code{\link{isobaric_kits}}'s
+\code{sdrf_label} writes: for TMT10, \code{TMT131} (PRIDE's spelling of the last channel) names \code{131N}
+(mzLib #1467); for TMT11, where \code{131N} and \code{131C} are both channels, it is still refused.
+
 \strong{The numbers are 1-based, as the SDRF writes them.} \code{\link{sdrf_design}}'s are 0-based. That split
 is mzLib's, and mzLibR converts neither.
 }
@@ -98,7 +102,7 @@ has it.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf isobaric-design}. Generated from the bridge's verb spec \code{sdrf.isobaric-design.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf isobaric-design}. Generated from the bridge's verb spec \code{sdrf.isobaric-design.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Readers/Sdrf/SdrfIsobaricDesign.cs}{\code{SdrfIsobaricDesign.Read}} in \code{mzLib/Readers/Sdrf/SdrfIsobaricDesign.cs} at mzLib \code{d10017ce}
@@ -185,6 +189,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item Nothing is guessed. The kit is only the one named, because one kit's labels can be a subset of another's (TMT11 with 131C unannotated reads exactly like TMT10). The plex is only the source declared; comment[sample preparation batch] is often not a plex (in PXD061609 it holds three fractionation arms of one plex).
 \item Rows are the annotated channels only. mzLib's quantification design (ToExperimentalDesign) carries every kit channel, an unannotated one with biological replicate 0 and no sample; that design is not on the wire.
 \item A plex is one channel-to-sample map: every file of a plex carries all of its channels, so fractions share their samples.
+\item Channel labels are read through mzLib's SdrfIsobaricLabels, one rule for readers and writers. For TMT10, TMT131 (PRIDE's spelling of the last channel) names 131N (since mzLib #1467); TMT131 is still refused for TMT11, where 131N and 131C are both channels.
 \item Sample type is not read (mzLib MAP-08): every annotated channel is a study sample, a reference or pool channel included.
 \item \code{--out} names a folder. MetaMorpheus reads TmtDesign.txt only from the folder of the first spectra file, and refuses a folder that also holds ExperimentalDesign.tsv. mzLib's writer replaces an existing TmtDesign.txt; MetaMorpheus's own \code{--sdrf}Design never does.
 \item TMT16 is mzLib's TMTpro 16-plex. MetaMorpheus searches it with its TMT18 label; a TMT16 design is read as is by such a run, with 134C and 135N empty.

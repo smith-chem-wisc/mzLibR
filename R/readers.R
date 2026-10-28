@@ -209,6 +209,9 @@ readers_build_read_args <- function(path, limit, offset, out, verb = "read-resul
 #' dispatch works: a DIA-NN report is recognised by its columns, not its name, so a renamed
 #' `report.tsv` still reads, and any `.parquet` whose columns include `Precursor.Id`,
 #' `Stripped.Sequence` and `Run` is a `DiaNnReportParquet` while any other `.parquet` is refused.
+#' A `.parquet` mzLib cannot open at all - another process holds it, or you may not read it - is an
+#' `mzlib_bridge_error` naming the I/O failure (`IOException` or `UnauthorizedAccessException`,
+#' mzLib #1478), not that refusal.
 #'
 #' @seealso [readers_identify()]
 #' @spec readers.formats

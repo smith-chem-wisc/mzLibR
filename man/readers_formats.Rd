@@ -43,10 +43,13 @@ told apart by what the directory holds, and several formats share \code{.tsv}. N
 dispatch works: a DIA-NN report is recognised by its columns, not its name, so a renamed
 \code{report.tsv} still reads, and any \code{.parquet} whose columns include \code{Precursor.Id},
 \code{Stripped.Sequence} and \code{Run} is a \code{DiaNnReportParquet} while any other \code{.parquet} is refused.
+A \code{.parquet} mzLib cannot open at all - another process holds it, or you may not read it - is an
+\code{mzlib_bridge_error} naming the I/O failure (\code{IOException} or \code{UnauthorizedAccessException},
+mzLib #1478), not that refusal.
 
 }
 \section{Wraps}{
-Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileType}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}

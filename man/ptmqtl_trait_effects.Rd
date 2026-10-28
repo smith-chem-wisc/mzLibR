@@ -9,7 +9,9 @@ ptmqtl_trait_effects(occupancy, runs, min_runs = NULL, min_replicates = NULL,
 }
 \arguments{
 \item{occupancy}{The table \code{\link{ptmqtl_occupancy}} writes with \code{out} (columns found by header name).
-  A \code{fraction} cell is used as written, as mzLib does for a stored fraction.}
+  A \code{fraction} cell is used as written, as mzLib does for a stored fraction. The peptidoform
+  counts the 0.7.0 bridge writes are read if present and not used by the fit, so a table written
+  before them reads too.}
 
 \item{runs}{A TSV with a header row, then one row per run: the run, its biological replicate, the
   trait (its header names it; any unit), then any covariates (each header names one). A run with
@@ -32,7 +34,7 @@ ptmqtl_trait_effects(occupancy, runs, min_runs = NULL, min_replicates = NULL,
 
 }
 \description{
-Per site, the effect of a per-run trait on logit occupancy, from a random-intercept mixed model per site, so that repeated runs of one biological replicate are not counted as independent.
+Per site, the effect of a per-run trait on the log odds of occupancy (natural log or log2), from a random-intercept mixed model per site, so that repeated runs of one biological replicate are not counted as independent.
 
 The model, per site, is logit(occupancy) = b0 + b_trait x trait + covariates + a random intercept
 per biological replicate + error, fitted by REML (mzLib's \code{MixedModel}). The random intercept is
@@ -51,22 +53,27 @@ An \code{mzlibr_trait_effects}:
     \code{site_key}, \code{protein_accession}, \code{position}, \code{residue} and \code{modification}, as
     \code{\link{ptmqtl_occupancy}} writes them; \code{status}, one of \code{"fitted"}, \code{"below_support"},
     \code{"too_few_observations"}, \code{"rank_deficient"}, \code{"too_few_groups"}, \code{"variance_ratio_at_limit"}
-    or \code{"not_converged"}; \code{effect} (logit occupancy per trait unit), the change in
-    logit(occupancy) per unit of the trait, so \code{exp(effect)} is the odds ratio, \code{NA} when not
-    fitted; \code{standard_error} (logit occupancy per trait unit); \code{df} (degrees of freedom), by the
+    or \code{"not_converged"}; \code{effect} (log odds of occupancy per trait unit, on the scale \code{scale}
+    reports; logit occupancy per trait unit at mzLib's default, \code{"natural_log_odds"}), the change in
+    the log odds of occupancy per unit of the trait, so \code{exp(effect)} is the odds ratio, \code{NA} when
+    not fitted; \code{standard_error} (log odds of occupancy per trait unit, as \code{scale}); \code{df}
+    (degrees of freedom), by the
     containment rule; \code{p_value}, a fraction (0 to 1), two-sided, for the trait; \code{q}, a fraction
     (0 to 1), Benjamini-Hochberg over this call's fitted sites; \code{runs}, runs contributing a
     response; \code{replicates}, distinct replicates among them; \code{median_fraction} (fraction, 0 to 1),
-    median occupancy over those runs; \code{covariate_effects} (logit occupancy per covariate unit), a
-    list column, one per covariate in \code{covariate_names} order, each \code{NA} when not fitted;
-    \code{replicate_variance} (squared logit occupancy), between replicates; and \code{residual_variance}
-    (squared logit occupancy), run to run within a replicate. Statistics are \code{NA} where \code{status}
+    median occupancy over those runs; \code{covariate_effects} (log odds of occupancy per covariate
+    unit, as \code{scale}), a list column, one per covariate in \code{covariate_names} order, each \code{NA} when
+    not fitted; \code{replicate_variance} (squared log odds of occupancy, as \code{scale}), between
+    replicates; and \code{residual_variance} (squared log odds of occupancy, as \code{scale}), run to run
+    within a replicate. Statistics are \code{NA} where \code{status}
     is not \code{"fitted"}.
   - \code{occupancy_file} and \code{runs_file}, as absolute paths; \code{trait_name}, the runs table's third
     header; \code{covariate_names}; \code{cell_count} occupancy rows (cells) read; \code{run_count} runs in the
     runs table; \code{trait_run_count}, runs with a trait value (runs); \code{occupancy_runs_not_used};
     \code{min_runs} (runs) and \code{min_replicates} (replicates), the thresholds used, yours or mzLib's
-    default; \code{logit_epsilon} (fraction, 0 to 1), the clamp used; \code{exclude_ceiling};
+    default; \code{logit_epsilon} (fraction, 0 to 1), the clamp used; \code{exclude_ceiling}; \code{scale},
+    the unit of every effect, standard error and variance, \code{"natural_log_odds"} (mzLib's default,
+    the logit) or \code{"log2_odds"} (mzLib #1464; \code{NA} from a bridge before pyMzLib 0.7.0);
     \code{status_counts}, sites (sites) per status; \code{ignored_columns}; \code{row_count} rows;
     \code{column_names}.
   - \code{caveats}: the model and what it leaves out, plus any that apply to this input.
@@ -81,24 +88,26 @@ not a target-decoy q-value.
 
 }
 \section{Wraps}{
-Wire verb \code{ptmqtl trait-effects}. Generated from the bridge's verb spec \code{ptmqtl.trait-effects.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{ptmqtl trait-effects}. Generated from the bridge's verb spec \code{ptmqtl.trait-effects.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{SiteTraitEffects.Fit}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{d10017ce}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{SiteTraitOptions}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{d10017ce}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{SiteTraitEffect}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{d10017ce}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteRunOccupancy}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{SiteTraitEffects.Fit}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{cc67b7a2}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{SiteTraitOptions}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{cc67b7a2}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{SiteTraitEffect}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{cc67b7a2}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteTraitEffects.cs}{\code{OccupancyScale}} in \code{mzLib/Quantification/PtmQtl/SiteTraitEffects.cs} at mzLib \code{cc67b7a2}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteRunOccupancy}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{cc67b7a2}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/MixedModel.cs}{\code{MixedModel.Fit}} in \code{mzLib/StatisticalModels/MixedModel.cs} at mzLib \code{d10017ce}
 }
 }
 \section{Parameters: units, ranges and defaults}{
 \describe{
-\item{\code{occupancy}}{path; required. The occupancy table ptmqtl occupancy \code{--out} writes, one row per (site, run). Columns are found by header name: protein_accession, position (1-based), residue (one letter), modification, run, state (quantified, floor, count_only or not_detected), modified_intensity and covering_intensity (instrument units, finite), unmodified_quantified (true or false), and optionally fraction (fraction, 0 to 1; blank for none), which mzLib then uses instead of modified_intensity / covering_intensity, as it does for a fraction a producer wrote exactly. site_key and category are derived by mzLib and not read; any other column is listed in ignored_columns. A (site, run) given twice is refused, since mzLib's fit would use the first.}
+\item{\code{occupancy}}{path; required. The occupancy table ptmqtl occupancy \code{--out} writes, one row per (site, run). Columns are found by header name: protein_accession, position (1-based), residue (one letter), modification, run, state (quantified, floor, count_only or not_detected), modified_intensity and covering_intensity (instrument units, finite), unmodified_quantified (true or false), and optionally fraction (fraction, 0 to 1; blank for none), which mzLib then uses instead of modified_intensity / covering_intensity, as it does for a fraction a producer wrote exactly, and optionally covering_peptidoforms and modified_peptidoforms (integers; blank for not supplied), read into mzLib's cell; the fit does not use them. site_key and category are derived by mzLib and not read; any other column is listed in ignored_columns. A (site, run) given twice is refused, since mzLib's fit would use the first.}
 \item{\code{runs}}{path; required. A TSV with a header row, then one row per run: the run (as the occupancy table names it), its biological replicate (the random-intercept group, for example the animal or donor), the trait (its header names the trait; any unit, which effect is then per), then any covariates (each header names one; every value finite for a run with a trait). Columns are by position. A run with a blank, NA or NaN trait is not used, as mzLib reads a run absent from the trait. A run of the occupancy table missing here is not used either, and is listed in occupancy_runs_not_used.}
 \item{\code{min_runs} (wire \code{--min-runs})}{int; in \strong{runs}; default \samp{mzLib's SiteTraitOptions.MinRuns, 6 at the pin}; range \code{>= 0}. The fewest runs contributing a response for a site to be fitted; fewer is below_support. Absent, the bridge sets nothing and mzLib's default applies.}
 \item{\code{min_replicates} (wire \code{--min-replicates})}{int; in \strong{replicates}; default \samp{mzLib's SiteTraitOptions.MinReplicates, 4 at the pin}; range \code{>= 0}. The fewest distinct biological replicates among those runs; fewer is below_support. Absent, mzLib's default applies.}
 \item{\code{logit_epsilon} (wire \code{--logit-epsilon})}{float; in \strong{fraction (0 to 1)}; default \samp{mzLib's SiteTraitOptions.LogitEpsilon, 5e-5 at the pin (half the 4-decimal resolution of stored fractions)}; range \code{> 0 and < 0.5}. Each fraction is clamped to [epsilon, 1 - epsilon] before the logit, so 0 and 1 have finite logits. Absent, mzLib's default applies.}
 \item{\code{keep_ceiling} (wire \code{--keep-ceiling})}{flag; default \samp{absent: mzLib's SiteTraitOptions.ExcludeCeiling, true at the pin, so ceilings are left out}. Use a run where the site was seen only modified (a fraction of 1 with unmodified_quantified false) as a response, clamped below 1. mzLib leaves such a ceiling out unless asked.}
+\item{wire \code{--scale}}{string; default \samp{absent: mzLib's SiteTraitOptions.Scale, natural_log_odds at the pin}; range \code{natural_log_odds | log2_odds}. The unit the effects and variances are reported in (mzLib's OccupancyScale, #1464). natural_log_odds: ln(f / (1 - f)), the logit, so exp(effect) is the odds ratio per unit. log2_odds: log2(f / (1 - f)), so an effect of +1 doubles the odds per unit; mzLib divides the natural-log fit's effects and standard errors by ln 2 and its variances by (ln 2)^2, and leaves df, p and q unchanged: a change of unit, not a refit. Absent, the bridge sets nothing and mzLib's default applies. \emph{Not an argument here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later mzLibR port; mzLib's default, natural_log_odds, always applies, and the result's scale says so.}}
 }
 }
 \section{Returned fields}{
@@ -117,12 +126,13 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{min_replicates}}{int; in \strong{replicates}; never \code{NA}. The replicate threshold used: as given, or mzLib's default.}
 \item{\code{logit_epsilon}}{float; in \strong{fraction (0 to 1)}; never \code{NA}. The clamp used: as given, or mzLib's default.}
 \item{\code{exclude_ceiling}}{bool; never \code{NA}. Whether ceiling cells were left out: false with \code{--keep-ceiling}, else mzLib's default.}
+\item{\code{scale}}{string; never \code{NA}. The scale used, natural_log_odds or log2_odds: as given, or mzLib's default. It is the unit of effect, standard_error, covariate_effects and the two variances.}
 \item{\code{status_counts}}{map<string,int>; in \strong{sites}; never \code{NA}. Sites per status, keyed by every status value.}
 \item{\code{ignored_columns}}{string[]; never \code{NA}. Columns of the occupancy file that were not read (other than site_key and category); empty when none.}
 \item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. Sites in the table.}
 \item{\code{column_names}}{string[]; never \code{NA}. The table's columns, in order.}
 \item{\code{records} (wire \code{columns})}{table; never \code{NA}. One row per site with at least one usable response (a quantified cell, not a ceiling unless \code{--keep-ceiling}, in a run with a trait), in ordinal site_key order.}
-\item{\code{caveats}}{string[]; never \code{NA}. Six static caveats; plus one listing occupancy runs not used, one counting sites not fitted by status, and one naming columns not read, when they apply.}
+\item{\code{caveats}}{string[]; never \code{NA}. Seven static caveats, one of them naming the scale and its units; plus one listing occupancy runs not used, one counting sites not fitted by status, and one naming columns not read, when they apply.}
 }
 }
 \section{Columns of \code{records}}{
@@ -133,25 +143,25 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{residue}}{string; never \code{NA}. The one-letter residue.}
 \item{\code{modification}}{string; never \code{NA}. Category:IdWithMotif.}
 \item{\code{status}}{string; never \code{NA}. fitted | below_support (fewer runs or replicates than min_runs or min_replicates) | too_few_observations | rank_deficient | too_few_groups | variance_ratio_at_limit | not_converged (mzLib's MixedModel could not fit it, as stats fit names those outcomes). Only fitted rows carry statistics.}
-\item{\code{effect}}{float; in \strong{logit occupancy per trait unit}; \code{NA} when not fitted (see status). The change in logit(occupancy) per unit of the trait, other covariates held fixed. exp(effect) is the odds ratio of the modified form per trait unit.}
-\item{\code{standard_error}}{float; in \strong{logit occupancy per trait unit}; \code{NA} when not fitted. Standard error of effect.}
+\item{\code{effect}}{float; in \strong{log odds of occupancy per trait unit (natural log or log2, as scale says)}; \code{NA} when not fitted (see status). The change in the log odds of occupancy per unit of the trait, other covariates held fixed. natural_log_odds: exp(effect) is the odds ratio of the modified form per trait unit. log2_odds: 2^effect is, so +1 doubles the odds.}
+\item{\code{standard_error}}{float; in \strong{log odds of occupancy per trait unit (as scale)}; \code{NA} when not fitted. Standard error of effect, on the same scale.}
 \item{\code{df}}{float; in \strong{degrees of freedom}; \code{NA} when not fitted. Denominator degrees of freedom of the t test, by nlme's containment rule: for a trait constant within each replicate, replicates - 1 - the between-replicate coefficients.}
 \item{\code{p_value}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not fitted. Two-sided p-value of the trait coefficient.}
 \item{\code{q}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not fitted, so not in the family. Benjamini-Hochberg over the sites with a p-value in this call. Not a target-decoy q-value.}
 \item{\code{runs}}{int; in \strong{runs}; never \code{NA}. Runs contributing a response.}
 \item{\code{replicates}}{int; in \strong{replicates}; never \code{NA}. Distinct biological replicates among those runs.}
 \item{\code{median_fraction}}{float; in \strong{fraction (0 to 1)}; never \code{NA}. Median occupancy over the contributing runs, before the clamp.}
-\item{\code{covariate_effects}}{float[]; in \strong{logit occupancy per covariate unit}; never \code{NA}. One coefficient per covariate, in covariate_names order; each element null when the site was not fitted. Empty without covariates.}
-\item{\code{replicate_variance}}{float; in \strong{squared logit occupancy}; \code{NA} when not fitted. Between-replicate variance of logit occupancy (the random intercept).}
-\item{\code{residual_variance}}{float; in \strong{squared logit occupancy}; \code{NA} when not fitted. Within-replicate (run-to-run) variance of logit occupancy.}
+\item{\code{covariate_effects}}{float[]; in \strong{log odds of occupancy per covariate unit (as scale)}; never \code{NA}. One coefficient per covariate, in covariate_names order; each element null when the site was not fitted. Empty without covariates.}
+\item{\code{replicate_variance}}{float; in \strong{squared log odds of occupancy (as scale)}; \code{NA} when not fitted. Between-replicate variance of the log odds of occupancy (the random intercept).}
+\item{\code{residual_variance}}{float; in \strong{squared log odds of occupancy (as scale)}; \code{NA} when not fitted. Within-replicate (run-to-run) variance of the log odds of occupancy.}
 }
 }
 \section{Errors}{
 Each is an R condition carrying the class shown and \code{mzlib_error}; see \code{\link{mzlib_error}}.
 
 \describe{
-\item{\code{mzlib_usage_error} (usage)}{occupancy or runs missing, blank or not found; min-runs or min-replicates not an integer or below 0; logit-epsilon not a number, or not above 0 and below 0.5; an option given without a value; keep-ceiling written with a value}
-\item{\code{mzlib_usage_error} (usage)}{the occupancy file empty, header-only, missing a column, with a repeated column name, a row of the wrong width, a position that is not an integer, a residue that is not one letter, a state that is not one of the four, an intensity that is not finite, a fraction that is not a number, unmodified_quantified not true or false, an empty accession, modification or run, or a (site, run) twice}
+\item{\code{mzlib_usage_error} (usage)}{occupancy or runs missing, blank or not found; min-runs or min-replicates not an integer or below 0; logit-epsilon not a number, or not above 0 and below 0.5; scale not natural_log_odds or log2_odds; an option given without a value; keep-ceiling written with a value}
+\item{\code{mzlib_usage_error} (usage)}{the occupancy file empty, header-only, missing a column, with a repeated column name, a row of the wrong width, a position that is not an integer, a residue that is not one letter, a state that is not one of the four, an intensity that is not finite, a fraction that is not a number, a peptidoform count that is not blank or an integer, unmodified_quantified not true or false, an empty accession, modification or run, or a (site, run) twice}
 \item{\code{mzlib_usage_error} (usage)}{the runs file with fewer than three columns, a repeated header after the replicate, a row of the wrong width, an empty or repeated run, or a trait or covariate that is not a number}
 \item{\code{mzlib_usage_error} (usage)}{mzLib refuses the input, in its own words: a run with a trait and no replicate; a run with a trait whose covariates are not all finite; a design (intercept, trait, covariates over the runs with a trait) not of full column rank, such as a constant trait}
 \item{\code{mzlib_bridge_error} (correctness)}{never expected}
@@ -164,6 +174,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item Only quantified cells are responses; floor, count_only and not_detected cells are left out, never entered as 0. This is the intensity part of the question: it says nothing about whether detecting the modification changes with the trait.
 \item Ceiling cells are left out unless keep-ceiling.
 \item Fractions are clamped to [logit_epsilon, 1 - logit_epsilon] before the logit. effect is per unit of the trait as given: rescale the trait to change the unit.
+\item effect, standard_error, covariate_effects and the two variances are on the scale echoed: natural_log_odds (exp(effect) is the odds ratio per unit) or log2_odds (an effect of +1 doubles the odds). log2_odds is the natural-log fit divided by ln 2 (variances by (ln 2)^2); df, p_value and q do not change.
 \item A site with fewer than min_runs runs or min_replicates replicates is below_support, with null statistics; a site with no usable response does not appear.
 \item q adjusts over this call's fitted sites only: not across datasets, and not a target-decoy q-value.
 }

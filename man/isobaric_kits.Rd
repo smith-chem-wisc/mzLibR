@@ -17,7 +17,7 @@ isobaric_kits(kit = NULL, timeout = 60)
 
 }
 \description{
-List the isobaric labelling kits mzLib can name, with every channel's label and reporter-ion m/z.
+List the isobaric labelling kits mzLib can name, with every channel's label, reporter-ion m/z and SDRF label.
 
 Calls mzLib's \code{IsobaricMassTag.TryGetIsobaricMassTag} for each \code{IsobaricMassTagType}, or for the
 one \code{kit} resolves to through \code{IsobaricMassTag.TryGetTagType}. No file, no network.
@@ -35,7 +35,11 @@ An \code{mzlibr_isobaric_kits}: \code{kit}, the name you asked for exactly as gi
   data.frame of \code{kit} and \code{channel_count}, in mzLib's order; \code{caveats}; and \code{records}, a
   data.frame with one row per (kit, channel): \code{kit}, \code{channel_index} (1-based within the kit,
   ascending with the m/z), \code{channel_label} as MetaMorpheus spells it, \code{reporter_ion_mz} (m/z,
-  charge 1, theoretical), and \code{mz_min} and \code{mz_max}, the matching window in m/z.
+  charge 1, theoretical), \code{mz_min} and \code{mz_max}, the matching window in m/z, and \code{sdrf_label},
+  the SDRF \code{comment[label]} that names the channel, by mzLib's \code{SdrfIsobaricLabels} (#1467):
+  \code{TMT127N}, \code{ITRAQ114}, \code{DiLeu115a}, and \code{TMT131} for TMT10's 131N, PRIDE's spelling. Write it
+  when you build an SDRF; \code{\link{sdrf_isobaric_design}} reads it back to this channel. A bridge before
+  pyMzLib 0.7.0 sends no \code{sdrf_label} column.
 
 }
 \section{What the m/z are not}{
@@ -48,12 +52,13 @@ channel (the phenylalanine immonium ion sits there); its eighth reagent is 121.
 
 }
 \section{Wraps}{
-Wire verb \code{isobaric kits}. Generated from the bridge's verb spec \code{isobaric.kits.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{isobaric kits}. Generated from the bridge's verb spec \code{isobaric.kits.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/Modifications/IsobaricMassTag.cs}{\code{IsobaricMassTag.TryGetIsobaricMassTag}} in \code{mzLib/Omics/Modifications/IsobaricMassTag.cs} at mzLib \code{0a808fec}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/Modifications/IsobaricMassTag.cs}{\code{IsobaricMassTag.TryGetTagType}} in \code{mzLib/Omics/Modifications/IsobaricMassTag.cs} at mzLib \code{0a808fec}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/Modifications/IsobaricMassTag.cs}{\code{IsobaricMassTagType}} in \code{mzLib/Omics/Modifications/IsobaricMassTag.cs} at mzLib \code{0a808fec}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Readers/Sdrf/SdrfIsobaricLabels.cs}{\code{SdrfIsobaricLabels.GetSdrfLabel}} in \code{mzLib/Readers/Sdrf/SdrfIsobaricLabels.cs} at mzLib \code{cc67b7a2}
 }
 }
 \section{Parameters: units, ranges and defaults}{
@@ -72,7 +77,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{kits}}{object[]; never \code{NA}. One per kit in IsobaricMassTagType order: \{kit, channel_count\}.}
 \item{\code{column_names}}{string[]; never \code{NA}. The table's columns in order.}
 \item{\code{records} (wire \code{columns})}{table; never \code{NA}. One row per (kit, channel), kits in enum order, channels in ascending m/z.}
-\item{\code{caveats}}{string[]; never \code{NA}. Five static caveats.}
+\item{\code{caveats}}{string[]; never \code{NA}. Six static caveats.}
 }
 }
 \section{Columns of \code{records}}{
@@ -83,6 +88,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{reporter_ion_mz}}{float; in \strong{m/z}; never \code{NA}. Theoretical m/z at charge 1: a DI HCD diagnostic-ion mass of the kit's Multiplex Label modification in mzLib's TMT.txt, plus one proton.}
 \item{\code{mz_min}}{float; in \strong{m/z}; never \code{NA}. reporter_ion_mz minus absolute_tolerance.}
 \item{\code{mz_max}}{float; in \strong{m/z}; never \code{NA}. reporter_ion_mz plus absolute_tolerance.}
+\item{\code{sdrf_label}}{string; never \code{NA}. The SDRF comment[label] that names the channel, mzLib's SdrfIsobaricLabels.GetSdrfLabel (#1467): TMT, ITRAQ or DiLeu and the channel (TMT127N, ITRAQ114, DiLeu115a), except TMT10's 131N, which is TMT131 (PRIDE:0000529). Write it when building an SDRF; sdrf isobaric-design reads it back to channel_label.}
 }
 }
 \section{Errors}{
@@ -100,6 +106,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item mz_min and mz_max are mzLib's own reporter-ion matching window, the most intense peak inside it wins.
 \item TMT16 is the lowest sixteen channels of TMTpro 18-plex and has no modification entry of its own.
 \item iTRAQ8 has no 120 channel (the phenylalanine immonium ion sits at 120.081); its eighth reagent is 121.
+\item sdrf_label is PRIDE's term as sdrf-pipelines reads it, by mzLib's one channel/label rule (SdrfIsobaricLabels). TMT10's last channel is TMT131, while TMT11 and TMTpro keep TMT131N. DiLeu has no PRIDE term; its label is DiLeu and the channel.
 }
 }
 \section{Performance}{
@@ -126,6 +133,7 @@ The spec records these as open. They are listed rather than hidden:
 \references{
 \itemize{
 \item \href{https://doi.org/10.1021/acs.jproteome.1c00168}{doi:10.1021/acs.jproteome.1c00168}: the TMTpro-18plex reagents paper (Li et al. 2021); mzLib cites it as the source of its 0.003 Da reporter-ion matching tolerance (IsobaricMassTag.AbsoluteToleranceValue, IsobaricMassTag.cs:41)
+\item \href{https://doi.org/10.1038/s41467-021-26111-3}{doi:10.1038/s41467-021-26111-3}: SDRF-Proteomics, whose comment[label] column sdrf_label fills (Dai et al., Nat Commun 12, 5854, 2021)
 }
 }
 \seealso{
@@ -138,6 +146,9 @@ catalogue <- isobaric_kits()
 catalogue$kits
 catalogue$absolute_tolerance
 catalogue$records$channel_label[catalogue$records$kit == "iTRAQ8"]
+
+# The label an SDRF writes for each channel. TMT10's last channel is TMT131 there:
+utils::tail(catalogue$records$sdrf_label[catalogue$records$kit == "TMT10"], 2)
 
 # TMTpro 18-plex, whose top channel sits at 135.15:
 tmtpro <- isobaric_kits("TMT18")

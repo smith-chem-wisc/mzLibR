@@ -108,6 +108,26 @@ Present here and not in pyMzLib, because R has the reference implementations at 
 | `the recorded REML fit is nlme::lme() run here, to 1e-5` | the first ten features of mzLib's reference input, when nlme is installed |
 | `the recorded design matrix is R's model.matrix(), run here and as recorded` | `model.matrix(~ condition + batch + I((age - 50)/10))` |
 
+## The pyMzLib 0.7.0 repin (mzLib 1.0.596)
+
+pyMzLib 0.7.0's changes to the tests of functions mzLibR already has are ported case for case,
+from its re-recorded fixtures, byte for byte: the stratified design's `not_run` and its `id`
+(`test-diff.R`); the occupancy's peptidoform counts, the pairs' `test_status`, `bounds_included`,
+`run_covariate_removed` and their echoes, `exclude_ceiling` `NA` when not chosen, and the trait
+fit's `scale` (`test-ptmqtl.R`, offline and `LIVE:`); the SDRF's replicate numbers kept and the
+seventh caveat, and every kit channel's `sdrf_label` (`test-sdrf-design.R`).
+
+Not ported yet, with the functions and options they test (a later port; `docs/name-parity.md`
+lists the same gaps):
+
+| pyMzLib test | waits on |
+|---|---|
+| `test_pairs_sends_only_what_was_given` (its `include_bounds`/`run_covariate` call), `test_pairs_with_bounds_tests_what_the_guard_kept_out`, `test_pairs_given_a_run_covariate`, the `ptmqtl_pairs_bounds*`/`ptmqtl_pairs_depth*` live cases | `ptmqtl_pairs(include_bounds = , run_covariate = )` |
+| `test_trait_effects_sends_only_what_was_given` (its `scale` call), `test_trait_effects_on_log2_odds_is_the_natural_fit_over_ln2`, the `ptmqtl_trait_effects_log2` live case | `ptmqtl_trait_effects(scale = )` |
+| `test_library_calibrate.py`, `test_library_calibrate_live.py` | `library calibrate-rt` |
+| `test_proteins_map_residues.py`, `test_proteins_map_residues_live.py` | `genes map-residues` |
+| `test_stats_latent.py`, `test_stats_latent_live.py` | `stats fit-latent-mixed`, `stats fit-link` |
+
 ## Deliberately not ported
 
 | pyMzLib test | why |

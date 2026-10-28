@@ -98,9 +98,13 @@ sdrf_parse_design <- function(data) {
 #' Calls mzLib's `SdrfLabelFreeDesign.Read`. It runs every check MetaMorpheus's own design validator
 #' runs and **refuses rather than repairs**: a factor written `not available`, two files claiming the
 #' same replicate and fraction, a document with several factor columns and no declaration - each is
-#' a refusal, and all of them are reported at once. It relabels in only two ways, both recorded in
-#' `notes`: study-wide biological replicate numbers are ranked within each condition (`22 -> 1`),
-#' and rows for files the search does not read are dropped.
+#' a refusal, and all of them are reported at once. **Replicate and fraction numbers are the
+#' SDRF's, gaps included** (mzLib #1426): mzLib never ranks or closes them up, because replicate 4 of
+#' one condition can be the same subject as replicate 4 of another, and a gap can be a lost sample.
+#' `notes` records what mzLib added, dropped or wants checked: a biological replicate it added where
+#' the SDRF gives none (no column, or `not available`), after the highest the condition uses; rows
+#' for files the search does not read, which are dropped; conditions whose numbers are not 1..N;
+#' and sample names whose one number disagrees with their replicate.
 #'
 #' **A refusal is an answer, not an error.** When `is_valid` is `FALSE`, `refusals` lists every
 #' reason and `records` has no rows, so a design MetaMorpheus would reject cannot be used by
@@ -117,7 +121,8 @@ sdrf_parse_design <- function(data) {
 #'   in `notes`, and the paths you give become `full_path`. `NULL` takes the SDRF's own file names.
 #' @param out Also write MetaMorpheus's `ExperimentalDesign.tsv` (1-based) here. Must end in `.tsv`.
 #'   Written only when the design is valid. MetaMorpheus finds the file only when it is named
-#'   `ExperimentalDesign.tsv` and sits beside the spectra.
+#'   `ExperimentalDesign.tsv` and sits beside the spectra, and refuses one whose replicate numbers
+#'   have gaps until a MetaMorpheus release carries smith-chem-wisc/MetaMorpheus#2928.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_sdrf_design`: `path`; `is_valid`; `file_key_column`, the column runs were keyed
@@ -127,7 +132,8 @@ sdrf_parse_design <- function(data) {
 #'   all of it; `written` (`path`, `file_count`), or `NULL`; `caveats`; and `records`, one row per
 #'   run in SDRF row order: `full_path`, `file_name` (the run key, `Intensity_<file_name>`),
 #'   `condition`, and `biological_replicate`, `technical_replicate` and `fraction`, **0-based**, as
-#'   the quant functions take them. `ExperimentalDesign.tsv` writes the same numbers plus one.
+#'   the quant functions take them: the SDRF's own numbers minus one, gaps included.
+#'   `ExperimentalDesign.tsv` writes the same numbers plus one.
 #'
 #' @section From SDRF to FlashLFQ:
 #'
@@ -152,9 +158,9 @@ sdrf_parse_design <- function(data) {
 #' length(refused$refusals)
 #' writeLines(refused$refusals[[1]])
 #'
-#' # Study-wide replicate numbers are ranked within each condition, and the mapping is kept:
-#' ranked <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
-#' writeLines(ranked$notes[[2]])
+#' # Study-wide replicate numbers are kept as the SDRF writes them, and the gaps are noted:
+#' kept <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
+#' writeLines(kept$notes[[2]])
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @spec sdrf.design
 #' @export

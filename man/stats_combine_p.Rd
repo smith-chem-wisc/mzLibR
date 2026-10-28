@@ -72,7 +72,7 @@ that. mzLib computes no two-sided combined p-value.
 
 }
 \section{Wraps}{
-Wire verb \code{stats combine-p}. Generated from the bridge's verb spec \code{stats.combine-p.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats combine-p}. Generated from the bridge's verb spec \code{stats.combine-p.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/PValueCombination.cs}{\code{PValueCombination.Fisher}} in \code{mzLib/StatisticalModels/PValueCombination.cs} at mzLib \code{d10017ce}
