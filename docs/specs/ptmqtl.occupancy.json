@@ -12,7 +12,7 @@
     {
       "symbol": "SiteOccupancyCalculator.Calculate",
       "path": "mzLib/Quantification/PtmQtl/SiteOccupancy.cs",
-      "pin": "d10017ce"
+      "pin": "cc67b7a2"
     },
     {
       "symbol": "PeptidoformObservation",
@@ -22,7 +22,7 @@
     {
       "symbol": "SiteRunOccupancy",
       "path": "mzLib/Quantification/PtmQtl/SiteOccupancy.cs",
-      "pin": "d10017ce"
+      "pin": "cc67b7a2"
     },
     {
       "symbol": "ModificationSite",
@@ -211,7 +211,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "Six static caveats; one more with --samples, one when columns were not read, and one counting the censored (floor or not_detected) cells when there are any."
+        "doc": "Seven static caveats; one more with --samples, one when columns were not read, and one counting the censored (floor or not_detected) cells when there are any."
       }
     ],
     "columns": [
@@ -277,7 +277,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "quantified (the modified form was quantified: a fraction in (0, 1]) | floor (the modified form was identified but not quantified while forms covering the site were: low but NOT zero) | count_only (the modified form was identified, but nothing covering the site was quantified) | not_detected (the site was covered by quantified peptides but no modified form was identified: unknown, not 0)."
+        "doc": "quantified (the modified form was quantified: a fraction in (0, 1]) | floor (the modified form was identified but not quantified while forms covering the site were: low but NOT zero) | count_only (the modified form was identified, but nothing covering the site was quantified) | not_detected (a covered-zero, mzLib's DEF-OCC-COVERED-ZERO: peptidoforms covering the site were identified in this run and none carried the modification; a bound below what the run could detect, not a measured 0; since mzLib #1468 the covering forms need not be quantified)."
       },
       {
         "wire": "modified_intensity",
@@ -300,7 +300,7 @@
         "type": "float",
         "unit": "fraction (0 to 1)",
         "nullable": true,
-        "null_means": "state is not quantified: the occupancy is censored (floor) or unknown (count_only, not_detected), never 0",
+        "null_means": "state is not quantified: the occupancy is censored (floor), a bound (not_detected) or unknown (count_only), never 0",
         "doc": "modified_intensity / covering_intensity."
       },
       {
@@ -310,6 +310,22 @@
         "nullable": false,
         "null_means": null,
         "doc": "Whether some quantified form covering the position does not carry this modification there (the unmodified form, or another modification at the same position). false with fraction 1 is a ceiling: the site was seen only modified."
+      },
+      {
+        "wire": "covering_peptidoforms",
+        "type": "int",
+        "unit": "peptidoforms",
+        "nullable": true,
+        "null_means": "not supplied (Calculate always supplies it; a stored table may not)",
+        "doc": "Distinct peptidoforms covering the position identified in this run (or sample), quantified or not: mzLib's SiteRunOccupancy.CoveringPeptidoforms (#1468). It counts identifications, not intensity: the n of a cell's k of n."
+      },
+      {
+        "wire": "modified_peptidoforms",
+        "type": "int",
+        "unit": "peptidoforms",
+        "nullable": true,
+        "null_means": "not supplied, as covering_peptidoforms",
+        "doc": "Of covering_peptidoforms, those carrying this modification at the position (SiteRunOccupancy.ModifiedPeptidoforms): the k. 0 for not_detected. A count_only cell with k = n was seen only modified; with k < n both forms were identified."
       }
     ]
   },
@@ -337,12 +353,13 @@
   ],
   "caveats": [
     "Intensity occupancy, as MetaMorpheus writes IntensityOccupancy_ (QuantProject DEF-OCC-INT): for a site in a run, the summed intensity of the quantified peptidoforms carrying the modification at that position over the summed intensity of every quantified peptidoform covering it. Supply MS/MS identifications only: a match-between-runs transfer must not be a row.",
-    "fraction is null unless state is quantified. A floor (identified, not quantified, while the site was covered) is low but not zero, and not_detected is unknown: neither may be averaged in as 0.",
+    "fraction is null unless state is quantified. A floor (identified, not quantified, while the site was covered) is low but not zero, and not_detected is a bound below detection: neither may be averaged in as 0.",
     "A fraction of 1 with unmodified_quantified false is a ceiling: the unmodified form may be present below detection.",
     "position is 1-based, with a protein N-terminal modification at the residue it sits on; readers read-occupancy puts the N-terminus at 0.",
     "mzLib always excludes the categories Common Variable and Common Fixed, peptide-terminal modifications, and every C-terminal modification (the protein's length is not supplied). An N-terminal modification is a site only on a peptide starting at residue 1, or at 2 when previous_residue is M or blank. Whether it is protein- or peptide-terminal is read from mzLib's modification registry; a name the registry does not know is treated as protein N-terminal.",
     "A peptide shared by several proteins counts in full for each; MetaMorpheus gives it a proportional share per protein group, so its IntensityOccupancy_ can differ.",
-    "With samples, fractions are summed before the ratio. Map only fractions of one sample together; technical replicates keep their own run."
+    "With samples, fractions are summed before the ratio. Map only fractions of one sample together; technical replicates keep their own run.",
+    "covering_peptidoforms and modified_peptidoforms count identifications, not intensity: the k of n of a cell with no fraction. They tell a count_only cell seen only modified from one where both forms were identified, which is what ptmqtl pairs --include-bounds ranks as a high bound or leaves out."
   ],
   "bindings": {
     "py": {
