@@ -23,7 +23,8 @@ test_that("the cases recording parses; a censored cell has no fraction, never a 
   occ <- mz$ptmqtl_parse_occupancy(recorded_data("ptmqtl_occupancy_cases.json"))
   expect_true(inherits(occ, "mzlibr_site_occupancy"))
   expect_identical(occ$column_names, c("site_key", "protein_accession", "position", "residue", "modification", "category",
-    "run", "state", "modified_intensity", "covering_intensity", "fraction", "unmodified_quantified"))
+    "run", "state", "modified_intensity", "covering_intensity", "fraction", "unmodified_quantified",
+    "covering_peptidoforms", "modified_peptidoforms"))
   expect_identical(sort(names(occ$state_counts)), sort(mz$PTMQTL_OCCUPANCY_STATES))
   expect_identical(c(occ$row_count, nrow(occ$records), sum(occ$state_counts)), c(14, 14, 14))
   expect_identical(c(occ$site_count, occ$state_counts[["quantified"]], occ$state_counts[["count_only"]]), c(9, 9, 3))
@@ -43,6 +44,21 @@ test_that("the cases recording parses; a censored cell has no fraction, never a 
   ceiling <- r[r$protein_accession == "CEILING", ]
   expect_identical(c(ceiling$fraction, ceiling$unmodified_quantified), c(1, 0))
   expect_true(any(startsWith(occ$caveats, "position is 1-based")))
+})
+
+test_that("each cell carries mzLib's peptidoform counts", {
+  # mzLib #1468: identifications, not intensity. The k of n of each cell.
+  r <- mz$ptmqtl_parse_occupancy(recorded_data("ptmqtl_occupancy_cases.json"))$records
+  states <- r[r$protein_accession == "STATES", ]
+  states <- states[order(states$run), ]
+  expect_identical(states$run, c("countOnly", "floor", "notDetected", "quant"))
+  expect_identical(states$state, c("count_only", "floor", "not_detected", "quantified"))
+  expect_identical(states$covering_peptidoforms, c(1, 2, 1, 2))
+  expect_identical(states$modified_peptidoforms, c(1, 1, 0, 1))
+  ratio <- r[r$protein_accession == "RATIO", ]
+  expect_identical(c(ratio$covering_peptidoforms, ratio$modified_peptidoforms), c(3, 1))
+  occ <- mz$ptmqtl_parse_occupancy(recorded_data("ptmqtl_occupancy_cases.json"))
+  expect_true(any(startsWith(occ$caveats, "covering_peptidoforms and modified_peptidoforms")))
 })
 
 test_that("with samples the fractions are summed before the ratio", {
@@ -121,12 +137,27 @@ test_that("the physical recording parses; physical pairs carry no test and echo 
   expect_true(abs(pair$statistic - 0.25) < 1e-15)
   expect_identical(c(pair$n, pair$statistic_n), c(2, 1))
   expect_true(is.na(pair$p_value) && is.na(pair$q) && is.na(pair$spearman_method))
+  # The co-varying test fields: no test for physical pairs.
+  expect_true(is.na(pair$test_status))
+  expect_false(pair$bounds_included)
+  expect_false(pair$run_covariate_removed)
+  expect_true(is.na(found$include_bounds) && is.na(found$min_untied_share))
+  expect_true(is.na(found$run_covariate_file) && is.na(found$run_covariate_name))
+  expect_true(is.null(found$run_covariate_runs_missing))
+  expect_true("run_covariate_runs_missing" %in% names(found))
 })
 
 test_that("the co-varying recordings report mzLib's defaults, and the run level when removed", {
   plain <- mz$ptmqtl_parse_pairs(recorded_data("ptmqtl_pairs_batch.json"))
   expect_identical(plain$min_quantified_fraction, 0.7)
-  expect_true(plain$exclude_ceiling)
+  # mzLib's excludeCeiling is nullable since #1468 and resolved inside CoVarying: not chosen stays NA,
+  # never a value this package names for mzLib.
+  expect_identical(plain$exclude_ceiling, NA)
+  expect_false(plain$include_bounds)
+  expect_true(is.na(plain$min_untied_share) && is.na(plain$run_covariate_name))
+  expect_true(is.null(plain$run_covariate_runs_missing))
+  expect_true(all(plain$records$test_status == "tested"))
+  expect_false(any(plain$records$bounds_included) || any(plain$records$run_covariate_removed))
   expect_false(plain$remove_run_level)
   expect_true(is.na(plain$run_level_group) && is.na(plain$physical_count) && is.na(plain$min_runs_for_run_level))
   expect_identical(plain$covarying_run_count, 12)
@@ -137,7 +168,9 @@ test_that("the co-varying recordings report mzLib's defaults, and the run level 
   expect_true(all(given$records$run_level_removed))
   not_estimable <- given$records[given$records$spearman_method == "not_estimable", ]
   expect_true(nrow(not_estimable) > 0L && all(is.na(not_estimable$statistic) & is.na(not_estimable$q)))
+  expect_identical(unique(not_estimable$test_status), "not_estimable")
   expect_true(any(startsWith(given$caveats, "With --remove-run-level")))
+  expect_true(any(startsWith(given$caveats, paste(nrow(not_estimable), "co-varying pairs were not tested"))))
   pick <- function(r) r$statistic[startsWith(r$site_a, "PAIR_S") & startsWith(r$site_b, "PAIR_T")]
   expect_identical(sprintf("%.2f", c(pick(plain$records), pick(given$records))), c("0.76", "0.03"))
 })
@@ -169,6 +202,8 @@ test_that("the trait recording recovers the dose effect, with mzLib's support th
   expect_true(inherits(fit, "mzlibr_trait_effects"))
   expect_identical(c(fit$min_runs, fit$min_replicates, fit$logit_epsilon), c(6, 4, 5e-05))
   expect_true(fit$exclude_ceiling)
+  # mzLib #1464: the scale every effect is on; natural-log odds is mzLib's default.
+  expect_identical(fit$scale, "natural_log_odds")
   expect_identical(names(fit$status_counts), mz$PTMQTL_TRAIT_STATUSES)
   expect_identical(c(fit$trait_name, fit$covariate_names), c("dose", "injection"))
   expect_identical(c(fit$trait_run_count, fit$run_count), c(12, 12))
@@ -245,6 +280,11 @@ test_that("LIVE: the ptmqtl recordings are what the bridge returns today", {
     for (counts in c("state_counts", "status_counts")) {
       # Keys from mzLib enums; a repin that grows one must not slip past the recording.
       if (!is.null(recorded[[counts]])) expect_identical(live[[counts]], recorded[[counts]], info = name)
+    }
+    # The settings echoed (mzLib's defaults when not given), and the run covariate's bookkeeping.
+    for (echo in c("include_bounds", "min_untied_share", "exclude_ceiling", "run_covariate_name",
+                   "run_covariate_runs_missing", "min_runs_for_run_level", "scale")) {
+      if (echo %in% names(recorded)) expect_identical(live[[echo]], recorded[[echo]], info = paste(name, echo))
     }
   }
 })

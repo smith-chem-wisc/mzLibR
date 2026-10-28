@@ -30,7 +30,7 @@ test_that("a valid design projects every run, its coordinates 0-based", {
   expect_identical(sort(unique(d$records$biological_replicate)), c(0, 1, 2))
   expect_identical(d$records$full_path, paste0(d$records$file_name, ".raw"))
   expect_true(grepl("24 file(s), 8 condition(s)", d$report, fixed = TRUE))
-  expect_identical(length(d$caveats), 6L)
+  expect_identical(length(d$caveats), 7L)
 })
 
 test_that("the design feeds FlashLFQ unchanged", {
@@ -63,12 +63,18 @@ test_that("a refusal is a result, and blocks only the hand-off", {
   expect_error(sdrf_design_spectra(list()), class = "mzlib_usage_error", contains = "sdrf_design() result")
 })
 
-test_that("the renumbering is kept in notes, and the runs match the reference", {
-  ranked <- mz$sdrf_parse_design(design_fixture("sdrf_design_studywide.json"))
-  expect_true(ranked$is_valid)
-  expect_identical(length(ranked$notes), 7L)
-  expect_true(any(grepl("22 -> 1, 23 -> 2, 24 -> 3", ranked$notes, fixed = TRUE)))
-  expect_identical(ranked$records, design_valid()$records)
+test_that("the SDRF's replicate numbers are kept, and the gaps noted", {
+  # mzLib #1426: the SDRF's numbers are written as given, never ranked; notes flags the gaps.
+  kept <- mz$sdrf_parse_design(design_fixture("sdrf_design_studywide.json"))
+  expect_true(kept$is_valid)
+  expect_identical(length(kept$notes), 7L)
+  expect_true(any(grepl("biological replicates 22, 23, 24, kept as the SDRF numbers them", kept$notes, fixed = TRUE)))
+  expect_identical(max(kept$records$biological_replicate), 23)
+  expect_false(identical(kept$records, design_valid()$records))
+  # Only the replicate numbers differ from the reference document's design.
+  expect_identical(kept$records[, setdiff(names(kept$records), "biological_replicate")],
+                   design_valid()$records[, setdiff(names(kept$records), "biological_replicate")])
+  expect_true(any(startsWith(kept$caveats, "Replicate and fraction numbers are the SDRF's, gaps included")))
 })
 
 # ---------------------------------------------------------------- sdrf_design: arguments
@@ -134,7 +140,20 @@ test_that("every kit is listed, in mzLib's order, and groups the table", {
     expect_identical(rows$reporter_ion_mz, sort(rows$reporter_ion_mz))
   }
   expect_identical(result$absolute_tolerance, 0.003)
-  expect_identical(length(result$caveats), 5L)
+  expect_identical(length(result$caveats), 6L)
+})
+
+test_that("every channel carries mzLib's SDRF label", {
+  # mzLib #1467: SdrfIsobaricLabels.GetSdrfLabel, PRIDE's spelling as sdrf-pipelines reads it.
+  result <- kits_every()
+  records <- result$records
+  expect_true(all(!is.na(records$sdrf_label) & nzchar(records$sdrf_label)))
+  labels <- function(kit) records$sdrf_label[records$kit == kit]
+  expect_identical(utils::tail(labels("TMT10"), 1L), "TMT131")
+  expect_identical(utils::tail(labels("TMT11"), 2L)[[1L]], "TMT131N")
+  expect_identical(labels("iTRAQ4"), c("ITRAQ114", "ITRAQ115", "ITRAQ116", "ITRAQ117"))
+  expect_identical(labels("diLeu12")[[1L]], "DiLeu115a")
+  expect_true(any(startsWith(result$caveats, "sdrf_label is the SDRF comment[label]")))
 })
 
 test_that("TMTpro 16 is the first sixteen of 18, and iTRAQ8 has no 120", {

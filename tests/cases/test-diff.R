@@ -130,12 +130,17 @@ test_that("strata are designed on their own, and say what they cannot run", {
   design <- diff_recorded("diff_design_strata.json")
   expect_identical(names(design$strata), c("organism part=kidney", "organism part=liver", "organism part=muscle"))
   kidney <- design$strata[["organism part=kidney"]]
-  expect_identical(kidney$not_run$label, "condition (one level: A)")
+  # mzLib #1476: kidney skips the analysis-wide c1, listed under its own label and id.
+  expect_identical(kidney$not_run$label, "condition=B vs condition=A")
   expect_identical(kidney$not_run$reason, "not_in_stratum")
+  expect_identical(kidney$not_run$id, "c1")
+  expect_identical(names(kidney$not_run), c("label", "reason", "id"))
   expect_identical(kidney$column_names, "intercept")
   expect_identical(design$records$contrast_id, c("c1", "c1"))
   expect_identical(design$stratum_columns, "organism part")
   expect_identical(nrow(design$strata[["organism part=liver"]]$not_run), 0L)
+  expect_identical(names(design$strata[["organism part=liver"]]$not_run), c("label", "reason", "id"))
+  expect_true(any(grepl("an id names the same comparison in every stratum", design$caveats, fixed = TRUE)))
 })
 
 # ---------------------------------------------------------------- observations: what is sent
