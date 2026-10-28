@@ -144,7 +144,7 @@
         "unit": null,
         "nullable": true,
         "null_means": "out was not given",
-        "doc": "{path, row_count}; row_count is the whole merged document."
+        "doc": "{path, row_count}; row_count is the whole merged document. path is the file mzLib wrote: SdrfDocument.WriteResults adds .sdrf.tsv to a name it would not read back as an SDRF, so out x.tsv writes x.tsv.sdrf.tsv. Bridges before pyMzLib 0.6.0 reported the name as given (SDRF-B3 asks mzLib to return the path)."
       },
       {
         "wire": "caveats",

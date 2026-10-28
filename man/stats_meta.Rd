@@ -46,7 +46,7 @@ Send \code{records$p_value} to \code{\link{stats_adjust}} to adjust across featu
 
 }
 \section{Wraps}{
-Wire verb \code{stats meta}. Generated from the bridge's verb spec \code{stats.meta.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats meta}. Generated from the bridge's verb spec \code{stats.meta.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/RandomEffectsMeta.cs}{\code{RandomEffectsMeta.Pool}} in \code{mzLib/StatisticalModels/RandomEffectsMeta.cs} at mzLib \code{0a808fec}

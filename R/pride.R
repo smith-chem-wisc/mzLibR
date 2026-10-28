@@ -564,6 +564,148 @@ pride_list_ftp_files <- function(accession, timeout = NULL) {
   pride_parse_ftp_files(data, canonical)
 }
 
+# ---------------------------------------------------------------- checksums
+
+# The pyMzLib release whose bridge first dispatches `pride checksums`: its spec's since.pymzlib.
+PRIDE_CHECKSUMS_SINCE <- "0.6.0"
+
+# mzLib's wording for an unknown accession (PrideArchiveClient.GetProjectAsync at the pin). The
+# checksum verb asks for the project when PRIDE's list is empty, and throws this when there is none.
+PRIDE_UNKNOWN_PROJECT_MARKER <- "has no project with accession"
+
+# One row per file PRIDE recorded a checksum for, read strictly.
+#
+# Unlike the manifest's rows, a row missing its MD5 or its size is refused rather than defaulted:
+# an "" MD5 or a 0 size would make every later check of that file blame the download for what is
+# really a broken contract. An empty list is a zero-row frame, not an error: mzLib has already
+# asked whether the project exists (an unknown one raises before this point).
+pride_parse_checksums <- function(data, accession) {
+  entries <- if (is.list(data)) data[["files"]] else NULL
+  if (!is.list(entries)) {
+    entries <- list()
+  }
+  for (entry in entries) {
+    for (name in c("file_name", "md5", "size_bytes")) {
+      if (!is.list(entry) || wire_null(entry[[name]])) {
+        stop(mzlib_protocol_error(paste0(
+          "A checksum row from the bridge has no ", name, ", so it cannot be checked against. ",
+          "Please report this: the bridge and mzLibR disagree about the pride checksums contract."
+        )))
+      }
+    }
+  }
+  file_name <- vapply(entries, function(e) as.character(e[["file_name"]])[1L], character(1L))
+  checksums <- data.frame(
+    file_name = file_name,
+    md5 = vapply(entries, function(e) as.character(e[["md5"]])[1L], character(1L)),
+    # A double, never an integer: raw files pass 2 GiB, which an R integer cannot hold.
+    size_bytes = vapply(entries, function(e) as.numeric(e[["size_bytes"]])[1L], numeric(1L)),
+    project_accession = rep(accession, length(entries)),
+    stringsAsFactors = FALSE
+  )
+  # Keyed by file name, as mzLib's own result is a map from name to row: `checksums["README.txt", ]`.
+  # mzLib refuses a list that names a file twice, so the names are unique.
+  rownames(checksums) <- file_name
+  checksums
+}
+
+#' The MD5 and exact size PRIDE recorded for each file deposited in a project
+#'
+#' Answers **is the file on my disk the file PRIDE holds?** A file is PRIDE's when its length is
+#' `size_bytes` and its MD5 is `md5`. [pride_download()] and [pride_download_files()] check neither
+#' yet, so for files that matter, check them yourself: `file.size()` and `tools::md5sum()` are all
+#' it takes, as the example shows.
+#'
+#' **This is a third list, not a view of either of the others.** It covers the files the submitter
+#' deposited at the project's root. PRIDE's own `generated/` files have no row: a file without a row
+#' cannot be checked, and that does not make it invalid. It names files [pride_list_files()] omits
+#' (5 of PXD000001's 12 rows on 2026-10-21). And it can name files that are not deposits at all:
+#' PXD015239's lists an NFS temp file, `.nfs80360b91005fae5300002478`. Look up the files you have by
+#' name; do not read the list as the project's contents.
+#'
+#' The `checksum` column of [pride_list_files()] is not this MD5. Where PRIDE fills it in, it is a
+#' 40-character SHA-1, and for every PXD000001 file it is empty.
+#'
+#' @param accession A project accession, e.g. `"PXD000001"`. Upper-cased and trimmed first, because
+#'   PRIDE's checksum route is case-sensitive.
+#' @param timeout Seconds to allow for the whole call.
+#'   `NULL`, the default, adds no limit of mzLibR's own, because mzLib already bounds every
+#'   request: it retries a transient failure three times, after 5, 20 and 60 s, and each attempt
+#'   can take up to 100 s. An outage that hangs is therefore reported as
+#'   `mzlib_service_unavailable` after about 8 minutes per request, and an empty list costs a
+#'   second request, the project lookup. A number cuts the whole call off after that many seconds
+#'   with `mzlib_timeout`, which is not `mzlib_service_unavailable`.
+#'
+#' @return A data.frame with one row per file, in file-name order, and the columns `file_name`,
+#'   `md5`, `size_bytes` and `project_accession`. **Its row names are the file names**, so
+#'   `checksums["README.txt", ]` looks a file up by the name it was downloaded under; they are
+#'   case-sensitive, as PRIDE's names are.
+#'
+#'   `file_name` is the bare file name, spelled as [pride_list_files()] spells it, never a path.
+#'   `md5` is 32 hexadecimal characters as PRIDE wrote them: lower case in every list seen, but not
+#'   rewritten, so compare without regard to case (`tools::md5sum()` is lower case).
+#'   `size_bytes` is the file's exact size in bytes, the length a download of it comes to, as a
+#'   double (raw files pass 2 GiB). Compare a downloaded file's `file.size()` with it, not with
+#'   `file_size_bytes` from [pride_list_files()], which can differ: for PXD000001's
+#'   `PRIDE_Exp_Complete_Ac_22134.xml.gz` that one is 10,677,205 bytes and this one is 10,668,000,
+#'   the length the download has. `project_accession` is the accession the list was fetched for.
+#'
+#'   **Zero rows when the project exists but PRIDE holds no checksums for it**: that is an answer,
+#'   not an error, though nothing can then be checked. An unknown accession raises
+#'   `mzlib_project_not_found`, and so does a project not yet published, since PRIDE holds no
+#'   checksums before publication. A list mzLib cannot read (a new header, a malformed row, a name
+#'   listed twice) stays an `mzlib_bridge_error` with `error_type` `"MzLibException"`: the project
+#'   exists and its list is broken, so "check for a typo" would send you looking for the wrong
+#'   mistake.
+#'
+#' @section Checking a download:
+#'
+#' Check both the length and the MD5. The length costs nothing; the MD5 reads the whole file. The
+#' length alone does not prove the bytes: on 7 and 8 October 2026, EBI served about 23 of about 70
+#' large transfers at the right size with its own error text written over part of them
+#' (mzLib #1449). The PRIDE article shows the check on two damaged copies of a file.
+#'
+#' @seealso [pride_list_files()], [pride_download_files()]
+#' @spec pride.checksums
+#' @examples
+#' \dontshow{.mzlibr_example <- mzLibR:::replay_bridge_start()}
+#' checksums <- pride_file_checksums("PXD000001")
+#' nrow(checksums)
+#' checksums["README.txt", c("md5", "size_bytes")]
+#'
+#' # A downloaded file is PRIDE's when both match. Here, a copy cut short:
+#' copy <- tempfile(fileext = ".txt")
+#' writeBin(charToRaw(strrep("x", 1000)), copy)
+#' file.size(copy) == checksums["README.txt", "size_bytes"]
+#' tolower(unname(tools::md5sum(copy))) == tolower(checksums["README.txt", "md5"])
+#' unlink(copy)
+#' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
+#' @export
+pride_file_checksums <- function(accession, timeout = NULL) {
+  canonical <- pride_normalise_accession(accession)
+  bridge_require_verb("pride checksums", PRIDE_CHECKSUMS_SINCE)
+
+  data <- tryCatch(
+    bridge_invoke(c("pride", "checksums", "--accession", canonical), timeout = timeout),
+    # PRIDE answers an unknown accession with an empty list, so mzLib asks for the project and
+    # throws MzLibException when there is none. Re-map only that wording: a list mzLib cannot read
+    # is an MzLibException too, and reporting it as a typo would hide a broken contract. An outage
+    # has its own class and passes through unchanged.
+    mzlib_bridge_error = function(condition) {
+      if (identical(condition$error_type, "MzLibException") &&
+        grepl(PRIDE_UNKNOWN_PROJECT_MARKER, conditionMessage(condition), fixed = TRUE)) {
+        stop(mzlib_project_not_found(paste0(
+          "PRIDE has no public project '", canonical, "'. Check for a typo; a project not yet ",
+          "published looks the same, and PRIDE holds no checksums before publication."
+        )))
+      }
+      stop(condition)
+    }
+  )
+
+  pride_parse_checksums(data, canonical)
+}
+
 # ---------------------------------------------------------------- search
 
 # PRIDE answers a longer keyword with HTTP 500, which is indistinguishable from an outage, so mzLib
@@ -769,7 +911,8 @@ pride_search <- function(keyword, page_size = NULL, timeout = NULL) {
 #' interrupted download never leaves a truncated file under its real name. A transfer that fails
 #' after mzLib's retries leaves `<name>.partial` and `<name>.partial.validator` in `destination` on
 #' purpose: the next call for that file resumes from them (mzLib #1412). Leave them in place, or
-#' delete both to start over.
+#' delete both to start over. Their bytes are **not** checked against PRIDE's record: compare a
+#' file that matters with [pride_file_checksums()].
 #'
 #' Prefer [pride_download_files()] when you can. `category` and `extensions` can only express
 #' what they were built to express; "under 5 MB", "the three newest", or "everything except the
@@ -824,7 +967,8 @@ pride_download <- function(accession, destination, category = NULL, extensions =
 #' Download exactly the files you selected
 #'
 #' The counterpart to [pride_list_files()], and usually the one you want: filter the data.frame
-#' however you like, then pass the rows.
+#' however you like, then pass the rows. As with [pride_download()], the bytes are not checked
+#' against PRIDE's record; compare a file that matters with [pride_file_checksums()].
 #'
 #' ```r
 #' files <- pride_list_files("PXD000001")

@@ -12,7 +12,8 @@ sdrf_pool(documents, out = NULL, limit = NULL, offset = 0, timeout = 60)
   or none.}
 
 \item{out}{Write the merged document here as SDRF. The \strong{whole} document is written regardless
-  of \code{limit} and \code{offset}.}
+  of \code{limit} and \code{offset}. A name that does not end in \code{.sdrf.tsv} gets it added by mzLib, so
+  \code{out = "x.tsv"} writes \code{x.tsv.sdrf.tsv}; \code{written$path} says which file was written.}
 
 \item{limit}{Maximum rows to return. \code{NULL}, the default, returns all of them.}
 
@@ -33,8 +34,11 @@ a \code{comment[source document]} column records which document each row came fr
 \value{
 An \code{mzlibr_pooled_sdrf}, which is also an \code{mzlibr_sdrf}: everything \code{\link{sdrf_read}}
   returns, plus \code{document_count}, \code{paths}, \code{labels}, and \code{written} (a list of \code{path} and
-  \code{row_count}, or \code{NULL} when \code{out} was not given). \code{row_count} counts the rows of the whole
-  pooled document; \code{returned_count} the rows returned, starting \code{offset} rows in.
+  \code{row_count}, or \code{NULL} when \code{out} was not given). \code{written$path} is the file mzLib actually
+  wrote, which is not always the name you gave (see \code{out}); bridges before pyMzLib 0.6.0 reported
+  the name as given. \code{written$row_count} counts the rows written, the whole merged document.
+  \code{row_count} counts the rows of the whole pooled document; \code{returned_count} the rows returned,
+  starting \code{offset} rows in.
 
 }
 \section{Give your documents names}{
@@ -54,7 +58,7 @@ uniqueness rule. Use \code{\link{sdrf_source_documents}} as part of any key.
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{f85fef72f651}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf pool}. Generated from the bridge's verb spec \code{sdrf.pool.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Sdrf/SdrfCollection.cs}{\code{SdrfCollection.Merge}} in \code{mzLib/Readers/Sdrf/SdrfCollection.cs} at mzLib \code{23c2490e}
@@ -82,7 +86,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{offset}}{int; in \strong{rows}; never \code{NA}. The offset applied.}
 \item{\code{truncated}}{bool; never \code{NA}. True whenever rows were left out.}
 \item{\code{rows}}{string[][]; never \code{NA}. Row-major raw cells, as for sdrf read.}
-\item{\code{written}}{object; \code{NA} when out was not given. \{path, row_count\}; row_count is the whole merged document.}
+\item{\code{written}}{object; \code{NA} when out was not given. \{path, row_count\}; row_count is the whole merged document. path is the file mzLib wrote: SdrfDocument.WriteResults adds .sdrf.tsv to a name it would not read back as an SDRF, so out x.tsv writes x.tsv.sdrf.tsv. Bridges before pyMzLib 0.6.0 reported the name as given (SDRF-B3 asks mzLib to return the path).}
 \item{\code{caveats}}{string[]; never \code{NA}. Four static caveats, plus a fifth when no labels were supplied.}
 }
 }
