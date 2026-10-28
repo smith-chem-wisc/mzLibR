@@ -77,3 +77,10 @@ FIELD_CHECKS[["stats entrapment-fdp"]] <- list("stats_entrapment_fdp_reference.j
 # contrasts file.
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "stats fit", fixture = "stats_fit_malat_diff_design.json")
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "stats fit", fixture = "stats_fit_malat_diff_design_contrasts.json")
+
+# Not yet ported: the pyMzLib 0.7.0 bridge's latent-scale mixed model and its detection link
+# (stats fit-latent-mixed, stats fit-link; mzLib #1469), a later mzLibR port.
+PARENT_OMISSIONS[c("stats.fit_latent_mixed", "stats.fit_link")] <- c(
+  "not ported yet: wire `stats fit-latent-mixed` (mzLib #1469), new in the pyMzLib 0.7.0 bridge",
+  "not ported yet: wire `stats fit-link` (mzLib #1469), new in the pyMzLib 0.7.0 bridge"
+)

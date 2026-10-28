@@ -20,3 +20,4 @@ PARENT_OMISSIONS[c(
 )
 
 FIELD_CHECKS[["isobaric kits"]] <- list("isobaric_kits.json", function(d) mz$isobaric_parse_kits(d))
+PARENT_OMISSIONS["IsobaricKit.sdrf_labels"] <- "`records$sdrf_label[records$kit == name]`"

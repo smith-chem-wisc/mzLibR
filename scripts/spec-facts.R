@@ -34,6 +34,10 @@ R_CONDITION <- c(
 #   PARENT_MAP        mzLibR function -> the pyMzLib callable it mirrors (scripts/name-parity.R).
 #   PARENT_ADDITIONS  mzLibR functions with no pyMzLib counterpart, with the reason.
 #   PARENT_OMISSIONS  pyMzLib callables with no mzLibR function, with the reason.
+#   PARENT_PARAM_OMISSIONS
+#                     "<mzLibR function>.<pyMzLib parameter>" -> the reason the mapped function
+#                     does not take that parameter of its pyMzLib parent (an option not ported yet).
+#                     name-parity.R fails on an entry the parent no longer has, or that R now takes.
 #   REPLAY_EXTRA      recordings an example replays that no spec lists (scripts/stage-replay.R).
 #   FIELD_CHECKS      verb -> list(fixture, parse): how name-parity.R parses the verb's recording
 #                     to check that every field the spec says the R object carries is in it.
@@ -50,6 +54,7 @@ R_DEVIATIONS <- list()
 PARENT_MAP <- character(0)
 PARENT_ADDITIONS <- character(0)
 PARENT_OMISSIONS <- character(0)
+PARENT_PARAM_OMISSIONS <- character(0)
 REPLAY_EXTRA <- list()
 FIELD_CHECKS <- list()
 

@@ -41,6 +41,14 @@ read_spec <- function(path) {
   json_parse(paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n"))
 }
 
+# A spec whose R function mzLibR does not export yet (a verb the vendored specs describe ahead of
+# its port) is not taught by any article, so its citations wait for the port.
+exported <- getNamespaceExports("mzLibR")
+projected <- function(spec) {
+  name <- spec$bindings$r$name
+  is.character(name) && length(name) == 1L && name %in% exported
+}
+
 cite_block <- function(pattern) {
   specs <- sort(list.files(file.path("docs", "specs"), pattern = "[.]json$"))
   specs <- specs[grepl(pattern, specs)]
@@ -48,6 +56,7 @@ cite_block <- function(pattern) {
   lines <- character(0)
   for (file in specs) {
     spec <- read_spec(file.path("docs", "specs", file))
+    if (!projected(spec)) next
     for (entry in spec$cite) {
       doi <- entry$doi
       if (is.null(doi) || doi %in% seen) next

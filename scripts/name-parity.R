@@ -130,6 +130,7 @@ for (module in modules) {
 mapping <- PARENT_MAP
 additions <- PARENT_ADDITIONS
 omissions <- PARENT_OMISSIONS
+param_omissions <- PARENT_PARAM_OMISSIONS
 
 # ---------------------------------------------------------------- the R side
 
@@ -189,9 +190,28 @@ for (name in functions) {
   ours_compared <- if (grepl("^[A-Z]", mapped)) ours[-1L] else ours
   only_ours <- setdiff(ours_compared, theirs)
   only_theirs <- setdiff(theirs, ours_compared)
+  # pyMzLib parameters this function does not take yet, each with its reason
+  # (PARENT_PARAM_OMISSIONS, scripts/deviations/<module>.R).
+  # An entry R now takes, or the parent no longer has, is stale and fails.
+  param_keys <- names(param_omissions)[startsWith(names(param_omissions), paste0(name, "."))]
+  for (key in param_keys) {
+    param <- substring(key, nchar(name) + 2L)
+    if (!param %in% only_theirs) {
+      problems <- c(problems, paste0(key, ": listed as not taken, but ",
+        if (param %in% ours_compared) "mzLibR takes it" else "pyMzLib has no such parameter"))
+    }
+  }
+  not_taken <- intersect(only_theirs, substring(param_keys, nchar(name) + 2L))
+  only_theirs <- setdiff(only_theirs, not_taken)
+  not_taken_text <- if (length(not_taken) > 0L) {
+    paste0("; not taken yet: ", paste(not_taken, collapse = ", "))
+  } else {
+    ""
+  }
 
   if (length(only_ours) == 0L && length(only_theirs) == 0L) {
-    cat("| `", name, "()` | `", mapped, "` | ", length(theirs), " identical |\n", sep = "")
+    cat("| `", name, "()` | `", mapped, "` | ", length(theirs) - length(not_taken), " identical",
+      not_taken_text, " |\n", sep = "")
   } else {
     detail <- character(0)
     if (length(only_ours) > 0L) {
@@ -217,6 +237,18 @@ unaccounted <- setdiff(names(parent), c(unname(mapping), names(omissions)))
 for (name in unaccounted) {
   problems <- c(problems, paste0(name, ": pyMzLib callable with no mzLibR function and no reason given"))
   cat("| `", name, "` | **UNACCOUNTED FOR** |\n", sep = "")
+}
+
+if (length(param_omissions) > 0L) {
+  cat("\n### pyMzLib parameters an mzLibR function does not take yet\n\n")
+  cat("| mzLibR | pyMzLib parameter | why not |\n|---|---|---|\n")
+  for (key in names(param_omissions)) {
+    fn <- sub("[.].*$", "", key)
+    if (!fn %in% names(mapping)) {
+      problems <- c(problems, paste0(key, ": listed as not taken, but ", fn, "() is not a mapped function"))
+    }
+    cat("| `", fn, "()` | `", substring(key, nchar(fn) + 2L), "` | ", param_omissions[[key]], " |\n", sep = "")
+  }
 }
 
 # ---------------------------------------------------------------- report: columns
