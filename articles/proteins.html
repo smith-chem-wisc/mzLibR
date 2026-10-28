@@ -34,13 +34,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
+    <li><a class="dropdown-item" href="../articles/library.html">Spectral libraries</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
     <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
-    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, contrasts, and the tests around it</a></li>
+    <li><a class="dropdown-item" href="../articles/diff.html">Differential design and observations: the design matrix and every peptide, by mzLib</a></li>
+    <li><a class="dropdown-item" href="../articles/ptmqtl.html">PTM site occupancy and PTM-QTL: occupancy, pairs and trait effects, by mzLib</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -115,6 +118,31 @@ kept?</td>
 <td><code><a href="../reference/proteins_update_go.html">proteins_update_go()</a></code></td>
 <td>
 <code>Loaders.UpdateGeneOntology</code> (#1353)</td>
+</tr>
+<tr class="even">
+<td>where is residue 120 of this protein in its isoform, or in the
+bovine protein?</td>
+<td>
+<code><a href="../reference/proteins_align.html">proteins_align()</a></code>,
+<code><a href="../reference/proteins_map_source_to_target.html">proteins_map_source_to_target()</a></code>
+</td>
+<td>
+<code>PairwiseAligner</code> (#1428)</td>
+</tr>
+<tr class="odd">
+<td>which entry, isoform and variants does <code>P04637-2_S70N</code> or
+<code>NP_000537.3_R72P</code> name?</td>
+<td><code><a href="../reference/proteins_parse_accessions.html">proteins_parse_accessions()</a></code></td>
+<td>
+<code>VariantApplication.ParseAccession</code> (#1382)</td>
+</tr>
+<tr class="even">
+<td>which mouse genes are orthologous to this human gene, and if none,
+why not?</td>
+<td><code><a href="../reference/proteins_build_orthology.html">proteins_build_orthology()</a></code></td>
+<td>
+<code>OrthologySnapshot</code>, <code>OrthologySnapshotWriter</code>
+(#1381)</td>
 </tr>
 </tbody>
 </table>
@@ -466,6 +494,572 @@ ids and have them listed in <code>unresolved_go_ids</code>.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="map-a-residue-from-one-sequence-onto-another">Map a residue from one sequence onto another<a class="anchor" aria-label="anchor" href="#map-a-residue-from-one-sequence-onto-another"></a>
+</h2>
+<p>A position means something only in the sequence it was counted in. A
+phosphosite reported on the canonical isoform, a variant called against
+last year’s UniProt release, a cysteine you know in the human protein:
+before you look for it in an isoform, an ortholog or a newer entry, you
+need the residue that <em>corresponds</em> to it there. Counting the
+same number along the other sequence is wrong as soon as there is one
+insertion or deletion before it.</p>
+<p><code><a href="../reference/proteins_align.html">proteins_align()</a></code> aligns pairs of sequences with mzLib’s
+<code>PairwiseAligner</code> (#1428) and maps every residue to its
+counterpart in the other sequence, or to <code>NA</code> when it has
+none. Here the canonical DYNC1I2 sequence (Q13409) is aligned with its
+isoforms 2B and 2C, read from the database with
+<code>sequences = TRUE</code>:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">seqs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_read.html">proteins_read</a></span><span class="op">(</span><span class="st">"human_extra.fasta"</span>, contaminants <span class="op">=</span> <span class="st">"contaminants.fasta"</span>,</span>
+<span>                      accessions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Q13409"</span>, <span class="st">"Q13409-2"</span>, <span class="st">"Q13409-3"</span>, <span class="st">"P02768"</span>, <span class="st">"P02769"</span><span class="op">)</span>,</span>
+<span>                      sequences <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">seq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">seqs</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">sequence</span>, <span class="va">seqs</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">accession</span><span class="op">)</span></span>
+<span><span class="va">isoforms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_align.html">proteins_align</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">seq</span><span class="op">[[</span><span class="st">"Q13409"</span><span class="op">]</span><span class="op">]</span>, <span class="va">seq</span><span class="op">[[</span><span class="st">"Q13409-2"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>                                <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">seq</span><span class="op">[[</span><span class="st">"Q13409"</span><span class="op">]</span><span class="op">]</span>, <span class="va">seq</span><span class="op">[[</span><span class="st">"Q13409-3"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">two</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_alignments.html">proteins_alignments</a></span><span class="op">(</span><span class="va">isoforms</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">75</span>, <span class="fl">76</span>, <span class="fl">82</span>, <span class="fl">100</span>, <span class="fl">120</span>, <span class="fl">133</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>canonical <span class="op">=</span> <span class="va">p</span>,</span>
+<span>           isoform_2B <span class="op">=</span> <span class="fu"><a href="../reference/proteins_map_source_to_target.html">proteins_map_source_to_target</a></span><span class="op">(</span><span class="va">two</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">p</span><span class="op">)</span>,</span>
+<span>           isoform_2C <span class="op">=</span> <span class="fu"><a href="../reference/proteins_map_source_to_target.html">proteins_map_source_to_target</a></span><span class="op">(</span><span class="va">two</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   canonical isoform_2B isoform_2C</span></span>
+<span><span class="co">#&gt; 1        75         75         75</span></span>
+<span><span class="co">#&gt; 2        76         NA         NA</span></span>
+<span><span class="co">#&gt; 3        82         76         76</span></span>
+<span><span class="co">#&gt; 4       100         94         94</span></span>
+<span><span class="co">#&gt; 5       120        114         NA</span></span>
+<span><span class="co">#&gt; 6       133        127        107</span></span></code></pre></div>
+<p>Reading it row by row:</p>
+<ul>
+<li>
+<strong>Up to residue 75 the numbers agree.</strong> Both isoforms
+begin with the same 75 residues.</li>
+<li>
+<strong>Residues 76 to 81 have no counterpart in either
+isoform</strong>: <code>NA</code>, never the nearest residue.</li>
+<li>
+<strong>After the gap the numbers are shifted</strong>: canonical
+residue 100 is residue 94 of each isoform.</li>
+<li>
+<strong>Isoform 2C lacks 20 more</strong> (canonical 113 to 132), so
+canonical 120 has no counterpart in 2C, and canonical 133 is 2C’s
+residue 107.</li>
+</ul>
+<p><code><a href="../reference/proteins_map_target_to_source.html">proteins_map_target_to_source()</a></code> goes the other way. The
+aligned rows hold <code>-</code> wherever a residue faces a gap, so
+printing them one above the other shows where the gaps fall:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">isoforms</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">aligned_source</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">isoforms</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">aligned_target</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, <span class="fl">61</span>, <span class="fl">140</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; EALLQSMGLTPESPIVFSEYWVPPPMSPSSKSVSTPSEAGSQDSGDGAVGSRTLHWDTDPSVLQLHSDSDLGRGPIKLGM</span></span>
+<span><span class="co">#&gt; EALLQSMGLTPESPI------VPPPMSPSSKSVSTPSEAGSQDSGDGAVGSR--------------------RGPIKLGM</span></span>
+<span><span class="va">isoforms</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pair_index"</span>, <span class="st">"identical"</span>, <span class="st">"substituted"</span>, <span class="st">"source_residues_facing_gap"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   pair_index identical substituted source_residues_facing_gap</span></span>
+<span><span class="co">#&gt; 1          1       632           0                          6</span></span>
+<span><span class="co">#&gt; 2          2       612           0                         26</span></span>
+<span><span class="va">isoforms</span><span class="op">$</span><span class="va">aligner_id</span></span>
+<span><span class="co">#&gt; [1] "global-affine;BLOSUM62;open=11;extend=1;end-gaps=free"</span></span></code></pre></div>
+<p><code>identical</code> and <code>substituted</code> count the paired
+residues that are the same letter and that differ;
+<code>source_residues_facing_gap</code> and
+<code>target_residues_facing_gap</code> count the residues with no
+counterpart. <code>score</code> is the alignment’s BLOSUM62 score in
+half-bits (see the traps). <code>aligner_id</code> names the method and
+every parameter, so store it beside any position you map.</p>
+<div class="section level3">
+<h3 id="orthologs-the-counterpart-can-be-a-different-amino-acid">Orthologs: the counterpart can be a different amino acid<a class="anchor" aria-label="anchor" href="#orthologs-the-counterpart-can-be-a-different-amino-acid"></a>
+</h3>
+<p>Across species most residues still pair, but many pair with a
+<em>different</em> residue. Human serum albumin’s free thiol, Cys34 of
+the mature protein, is residue 58 of the UniProt sequence, which counts
+the 24-residue signal peptide and propeptide. In bovine albumin it is a
+cysteine at 58 too:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">albumin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_align.html">proteins_align</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">seq</span><span class="op">[[</span><span class="st">"P02768"</span><span class="op">]</span><span class="op">]</span>, <span class="va">seq</span><span class="op">[[</span><span class="st">"P02769"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">albumin</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"identical"</span>, <span class="st">"substituted"</span>, <span class="st">"source_residues_facing_gap"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   identical substituted source_residues_facing_gap</span></span>
+<span><span class="co">#&gt; 1       465         142                          2</span></span>
+<span><span class="va">map</span> <span class="op">&lt;-</span> <span class="va">albumin</span><span class="op">$</span><span class="va">residue_map</span></span>
+<span><span class="va">map</span><span class="op">[</span><span class="va">map</span><span class="op">$</span><span class="va">sequence</span> <span class="op">==</span> <span class="st">"source"</span> <span class="op">&amp;</span> <span class="va">map</span><span class="op">$</span><span class="va">position</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">26</span>, <span class="fl">58</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"position"</span>, <span class="st">"residue"</span>, <span class="st">"mapped_position"</span>, <span class="st">"mapped_residue"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    position residue mapped_position mapped_residue</span></span>
+<span><span class="co">#&gt; 26       26       A              26              T</span></span>
+<span><span class="co">#&gt; 58       58       C              58              C</span></span></code></pre></div>
+<p>Residue 26 pairs, but it is A in human and T in bovine albumin.
+<strong>Always check the residue at the mapped position</strong> before
+you carry a modification across: a phosphosite on S is not a site on A.
+The residue map puts both letters side by side.</p>
+</div>
+<div class="section level3">
+<h3 id="the-options-and-whose-defaults-they-are">The options, and whose defaults they are<a class="anchor" aria-label="anchor" href="#the-options-and-whose-defaults-they-are"></a>
+</h3>
+<p>Every option you leave out is <strong>mzLib’s to set</strong>. mzLibR
+sends nothing for it, and the result says what the aligner used. The
+isoform alignment above passed no options, so these are mzLib’s own
+defaults in this build:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">unclass</a></span><span class="op">(</span><span class="va">isoforms</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"matrix"</span>, <span class="st">"gap_open"</span>, <span class="st">"gap_extend"</span>, <span class="st">"end_gaps"</span>, <span class="st">"max_cells"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 5</span></span>
+<span><span class="co">#&gt;  $ matrix    : chr "BLOSUM62"</span></span>
+<span><span class="co">#&gt;  $ gap_open  : num 11</span></span>
+<span><span class="co">#&gt;  $ gap_extend: num 1</span></span>
+<span><span class="co">#&gt;  $ end_gaps  : chr "free"</span></span>
+<span><span class="co">#&gt;  $ max_cells : num 2e+08</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>argument</th>
+<th>meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>gap_open</code></td>
+<td>cost of opening a gap, in BLOSUM62’s half-bits; a gap of <em>k</em>
+residues costs <code>gap_open + k * gap_extend</code> (BLAST’s
+convention; mzLib’s defaults are BLASTP’s)</td>
+</tr>
+<tr class="even">
+<td><code>gap_extend</code></td>
+<td>cost of each residue in a gap, the first included</td>
+</tr>
+<tr class="odd">
+<td><code>end_gaps</code></td>
+<td>
+<code>"free"</code>: an overhang at either end costs nothing (EMBOSS
+needle’s default), so a signal peptide or a longer tail is not
+penalised. <code>"charged"</code>: every gap costs</td>
+</tr>
+<tr class="even">
+<td><code>max_cells</code></td>
+<td>the largest table mzLib will build,
+<code>(nchar(source) + 1) * (nchar(target) + 1)</code> cells of one
+byte; a larger pair is refused rather than allowed to exhaust
+memory</td>
+</tr>
+<tr class="odd">
+<td><code>residue_map</code></td>
+<td>
+<code>FALSE</code> leaves out the residue map, for a large batch
+where you want only the scores and counts</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">charged</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_align.html">proteins_align</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MLLLPEPTIDE"</span>, <span class="st">"PEPTIDE"</span><span class="op">)</span><span class="op">)</span>, end_gaps <span class="op">=</span> <span class="st">"charged"</span><span class="op">)</span></span>
+<span><span class="va">charged</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"aligned_target"</span>, <span class="st">"score"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   aligned_target score</span></span>
+<span><span class="co">#&gt; 1    ----PEPTIDE    24</span></span>
+<span><span class="va">charged</span><span class="op">$</span><span class="va">aligner_id</span></span>
+<span><span class="co">#&gt; [1] "global-affine;BLOSUM62;open=11;extend=1;end-gaps=charged"</span></span></code></pre></div>
+<p>With free end gaps the same pair scores 39: the four-residue overhang
+costs <code>11 + 4 * 1</code> only when it is charged.</p>
+</div>
+<div class="section level3">
+<h3 id="the-traps">The traps<a class="anchor" aria-label="anchor" href="#the-traps"></a>
+</h3>
+<ul>
+<li>
+<strong><code>score</code> is not an identity, a bit score or an
+E-value.</strong> It is a raw sum of BLOSUM62 scores in half-bits, less
+the gaps, and it grows with length. Compare scores only between
+alignments with the same <code>aligner_id</code>. mzLibR computes no
+percent identity, because there are several definitions: divide
+<code>identical</code> by the length you mean.</li>
+<li>
+<strong>It is a global alignment.</strong> Every residue of both
+sequences is placed, paired or facing a gap. With free end gaps a short
+sequence is placed on the best-scoring stretch of a long one, even when
+it has no real match there.</li>
+<li>
+<strong>One optimal alignment, chosen the same way every
+time.</strong> Isoform 2B above is a real case: canonical V76 and V82
+are both V, either could pair with the isoform’s V76, and mzLib pairs
+V82. Another aligner may give the equally good other answer.</li>
+<li>
+<strong>Pass bare one-letter sequences.</strong> mzLib refuses only
+<code>-</code> and <code>.</code>, as an <code>mzlib_usage_error</code>.
+Any other character BLOSUM62 does not name - selenocysteine
+<code>U</code>, pyrrolysine <code>O</code>, a digit, a space, a
+modification bracket - is scored as an unknown residue <code>X</code>,
+silently.</li>
+<li>
+<strong>Long pairs need a larger <code>max_cells</code>.</strong>
+Two titin isoforms need about 1.2 billion cells, past the default; mzLib
+accepts up to 2,147,483,591.</li>
+<li>
+<strong>Many pairs are one call.</strong>
+<code><a href="../reference/proteins_align.html">proteins_align()</a></code> takes the whole list at once, in one
+bridge process, so a few thousand pairs cost one start-up; never loop
+it.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="read-an-accession-into-entry-isoform-and-variants">Read an accession into entry, isoform and variants<a class="anchor" aria-label="anchor" href="#read-an-accession-into-entry-isoform-and-variants"></a>
+</h2>
+<p>The accessions a search reports are not all plain entries. UniProt
+isoforms carry <code>-2</code>; RefSeq accessions carry a
+<code>.3</code> version; and mzLib names a protein with applied sequence
+variants after its entry, <code>P04637_S70N_A80T</code> or
+<code>NP_000537.3_R72P</code>. To join results to anything you keep per
+entry - genes, orthologs, GO terms - you need the entry back, without
+losing the isoform or the variants. Cutting at the first <code>_</code>
+turns <code>NP_000537</code> into <code>NP</code>.</p>
+<p><code><a href="../reference/proteins_parse_accessions.html">proteins_parse_accessions()</a></code> reads each accession with
+mzLib’s own grammars (<code>VariantApplication.ParseAccession</code>,
+#1382):</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">parsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_parse_accessions.html">proteins_parse_accessions</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"P04637"</span>, <span class="st">"P04637-2"</span>, <span class="st">"Q13409-2"</span>, <span class="st">"NP_000537.3_R72P"</span>,</span>
+<span>  <span class="st">"P04637_S70N_A80T"</span>, <span class="st">"P04637_2"</span>, <span class="st">"DECOY_P02768"</span>, <span class="st">"sp|P04637|P53_HUMAN"</span>, <span class="st">"P04637|P02768"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">parsed</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"input"</span>, <span class="st">"namespace"</span>, <span class="st">"entry_accession"</span>, <span class="st">"isoform"</span>, <span class="st">"version"</span>, <span class="st">"applied_variants"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                 input    namespace     entry_accession isoform version</span></span>
+<span><span class="co">#&gt; 1              P04637      uniprot              P04637      NA      NA</span></span>
+<span><span class="co">#&gt; 2            P04637-2      uniprot              P04637       2      NA</span></span>
+<span><span class="co">#&gt; 3            Q13409-2      uniprot              Q13409       2      NA</span></span>
+<span><span class="co">#&gt; 4    NP_000537.3_R72P       refseq           NP_000537      NA       3</span></span>
+<span><span class="co">#&gt; 5    P04637_S70N_A80T      uniprot              P04637      NA      NA</span></span>
+<span><span class="co">#&gt; 6            P04637_2 unrecognized            P04637_2      NA      NA</span></span>
+<span><span class="co">#&gt; 7        DECOY_P02768 unrecognized        DECOY_P02768      NA      NA</span></span>
+<span><span class="co">#&gt; 8 sp|P04637|P53_HUMAN unrecognized sp|P04637|P53_HUMAN      NA      NA</span></span>
+<span><span class="co">#&gt; 9       P04637|P02768 unrecognized       P04637|P02768      NA      NA</span></span>
+<span><span class="co">#&gt;   applied_variants</span></span>
+<span><span class="co">#&gt; 1             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 3             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 4             R72P</span></span>
+<span><span class="co">#&gt; 5        S70N_A80T</span></span>
+<span><span class="co">#&gt; 6             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 7             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 8             &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 9             &lt;NA&gt;</span></span>
+<span><span class="va">parsed</span><span class="op">$</span><span class="va">namespace_counts</span></span>
+<span><span class="co">#&gt; unrecognized      uniprot       refseq </span></span>
+<span><span class="co">#&gt;            4            4            1</span></span></code></pre></div>
+<ul>
+<li>
+<strong><code>entry_accession</code></strong> is the UniProt entry
+or the unversioned RefSeq accession. It answers “same entry?”,
+<strong>not</strong> “same sequence?”: <code>P04637</code> and
+<code>P04637-2</code> share it, but they are different sequences. Join
+per-entry data on it; join sequence-level data on
+<code>input</code>.</li>
+<li>
+<strong><code>isoform</code></strong> and
+<strong><code>version</code></strong> are the <code>-n</code> and
+<code>.n</code> numbers, <code>NA</code> when there is none.</li>
+<li>
+<strong><code>parent_accession</code></strong> is the entry the
+variants were applied to, isoform or version kept:
+<code>NP_000537.3</code> for <code>NP_000537.3_R72P</code>. Look the
+parent sequence up under it.</li>
+<li>
+<strong><code>applied_variants</code></strong> is the variant suffix
+exactly as written, <code>NA</code> when there is none. It is not
+checked against any sequence.</li>
+<li>
+<strong><code>namespace</code></strong> is <code>uniprot</code>,
+<code>refseq</code> or <code>unrecognized</code>, spelled as
+<code><a href="../reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code> spells it, so the two tables
+join.</li>
+</ul>
+<p><strong>It parses and never repairs.</strong> Everything outside the
+two grammars comes back <code>unrecognized</code>, with
+<code>entry_accession</code> equal to the input, so a data problem stays
+visible instead of being fixed silently. <strong><code>P04637_2</code>
+is not a variant of P04637</strong>: it is mzLib’s loader counter for a
+<em>different</em> entry whose accession collided with P04637’s. Decoy,
+contaminant and entrapment prefixes and FASTA headers are left as they
+are. A protein group (<code>P04637|P02768</code>) is not split: split
+groups on <code>|</code> first, if that is what you mean. Lower case and
+spaces count, because mzLibR sends every accession exactly as you give
+it. Only RefSeq <em>protein</em> accessions (<code>NP_</code>,
+<code>XP_</code>, <code>YP_</code>, <code>WP_</code>, <code>AP_</code>)
+are recognized, so a transcript (<code>NM_</code>) or an Ensembl id is
+unrecognized too.</p>
+</div>
+<div class="section level2">
+<h2 id="orthologs-across-species-an-ensembl-compara-snapshot">Orthologs across species: an Ensembl Compara snapshot<a class="anchor" aria-label="anchor" href="#orthologs-across-species-an-ensembl-compara-snapshot"></a>
+</h2>
+<p>You have a mouse result and a human question: which human gene is
+this mouse gene’s ortholog? Ensembl Compara answers that, per species
+pair, in bulk files with three traps:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>The dumps partition.</strong> Each species has its own
+homology dump, and Compara puts each of a pair’s relationships in
+<em>one</em> of the pair’s two dumps, arbitrarily. In release 116 every
+human-mouse orthology is in the <strong>mouse</strong> dump and none is
+in the human one. Reading the dump named after your species gives a
+complete-looking, badly incomplete answer.</li>
+<li>
+<strong>Orthology is not transitive.</strong> Human A ~ mouse B and
+mouse B ~ rat C does not make A ~ C. Chaining pairs into groups invents
+tuples Compara never asserted.</li>
+<li>
+<strong>“No ortholog” means three things.</strong> The gene’s tree
+may hold a gene of the other species with no ortholog called, hold none
+of that species, or the gene may be in no tree at all.</li>
+</ol>
+<p><code><a href="../reference/proteins_build_orthology.html">proteins_build_orthology()</a></code> builds mzLib’s orthology
+snapshot (<code>OrthologySnapshot</code>, #1381), which makes the first
+trap structural - <strong>mzLib refuses a call without every species’
+dump</strong> - and keeps the other two visible. This example is mzLib’s
+own test world: four human genes, three mouse and two rat, with every
+human-mouse row in the mouse dump. The species are named by Ensembl
+production name, the names of <code>gtfs</code>:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>homo_sapiens <span class="op">=</span> <span class="st">"Homo_sapiens.GRCh38.116.gtf"</span>,</span>
+<span>          mus_musculus <span class="op">=</span> <span class="st">"Mus_musculus.GRCm39.116.gtf"</span>,</span>
+<span>          rattus_norvegicus <span class="op">=</span> <span class="st">"Rattus_norvegicus.GRCr8.116.gtf"</span><span class="op">)</span></span>
+<span><span class="va">dumps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"homologies/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">gtfs</span><span class="op">)</span>, <span class="st">"/Compara.116.protein_default.homologies.tsv.gz"</span><span class="op">)</span></span>
+<span><span class="va">snap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_build_orthology.html">proteins_build_orthology</a></span><span class="op">(</span><span class="st">"116"</span>, gtfs <span class="op">=</span> <span class="va">gtfs</span>, dumps <span class="op">=</span> <span class="va">dumps</span>,</span>
+<span>  gene_trees <span class="op">=</span> <span class="st">"vertebrates.GeneTree_content.default.e116.txt.gz"</span>,</span>
+<span>  pair_status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"homo_sapiens"</span>, <span class="st">"mus_musculus"</span><span class="op">)</span><span class="op">)</span>   <span class="co"># every human gene, in mouse</span></span>
+<span><span class="va">snap</span><span class="op">$</span><span class="va">pair_status</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_id"</span>, <span class="st">"gene_biotype"</span>, <span class="st">"status"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;           gene_id   gene_biotype                    status</span></span>
+<span><span class="co">#&gt; 1 ENSG00000000001 protein_coding              has_ortholog</span></span>
+<span><span class="co">#&gt; 2 ENSG00000000002 protein_coding              has_ortholog</span></span>
+<span><span class="co">#&gt; 3 ENSG00000000003 protein_coding tree_lacks_target_species</span></span>
+<span><span class="co">#&gt; 4 ENSG00000000004 protein_coding           not_in_any_tree</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">snap</span><span class="op">$</span><span class="va">snapshot_id</span>, <span class="fl">1</span>, <span class="fl">12</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "5487ebcabe48"</span></span></code></pre></div>
+<p>Record <code>snap$snapshot_id</code> with any result you draw from
+the snapshot. It is mzLib’s sha256 over the format, the release, the
+species and every input’s sha256, so the same inputs always give the
+same id, and a different id means different inputs.</p>
+<div class="section level3">
+<h3 id="every-species-dump-always">Every species’ dump, always<a class="anchor" aria-label="anchor" href="#every-species-dump-always"></a>
+</h3>
+<p>The result shows where the rows came from. The human dump holds one
+row (human-rat); all three human-mouse rows came from the mouse
+dump:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">snap</span><span class="op">$</span><span class="va">dumps</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"species"</span>, <span class="st">"rows_read"</span>, <span class="st">"rows_kept"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;             species rows_read rows_kept</span></span>
+<span><span class="co">#&gt; 1      homo_sapiens         1         1</span></span>
+<span><span class="co">#&gt; 2      mus_musculus         5         5</span></span>
+<span><span class="co">#&gt; 3 rattus_norvegicus         1         1</span></span>
+<span><span class="va">snap</span><span class="op">$</span><span class="va">pairs</span></span>
+<span><span class="co">#&gt;           species_a         species_b row_count ortholog_count paralog_count</span></span>
+<span><span class="co">#&gt; 1      homo_sapiens      homo_sapiens         0              0             0</span></span>
+<span><span class="co">#&gt; 2      homo_sapiens      mus_musculus         3              3             0</span></span>
+<span><span class="co">#&gt; 3      homo_sapiens rattus_norvegicus         1              1             0</span></span>
+<span><span class="co">#&gt; 4      mus_musculus      mus_musculus         1              0             1</span></span>
+<span><span class="co">#&gt; 5      mus_musculus rattus_norvegicus         2              2             0</span></span>
+<span><span class="co">#&gt; 6 rattus_norvegicus rattus_norvegicus         0              0             0</span></span>
+<span><span class="co">#&gt;   homoeolog_count</span></span>
+<span><span class="co">#&gt; 1               0</span></span>
+<span><span class="co">#&gt; 2               0</span></span>
+<span><span class="co">#&gt; 3               0</span></span>
+<span><span class="co">#&gt; 4               0</span></span>
+<span><span class="co">#&gt; 5               0</span></span>
+<span><span class="co">#&gt; 6               0</span></span>
+<span><span class="fu"><a href="../reference/proteins_orthology_pair.html">proteins_orthology_pair</a></span><span class="op">(</span><span class="va">snap</span>, <span class="st">"mus_musculus"</span>, <span class="st">"homo_sapiens"</span><span class="op">)</span><span class="op">$</span><span class="va">row_count</span>   <span class="co"># either order</span></span>
+<span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
+<p>Leave the mouse dump out and mzLib refuses: <em>“No homology dump for
+mus_musculus. Each pair’s relationships are split between its two
+species’ dumps, so every species’ dump is required.”</em> That is an
+<code>mzlib_usage_error</code>. A pair with nothing in it, such as the
+human paralogs here, still has its row.</p>
+</div>
+<div class="section level3">
+<h3 id="what-to-download-once-per-release">What to download, once per release<a class="anchor" aria-label="anchor" href="#what-to-download-once-per-release"></a>
+</h3>
+<p>Nothing is downloaded for you. For release 116, from
+<code>https://ftp.ensembl.org/pub/release-116/</code>:</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th>input</th>
+<th>path under the release</th>
+<th>size (human, 116)</th>
+<th>argument</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>each species’ primary-assembly GTF</td>
+<td><code>gtf/homo_sapiens/Homo_sapiens.GRCh38.116.gtf.gz</code></td>
+<td>141 MB</td>
+<td><code>gtfs = c(species = path)</code></td>
+</tr>
+<tr class="even">
+<td>each species’ homology dump</td>
+<td><code>tsv/ensembl-compara/homologies/homo_sapiens/Compara.116.protein_default.homologies.tsv.gz</code></td>
+<td>109 MB</td>
+<td><code>dumps</code></td>
+</tr>
+<tr class="odd">
+<td>the gene trees, one file for all species</td>
+<td><code>compara/vertebrates.GeneTree_content.default.e116.txt.gz</code></td>
+<td>79 MB</td>
+<td><code>gene_trees</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Take the dump in each species’ own folder</strong>: every
+species’ dump has the same file name, and one folder up,
+<code>homologies/</code> also holds a 10 GB file of that name, which is
+not one species’ dump. <strong>Keep Ensembl’s file names</strong>: mzLib
+holds the gene trees and every dump to <code>release</code> only when
+their names carry it, and a caveat says which were not checked. A
+compact gene table made with mzLib’s <code>EnsemblGeneSetWriter</code>
+for <code><a href="../reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code> works too, in
+<code>gene_sets</code> instead of <code>gtfs</code>; it carries the
+GTF’s provenance, so the snapshot and its id are the same.</p>
+</div>
+<div class="section level3">
+<h3 id="what-each-status-means">What each status means<a class="anchor" aria-label="anchor" href="#what-each-status-means"></a>
+</h3>
+<p><code>pair_status = c(from, to)</code> gives every gene of
+<code>from</code>’s gene set exactly one status in <code>to</code>. It
+says how far Compara’s inference got, not what biology holds:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>status</th>
+<th>what it means</th>
+<th>read it as</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>has_ortholog</code></td>
+<td>at least one ortholog in <code>to</code>
+</td>
+<td>an answer; the Parquet has the rows</td>
+</tr>
+<tr class="even">
+<td><code>no_edge_in_shared_tree</code></td>
+<td>the gene’s tree holds a <code>to</code> gene, and Compara called no
+ortholog to it</td>
+<td>the nearest the data comes to “no ortholog exists”</td>
+</tr>
+<tr class="odd">
+<td><code>tree_lacks_target_species</code></td>
+<td>the gene’s tree holds no <code>to</code> gene</td>
+<td>nothing was compared</td>
+</tr>
+<tr class="even">
+<td><code>not_in_any_tree</code></td>
+<td>the gene is in the gene set but in no gene tree</td>
+<td>no call was attempted</td>
+</tr>
+</tbody>
+</table>
+<p><code>snap$pair_status$status_counts</code> counts genes per status,
+every status present. <strong>A status is not symmetric</strong>: ask
+for <code>c("mus_musculus", "homo_sapiens")</code> separately.
+<strong>Every biotype is a row</strong>, so choose your denominator by
+filtering on <code>gene_biotype</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="write-the-snapshot-then-query-it">Write the snapshot, then query it<a class="anchor" aria-label="anchor" href="#write-the-snapshot-then-query-it"></a>
+</h3>
+<p>The relationships themselves go to disk. Give <code>out</code> a
+directory that does not exist yet:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">written</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_build_orthology.html">proteins_build_orthology</a></span><span class="op">(</span><span class="st">"116"</span>, gtfs <span class="op">=</span> <span class="va">gtfs</span>, dumps <span class="op">=</span> <span class="va">dumps</span>,</span>
+<span>  gene_trees <span class="op">=</span> <span class="st">"vertebrates.GeneTree_content.default.e116.txt.gz"</span>,</span>
+<span>  restrict_gene_trees <span class="op">=</span> <span class="cn">TRUE</span>, out <span class="op">=</span> <span class="st">"compara-116"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">written</span><span class="op">$</span><span class="va">snapshot_id</span>, <span class="va">snap</span><span class="op">$</span><span class="va">snapshot_id</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span>
+<span><span class="va">written</span><span class="op">$</span><span class="va">written</span><span class="op">$</span><span class="va">files</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"path"</span>, <span class="st">"rows"</span>, <span class="st">"bytes"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                                                  path rows bytes</span></span>
+<span><span class="co">#&gt; 1                          genes/homo_sapiens.parquet    4  1444</span></span>
+<span><span class="co">#&gt; 2                          genes/mus_musculus.parquet    3  1459</span></span>
+<span><span class="co">#&gt; 3                     genes/rattus_norvegicus.parquet    2  1499</span></span>
+<span><span class="co">#&gt; 4                        members/homo_sapiens.parquet    3  1554</span></span>
+<span><span class="co">#&gt; 5                        members/mus_musculus.parquet    3  1609</span></span>
+<span><span class="co">#&gt; 6                   members/rattus_norvegicus.parquet    2  1639</span></span>
+<span><span class="co">#&gt; 7            pairs/homo_sapiens__homo_sapiens.parquet    0   653</span></span>
+<span><span class="co">#&gt; 8            pairs/homo_sapiens__mus_musculus.parquet    3  4221</span></span>
+<span><span class="co">#&gt; 9       pairs/homo_sapiens__rattus_norvegicus.parquet    1  4141</span></span>
+<span><span class="co">#&gt; 10           pairs/mus_musculus__mus_musculus.parquet    1  4195</span></span>
+<span><span class="co">#&gt; 11      pairs/mus_musculus__rattus_norvegicus.parquet    2  4272</span></span>
+<span><span class="co">#&gt; 12 pairs/rattus_norvegicus__rattus_norvegicus.parquet    0   653</span></span>
+<span><span class="co">#&gt; 13                                          views.sql   NA  3297</span></span></code></pre></div>
+<p>The directory holds <code>genes/SPECIES.parquet</code> (the gene
+set), <code>members/SPECIES.parquet</code> (gene to Compara tree),
+<code>pairs/A__B.parquet</code> (every relationship between A and B, A
+sorting first; A == B holds the paralogs), <code>views.sql</code> and
+<code>manifest.json</code> (every input and file with its sha256).
+<strong>A directory that is not empty is refused</strong>: a snapshot is
+written once, and next release’s goes in a new directory to compare with
+this one. <code>restrict_gene_trees = TRUE</code> keeps only your
+species’ genes from the gene-tree file; without it, mzLib’s default
+keeps every gene in it - 4.2 million for the vertebrates of release 116
+- and a caveat says how many. The snapshot is the same either way, as
+the equal ids show.</p>
+<p><strong>mzLib writes Parquet and ships no reader, and mzLibR reads
+none</strong> (it has no dependencies). The <code>arrow</code> package
+reads the tables, and <code>duckdb</code> runs the macros mzLib writes
+in <code>views.sql</code> (<code>orthologs</code>,
+<code>pair_status</code>, <code>species_set3</code>):</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Not run: needs the arrow package, which mzLibR does not depend on.</span></span>
+<span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu">read_parquet</span><span class="op">(</span><span class="st">"compara-116/pairs/homo_sapiens__mus_musculus.parquet"</span><span class="op">)</span></span>
+<span><span class="va">pairs</span><span class="op">[</span><span class="va">pairs</span><span class="op">$</span><span class="va">relationship_class</span> <span class="op">==</span> <span class="st">"ortholog"</span>,</span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_a"</span>, <span class="st">"gene_b"</span>, <span class="st">"relationship_type"</span>, <span class="st">"identity_a"</span>, <span class="st">"identity_b"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p><code>pairs/A__B.parquet</code> has one row per relationship, ordered
+by Compara’s <code>homology_id</code>, with Compara’s values verbatim:
+<code>relationship_type</code> (<code>ortholog_one2one</code>,
+<code>ortholog_one2many</code>, …), <code>relationship_class</code>, the
+genes and proteins of each side, <code>identity_a</code> and
+<code>identity_b</code> (percent, each over its <strong>own</strong>
+protein, so they differ), <code>goc_score</code>,
+<code>wga_coverage</code>, <code>dn</code>, <code>ds</code>,
+<code>is_high_confidence</code> and <code>source_dump</code>. <strong>A
+NULL stays null, never 0 or false</strong>, and arrow reads it as
+<code>NA</code>. <code><a href="../reference/proteins_build_orthology.html">?proteins_build_orthology</a></code> lists every
+column of the three tables.</p>
+</div>
+<div class="section level3">
+<h3 id="the-traps-1">The traps<a class="anchor" aria-label="anchor" href="#the-traps-1"></a>
+</h3>
+<ul>
+<li>
+<strong>Never chain pairs.</strong> Use <code>views.sql</code>’s
+<code>species_set3</code> (or mzLib’s
+<code>OrthologySnapshot.SpeciesSet</code> for more species), which
+requires every two members of a tuple to be orthologs.</li>
+<li>
+<strong>One-to-many is several rows.</strong> Nothing is picked: a
+human gene with two mouse orthologs has two rows, both
+<code>ortholog_one2many</code>. Decide per question.</li>
+<li>
+<strong>The gene set and the dumps must be one release.</strong> A
+homology naming a gene its gene set lacks is refused as an
+<code>mzlib_bridge_error</code> (<code>InvalidDataException</code>):
+that is what a GTF and dumps from different releases look like.</li>
+<li>
+<strong><code>source_dump</code> cannot tell species apart.</strong>
+Ensembl gives every species’ dump the same file name, so the column
+holds that one name everywhere, and a caveat says so.
+<code>manifest.json</code>’s <code>inputs</code> list each dump with its
+species and sha256.</li>
+<li>
+<strong>Join with <code><a href="../reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code> on the gene
+set.</strong> Its <code>gene_set_sha256</code> column and
+<code>snap$gene_sets$sha256</code> are the same value when both were
+counted against the same GTF. Check that before joining a resolution to
+a snapshot.</li>
+<li>
+<strong>It is slow and large.</strong> Every input is read whole.
+For human, mouse and rat at release 116, mzLib reports about 20 s to
+build and 40 s more to write 13 files (9.0 MB).</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
 <h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
 </h2>
 <p>The methods and resources behind the functions on this page, from
@@ -473,12 +1067,30 @@ their specs:</p>
 <!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
 <ul>
 <li>
+<a href="https://doi.org/10.1101/gr.073585.107" class="external-link">doi:10.1101/gr.073585.107</a>:
+Ensembl Compara gene trees, the duplication-aware phylogenies its
+orthology and paralogy calls are read from (Vilella et al. 2009, Genome
+Res 19:327).</li>
+<li>
 <a href="https://doi.org/10.1093/nar/gkaf1239" class="external-link">doi:10.1093/nar/gkaf1239</a>:
-Ensembl releases, GTFs and cross-references (Ensembl 2026, NAR).</li>
+Ensembl releases, their GTFs and the Compara homology dumps (Ensembl
+2026, NAR).</li>
 <li>
 <a href="https://doi.org/10.1093/nar/gkae1010" class="external-link">doi:10.1093/nar/gkae1010</a>:
 UniProt, whose XML dbReferences carry the gene links resolved (UniProt
 Consortium 2025, NAR).</li>
+<li>
+<a href="https://doi.org/10.1016/0022-2836%2870%2990057-4" class="external-link">doi:10.1016/0022-2836(70)90057-4</a>:
+Global alignment by dynamic programming (Needleman and Wunsch 1970, J
+Mol Biol 48:443).</li>
+<li>
+<a href="https://doi.org/10.1016/0022-2836%2882%2990398-9" class="external-link">doi:10.1016/0022-2836(82)90398-9</a>:
+Affine gap costs in the same time and memory order, the form mzLib
+implements (Gotoh 1982, J Mol Biol 162:705).</li>
+<li>
+<a href="https://doi.org/10.1073/pnas.89.22.10915" class="external-link">doi:10.1073/pnas.89.22.10915</a>:
+BLOSUM62, the substitution matrix and its half-bit units (Henikoff and
+Henikoff 1992, PNAS 89:10915).</li>
 <li>
 <a href="https://doi.org/10.1093/genetics/iyad031" class="external-link">doi:10.1093/genetics/iyad031</a>:
 The Gene Ontology knowledgebase in 2023 (GO Consortium, Genetics 224,
@@ -487,6 +1099,10 @@ iyad031), the ontology and annotations used.</li>
 <a href="https://doi.org/10.1038/75556" class="external-link">doi:10.1038/75556</a>: Gene
 Ontology: tool for the unification of biology (Ashburner et al., Nat
 Genet 25, 25-29, 2000), the is_a / part_of graph propagated over.</li>
+<li>
+<a href="https://doi.org/10.1093/nar/gkv1189" class="external-link">doi:10.1093/nar/gkv1189</a>:
+RefSeq, whose protein accession prefixes and .n versions mzLib matches
+(O’Leary et al. 2016, NAR).</li>
 </ul>
 <!-- END cite -->
 </div>

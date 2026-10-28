@@ -7,12 +7,295 @@ the bridge’s verb specs, which every help page’s **Since** section
 renders.
 
 This release projects mzLib 1.0.595. The verbs marked *needs the pyMzLib
-0.2.0 bridge*, *needs the pyMzLib 0.3.0 bridge* or *needs the pyMzLib
-0.4.0 bridge* below are new in the bridge that release publishes; with
-an older bridge they are refused, naming the release they need.
+0.2.0 bridge*, *needs the pyMzLib 0.3.0 bridge*, *needs the pyMzLib
+0.4.0 bridge* or *needs the pyMzLib 0.6.0 bridge* below are new in the
+bridge that release publishes; with an older bridge they are refused,
+naming the release they need.
 [`mzlibr_install_bridge()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.md)
-installs the bridge pyMzLib 0.5.0 publishes (mzLib 1.0.595, `d10017ce`),
+installs the bridge pyMzLib 0.6.0 publishes (mzLib 1.0.595, `d10017ce`),
 verified against that release’s SHA256SUMS.
+
+### Statistics, designs and PTM-QTL (the pyMzLib 0.6.0 bridge)
+
+Ported from pyMzLib 0.6.0, verb for verb; each *needs the pyMzLib 0.6.0
+bridge*. Every number is mzLib’s, and every recording the help pages and
+articles replay is pyMzLib’s, byte for byte. New articles:
+[`vignette("diff")`](https://smith-chem-wisc.github.io/mzLibR/articles/diff.md)
+and
+[`vignette("ptmqtl")`](https://smith-chem-wisc.github.io/mzLibR/articles/ptmqtl.md);
+the differential-abundance article gains a section for each new
+statistic.
+
+- **`stats_fit(contrasts = )`: any comparison, with a confidence
+  interval** (mzLib
+  [\#1452](https://github.com/smith-chem-wisc/mzLibR/issues/1452),
+  `EmpiricalBayes.ModerateContrasts`). Give the contrasts file
+  `diff_design(out = )` writes beside the design (`contrasts_<i>.tsv`),
+  or your own: a contrast id column, then exactly the design’s
+  coefficient columns, one weight each. Each contrast is moderated with
+  the same prior as the coefficients, has its own Benjamini-Hochberg
+  family, and carries `confidence_low` and `confidence_high`, as limma’s
+  `contrasts.fit()`, `eBayes()` and `topTable(confint = )`. The answers
+  are a second table, `fit$contrasts` (an `mzlibr_moderated_contrasts`
+  with `confidence_level`, `tested_contrasts`, `weights` and `records`),
+  so the coefficient table is unchanged; `coefficients` may now be empty
+  and defaults to `character(0)`. `confidence` sets the level, as a
+  fraction; left `NULL`, it is mzLib’s default (0.95).
+  `fit$contrasts_file` names the file.
+- **`stats_fit(estimator = )`: mzLib’s marginal-likelihood variance
+  prior** (mzLib
+  [\#1368](https://github.com/smith-chem-wisc/mzLibR/issues/1368)).
+  `"marginal_likelihood"` fits the prior with each feature’s own
+  residual df, so the unequal df that missing values cause are handled
+  exactly; `"moments_legacy"` (limma’s `eBayes(legacy = TRUE)`) stays
+  mzLib’s default, and the new `fit$prior$estimator` reports which was
+  used. On the MALAT1 dilution series it lowers the prior df from 19.6
+  to 11.0 and drops the false FLuc call at half load.
+- **An older bridge is named, not trusted.** A bridge before pyMzLib
+  0.6.0 lists `stats fit` but ignores `--contrasts` and `--estimator`;
+  [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  then raises an `mzlib_usage_error` naming the 0.6.0 bridge instead of
+  returning a fit that did not do what was asked.
+- **[`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)’s
+  caveats name the variance-prior estimator.** The first caveat now
+  begins `moments_legacy:` (or `marginal_likelihood:`), the
+  `residual_df_differ` caveat names `estimator = "marginal_likelihood"`,
+  and the `bh_adjusted` caveat says “per coefficient and per contrast”.
+  Every number is unchanged; only code that matches caveat text needs a
+  look. On fewer than 3 features `prior$scale` is `NA` and `prior$df` 0
+  (mzLib
+  [\#1398](https://github.com/smith-chem-wisc/mzLibR/issues/1398));
+  [`?stats_fit`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  now says bridges before pyMzLib 0.6.0, not 0.5.1, reported the first
+  feature’s variance there.
+- **[`stats_combine_p()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_combine_p.md)**:
+  one p-value per feature from several independent studies, by Fisher’s
+  method or Stouffer’s, weighted or not (mzLib
+  [\#1367](https://github.com/smith-chem-wisc/mzLibR/issues/1367),
+  `PValueCombination`). `method` is required. Give each test’s `effect`
+  and every p-value is read as two-sided and converted to the one-sided
+  p-value for effect \> 0 first, so opposite effects cancel. The tests
+  hold the recordings to R’s
+  [`pchisq()`](https://rdrr.io/r/stats/Chisquare.html) and
+  [`qnorm()`](https://rdrr.io/r/stats/Normal.html), recorded and
+  computed here.
+- **[`stats_correlate()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_correlate.md)**:
+  Spearman’s rho of every feature with a per-sample trait, optionally
+  partial given covariates (`given`; mzLib
+  [\#1367](https://github.com/smith-chem-wisc/mzLibR/issues/1367),
+  [\#1446](https://github.com/smith-chem-wisc/mzLibR/issues/1446),
+  `SpearmanCorrelation`). Each row carries rho, a two-sided p-value, the
+  samples used and how the p-value was computed (`"exact"`,
+  `"asymptotic"` or `"not_estimable"`, with rho and p `NA`). The tests
+  hold every recorded row to
+  [`stats::cor.test()`](https://rdrr.io/r/stats/cor.test.html) run here.
+- **[`stats_fit_logistic()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_logistic.md)**:
+  a logistic regression per feature of a 0/1 table, as R’s
+  `glm(family = binomial)` (mzLib
+  [\#1367](https://github.com/smith-chem-wisc/mzLibR/issues/1367)): is a
+  feature’s detection related to the condition? A feature the design
+  separates is `"separated"`, with `NA` statistics, instead of R’s huge
+  coefficient. `max_iterations` and `tolerance` are mzLib’s when left
+  `NULL`. The tests hold the recording to R 4.6.1’s
+  [`glm()`](https://rdrr.io/r/stats/glm.html) output and to
+  [`glm.fit()`](https://rdrr.io/r/stats/glm.html) run here.
+- **[`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)**:
+  a linear mixed model per feature with a random intercept per group of
+  samples, as `nlme::lme(random = ~ 1 | group)` (mzLib
+  [\#1367](https://github.com/smith-chem-wisc/mzLibR/issues/1367)),
+  tested by Wald t on nlme’s containment df. `estimator = "reml"` or
+  `"ml"`; left `NULL`, mzLib’s default (REML), which the result reports.
+  The tests hold the recordings to nlme 3.1.169’s output and to
+  [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html) run here.
+- **[`stats_entrapment_fdp()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_entrapment_fdp.md)**:
+  the lower bound, combined and paired estimates of a search’s false
+  discovery proportion at each q-value threshold (mzLib
+  [\#1385](https://github.com/smith-chem-wisc/mzLibR/issues/1385), Wen
+  et al. 2025, as FDRBench). `ratio` is required; `paired` is reported
+  only at a ratio of exactly 1; `thresholds` left `NULL` is mzLib’s
+  default sweep, 0.001 to 0.100.
+- **[`diff_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/diff_design.md),
+  with
+  [`factor_spec()`](https://smith-chem-wisc.github.io/mzLibR/reference/factor_spec.md)
+  and
+  [`covariate_spec()`](https://smith-chem-wisc.github.io/mzLibR/reference/covariate_spec.md)**:
+  a sample sheet to mzLib’s design matrix per stratum (mzLib
+  [\#1450](https://github.com/smith-chem-wisc/mzLibR/issues/1450),
+  `AnalysisDesign`), equal to R’s
+  [`model.matrix()`](https://rdrr.io/r/stats/model.matrix.html) (the
+  tests run it here), with its rank, aliased terms, warnings and the
+  contrasts it cannot run; one row per default contrast with **mzLib’s
+  verdict on whether these samples can estimate it at all**. Each
+  stratum’s `matrix` is an R matrix named by sample id, and `strata` is
+  a list named by stratum key. With `out` it writes `design_<i>.tsv` and
+  `contrasts_<i>.tsv`, which
+  [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  reads.
+- **[`diff_observations()`](https://smith-chem-wisc.github.io/mzLibR/reference/diff_observations.md)**:
+  every peptide in every biological sample from a FlashLFQ or
+  MetaMorpheus peptide table (mzLib
+  [\#1455](https://github.com/smith-chem-wisc/mzLibR/issues/1455)): log2
+  intensity, fractions summed and technical replicates averaged, or
+  **`NA`, never 0, with the reason in `state`**. `runs` is a data.frame
+  of `file` and `sample`, and optionally `fraction` and
+  `technical_replicate`; `basis` has no default. mzLib’s shared-peptide
+  normalization is always measured and reported, and subtracted with
+  `normalize = TRUE`. `responses_out` writes the table
+  [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
+  reads.
+- **[`ptmqtl_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_occupancy.md),
+  [`ptmqtl_pairs()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_pairs.md)
+  and
+  [`ptmqtl_trait_effects()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_trait_effects.md)**:
+  PTM site occupancy per run with each cell’s state (a censored cell has
+  no `fraction`, never a 0), physical and co-varying PTM pairs (`type`
+  is required; `remove_run_level` takes out a batch shift), and a
+  per-run trait’s effect on logit occupancy with a random intercept per
+  biological replicate (mzLib
+  [\#1369](https://github.com/smith-chem-wisc/mzLibR/issues/1369),
+  [\#1430](https://github.com/smith-chem-wisc/mzLibR/issues/1430),
+  [\#1446](https://github.com/smith-chem-wisc/mzLibR/issues/1446)).
+  **Positions are 1-based, unlike
+  [`readers_read_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_occupancy.md)**.
+- The vendored specs are re-synced from bridge `60b1d259`.
+  `scripts/sync-specs.R` now reads a bare `y` or `n` in a spec as the
+  string the bridge’s own YAML reader takes it for, where R’s `yaml`
+  package read it as a boolean (`stats correlate`‘s and `ptmqtl pairs`’
+  `n` column).
+
+### Data: checksums, alignment, orthology, spectral libraries and SDRF scoping (the pyMzLib 0.6.0 bridge)
+
+Ported from pyMzLib 0.6.0, verb for verb; each *needs the pyMzLib 0.6.0
+bridge* and is refused, naming that release, by an older one. Every
+option left out is not sent, so mzLib’s default applies and the result
+says what was used. Every recording the help pages and articles replay
+is pyMzLib’s, byte for byte. A new article,
+[`vignette("library")`](https://smith-chem-wisc.github.io/mzLibR/articles/library.md);
+the PRIDE, protein-database and SDRF articles gain a section for each
+new verb.
+
+- **[`pride_file_checksums()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_file_checksums.md):
+  the MD5 and exact size PRIDE recorded for each deposited file** (mzLib
+  [\#1427](https://github.com/smith-chem-wisc/mzLibR/issues/1427), wire
+  `pride checksums`). A data.frame of `file_name`, `md5`, `size_bytes`
+  and `project_accession`, its row names the file names, so
+  `checksums["README.txt", ]` looks a file up by the name it was
+  downloaded under. `size_bytes` is the exact download length, which
+  neither other listing gives (PXD000001’s `.xml.gz`: 10,668,000 bytes,
+  where
+  [`pride_list_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md)
+  says 10,677,205), and `md5` is not the manifest’s `checksum` (a SHA-1
+  where present). It is a third list: PRIDE’s `generated/` files have no
+  row. Zero rows is an answer; an unknown accession, or a project not
+  yet published, raises `mzlib_project_not_found`; a list mzLib cannot
+  read stays an `mzlib_bridge_error` (`MzLibException`). No timeout of
+  mzLibR’s own.
+  [`pride_download()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download.md)
+  and
+  [`pride_download_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download_files.md)
+  still check no bytes, and now say so; the PRIDE article shows the
+  check with [`file.size()`](https://rdrr.io/r/base/file.info.html) and
+  [`tools::md5sum()`](https://rdrr.io/r/tools/md5sum.html).
+- **[`proteins_align()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_align.md):
+  map a residue onto an isoform, an ortholog or another release** (mzLib
+  [\#1428](https://github.com/smith-chem-wisc/mzLibR/issues/1428), wire
+  `proteins align`). A global affine alignment scored with BLOSUM62, for
+  a list of `c(source, target)` pairs in one bridge call: `records` (one
+  row per pair: score in half-bits, identical and substituted residues,
+  residues facing a gap, the aligned rows) and `residue_map` (one row
+  per residue, its counterpart’s position and letter, `NA` facing a gap,
+  never the nearest residue). `pair_index` is 1-based.
+  [`proteins_map_source_to_target()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_source_to_target.md)
+  and
+  [`proteins_map_target_to_source()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_target_to_source.md)
+  look positions up, and
+  [`proteins_alignments()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_alignments.md)
+  splits a result into one alignment per pair. `gap_open`, `gap_extend`,
+  `end_gaps` and `max_cells` default to `NULL`, mzLib’s (11, 1,
+  `"free"`, 200,000,000); `residue_map = FALSE` sends
+  `--no-residue-map`. One pair is
+  `proteins_align(list(c(source, target)))`, as the spec spells it:
+  there is no separate one-pair function, which is pyMzLib’s
+  `proteins.align()`.
+- **[`proteins_parse_accessions()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_parse_accessions.md):
+  entry, isoform or version, and applied variants** (mzLib
+  [\#1382](https://github.com/smith-chem-wisc/mzLibR/issues/1382), wire
+  `proteins parse-accession`). `P04637-2_S70N` is entry `P04637`,
+  isoform 2, with `S70N`; `NP_000537.3_R72P` is RefSeq `NP_000537`,
+  version 3. It parses and never repairs: a FASTA header, a `DECOY_`
+  prefix, a `|`-joined group or mzLib’s `P04637_2` collision counter is
+  `unrecognized` and kept verbatim, and every accession is sent exactly
+  as given, not trimmed.
+- **[`proteins_build_orthology()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_build_orthology.md):
+  an Ensembl Compara orthology snapshot** (mzLib
+  [\#1381](https://github.com/smith-chem-wisc/mzLibR/issues/1381), wire
+  `genes orthology`). From each species’ GTF (or gene table), every
+  species’ homology dump - mzLib refuses a call without one - and the
+  gene-tree file, all local; `gtfs` and `gene_sets` are named character
+  vectors, production name to path. It reports what went in
+  (`gene_sets`, `gene_trees`, `dumps`), the relationships per species
+  pair (`pairs`;
+  [`proteins_orthology_pair()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_orthology_pair.md)
+  finds one in either order), a `snapshot_id` to record with any result,
+  with `pair_status` every gene’s status in one other species
+  (`has_ortholog`, `no_edge_in_shared_tree`,
+  `tree_lacks_target_species`, `not_in_any_tree`), and with `out` the
+  Parquet snapshot it wrote (`written`). mzLibR reads no Parquet; the
+  proteins article queries it with `arrow`. mzLib’s three-species test
+  world is copied into `tests/orthology/`, kept byte-exact by
+  `.gitattributes` because the recordings’ sha256s are over its bytes.
+- **[`library_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_read.md)
+  and
+  [`library_read_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_read_many.md):
+  mzLib’s `.msl` spectral libraries** (wire `library read`). One row per
+  precursor, or per fragment ion with `fragments = TRUE`, in the
+  library’s stored order; `retention_time_unit` is per row (iRT or
+  minutes, never converted), and mzLib’s “not available” values (ion
+  mobility 0.0, a NaN q-value, NCE 0, an empty protein) are `NA`.
+  `precursor_index` is 1-based. `index_only_threshold` defaults to
+  `NULL`, mzLib’s 1 GiB; `limit` and `offset` count precursors. The
+  many-libraries form returns one long table and a `files` data.frame,
+  in one bridge call.
+- **[`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md):
+  a TMT, TMTpro, iTRAQ or DiLeu design from an SDRF** (wire
+  `sdrf isobaric-design`). One row per file and annotated channel, or
+  every reason there is none. It guesses neither the kit nor the plex:
+  declare exactly one of `plex_column`, `plex_file_name_pattern` and
+  `single_plex`. **Its numbers are 1-based, as the SDRF writes them**,
+  where
+  [`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)’s
+  are 0-based; the split is mzLib’s, and mzLibR converts neither. `out`
+  names a folder for MetaMorpheus’s `TmtDesign.txt`.
+- **[`sdrf_restrict()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_restrict.md):
+  an SDRF cut to the files one search read** (wire `sdrf restrict`).
+  mzLib joins `X-calib.mzML` to the row naming `X.raw` by stem, adds
+  `comment[searched data file]`, and reports what it could not place
+  (`searched_without_row`, `dropped_data_files`, `ambiguous`,
+  `shared_stem`). Name an element of `searched_files` by its acquired
+  file to override the suffix rule. The result is an `mzlibr_sdrf`;
+  [`sdrf_searched_data_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_searched_data_files.md)
+  reads the new column. Restrict first, then read a design: both design
+  readers key on that column.
+
+*Same file, different value.*
+
+- **`sdrf_pool(out = )`’s `written$path` names the file mzLib wrote.**
+  mzLib adds `.sdrf.tsv` to a name that does not already end in it, so
+  `out = "x.tsv"` writes `x.tsv.sdrf.tsv`. With the pyMzLib 0.6.0 bridge
+  `written$path` says `x.tsv.sdrf.tsv`; older bridges reported `x.tsv`,
+  a file that does not exist. The file written is the same, and an `out`
+  already ending in `.sdrf.tsv` is unchanged. `sdrf_restrict(out = )`
+  reports its file the same way.
+
+*For contributors.* The replay bridge (`R/replay.R`) gains pyMzLib
+0.6.0’s rules for these verbs: a recording answers only a call with the
+same pairs, accessions, searched files or species on stdin, the same
+`--sequences`, `--no-residue-map`, `--pair-status` and
+`--restrict-gene-trees` choice, and the options it was recorded with;
+and, as in pyMzLib, a recording whose echo of an option is null never
+answers a call that sends it. The test harness gains
+`recorded_bridge_call()`, which runs a public function through the real
+transport and verb check against a recording and returns what it sent.
 
 ### Defaults come from mzLib (the pyMzLib 0.5.0 bridge)
 

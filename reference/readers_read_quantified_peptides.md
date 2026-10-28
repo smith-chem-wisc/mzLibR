@@ -71,7 +71,7 @@ IsoTracker. For any other file `retention_time` and `peak_order` are
 
 Wire verb `readers read-quantified-peptides`. Generated from the
 bridge's verb spec `readers.read-quantified-peptides.yaml` (bridge
-commit `f85fef72f651`) by `scripts/build-man.R`; the spec owns these
+commit `60b1d25968a1`) by `scripts/build-man.R`; the spec owns these
 facts, and all three bindings render the same ones.
 
 - [`QuantifiedPeptideFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs)

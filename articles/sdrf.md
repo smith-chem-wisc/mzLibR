@@ -14,6 +14,8 @@ group results across experiments.
 | each sample’s characteristics, with ages in years | [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md), [`sdrf_parse_ages()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_parse_ages.md) | `SdrfSampleBlock.BySourceName`, `SdrfAge.TryParse` |
 | do several SDRFs spell their terms alike? | [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md) | `SdrfDriftLint.Analyze` |
 | can it drive a label-free quantification, and with what design? | [`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md) | `SdrfLabelFreeDesign.Read` (#1363) |
+| which rows did my search read, when it read `X-calib.mzML` and the SDRF names `X.raw`? | [`sdrf_restrict()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_restrict.md) | `SdrfSearchScope.Restrict` |
+| can it drive a TMT, iTRAQ or DiLeu quantification, channel by channel? | [`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md) | `SdrfIsobaricDesign.Read` |
 
 ## Read one document
 
@@ -122,6 +124,19 @@ for analysis, not for deposit: two experiments may both have a “Sample
 1”, so keep
 [`sdrf_source_documents()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_source_documents.md)
 in any key.
+
+`out` writes the whole pooled document, whatever `limit` is. **mzLib
+adds `.sdrf.tsv` to a name that does not already end in it**, so
+`out = "x.tsv"` writes `x.tsv.sdrf.tsv`; `written$path` names the file
+it wrote. Name the file `.sdrf.tsv` and the two agree:
+
+``` r
+
+# Not run: writes a file, which the recordings this page replays did not.
+pooled <- sdrf_pool(c(malaria = "PXD000070.sdrf.tsv", colon = "PXD026824.sdrf.tsv"),
+                    out = "pooled.tsv")
+pooled$written$path   # ".../pooled.tsv.sdrf.tsv"
+```
 
 ## Is the document well-formed?
 
@@ -437,10 +452,178 @@ identical(ranked$records, d$records)
 #> [1] TRUE
 ```
 
-**Label-free only.** An isobaric SDRF needs a channel design that
-[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
-does not build. For the channels themselves, see the isobaric kits
+**Label-free only.** An isobaric SDRF needs a channel design, which
+[`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md)
+reads, below. For the channels themselves, see the isobaric kits
 article.
+
+## Which rows did my search read?
+
+A search reads `X-calib.mzML`; the SDRF names the acquired `X.raw`. The
+design readers match `searched_files` by **exact** name, so the search’s
+own names match nothing.
+[`sdrf_restrict()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_restrict.md)
+joins them with mzLib’s `SdrfSearchScope.Restrict`: **by stem**,
+ignoring case, after removing the derivative suffixes MetaMorpheus
+writes (`-calib`, `-averaged`, in any order and number). Each kept row
+is carried cell for cell, with the searched file’s name in a new
+`comment[searched data file]` column; nothing is renumbered.
+
+The example is mzLib’s TMT10 fixture from PXD008841 (40 rows, 4 files).
+The search read two calibrated runs, the raw file of one of them as
+well, a renamed file whose acquisition you know, and one the SDRF does
+not describe. **Name an element by the acquired file it came from** when
+you know it; that overrides the suffix rule:
+
+``` r
+
+pool1 <- "HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr0"
+pool5 <- "HJOSLO2U_QEHF_20150329_TMT_pool5_300ugIPG37-49_7of15ul_fr0"
+searched <- c(paste0("D:\\search\\", pool1, "1-calib.mzML"), paste0(pool1, "2-calib.mzML"),
+              paste0(pool1, "2.raw"), "sample_A.mzML", "not_in_sdrf.mzML")
+names(searched) <- c("", "", "", paste0(pool5, "1.raw"), "")
+scoped <- sdrf_restrict("PXD008841.subset.sdrf.tsv", searched, limit = 2)
+c(input = scoped$input_row_count, kept = scoped$row_count, returned = scoped$returned_count)
+#>    input     kept returned 
+#>       40       30        2
+sdrf_searched_data_files(scoped)
+#> [1] "HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01-calib.mzML"
+#> [2] "HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01-calib.mzML"
+```
+
+The result is an SDRF document, so
+[`sdrf_value()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_value.md)
+and the other accessors work on it. Four reports say what the
+restriction could not place, and none of them is repaired:
+
+``` r
+
+scoped$searched_without_row   # searched, but the SDRF has no row for it
+#> [1] "not_in_sdrf.mzML"
+scoped$dropped_data_files     # acquired, but this search did not read it
+#> [1] "HJOSLO2U_QEHF_20150329_TMT_pool5_300ugIPG37-49_7of15ul_fr02.raw"
+writeLines(strwrap(scoped$ambiguous, 80))   # two searched files claimed one acquisition
+#> HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02:
+#> HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02-calib.mzML,
+#> HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02.raw
+scoped$shared_stem            # one searched file whose rows name two different acquired files
+#> character(0)
+```
+
+`fr02` was searched twice, as `-calib.mzML` and as `.raw`: the first in
+name order kept its rows, and the other has none and is not counted as
+missing. `out` writes the **whole** restricted document, as for
+[`sdrf_pool()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_pool.md):
+name it `.sdrf.tsv`, because mzLib adds that to a name that does not end
+in it, and `written$path` names the file written.
+
+**Then read the design from the restricted document**, with the search’s
+own paths as `searched_files`:
+[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)
+and
+[`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md)
+key on `comment[searched data file]` when a document has it. Give those
+paths as this platform writes them.
+[`sdrf_restrict()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_restrict.md)
+reduces either separator on any platform, but the design readers split
+only the running platform’s, so `D:\search\x.mzML` is not a file name on
+Linux. [`file.path()`](https://rdrr.io/r/base/file.path.html) writes
+`/`, which both platforms read.
+
+## An isobaric design, channel by channel
+
+[`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md)
+is the TMT, TMTpro, iTRAQ and DiLeu counterpart of
+[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md).
+It calls mzLib’s `SdrfIsobaricDesign.Read`, which runs MetaMorpheus’s
+own checks on a TMT design - one plex, fraction and technical replicate
+per file; a channel described once per plex; no sample twice at one
+fraction in a plex - and refuses rather than repairs, reporting every
+failure at once.
+
+**It guesses nothing.** Not the kit, because one kit’s labels can be a
+subset of another’s (TMT11 with 131C unannotated reads exactly like
+TMT10), and not the plex, which you declare with exactly one of
+`plex_column`, `plex_file_name_pattern` and `single_plex`. PXD008841
+writes no plex column; the plex survives only in its file names, spelled
+two ways (`TMTpool1`, `TMT_pool5`), so one .NET regular expression reads
+both:
+
+``` r
+
+d <- sdrf_isobaric_design("PXD008841.subset.sdrf.tsv", kit = "TMT10",
+                          plex_file_name_pattern = "TMT_?pool(?<plex>\\d+)")
+d
+#> <mzlibr_sdrf_isobaric_design> PXD008841.subset.sdrf.tsv: 4 files, 2 plex(es), kit TMT10, 40 channel rows (1-based numbers)
+#>   plex from: file-name pattern 'TMT_?pool(?<plex>\d+)' (declared)
+#>   files keyed on: comment[data file]
+d$plex_ids
+#> 1 5 
+#> 1 2
+d$records[9:11, c("full_path", "plex_id", "channel", "sample_name", "fraction")]
+#>                                                  full_path plex_id channel
+#> 9  HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01.raw       1    130C
+#> 10 HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01.raw       1    131N
+#> 11 HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02.raw       1     126
+#>    sample_name fraction
+#> 9      OSL.41B        1
+#> 10        pool        1
+#> 11     OSL.53E        2
+```
+
+One row per file and **annotated** channel, files in SDRF order and each
+file’s channels in reporter m/z order. **Every number is 1-based, as the
+SDRF writes it** - `fraction`, `technical_replicate`,
+`biological_replicate`, `plex_id` - where
+[`sdrf_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)’s
+are 0-based. The split is mzLib’s (`SdrfIsobaricDesign` against
+`SpectraFileInfo`), and mzLibR converts neither, so never mix the two
+tables without adding or removing 1. `out` names a **folder**: mzLib
+writes MetaMorpheus’s `TmtDesign.txt` inside it, with the same 1-based
+numbers.
+
+Leave the plex undeclared and mzLib refuses rather than guess one:
+
+``` r
+
+refused <- sdrf_isobaric_design("PXD008841.subset.sdrf.tsv", kit = "TMT10")
+refused$is_valid
+#> [1] FALSE
+writeLines(strwrap(refused$refusals[[1]], 80))
+#> No plex source was declared. Name the column that holds the plex, give a
+#> file-name pattern whose group captures it, or name the single plex. The plex is
+#> never inferred (MAP-09): 'comment[sample preparation batch]' is often not a
+#> plex.
+```
+
+A declared column is no guarantee either. PXD061609’s
+`comment[sample preparation batch]` holds three fractionation arms of
+**one** TMTpro plex. Read as the plex, it gives three plexes. Declared
+as one plex, each sample sits at the same fraction in three files, which
+a plex cannot hold, and mzLib refuses, every case at once:
+
+``` r
+
+arms <- sdrf_isobaric_design("PXD061609.subset.sdrf.tsv", kit = "TMT18",
+                             plex_column = "comment[sample preparation batch]")
+arms$plex_ids
+#> HighSalt  LowSalt    NoSAX 
+#>        1        2        3
+one <- sdrf_isobaric_design("PXD061609.subset.sdrf.tsv", kit = "TMT18", single_plex = "tube1")
+one$is_valid
+#> [1] FALSE
+length(one$refusals)
+#> [1] 36
+writeLines(strwrap(one$refusals[[1]], 80))
+#> Plex 'tube1' has sample 'brain_female' biorep 1 fraction 1 techrep 1 more than
+#> once: 'ea12578.raw' 126, 'ea12603.raw' 126, 'ea12628.raw' 126. Files that share
+#> a fraction number need different technical replicates, or different plexes.
+```
+
+Which reading is right is the depositor’s to say: mzLib reports, and you
+decide. The kit is named as
+[`isobaric_kits()`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md)
+takes it, and an unknown name is the same usage error there.
 
 ## Instead of `readers_read_records()`
 

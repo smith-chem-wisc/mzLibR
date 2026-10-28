@@ -34,13 +34,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
+    <li><a class="dropdown-item" href="../articles/library.html">Spectral libraries</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
     <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
-    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, contrasts, and the tests around it</a></li>
+    <li><a class="dropdown-item" href="../articles/diff.html">Differential design and observations: the design matrix and every peptide, by mzLib</a></li>
+    <li><a class="dropdown-item" href="../articles/ptmqtl.html">PTM site occupancy and PTM-QTL: occupancy, pairs and trait effects, by mzLib</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -132,6 +135,18 @@ the half you need to group results across experiments.</p>
 <td><code><a href="../reference/sdrf_design.html">sdrf_design()</a></code></td>
 <td>
 <code>SdrfLabelFreeDesign.Read</code> (#1363)</td>
+</tr>
+<tr class="even">
+<td>which rows did my search read, when it read
+<code>X-calib.mzML</code> and the SDRF names <code>X.raw</code>?</td>
+<td><code><a href="../reference/sdrf_restrict.html">sdrf_restrict()</a></code></td>
+<td><code>SdrfSearchScope.Restrict</code></td>
+</tr>
+<tr class="odd">
+<td>can it drive a TMT, iTRAQ or DiLeu quantification, channel by
+channel?</td>
+<td><code><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code></td>
+<td><code>SdrfIsobaricDesign.Read</code></td>
 </tr>
 </tbody>
 </table>
@@ -226,6 +241,17 @@ computed on the pooled table is not the fill rate of the originals. The
 pooled table is for analysis, not for deposit: two experiments may both
 have a “Sample 1”, so keep <code><a href="../reference/sdrf_source_documents.html">sdrf_source_documents()</a></code> in any
 key.</p>
+<p><code>out</code> writes the whole pooled document, whatever
+<code>limit</code> is. <strong>mzLib adds <code>.sdrf.tsv</code> to a
+name that does not already end in it</strong>, so
+<code>out = "x.tsv"</code> writes <code>x.tsv.sdrf.tsv</code>;
+<code>written$path</code> names the file it wrote. Name the file
+<code>.sdrf.tsv</code> and the two agree:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Not run: writes a file, which the recordings this page replays did not.</span></span>
+<span><span class="va">pooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_pool.html">sdrf_pool</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>malaria <span class="op">=</span> <span class="st">"PXD000070.sdrf.tsv"</span>, colon <span class="op">=</span> <span class="st">"PXD026824.sdrf.tsv"</span><span class="op">)</span>,</span>
+<span>                    out <span class="op">=</span> <span class="st">"pooled.tsv"</span><span class="op">)</span></span>
+<span><span class="va">pooled</span><span class="op">$</span><span class="va">written</span><span class="op">$</span><span class="va">path</span>   <span class="co"># ".../pooled.tsv.sdrf.tsv"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="is-the-document-well-formed">Is the document well-formed?<a class="anchor" aria-label="anchor" href="#is-the-document-well-formed"></a>
@@ -234,7 +260,7 @@ key.</p>
 rules - required columns, ragged rows, the uniqueness of
 <code>source name</code> + <code>assay name</code> +
 <code>comment[label]</code> - and locates each finding by line:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">skeleton</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_validate.html">sdrf_validate</a></span><span class="op">(</span><span class="st">"sdrf_skeleton.sdrf.tsv"</span><span class="op">)</span></span>
 <span><span class="va">skeleton</span></span>
 <span><span class="co">#&gt; &lt;mzlibr_sdrf_validation&gt; sdrf_skeleton.sdrf.tsv: NOT valid</span></span>
@@ -273,7 +299,7 @@ as a missing column, has <code>NA</code> for its line.</p>
 words in every sample column, one replicate number, no factor.
 <code><a href="../reference/sdrf_assess.html">sdrf_assess()</a></code> is the gate for that, and its verdict is how
 many of three checks pass:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">assessment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_assess.html">sdrf_assess</a></span><span class="op">(</span><span class="st">"sdrf_cohort.sdrf.tsv"</span><span class="op">)</span></span>
 <span><span class="va">assessment</span></span>
 <span><span class="co">#&gt; &lt;mzlibr_sdrf_assessment&gt; sdrf_cohort.sdrf.tsv: Informative</span></span>
@@ -299,7 +325,7 @@ many of three checks pass:</p>
 <p>A real deposit, PXD000070, is <code>Partial</code>: it describes its
 samples and varies its replicates, but no factor value varies, so it
 cannot say what was compared. A valid skeleton says nothing:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pxd70</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_assess.html">sdrf_assess</a></span><span class="op">(</span><span class="st">"PXD000070.sdrf.tsv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">pxd70</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"verdict"</span>, <span class="st">"factor_value_varies"</span>, <span class="st">"sample_is_described"</span>, <span class="st">"biological_replicate_varies"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 4</span></span>
@@ -317,7 +343,7 @@ cannot say what was compared. A valid skeleton says nothing:</p>
 <span><span class="co">#&gt; 3 characteristics[biological replicate]      2    2</span></span></code></pre></div>
 <p>For a corpus, <code><a href="../reference/sdrf_assess_many.html">sdrf_assess_many()</a></code> reads every document in
 one bridge call:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_assess_many.html">sdrf_assess_many</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sdrf_cohort.sdrf.tsv"</span>, <span class="st">"sdrf_skeleton.sdrf.tsv"</span>, <span class="st">"PXD000070.sdrf.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">batch</span><span class="op">$</span><span class="va">files</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"path"</span>, <span class="st">"verdict"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                     path     verdict</span></span>
@@ -333,7 +359,7 @@ a sample’s rows disagree about a column, mzLib withholds it rather than
 let the first row win, and <code>status</code> says
 <code>"conflicting"</code>. Ages are parsed into years on the
 <code>characteristics[age]</code> rows:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_samples.html">sdrf_samples</a></span><span class="op">(</span><span class="st">"sdrf_cohort.sdrf.tsv"</span><span class="op">)</span></span>
 <span><span class="va">samples</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">samples</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"conflicting"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"source_name"</span>, <span class="st">"column_name"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    source_name              column_name</span></span>
@@ -351,7 +377,7 @@ let the first row win, and <code>status</code> says
 and 63 days are both plausible in one study.
 <code><a href="../reference/sdrf_parse_ages.html">sdrf_parse_ages()</a></code> applies the same rules to any cells you
 have:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sdrf_parse_ages.html">sdrf_parse_ages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"58Y"</span>, <span class="st">"40Y-85Y"</span>, <span class="st">"&gt;=90Y"</span>, <span class="st">"6-8 weeks"</span>, <span class="st">"63"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">records</span><span class="op">[</span></span>
 <span>  , <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell"</span>, <span class="st">"years"</span>, <span class="st">"min_years"</span>, <span class="st">"max_years"</span>, <span class="st">"refusal"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;             cell      years  min_years  max_years       refusal</span></span>
@@ -374,7 +400,7 @@ have:</p>
 table still be unusable because one writes <code>"Homo sapiens"</code>
 and another <code>"homo sapiens"</code>. <code><a href="../reference/sdrf_lint.html">sdrf_lint()</a></code> finds
 those, one row per spelling:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">drift</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_lint.html">sdrf_lint</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cohort <span class="op">=</span> <span class="st">"sdrf_cohort.sdrf.tsv"</span>, partner <span class="op">=</span> <span class="st">"sdrf_cohort_partner.sdrf.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">drift</span></span>
 <span><span class="co">#&gt; &lt;mzlibr_sdrf_drift&gt; 2 documents: cohort, partner</span></span>
@@ -460,7 +486,7 @@ bands each).</p>
 </h3>
 <p>PXD067622 has two factor columns. Say which make up the condition;
 their values are joined with <code>_</code>, in the order you give:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"factor value[genotype]"</span>, <span class="st">"factor value[treatment]"</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_design.html">sdrf_design</a></span><span class="op">(</span><span class="st">"PXD067622.sdrf.tsv"</span>, condition_columns <span class="op">=</span> <span class="va">both</span><span class="op">)</span></span>
 <span><span class="va">d</span></span>
@@ -484,7 +510,7 @@ functions take - although every other position in mzLibR is 1-based.
 adds the one when it writes, and nowhere else. Never add it
 yourself.</p>
 <p>Hand the design straight to FlashLFQ:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/sdrf_design_spectra.html">sdrf_design_spectra</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                        path                       condition</span></span>
 <span><span class="co">#&gt; 1 20240830_HF_LC3_MAA_RK_12032_CA_DMSO4.raw SPRTN-TurboID CA_DMSO (vehicle)</span></span>
@@ -507,7 +533,7 @@ listed in <code>notes</code>, and your paths become
 every row. A condition built from an unknown factor would pair samples
 nobody said were alike, so mzLib refuses, once per row, naming each
 file:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">refused</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_design.html">sdrf_design</a></span><span class="op">(</span><span class="st">"PXD049018.sdrf.tsv"</span>, condition_columns <span class="op">=</span> <span class="va">both</span><span class="op">)</span></span>
 <span><span class="va">refused</span><span class="op">$</span><span class="va">is_valid</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
@@ -535,16 +561,162 @@ factor.</p>
 names. MetaMorpheus wants replicates numbered within each condition, so
 mzLib ranks them back, and records every renumbering in
 <code>notes</code>, the only place it is kept:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ranked</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_design.html">sdrf_design</a></span><span class="op">(</span><span class="st">"PXD067622_studywide.sdrf.tsv"</span>, condition_columns <span class="op">=</span> <span class="va">both</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="va">ranked</span><span class="op">$</span><span class="va">notes</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates renumbered 22 -&gt; 1, 23 -&gt; 2, 24 -&gt; 3.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">ranked</span><span class="op">$</span><span class="va">records</span>, <span class="va">d</span><span class="op">$</span><span class="va">records</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p><strong>Label-free only.</strong> An isobaric SDRF needs a channel
-design that <code><a href="../reference/sdrf_design.html">sdrf_design()</a></code> does not build. For the channels
-themselves, see the isobaric kits article.</p>
+design, which <code><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code> reads, below. For the
+channels themselves, see the isobaric kits article.</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="which-rows-did-my-search-read">Which rows did my search read?<a class="anchor" aria-label="anchor" href="#which-rows-did-my-search-read"></a>
+</h2>
+<p>A search reads <code>X-calib.mzML</code>; the SDRF names the acquired
+<code>X.raw</code>. The design readers match <code>searched_files</code>
+by <strong>exact</strong> name, so the search’s own names match nothing.
+<code><a href="../reference/sdrf_restrict.html">sdrf_restrict()</a></code> joins them with mzLib’s
+<code>SdrfSearchScope.Restrict</code>: <strong>by stem</strong>,
+ignoring case, after removing the derivative suffixes MetaMorpheus
+writes (<code>-calib</code>, <code>-averaged</code>, in any order and
+number). Each kept row is carried cell for cell, with the searched
+file’s name in a new <code>comment[searched data file]</code> column;
+nothing is renumbered.</p>
+<p>The example is mzLib’s TMT10 fixture from PXD008841 (40 rows, 4
+files). The search read two calibrated runs, the raw file of one of them
+as well, a renamed file whose acquisition you know, and one the SDRF
+does not describe. <strong>Name an element by the acquired file it came
+from</strong> when you know it; that overrides the suffix rule:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pool1</span> <span class="op">&lt;-</span> <span class="st">"HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr0"</span></span>
+<span><span class="va">pool5</span> <span class="op">&lt;-</span> <span class="st">"HJOSLO2U_QEHF_20150329_TMT_pool5_300ugIPG37-49_7of15ul_fr0"</span></span>
+<span><span class="va">searched</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"D:\\search\\"</span>, <span class="va">pool1</span>, <span class="st">"1-calib.mzML"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">pool1</span>, <span class="st">"2-calib.mzML"</span><span class="op">)</span>,</span>
+<span>              <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">pool1</span>, <span class="st">"2.raw"</span><span class="op">)</span>, <span class="st">"sample_A.mzML"</span>, <span class="st">"not_in_sdrf.mzML"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">searched</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">""</span>, <span class="st">""</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">pool5</span>, <span class="st">"1.raw"</span><span class="op">)</span>, <span class="st">""</span><span class="op">)</span></span>
+<span><span class="va">scoped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_restrict.html">sdrf_restrict</a></span><span class="op">(</span><span class="st">"PXD008841.subset.sdrf.tsv"</span>, <span class="va">searched</span>, limit <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>input <span class="op">=</span> <span class="va">scoped</span><span class="op">$</span><span class="va">input_row_count</span>, kept <span class="op">=</span> <span class="va">scoped</span><span class="op">$</span><span class="va">row_count</span>, returned <span class="op">=</span> <span class="va">scoped</span><span class="op">$</span><span class="va">returned_count</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    input     kept returned </span></span>
+<span><span class="co">#&gt;       40       30        2</span></span>
+<span><span class="fu"><a href="../reference/sdrf_searched_data_files.html">sdrf_searched_data_files</a></span><span class="op">(</span><span class="va">scoped</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01-calib.mzML"</span></span>
+<span><span class="co">#&gt; [2] "HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01-calib.mzML"</span></span></code></pre></div>
+<p>The result is an SDRF document, so <code><a href="../reference/sdrf_value.html">sdrf_value()</a></code> and the
+other accessors work on it. Four reports say what the restriction could
+not place, and none of them is repaired:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scoped</span><span class="op">$</span><span class="va">searched_without_row</span>   <span class="co"># searched, but the SDRF has no row for it</span></span>
+<span><span class="co">#&gt; [1] "not_in_sdrf.mzML"</span></span>
+<span><span class="va">scoped</span><span class="op">$</span><span class="va">dropped_data_files</span>     <span class="co"># acquired, but this search did not read it</span></span>
+<span><span class="co">#&gt; [1] "HJOSLO2U_QEHF_20150329_TMT_pool5_300ugIPG37-49_7of15ul_fr02.raw"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">scoped</span><span class="op">$</span><span class="va">ambiguous</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span>   <span class="co"># two searched files claimed one acquisition</span></span>
+<span><span class="co">#&gt; HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02:</span></span>
+<span><span class="co">#&gt; HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02-calib.mzML,</span></span>
+<span><span class="co">#&gt; HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02.raw</span></span>
+<span><span class="va">scoped</span><span class="op">$</span><span class="va">shared_stem</span>            <span class="co"># one searched file whose rows name two different acquired files</span></span>
+<span><span class="co">#&gt; character(0)</span></span></code></pre></div>
+<p><code>fr02</code> was searched twice, as <code>-calib.mzML</code> and
+as <code>.raw</code>: the first in name order kept its rows, and the
+other has none and is not counted as missing. <code>out</code> writes
+the <strong>whole</strong> restricted document, as for
+<code><a href="../reference/sdrf_pool.html">sdrf_pool()</a></code>: name it <code>.sdrf.tsv</code>, because mzLib
+adds that to a name that does not end in it, and
+<code>written$path</code> names the file written.</p>
+<p><strong>Then read the design from the restricted document</strong>,
+with the search’s own paths as <code>searched_files</code>:
+<code><a href="../reference/sdrf_design.html">sdrf_design()</a></code> and <code><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code> key
+on <code>comment[searched data file]</code> when a document has it. Give
+those paths as this platform writes them. <code><a href="../reference/sdrf_restrict.html">sdrf_restrict()</a></code>
+reduces either separator on any platform, but the design readers split
+only the running platform’s, so <code>D:\search\x.mzML</code> is not a
+file name on Linux. <code><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path()</a></code> writes <code>/</code>,
+which both platforms read.</p>
+</div>
+<div class="section level2">
+<h2 id="an-isobaric-design-channel-by-channel">An isobaric design, channel by channel<a class="anchor" aria-label="anchor" href="#an-isobaric-design-channel-by-channel"></a>
+</h2>
+<p><code><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code> is the TMT, TMTpro, iTRAQ and
+DiLeu counterpart of <code><a href="../reference/sdrf_design.html">sdrf_design()</a></code>. It calls mzLib’s
+<code>SdrfIsobaricDesign.Read</code>, which runs MetaMorpheus’s own
+checks on a TMT design - one plex, fraction and technical replicate per
+file; a channel described once per plex; no sample twice at one fraction
+in a plex - and refuses rather than repairs, reporting every failure at
+once.</p>
+<p><strong>It guesses nothing.</strong> Not the kit, because one kit’s
+labels can be a subset of another’s (TMT11 with 131C unannotated reads
+exactly like TMT10), and not the plex, which you declare with exactly
+one of <code>plex_column</code>, <code>plex_file_name_pattern</code> and
+<code>single_plex</code>. PXD008841 writes no plex column; the plex
+survives only in its file names, spelled two ways
+(<code>TMTpool1</code>, <code>TMT_pool5</code>), so one .NET regular
+expression reads both:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design</a></span><span class="op">(</span><span class="st">"PXD008841.subset.sdrf.tsv"</span>, kit <span class="op">=</span> <span class="st">"TMT10"</span>,</span>
+<span>                          plex_file_name_pattern <span class="op">=</span> <span class="st">"TMT_?pool(?&lt;plex&gt;\\d+)"</span><span class="op">)</span></span>
+<span><span class="va">d</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_sdrf_isobaric_design&gt; PXD008841.subset.sdrf.tsv: 4 files, 2 plex(es), kit TMT10, 40 channel rows (1-based numbers)</span></span>
+<span><span class="co">#&gt;   plex from: file-name pattern 'TMT_?pool(?&lt;plex&gt;\d+)' (declared)</span></span>
+<span><span class="co">#&gt;   files keyed on: comment[data file]</span></span>
+<span><span class="va">d</span><span class="op">$</span><span class="va">plex_ids</span></span>
+<span><span class="co">#&gt; 1 5 </span></span>
+<span><span class="co">#&gt; 1 2</span></span>
+<span><span class="va">d</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="fl">9</span><span class="op">:</span><span class="fl">11</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"full_path"</span>, <span class="st">"plex_id"</span>, <span class="st">"channel"</span>, <span class="st">"sample_name"</span>, <span class="st">"fraction"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                                                  full_path plex_id channel</span></span>
+<span><span class="co">#&gt; 9  HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01.raw       1    130C</span></span>
+<span><span class="co">#&gt; 10 HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr01.raw       1    131N</span></span>
+<span><span class="co">#&gt; 11 HJOS2U_20140410_TMTpool1_300ugIPG37-49_7of15ul_fr02.raw       1     126</span></span>
+<span><span class="co">#&gt;    sample_name fraction</span></span>
+<span><span class="co">#&gt; 9      OSL.41B        1</span></span>
+<span><span class="co">#&gt; 10        pool        1</span></span>
+<span><span class="co">#&gt; 11     OSL.53E        2</span></span></code></pre></div>
+<p>One row per file and <strong>annotated</strong> channel, files in
+SDRF order and each file’s channels in reporter m/z order. <strong>Every
+number is 1-based, as the SDRF writes it</strong> -
+<code>fraction</code>, <code>technical_replicate</code>,
+<code>biological_replicate</code>, <code>plex_id</code> - where
+<code><a href="../reference/sdrf_design.html">sdrf_design()</a></code>’s are 0-based. The split is mzLib’s
+(<code>SdrfIsobaricDesign</code> against <code>SpectraFileInfo</code>),
+and mzLibR converts neither, so never mix the two tables without adding
+or removing 1. <code>out</code> names a <strong>folder</strong>: mzLib
+writes MetaMorpheus’s <code>TmtDesign.txt</code> inside it, with the
+same 1-based numbers.</p>
+<p>Leave the plex undeclared and mzLib refuses rather than guess
+one:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">refused</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design</a></span><span class="op">(</span><span class="st">"PXD008841.subset.sdrf.tsv"</span>, kit <span class="op">=</span> <span class="st">"TMT10"</span><span class="op">)</span></span>
+<span><span class="va">refused</span><span class="op">$</span><span class="va">is_valid</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">refused</span><span class="op">$</span><span class="va">refusals</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; No plex source was declared. Name the column that holds the plex, give a</span></span>
+<span><span class="co">#&gt; file-name pattern whose group captures it, or name the single plex. The plex is</span></span>
+<span><span class="co">#&gt; never inferred (MAP-09): 'comment[sample preparation batch]' is often not a</span></span>
+<span><span class="co">#&gt; plex.</span></span></code></pre></div>
+<p>A declared column is no guarantee either. PXD061609’s
+<code>comment[sample preparation batch]</code> holds three fractionation
+arms of <strong>one</strong> TMTpro plex. Read as the plex, it gives
+three plexes. Declared as one plex, each sample sits at the same
+fraction in three files, which a plex cannot hold, and mzLib refuses,
+every case at once:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">arms</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design</a></span><span class="op">(</span><span class="st">"PXD061609.subset.sdrf.tsv"</span>, kit <span class="op">=</span> <span class="st">"TMT18"</span>,</span>
+<span>                             plex_column <span class="op">=</span> <span class="st">"comment[sample preparation batch]"</span><span class="op">)</span></span>
+<span><span class="va">arms</span><span class="op">$</span><span class="va">plex_ids</span></span>
+<span><span class="co">#&gt; HighSalt  LowSalt    NoSAX </span></span>
+<span><span class="co">#&gt;        1        2        3</span></span>
+<span><span class="va">one</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design</a></span><span class="op">(</span><span class="st">"PXD061609.subset.sdrf.tsv"</span>, kit <span class="op">=</span> <span class="st">"TMT18"</span>, single_plex <span class="op">=</span> <span class="st">"tube1"</span><span class="op">)</span></span>
+<span><span class="va">one</span><span class="op">$</span><span class="va">is_valid</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">one</span><span class="op">$</span><span class="va">refusals</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 36</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">one</span><span class="op">$</span><span class="va">refusals</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Plex 'tube1' has sample 'brain_female' biorep 1 fraction 1 techrep 1 more than</span></span>
+<span><span class="co">#&gt; once: 'ea12578.raw' 126, 'ea12603.raw' 126, 'ea12628.raw' 126. Files that share</span></span>
+<span><span class="co">#&gt; a fraction number need different technical replicates, or different plexes.</span></span></code></pre></div>
+<p>Which reading is right is the depositor’s to say: mzLib reports, and
+you decide. The kit is named as <code><a href="../reference/isobaric_kits.html">isobaric_kits()</a></code> takes it,
+and an unknown name is the same usage error there.</p>
 </div>
 <div class="section level2">
 <h2 id="instead-of-readers_read_records">Instead of <code>readers_read_records()</code><a class="anchor" aria-label="anchor" href="#instead-of-readers_read_records"></a>

@@ -28,7 +28,9 @@ sdrf_pool(documents, out = NULL, limit = NULL, offset = 0, timeout = 60)
 - out:
 
   Write the merged document here as SDRF. The **whole** document is
-  written regardless of `limit` and `offset`.
+  written regardless of `limit` and `offset`. A name that does not end
+  in `.sdrf.tsv` gets it added by mzLib, so `out = "x.tsv"` writes
+  `x.tsv.sdrf.tsv`; `written$path` says which file was written.
 
 - limit:
 
@@ -48,8 +50,11 @@ An `mzlibr_pooled_sdrf`, which is also an `mzlibr_sdrf`: everything
 [`sdrf_read`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_read.md)
 returns, plus `document_count`, `paths`, `labels`, and `written` (a list
 of `path` and `row_count`, or `NULL` when `out` was not given).
-`row_count` counts the rows of the whole pooled document;
-`returned_count` the rows returned, starting `offset` rows in.
+`written$path` is the file mzLib actually wrote, which is not always the
+name you gave (see `out`); bridges before pyMzLib 0.6.0 reported the
+name as given. `written$row_count` counts the rows written, the whole
+merged document. `row_count` counts the rows of the whole pooled
+document; `returned_count` the rows returned, starting `offset` rows in.
 
 ## Give your documents names
 
@@ -70,7 +75,7 @@ as part of any key.
 ## Wraps
 
 Wire verb `sdrf pool`. Generated from the bridge's verb spec
-`sdrf.pool.yaml` (bridge commit `f85fef72f651`) by
+`sdrf.pool.yaml` (bridge commit `60b1d25968a1`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -150,7 +155,11 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `written`:
 
   object; `NA` when out was not given. {path, row_count}; row_count is
-  the whole merged document.
+  the whole merged document. path is the file mzLib wrote:
+  SdrfDocument.WriteResults adds .sdrf.tsv to a name it would not read
+  back as an SDRF, so out x.tsv writes x.tsv.sdrf.tsv. Bridges before
+  pyMzLib 0.6.0 reported the name as given (SDRF-B3 asks mzLib to return
+  the path).
 
 - `caveats`:
 

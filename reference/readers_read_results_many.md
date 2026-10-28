@@ -61,7 +61,7 @@ input: `record_count` in records, `rows_not_read` in rows,
 
 Wire verb `readers read-results` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-results.yaml` (bridge commit
-`f85fef72f651`) by `scripts/build-man.R`; the spec owns these facts, and
+`60b1d25968a1`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadQuantifiableResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)

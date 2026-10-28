@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="mzLibR: mzLib for R">
-<meta name="description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files, protein databases (UniProt XML, FASTA) with Ensembl gene resolution, PRIDE repository access, in-silico digestion and fragmentation of peptidoforms, conversion of full sequences to Unimod and ProForma notation, label-free quantification with match-between-runs via FlashLFQ, Gene Ontology annotation of protein groups, and the moderated t-test of limma, Benjamini-Hochberg adjustment and random-effects meta-analysis as mzLib computes them. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
-<meta property="og:description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files, protein databases (UniProt XML, FASTA) with Ensembl gene resolution, PRIDE repository access, in-silico digestion and fragmentation of peptidoforms, conversion of full sequences to Unimod and ProForma notation, label-free quantification with match-between-runs via FlashLFQ, Gene Ontology annotation of protein groups, and the moderated t-test of limma, Benjamini-Hochberg adjustment and random-effects meta-analysis as mzLib computes them. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
+<meta name="description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign), spectral libraries (.msl) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files (label-free and isobaric designs), protein databases (UniProt XML, FASTA) with Ensembl gene resolution, sequence alignment and Ensembl Compara orthology, PRIDE repository access with checksums, in-silico digestion and fragmentation of peptidoforms, conversion of full sequences to Unimod and ProForma notation, label-free quantification with match-between-runs via FlashLFQ, Gene Ontology annotation of protein groups, and the moderated t-test of limma with contrasts, Benjamini-Hochberg adjustment, random-effects meta-analysis, p-value combination, Spearman correlation, logistic and mixed models per feature, entrapment false discovery estimates, design matrices from sample sheets, and PTM site occupancy as mzLib computes them. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
+<meta property="og:description" content="Calls the mzLib proteomics library from R over a language-neutral bridge: reading mass-spectrometry data files (mzML, Thermo .raw, Bruker .d, timsTOF, MGF and msalign), spectral libraries (.msl) and the result files of a dozen search tools, SDRF-Proteomics experimental-design files (label-free and isobaric designs), protein databases (UniProt XML, FASTA) with Ensembl gene resolution, sequence alignment and Ensembl Compara orthology, PRIDE repository access with checksums, in-silico digestion and fragmentation of peptidoforms, conversion of full sequences to Unimod and ProForma notation, label-free quantification with match-between-runs via FlashLFQ, Gene Ontology annotation of protein groups, and the moderated t-test of limma with contrasts, Benjamini-Hochberg adjustment, random-effects meta-analysis, p-value combination, Spearman correlation, logistic and mixed models per feature, entrapment false discovery estimates, design matrices from sample sheets, and PTM site occupancy as mzLib computes them. The bridge is a self-contained executable that carries its own .NET runtime, so no .NET installation is required. It is shared with the Python (pyMzLib) and Rust (mzLibRust) bindings, which means all three agree field for field.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -36,13 +36,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
+    <li><a class="dropdown-item" href="articles/library.html">Spectral libraries</a></li>
     <li><a class="dropdown-item" href="articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
     <li><a class="dropdown-item" href="articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
-    <li><a class="dropdown-item" href="articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
+    <li><a class="dropdown-item" href="articles/stats.html">Differential abundance: limma's moderated t, contrasts, and the tests around it</a></li>
+    <li><a class="dropdown-item" href="articles/diff.html">Differential design and observations: the design matrix and every peptide, by mzLib</a></li>
+    <li><a class="dropdown-item" href="articles/ptmqtl.html">PTM site occupancy and PTM-QTL: occupancy, pairs and trait effects, by mzLib</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -90,7 +93,8 @@
 <tbody>
 <tr>
 <td><code>pride_*</code></td>
-<td>List and download from the PRIDE Archive, with mzLib’s paging and URL resolution</td>
+<td>List and download from the PRIDE Archive, with mzLib’s paging and URL resolution, and check a download against the MD5 and exact size PRIDE recorded with <code><a href="reference/pride_file_checksums.html">pride_file_checksums()</a></code>
+</td>
 </tr>
 <tr>
 <td><code>peptidoform_*</code></td>
@@ -106,13 +110,17 @@
 <td>Read spectra from <strong>mzML</strong>, Thermo <code>.raw</code>, Bruker <code>.d</code>, timsTOF <code>.d</code>, MGF and msalign with <code><a href="reference/readers_read_spectra.html">readers_read_spectra()</a></code>; identify <strong>and read every file type</strong> mzLib knows, search results included — <code><a href="reference/readers_read_records.html">readers_read_records()</a></code> reads any of them into that format’s own fields, while <code><a href="reference/readers_read_results.html">readers_read_results()</a></code>, <code><a href="reference/readers_read_features.html">readers_read_features()</a></code>, <code><a href="reference/readers_read_matches.html">readers_read_matches()</a></code> and <code><a href="reference/readers_read_spectra.html">readers_read_spectra()</a></code> project the four cross-format views</td>
 </tr>
 <tr>
+<td><code>library_*</code></td>
+<td>Read mzLib’s <code>.msl</code> spectral libraries with <code><a href="reference/library_read.html">library_read()</a></code> and <code><a href="reference/library_read_many.html">library_read_many()</a></code>: every precursor with its retention time in iRT or minutes per row, and its fragment ions on request</td>
+</tr>
+<tr>
 <td><code>proteins_*</code></td>
-<td>What an accession is (organism, taxon, GO terms, Ensembl ids) with <code><a href="reference/proteins_read.html">proteins_read()</a></code>, which gene it resolves to against a pinned Ensembl release with <code><a href="reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code>, whether a peptide is unique to one protein or gene with <code><a href="reference/proteins_classify_peptides.html">proteins_classify_peptides()</a></code>, and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with <code><a href="reference/proteins_annotate_go.html">proteins_annotate_go()</a></code>
+<td>What an accession is (organism, taxon, GO terms, Ensembl ids) with <code><a href="reference/proteins_read.html">proteins_read()</a></code>, which gene it resolves to against a pinned Ensembl release with <code><a href="reference/proteins_resolve_genes.html">proteins_resolve_genes()</a></code>, whether a peptide is unique to one protein or gene with <code><a href="reference/proteins_classify_peptides.html">proteins_classify_peptides()</a></code>, and the Gene Ontology terms of every MetaMorpheus protein group, every member kept, against a pinned GO release with <code><a href="reference/proteins_annotate_go.html">proteins_annotate_go()</a></code>; carry a residue position to an isoform or ortholog with <code><a href="reference/proteins_align.html">proteins_align()</a></code>, read an accession into entry, isoform and variants with <code><a href="reference/proteins_parse_accessions.html">proteins_parse_accessions()</a></code>, and build an Ensembl Compara orthology snapshot with <code><a href="reference/proteins_build_orthology.html">proteins_build_orthology()</a></code>
 </td>
 </tr>
 <tr>
 <td><code>sdrf_*</code></td>
-<td>Read SDRF-Proteomics experimental-design files with <code><a href="reference/sdrf_read.html">sdrf_read()</a></code>, and pool several into one table with provenance with <code><a href="reference/sdrf_pool.html">sdrf_pool()</a></code>; check them with <code><a href="reference/sdrf_validate.html">sdrf_validate()</a></code>, <code><a href="reference/sdrf_assess.html">sdrf_assess()</a></code> and <code><a href="reference/sdrf_lint.html">sdrf_lint()</a></code>, get each sample’s ages in years with <code><a href="reference/sdrf_samples.html">sdrf_samples()</a></code>, and read the label-free design a quantification takes, or every reason there is none, with <code><a href="reference/sdrf_design.html">sdrf_design()</a></code>. Use these rather than <code><a href="reference/readers_read_records.html">readers_read_records()</a></code>, which joins each SDRF row into one string that cannot be split back apart</td>
+<td>Read SDRF-Proteomics experimental-design files with <code><a href="reference/sdrf_read.html">sdrf_read()</a></code>, and pool several into one table with provenance with <code><a href="reference/sdrf_pool.html">sdrf_pool()</a></code>; check them with <code><a href="reference/sdrf_validate.html">sdrf_validate()</a></code>, <code><a href="reference/sdrf_assess.html">sdrf_assess()</a></code> and <code><a href="reference/sdrf_lint.html">sdrf_lint()</a></code>, get each sample’s ages in years with <code><a href="reference/sdrf_samples.html">sdrf_samples()</a></code>, and read the label-free design a quantification takes, or every reason there is none, with <code><a href="reference/sdrf_design.html">sdrf_design()</a></code>, and its isobaric counterpart with <code><a href="reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code>; cut an SDRF to the files one search read with <code><a href="reference/sdrf_restrict.html">sdrf_restrict()</a></code>. Use these rather than <code><a href="reference/readers_read_records.html">readers_read_records()</a></code>, which joins each SDRF row into one string that cannot be split back apart</td>
 </tr>
 <tr>
 <td><code>isobaric_*</code></td>
@@ -121,7 +129,18 @@
 </tr>
 <tr>
 <td><code>stats_*</code></td>
-<td>limma’s moderated t-test (<code>lmFit</code> + <code>eBayes(legacy = TRUE)</code>) with <code><a href="reference/stats_fit.html">stats_fit()</a></code>, Benjamini-Hochberg with <code><a href="reference/stats_adjust.html">stats_adjust()</a></code> and DerSimonian-Laird random-effects meta-analysis with <code><a href="reference/stats_meta.html">stats_meta()</a></code>, computed by mzLib and held to limma and metafor to 1e-8</td>
+<td>limma’s moderated t-test (<code>lmFit</code> + <code>eBayes(legacy = TRUE)</code>) with <code><a href="reference/stats_fit.html">stats_fit()</a></code>, which also tests contrasts with confidence intervals and offers mzLib’s marginal-likelihood prior; Benjamini-Hochberg with <code><a href="reference/stats_adjust.html">stats_adjust()</a></code>; DerSimonian-Laird random-effects meta-analysis with <code><a href="reference/stats_meta.html">stats_meta()</a></code>; Fisher and Stouffer p-value combination with <code><a href="reference/stats_combine_p.html">stats_combine_p()</a></code>; Spearman correlation with a trait, plain or partial, with <code><a href="reference/stats_correlate.html">stats_correlate()</a></code>; a logistic model per feature of a detection table with <code><a href="reference/stats_fit_logistic.html">stats_fit_logistic()</a></code>; a mixed model per feature with a random intercept per group with <code><a href="reference/stats_fit_mixed.html">stats_fit_mixed()</a></code>; and entrapment FDP estimates with <code><a href="reference/stats_entrapment_fdp.html">stats_entrapment_fdp()</a></code> - computed by mzLib and held to limma, metafor, <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>, nlme and <code><a href="https://rdrr.io/r/stats/cor.test.html" class="external-link">cor.test()</a></code>
+</td>
+</tr>
+<tr>
+<td><code>diff_*</code></td>
+<td>A sample sheet to mzLib’s design matrix per stratum, equal to R’s <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code>, with every default contrast and whether these samples can estimate it, and the design and contrasts files <code><a href="reference/stats_fit.html">stats_fit()</a></code> reads, with <code><a href="reference/diff_design.html">diff_design()</a></code>; a FlashLFQ or MetaMorpheus peptide table to every peptide in every sample, log2 intensity or <code>NA</code> with the reason, with mzLib’s shared-peptide normalization, with <code><a href="reference/diff_observations.html">diff_observations()</a></code>
+</td>
+</tr>
+<tr>
+<td><code>ptmqtl_*</code></td>
+<td>PTM site occupancy in every run with each cell’s state (a censored cell is never a 0) with <code><a href="reference/ptmqtl_occupancy.html">ptmqtl_occupancy()</a></code>, modification pairs on one molecule or co-varying across runs with <code><a href="reference/ptmqtl_pairs.html">ptmqtl_pairs()</a></code>, and a per-run trait’s effect on logit occupancy with a random intercept per replicate with <code><a href="reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects()</a></code>
+</td>
 </tr>
 </tbody>
 </table>
@@ -160,6 +179,8 @@
 <li>
 <strong>PRIDE’s API manifest is incomplete.</strong> On 2026-10-21 it listed 9 of PXD000001’s 14 files, omitting the two largest; <code><a href="reference/pride_list_ftp_files.html">pride_list_ftp_files()</a></code> lists them all. And <code>file_size_bytes</code> is the <em>decompressed</em> size for some compressed files — 2.75x off for that MGF.</li>
 <li>
+<strong>A PRIDE download is not checked against PRIDE’s record.</strong> Compare a file that matters with <code><a href="reference/pride_file_checksums.html">pride_file_checksums()</a></code>: its <code>size_bytes</code> is the exact download length and its <code>md5</code> the digest, which the manifest’s <code>checksum</code> (a SHA-1, when present) is not.</li>
+<li>
 <strong>mzLib’s <code>"trypsin|P"</code> applies the Keil rule and plain <code>"trypsin"</code>, its default, does not</strong> — the reverse of the MaxQuant and Mascot convention. 195 peptides against 202 on albumin.</li>
 <li>
 <strong>mzLib’s default <code>min_length</code> silently discards everything shorter</strong> — albumin goes from 202 distinct sequences to 257 at <code>min_length = 1</code>.</li>
@@ -181,7 +202,7 @@
 <p>Every help page for a function that calls the bridge carries that call’s facts - every parameter and returned column with its unit and what <code>NA</code> means, the errors it raises, the same call in pyMzLib and mzLibRust - generated from the bridge’s per-verb specs, and every page has an example that <code>R CMD check</code> runs. <code><a href="reference/mzlib_error.html">?mzlib_error</a></code> explains the condition classes.</p>
 <ul>
 <li>
-<strong><a href="https://smith-chem-wisc.github.io/mzLibR/">The documentation site</a></strong> - the help pages and an article per module: reading files, SDRF, isobaric kits, PRIDE, protein databases and GO, peptidoforms, FlashLFQ, and differential abundance. The articles are also the package’s vignettes, <code>browseVignettes("mzLibR")</code>, and <code>R CMD check</code> runs every one.</li>
+<strong><a href="https://smith-chem-wisc.github.io/mzLibR/">The documentation site</a></strong> - the help pages and an article per module: reading files, spectral libraries, SDRF, isobaric kits, PRIDE, protein databases and GO, peptidoforms, FlashLFQ, differential abundance, differential design and observations, and PTM occupancy. The articles are also the package’s vignettes, <code>browseVignettes("mzLibR")</code>, and <code>R CMD check</code> runs every one.</li>
 <li>
 <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/docs/reference-facts.md" class="external-link"><code>docs/reference-facts.md</code></a> - for contributors: how the help pages are generated from the specs and checked against them.</li>
 <li>

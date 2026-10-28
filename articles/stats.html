@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Differential abundance: limma's moderated t, BH and meta-analysis • mzLibR</title>
+<title>Differential abundance: limma's moderated t, contrasts, and the tests around it • mzLibR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Differential abundance: limma's moderated t, BH and meta-analysis">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Differential abundance: limma's moderated t, contrasts, and the tests around it">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,13 +34,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
+    <li><a class="dropdown-item" href="../articles/library.html">Spectral libraries</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
     <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
-    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, contrasts, and the tests around it</a></li>
+    <li><a class="dropdown-item" href="../articles/diff.html">Differential design and observations: the design matrix and every peptide, by mzLib</a></li>
+    <li><a class="dropdown-item" href="../articles/ptmqtl.html">PTM site occupancy and PTM-QTL: occupancy, pairs and trait effects, by mzLib</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -63,7 +66,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Differential abundance: limma's moderated t, BH and meta-analysis</h1>
+      <h1>Differential abundance: limma's moderated t, contrasts, and the tests around it</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/smith-chem-wisc/mzLibR/blob/main/vignettes/stats.Rmd" class="external-link"><code>vignettes/stats.Rmd</code></a></small>
@@ -118,6 +121,55 @@ than take it on trust.</p>
 <code>rma(method = "DL")</code>
 </td>
 </tr>
+<tr class="even">
+<td>which features differ by a contrast, within what interval?</td>
+<td><code>stats_fit(contrasts = )</code></td>
+<td>
+<code>EmpiricalBayes.ModerateContrasts</code> (#1452)</td>
+<td>limma <code>contrasts.fit</code> +
+<code>topTable(confint = )</code>
+</td>
+</tr>
+<tr class="odd">
+<td>what do several studies’ p-values say together?</td>
+<td><code><a href="../reference/stats_combine_p.html">stats_combine_p()</a></code></td>
+<td>
+<code>PValueCombination.Fisher</code>, <code>.Stouffer</code>
+(#1367)</td>
+<td>Fisher 1925, Stouffer 1949</td>
+</tr>
+<tr class="even">
+<td>which features rise or fall with a per-sample trait?</td>
+<td><code><a href="../reference/stats_correlate.html">stats_correlate()</a></code></td>
+<td>
+<code>SpearmanCorrelation.Correlate</code>,
+<code>.PartialCorrelate</code> (#1367, #1446)</td>
+<td>R <code>cor.test(method = "spearman")</code>, ppcor
+<code>pcor.test</code>
+</td>
+</tr>
+<tr class="odd">
+<td>does a 0/1 outcome (detected or not) follow a coefficient?</td>
+<td><code><a href="../reference/stats_fit_logistic.html">stats_fit_logistic()</a></code></td>
+<td>
+<code>LogisticRegression.Fit</code> (#1367)</td>
+<td>R <code>glm(family = binomial)</code> per feature</td>
+</tr>
+<tr class="even">
+<td>which features change, when samples come in groups?</td>
+<td><code><a href="../reference/stats_fit_mixed.html">stats_fit_mixed()</a></code></td>
+<td>
+<code>MixedModel.Fit</code> (#1367)</td>
+<td>
+<code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code> with a random intercept per group</td>
+</tr>
+<tr class="odd">
+<td>does a search really control its FDR?</td>
+<td><code><a href="../reference/stats_entrapment_fdp.html">stats_entrapment_fdp()</a></code></td>
+<td>
+<code>EntrapmentFdp.Sweep</code> (#1385)</td>
+<td>Wen et al. 2025, as FDRBench</td>
+</tr>
 </tbody>
 </table>
 <p><code><a href="../reference/stats_fit.html">stats_fit()</a></code> already adjusts its own p-values, so you
@@ -139,7 +191,7 @@ This package ships the input and limma’s output in
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; &lt;mzlibr_moderated_fit&gt; 400 features x 12 samples, testing age_decades</span></span>
 <span><span class="co">#&gt;   fitted 400, too_few_observations 0, rank_deficient 0</span></span>
-<span><span class="co">#&gt;   prior df 4.532</span></span>
+<span><span class="co">#&gt;   prior df 4.532 (moments_legacy)</span></span>
 <span><span class="co">#&gt;   ! residual df differ between features: these are eBayes(legacy = TRUE) statistics</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="va">coefficient_names</span></span>
 <span><span class="co">#&gt; [1] "Intercept"   "age_decades" "sex"</span></span></code></pre></div>
@@ -153,9 +205,9 @@ This package ships the input and limma’s output in
 <span>  posterior_variance <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">posterior_variance</span>, <span class="va">limma</span><span class="op">$</span><span class="va">s2_post</span><span class="op">)</span>,</span>
 <span>  df_total <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">df_total</span>, <span class="va">limma</span><span class="op">$</span><span class="va">df_total</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                  t            p_value        bh_adjusted posterior_variance </span></span>
-<span><span class="co">#&gt;       1.611198e-11       3.690533e-13       3.692947e-13       5.493775e-14 </span></span>
+<span><span class="co">#&gt;       1.612212e-11       2.414497e-13       2.414120e-13       3.156851e-14 </span></span>
 <span><span class="co">#&gt;           df_total </span></span>
-<span><span class="co">#&gt;       2.236334e-14</span></span></code></pre></div>
+<span><span class="co">#&gt;       3.727223e-16</span></span></code></pre></div>
 <p>Every relative difference is below 1e-8. With limma installed you can
 run it yourself on the same input,
 <code>limma::eBayes(limma::lmFit(y, x), legacy = TRUE)</code>; this
@@ -235,6 +287,185 @@ quarter-load calls are 20-mer oligos, loaded at a constant amount. A 5%
 false discovery rate bounds the expected share of wrong calls; it does
 not promise none, and a known-answer experiment is how you see it
 happen.</p>
+<div class="section level3">
+<h3 id="unequal-degrees-of-freedom-the-marginal-likelihood-prior">Unequal degrees of freedom: the marginal-likelihood prior<a class="anchor" aria-label="anchor" href="#unequal-degrees-of-freedom-the-marginal-likelihood-prior"></a>
+</h3>
+<p>This experiment is the case the note on limma’s legacy estimator
+warns about: oligos are missing from different runs, so they have
+different residual degrees of freedom, and the default prior is limma’s
+legacy estimator:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>residual_df_differ <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">residual_df_differ</span>, estimator <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">$</span><span class="va">estimator</span>,</span>
+<span>  prior_df <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">$</span><span class="va">df</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; residual_df_differ          estimator           prior_df </span></span>
+<span><span class="co">#&gt;             "TRUE"   "moments_legacy"             "19.6"</span></span></code></pre></div>
+<p>mzLib has a second estimator for exactly this case,
+<code>"marginal_likelihood"</code> (mzLib #1368). It fits the prior by
+maximum likelihood with <strong>each oligo’s own degrees of
+freedom</strong>, so an oligo seen in five runs counts as five runs’
+worth of evidence about the variance, not as an average one. Ask for it
+by name:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ml</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_fit.html">stats_fit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_log2_vs_fluc.tsv"</span><span class="op">)</span>,</span>
+<span>                <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_design.tsv"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"malat_250ng"</span>, <span class="st">"malat_125ng"</span><span class="op">)</span>,</span>
+<span>                estimator <span class="op">=</span> <span class="st">"marginal_likelihood"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>estimator <span class="op">=</span> <span class="va">ml</span><span class="op">$</span><span class="va">prior</span><span class="op">$</span><span class="va">estimator</span>, prior_df <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">ml</span><span class="op">$</span><span class="va">prior</span><span class="op">$</span><span class="va">df</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;             estimator              prior_df </span></span>
+<span><span class="co">#&gt; "marginal_likelihood"                  "11"</span></span>
+<span><span class="va">ml_fitted</span> <span class="op">&lt;-</span> <span class="va">ml</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">ml</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"fitted"</span>, <span class="op">]</span></span>
+<span><span class="va">ml_hits</span> <span class="op">&lt;-</span> <span class="va">ml_fitted</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">ml_fitted</span><span class="op">$</span><span class="va">bh_adjusted</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">ml_fitted</span><span class="op">$</span><span class="va">bh_adjusted</span> <span class="op">&lt;</span> <span class="fl">0.05</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">ml_hits</span><span class="op">$</span><span class="va">coefficient</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">":.*$"</span>, <span class="st">""</span>, <span class="va">ml_hits</span><span class="op">$</span><span class="va">feature</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;              </span></span>
+<span><span class="co">#&gt;               20mer2 MALAT1</span></span>
+<span><span class="co">#&gt;   malat_125ng      2      4</span></span>
+<span><span class="co">#&gt;   malat_250ng      0      1</span></span></code></pre></div>
+<p><strong>The prior df falls</strong>: once each oligo’s own degrees of
+freedom count, the data support less shrinkage toward the common
+variance. The estimates are the same least-squares numbers; only the
+standard errors move, and with them the calls - compare this table with
+the one above. At half load the FLuc call is gone, which is right, since
+FLuc did not change.</p>
+<ul>
+<li>
+<strong>It is mzLib’s own estimator, not limma’s.</strong> Default
+limma (3.61 and later) handles unequal degrees of freedom with a
+different method (<code>fitFDistUnequalDF1</code>), so expect small
+differences from default limma.</li>
+<li>
+<strong>mzLib keeps <code>"moments_legacy"</code> the
+default</strong>, so that <code><a href="../reference/stats_fit.html">stats_fit()</a></code> reproduces
+<code>eBayes(legacy = TRUE)</code> exactly. Leaving
+<code>estimator</code> out always means mzLib’s default, and
+<code>prior$estimator</code> says which one you got.</li>
+<li>
+<strong>A prior df of about 0.05 is a floor, not a finding.</strong>
+mzLib searches d0 from e^-3 upward.</li>
+<li>One prior serves the whole call: every coefficient and every
+contrast is moderated with it.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="contrasts-any-comparison-with-a-confidence-interval">Contrasts: any comparison, with a confidence interval<a class="anchor" aria-label="anchor" href="#contrasts-any-comparison-with-a-confidence-interval"></a>
+</h2>
+<p>A design’s coefficients answer one kind of question: each level
+against the baseline. The questions a scientist asks are often other
+comparisons: 500 ng against 250 ng when the baseline is 125 ng, or the
+mean of two groups against a third. Each is a <strong>contrast</strong>,
+a weighted sum of the coefficients, and
+<code>stats_fit(contrasts = )</code> tests it with the same moderated t,
+plus a confidence interval: limma’s <code>contrasts.fit()</code>,
+<code>eBayes()</code> and <code>topTable(confint = 0.95)</code>.</p>
+<p>You rarely write the weights yourself. <code><a href="../reference/diff_design.html">diff_design()</a></code>
+builds the design from your sample sheet and writes the contrasts beside
+it. With no reference level, every pair of levels is a contrast:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"diff"</span>, <span class="st">"malat_dilution_samples.tsv"</span>, package <span class="op">=</span> <span class="st">"mzLibR"</span><span class="op">)</span></span>
+<span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diff_design.html">diff_design</a></span><span class="op">(</span><span class="va">samples</span>, factors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/factor_spec.html">factor_spec</a></span><span class="op">(</span><span class="st">"malat_load"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                      out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"malat_pairs"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">stratum</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">$</span><span class="va">strata</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">stratum</span><span class="op">$</span><span class="va">column_names</span></span>
+<span><span class="co">#&gt; [1] "intercept"        "malat_load=250ng" "malat_load=500ng"</span></span>
+<span><span class="va">stratum</span><span class="op">$</span><span class="va">warnings</span></span>
+<span><span class="co">#&gt; [1] "No reference level was declared for factor 'malat_load', so every pair of its levels is compared (GR-14). Levels: 125ng, 250ng, 500ng."</span></span>
+<span><span class="va">labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">design</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">label</span>, <span class="va">design</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">contrast_id</span><span class="op">)</span></span>
+<span><span class="va">labels</span></span>
+<span><span class="co">#&gt;                                     c1                                     c2 </span></span>
+<span><span class="co">#&gt; "malat_load=250ng vs malat_load=125ng" "malat_load=500ng vs malat_load=125ng" </span></span>
+<span><span class="co">#&gt;                                     c3 </span></span>
+<span><span class="co">#&gt; "malat_load=500ng vs malat_load=250ng"</span></span></code></pre></div>
+<p>mzLib took the first level, 125 ng, as the coding baseline, and wrote
+<code>design_1.tsv</code> and <code>contrasts_1.tsv</code>. Fit the
+design and test every contrast in the file. No coefficient is named, so
+the coefficient table is empty and every answer is in
+<code>contrasts</code>:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_fit.html">stats_fit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_log2_vs_fluc.tsv"</span><span class="op">)</span>, <span class="va">stratum</span><span class="op">$</span><span class="va">design_file</span>,</span>
+<span>                   contrasts <span class="op">=</span> <span class="va">stratum</span><span class="op">$</span><span class="va">contrasts_file</span><span class="op">)</span></span>
+<span><span class="va">pairs</span><span class="op">$</span><span class="va">contrasts</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_moderated_contrasts&gt; 3 contrast(s) x 492 features, 95% intervals</span></span>
+<span><span class="co">#&gt;   c1: 0 1 0</span></span>
+<span><span class="co">#&gt;   c2: 0 0 1</span></span>
+<span><span class="co">#&gt;   c3:  0 -1  1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>coefficient_rows <span class="op">=</span> <span class="va">pairs</span><span class="op">$</span><span class="va">row_count</span>, contrast_rows <span class="op">=</span> <span class="va">pairs</span><span class="op">$</span><span class="va">contrasts</span><span class="op">$</span><span class="va">row_count</span><span class="op">)</span></span>
+<span><span class="co">#&gt; coefficient_rows    contrast_rows </span></span>
+<span><span class="co">#&gt;                0             1476</span></span></code></pre></div>
+<p>The weights are on <code>pairs$coefficient_names</code>.
+<code>c1</code> and <code>c2</code> are single coefficients.
+<strong><code>c3</code> is not</strong>: it is the 500 ng coefficient
+minus the 250 ng one, a comparison no column of this design holds. The
+answers are known in advance, +1, +2 and +1 in log2, so look at the
+MALAT1 oligos:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">known</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>c1 <span class="op">=</span> <span class="fl">1</span>, c2 <span class="op">=</span> <span class="fl">2</span>, c3 <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">summary_of</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="va">pairs</span><span class="op">$</span><span class="va">contrasts</span><span class="op">$</span><span class="va">records</span></span>
+<span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">contrast</span> <span class="op">==</span> <span class="va">id</span> <span class="op">&amp;</span> <span class="va">r</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"fitted"</span> <span class="op">&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">feature</span>, <span class="st">"MALAT1:"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>known <span class="op">=</span> <span class="va">known</span><span class="op">[[</span><span class="va">id</span><span class="op">]</span><span class="op">]</span>, median <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">estimate</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, oligos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>,</span>
+<span>    interval_holds_it <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">confidence_low</span> <span class="op">&lt;=</span> <span class="va">known</span><span class="op">[[</span><span class="va">id</span><span class="op">]</span><span class="op">]</span> <span class="op">&amp;</span> <span class="va">known</span><span class="op">[[</span><span class="va">id</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;=</span> <span class="va">r</span><span class="op">$</span><span class="va">confidence_high</span><span class="op">)</span>,</span>
+<span>    excludes_zero <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">confidence_low</span> <span class="op">&lt;=</span> <span class="fl">0</span> <span class="op">&amp;</span> <span class="fl">0</span> <span class="op">&lt;=</span> <span class="va">r</span><span class="op">$</span><span class="va">confidence_high</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"c1"</span>, <span class="st">"c2"</span>, <span class="st">"c3"</span><span class="op">)</span>, <span class="va">summary_of</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    known median oligos interval_holds_it excludes_zero</span></span>
+<span><span class="co">#&gt; c1     1   0.18    116               103             7</span></span>
+<span><span class="co">#&gt; c2     2   1.01    116               105            23</span></span>
+<span><span class="co">#&gt; c3     1   0.89    116               109            16</span></span></code></pre></div>
+<ul>
+<li>
+<strong>Each oligo’s 95% interval is wide.</strong> It holds the
+known change for most oligos, and also holds 0 for most of them: one
+oligo, measured in a handful of runs, cannot tell a doubling from no
+change. The medians across oligos are much more precise than any one
+interval.</li>
+<li>
+<strong>The contrasts locate the compression seen above.</strong>
+500 ng against 250 ng reads close to its known +1; 250 ng against 125 ng
+reads far less. The shortfall is between the two lower loads.</li>
+<li>
+<strong>The intervals are per feature and not adjusted.</strong> For
+a decision across features use <code>bh_adjusted</code>, which each
+contrast has over its own fitted features.</li>
+</ul>
+<p>Each row of <code>pairs$contrasts$records</code> carries what a
+coefficient row does, plus <code>confidence_low</code> and
+<code>confidence_high</code>, in response units per contrast unit: a
+log2 fold change here.</p>
+<p><strong>Your own contrasts.</strong> A contrasts file is a header of
+a contrast id column and then exactly the design’s coefficient columns,
+in any order, then one row per contrast: its id and one weight per
+coefficient. To compare the mean of 250 ng and 125 ng against 500 ng on
+the design above:</p>
+<pre class="text"><code>contrast           intercept  malat_load=250ng  malat_load=500ng
+low_mean_vs_500    0          0.5               -1</code></pre>
+<p>(125 ng is the baseline, so its coefficient is 0 and needs no weight
+of its own.) A column the design lacks, a design column the file lacks,
+a weight that is not a number, or a row of all zeros is refused.</p>
+<p>The traps:</p>
+<ul>
+<li>
+<strong>Contrast ids are numbered within each stratum</strong>, so
+<code>c1</code> can mean different comparisons in two strata. Read the
+labels from <code><a href="../reference/diff_design.html">diff_design()</a></code>, as above.</li>
+<li>
+<strong>With missing values the standard error is exact per
+feature</strong>, computed on the samples that feature was observed in.
+limma’s <code>contrasts.fit()</code> approximates it there, so on data
+with missing values these numbers differ from limma’s by design; with
+complete data they agree.</li>
+<li>
+<strong>A contrast of one coefficient is that coefficient’s
+test</strong>, number for number. Asking for both in one call costs
+nothing: the model is fitted once and the prior is shared.</li>
+<li>
+<code>confidence = 0.9</code> (a fraction) changes the level; leave
+it out for mzLib’s default, and <code>contrasts$confidence_level</code>
+reports the level used.</li>
+<li>
+<strong>It needs the pyMzLib 0.6.0 bridge.</strong> An older bridge
+ignores <code>--contrasts</code> and <code>--estimator</code>, so
+<code><a href="../reference/stats_fit.html">stats_fit()</a></code> stops with an error naming the bridge it needs
+rather than return a fit that did not do what you asked.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="your-own-data">Your own data<a class="anchor" aria-label="anchor" href="#your-own-data"></a>
@@ -257,14 +488,15 @@ are fitted as a real zero; <code>zero_count</code> counts them and a
 caveat says so.</li>
 <li>
 <strong>The design is used as written.</strong> Include the
-intercept column yourself, and write each comparison as its own column:
-<code><a href="../reference/stats_fit.html">stats_fit()</a></code> does not expose mzLib’s contrasts yet.</li>
+intercept column yourself. <code><a href="../reference/diff_design.html">diff_design()</a></code> writes one from a
+sample sheet, with a contrasts file for any comparison that is no single
+column; see <code><a href="../articles/diff.html">vignette("diff", package = "mzLibR")</a></code>.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="p-values-from-anywhere">P-values from anywhere<a class="anchor" aria-label="anchor" href="#p-values-from-anywhere"></a>
 </h2>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">adjusted</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_adjust.html">stats_adjust</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.0002</span>, <span class="fl">0.004</span>, <span class="fl">0.019</span>, <span class="cn">NA</span>, <span class="fl">0.031</span>, <span class="fl">0.2</span>, <span class="cn">NaN</span>, <span class="fl">0.74</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">adjusted</span><span class="op">$</span><span class="va">tested_count</span></span>
 <span><span class="co">#&gt; [1] 6</span></span>
@@ -290,7 +522,7 @@ enlarges the family.</p>
 - and pools each feature with the DerSimonian-Laird random-effects
 model. These are metafor’s own reference cases, from mzLib’s test
 data:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inputs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"metafor_dl_inputs.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">pooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_meta.html">stats_meta</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>feature <span class="op">=</span> <span class="va">inputs</span><span class="op">$</span><span class="va">case</span>, estimate <span class="op">=</span> <span class="va">inputs</span><span class="op">$</span><span class="va">yi</span>,</span>
 <span>                                standard_error <span class="op">=</span> <span class="va">inputs</span><span class="op">$</span><span class="va">sei</span><span class="op">)</span><span class="op">)</span></span>
@@ -317,6 +549,334 @@ studies, so treat a pooled estimate from two or three studies with
 care.</p>
 </div>
 <div class="section level2">
+<h2 id="combining-p-values-across-studies">Combining p-values across studies<a class="anchor" aria-label="anchor" href="#combining-p-values-across-studies"></a>
+</h2>
+<p>Sometimes all you have from each study is a p-value.
+<code><a href="../reference/stats_combine_p.html">stats_combine_p()</a></code> turns several independent p-values for
+the same feature into one, by one of two rules: <code>"fisher"</code>, X
+= -2 sum ln p against chi-square on 2k degrees of freedom, driven by the
+smallest p-values; or <code>"stouffer"</code>, Z = sum w z / sqrt(sum
+w^2) against the standard normal, which weighs every study (for example
+by the square root of its sample size). There is no default: mzLib
+prefers neither, so you choose. mzLib’s own reference cases show the
+difference:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"combination_inputs.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">cases</span><span class="op">[</span><span class="va">cases</span><span class="op">$</span><span class="va">case</span> <span class="op">==</span> <span class="st">"mixed"</span>, <span class="op">]</span></span>
+<span><span class="co">#&gt;     case     p weight</span></span>
+<span><span class="co">#&gt; 21 mixed 0.001    1.5</span></span>
+<span><span class="co">#&gt; 22 mixed 0.999    2.5</span></span>
+<span><span class="co">#&gt; 23 mixed 0.500    3.5</span></span>
+<span><span class="co">#&gt; 24 mixed 0.050    4.5</span></span>
+<span><span class="co">#&gt; 25 mixed 0.950    5.5</span></span>
+<span><span class="va">fisher</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_combine_p.html">stats_combine_p</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>feature <span class="op">=</span> <span class="va">cases</span><span class="op">$</span><span class="va">case</span>, p_value <span class="op">=</span> <span class="va">cases</span><span class="op">$</span><span class="va">p</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"fisher"</span><span class="op">)</span></span>
+<span><span class="va">stouffer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_combine_p.html">stats_combine_p</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>feature <span class="op">=</span> <span class="va">cases</span><span class="op">$</span><span class="va">case</span>, p_value <span class="op">=</span> <span class="va">cases</span><span class="op">$</span><span class="va">p</span>, weight <span class="op">=</span> <span class="va">cases</span><span class="op">$</span><span class="va">weight</span><span class="op">)</span>,</span>
+<span>                            method <span class="op">=</span> <span class="st">"stouffer"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>feature <span class="op">=</span> <span class="va">fisher</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">feature</span>, studies <span class="op">=</span> <span class="va">fisher</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">studies</span>,</span>
+<span>           fisher <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">fisher</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">3</span><span class="op">)</span>, weighted_stouffer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">stouffer</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   feature studies   fisher weighted_stouffer</span></span>
+<span><span class="co">#&gt; 1     few       3 8.71e-02          0.150000</span></span>
+<span><span class="co">#&gt; 2    tiny       4 3.14e-11          0.002280</span></span>
+<span><span class="co">#&gt; 3     one       1 3.70e-02          0.037000</span></span>
+<span><span class="co">#&gt; 4    many      12 1.13e-01          0.032300</span></span>
+<span><span class="co">#&gt; 5   mixed       5 1.91e-02          0.713000</span></span>
+<span><span class="co">#&gt; 6    tail       3 2.14e-18          0.000836</span></span></code></pre></div>
+<p>In <code>mixed</code>, one p-value of 0.001 sits among four that
+disagree. Fisher says the five studies together are significant, because
+one of them is; weighted Stouffer says they are not, because the
+heaviest study points the other way. Both agree with R’s
+<code><a href="https://rdrr.io/r/stats/Chisquare.html" class="external-link">pchisq()</a></code> and <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm()</a></code>:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">r_answers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"combination_results.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>fisher <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">fisher</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="va">r_answers</span><span class="op">$</span><span class="va">fisher_p</span><span class="op">)</span>,</span>
+<span>  weighted_stouffer <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">stouffer</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="va">r_answers</span><span class="op">$</span><span class="va">weighted_p</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            fisher weighted_stouffer </span></span>
+<span><span class="co">#&gt;      5.083515e-15      3.632781e-15</span></span></code></pre></div>
+<p><strong>The trap: two-sided p-values have no direction.</strong> Both
+rules combine <em>one-sided</em> p-values. A two-sided p-value - which
+is what <code><a href="../reference/stats_fit.html">stats_fit()</a></code> reports - says how surprising an effect
+is, not which way it went, so two studies that disagree count as two
+that agree. Here are three proteins, each tested in three cohorts
+(illustrative numbers, written here, not measured):</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  feature <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"up_everywhere"</span>, <span class="st">"flips_sign"</span>, <span class="st">"no_effect"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.003</span>, <span class="fl">0.02</span>, <span class="fl">0.3</span>, <span class="fl">0.001</span>, <span class="fl">0.004</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.45</span>, <span class="fl">0.85</span><span class="op">)</span>,</span>
+<span>  weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  effect <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">1.2</span>, <span class="op">-</span><span class="fl">0.9</span>, <span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="op">-</span><span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ignored</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_combine_p.html">stats_combine_p</a></span><span class="op">(</span><span class="va">cohorts</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"feature"</span>, <span class="st">"p_value"</span>, <span class="st">"weight"</span><span class="op">)</span><span class="op">]</span>, method <span class="op">=</span> <span class="st">"stouffer"</span><span class="op">)</span></span>
+<span><span class="va">signed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_combine_p.html">stats_combine_p</a></span><span class="op">(</span><span class="va">cohorts</span>, method <span class="op">=</span> <span class="st">"stouffer"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>feature <span class="op">=</span> <span class="va">signed</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">feature</span>, direction_ignored <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">ignored</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>           signed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">signed</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         feature direction_ignored  signed</span></span>
+<span><span class="co">#&gt; 1 up_everywhere           6.2e-04 8.4e-05</span></span>
+<span><span class="co">#&gt; 2    flips_sign           9.5e-05 4.3e-01</span></span>
+<span><span class="co">#&gt; 3     no_effect           6.9e-01 4.4e-01</span></span></code></pre></div>
+<p><strong>Ignoring direction, <code>flips_sign</code> is the strongest
+result of the three</strong>: it rose sharply in one cohort and fell
+sharply in another. Give each test its <code>effect</code> (only its
+sign is used) and mzLib first turns each two-sided p into the one-sided
+p-value for effect &gt; 0, so opposite effects cancel. The combined
+<code>p_value</code> is the <strong>upper tail</strong>: signed, it
+tests effect &gt; 0, and a Stouffer <code>p_value</code> near 1 means a
+consistently negative effect.</p>
+<p>Before you trust a combined p-value: the studies must be independent
+(two analyses of the same samples are one study); it is not adjusted
+across features (send <code>records$p_value</code> to
+<code><a href="../reference/stats_adjust.html">stats_adjust()</a></code>); and it is not an effect size. If every
+study reports an estimate and a standard error on one scale,
+<code><a href="../reference/stats_meta.html">stats_meta()</a></code> pools those and says how much the studies
+disagree; prefer it.</p>
+</div>
+<div class="section level2">
+<h2 id="correlating-features-with-a-trait">Correlating features with a trait<a class="anchor" aria-label="anchor" href="#correlating-features-with-a-trait"></a>
+</h2>
+<p>When the samples differ by a number rather than a group - age, dose,
+the amount loaded - the question is which features rise or fall with it.
+<code><a href="../reference/stats_correlate.html">stats_correlate()</a></code> answers it with Spearman’s rank
+correlation: for each feature, mzLib ranks the feature’s values and the
+trait over the samples where both are known, correlates the ranks, and
+tests rho = 0, two-sided. It reads <code><a href="../reference/stats_fit.html">stats_fit()</a></code>’s responses
+table and a <strong>trait</strong> table: one row per sample, then one
+value column, whose header names the trait.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">correlation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_correlate.html">stats_correlate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_log2_vs_fluc.tsv"</span><span class="op">)</span>,</span>
+<span>                               <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_load_ng.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">correlation</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_correlations&gt; 492 features x 27 samples against malat_ng</span></span>
+<span><span class="co">#&gt;   exact 4, asymptotic 308, not_estimable 180</span></span>
+<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="va">correlation</span><span class="op">$</span><span class="va">records</span></span>
+<span><span class="va">r</span><span class="op">$</span><span class="va">transcript</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">":.*$"</span>, <span class="st">""</span>, <span class="va">r</span><span class="op">$</span><span class="va">feature</span><span class="op">)</span></span>
+<span><span class="va">estimable</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">method</span> <span class="op">!=</span> <span class="st">"not_estimable"</span> <span class="op">&amp;</span> <span class="va">r</span><span class="op">$</span><span class="va">transcript</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MALAT1"</span>, <span class="st">"FLuc"</span>, <span class="st">"20mer2"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">rho</span> <span class="op">~</span> <span class="va">transcript</span>, data <span class="op">=</span> <span class="va">estimable</span>, FUN <span class="op">=</span> <span class="va">median</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   transcript       rho</span></span>
+<span><span class="co">#&gt; 1     20mer2 0.4879500</span></span>
+<span><span class="co">#&gt; 2       FLuc 0.0000000</span></span>
+<span><span class="co">#&gt; 3     MALAT1 0.4330127</span></span></code></pre></div>
+<p>MALAT1’s oligos rise with its load, and FLuc’s, the spike every run
+was normalised to, do not.</p>
+<ul>
+<li>
+<code>method</code> says how <code>p_value</code> was computed:
+<code>"exact"</code> (the full permutation distribution, for n of 9 or
+fewer with no ties, as R’s <code><a href="https://rdrr.io/r/stats/cor.test.html" class="external-link">cor.test()</a></code>),
+<code>"asymptotic"</code> (t on n - 2 degrees of freedom, as
+<code>cor.test(exact = FALSE)</code>), or <code>"not_estimable"</code>,
+where <code>rho</code> and <code>p_value</code> are
+<code>NA</code>.</li>
+<li>
+<strong>Small n cannot be significant.</strong> Three samples have
+six orderings, so even a perfect rank correlation on three runs has p =
+1/3.</li>
+<li>
+<strong>An asymptotic p-value of exactly 0 means rho is exactly -1
+or 1</strong>: the t-test’s limit, not a measured probability.</li>
+<li>
+<strong>For 10 to 1289 samples without ties, R’s default
+<code><a href="https://rdrr.io/r/stats/cor.test.html" class="external-link">cor.test()</a></code> uses an Edgeworth series</strong> that mzLib
+does not, so p-values there differ slightly from R’s default output, but
+not from <code>cor.test(exact = FALSE)</code>. This package’s tests hold
+every row to <code><a href="https://rdrr.io/r/stats/cor.test.html" class="external-link">cor.test()</a></code> run in R.</li>
+</ul>
+<p><strong>Partial correlation.</strong> If something else also varies
+by sample - batch, run order, sex - give it in a <code>given</code>
+table of the same shape. mzLib then correlates what is left of the
+feature’s ranks and the trait’s ranks after each is regressed on the
+covariates’ ranks, as <code>ppcor::pcor.test(method = "spearman")</code>
+does:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_correlate.html">stats_correlate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"limma_reference_responses.tsv"</span><span class="op">)</span>,</span>
+<span>                         <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"limma_reference_age.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">partial</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_correlate.html">stats_correlate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"limma_reference_responses.tsv"</span><span class="op">)</span>,</span>
+<span>                           <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"limma_reference_age.tsv"</span><span class="op">)</span>,</span>
+<span>                           given <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"limma_reference_sex.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>plain <span class="op">=</span> <span class="va">plain</span><span class="op">$</span><span class="va">method_counts</span>, given_sex <span class="op">=</span> <span class="va">partial</span><span class="op">$</span><span class="va">method_counts</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           exact asymptotic not_estimable</span></span>
+<span><span class="co">#&gt; plain        22        378             0</span></span>
+<span><span class="co">#&gt; given_sex     0        400             0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>feature <span class="op">=</span> <span class="va">plain</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">feature</span>, rho <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">plain</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">rho</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                rho_given_sex <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">partial</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">rho</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   feature  rho rho_given_sex</span></span>
+<span><span class="co">#&gt; 1      g1 0.38          0.37</span></span>
+<span><span class="co">#&gt; 2      g2 0.93          0.97</span></span>
+<span><span class="co">#&gt; 3      g3 0.65          0.64</span></span>
+<span><span class="co">#&gt; 4      g4 0.12          0.12</span></span>
+<span><span class="co">#&gt; 5      g5 0.43          0.37</span></span></code></pre></div>
+<p>The partial test is always asymptotic, on n - 2 - k degrees of
+freedom for k covariates. Partial out only nuisance variables: a
+covariate that follows the trait takes the trait’s signal with it.</p>
+</div>
+<div class="section level2">
+<h2 id="is-a-features-detection-related-to-the-condition">Is a feature’s detection related to the condition?<a class="anchor" aria-label="anchor" href="#is-a-features-detection-related-to-the-condition"></a>
+</h2>
+<p>Missing values in label-free data are rarely random: a protein near
+the detection limit is missed more often where there is less of it. Ask
+the data first: <strong>does each feature’s chance of being detected
+depend on the condition?</strong> That is a logistic regression per
+feature on a table of 1 (measured) and 0 (not measured).
+<code><a href="../reference/stats_fit_logistic.html">stats_fit_logistic()</a></code> runs one per feature, as R’s
+<code>glm(family = binomial)</code>, and tests each coefficient with a
+Wald z. The dilution series has a detection table: 1 where the responses
+file has a value, 0 where it is blank.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">detection</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_fit_logistic.html">stats_fit_logistic</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_detected.tsv"</span><span class="op">)</span>,</span>
+<span>                                <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_design.tsv"</span><span class="op">)</span>,</span>
+<span>                                <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"malat_250ng"</span>, <span class="st">"malat_125ng"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">detection</span><span class="op">$</span><span class="va">status_counts</span></span>
+<span><span class="co">#&gt;               fitted too_few_observations       rank_deficient </span></span>
+<span><span class="co">#&gt;                  191                    0                    0 </span></span>
+<span><span class="co">#&gt;            separated        not_converged </span></span>
+<span><span class="co">#&gt;                  301                    0</span></span>
+<span><span class="va">quarter</span> <span class="op">&lt;-</span> <span class="va">detection</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">detection</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">coefficient</span> <span class="op">==</span> <span class="st">"malat_125ng"</span>, <span class="op">]</span></span>
+<span><span class="va">quarter</span><span class="op">$</span><span class="va">transcript</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">":.*$"</span>, <span class="st">""</span>, <span class="va">quarter</span><span class="op">$</span><span class="va">feature</span><span class="op">)</span></span>
+<span><span class="va">detected</span> <span class="op">&lt;-</span> <span class="va">quarter</span><span class="op">[</span><span class="va">quarter</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"fitted"</span> <span class="op">&amp;</span> <span class="va">quarter</span><span class="op">$</span><span class="va">transcript</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MALAT1"</span>, <span class="st">"FLuc"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">estimate</span> <span class="op">~</span> <span class="va">transcript</span>, data <span class="op">=</span> <span class="va">detected</span>, FUN <span class="op">=</span> <span class="va">median</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   transcript   estimate</span></span>
+<span><span class="co">#&gt; 1       FLuc  0.4054651</span></span>
+<span><span class="co">#&gt; 2     MALAT1 -0.1823216</span></span></code></pre></div>
+<p><code>estimate</code> is a change in the <strong>log-odds</strong> of
+detection: for a 0/1 column, the log of the odds ratio against the 500
+ng runs.</p>
+<p><strong>A separated feature has no estimate, and that is not the same
+as no effect.</strong> When the design splits a feature’s 0s from its
+1s, no maximum-likelihood estimate exists. R’s <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> prints
+a huge coefficient and a warning there; mzLib reports
+<code>"separated"</code> and <code>NA</code>. Most oligos here are
+separated because they were seen in a handful of runs, or none:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">separated</span> <span class="op">&lt;-</span> <span class="va">quarter</span><span class="op">[</span><span class="va">quarter</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"separated"</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span>events <span class="op">=</span> <span class="va">separated</span><span class="op">$</span><span class="va">events</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt; events</span></span>
+<span><span class="co">#&gt;  0  2  1  3 </span></span>
+<span><span class="co">#&gt; 64 55 54 37</span></span></code></pre></div>
+<p>Here separation means “too sparse to say”. In a cleaner experiment
+the same status can mark the strongest result in the table - a protein
+detected in every treated sample and in no control - so read
+<code>events</code> and <code>observed</code> before you discard one.
+Against R’s <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>, on mzLib’s own reference input:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">glm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_fit_logistic.html">stats_fit_logistic</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"glm_reference_responses.tsv"</span><span class="op">)</span>,</span>
+<span>                              <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"glm_reference_design.tsv"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Intercept"</span>, <span class="st">"x"</span>, <span class="st">"grp"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"glm_reference_fit.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="va">glm_fit</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">glm_fit</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">coefficient</span> <span class="op">==</span> <span class="st">"x"</span>, <span class="op">]</span></span>
+<span><span class="va">ok</span> <span class="op">&lt;-</span> <span class="va">glm</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"fitted"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">estimate</span><span class="op">[</span><span class="va">ok</span><span class="op">]</span>, <span class="va">glm</span><span class="op">$</span><span class="va">b1</span><span class="op">[</span><span class="va">ok</span><span class="op">]</span><span class="op">)</span>, standard_error <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">standard_error</span><span class="op">[</span><span class="va">ok</span><span class="op">]</span>, <span class="va">glm</span><span class="op">$</span><span class="va">se1</span><span class="op">[</span><span class="va">ok</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       estimate standard_error </span></span>
+<span><span class="co">#&gt;   4.203008e-12   1.341800e-07</span></span></code></pre></div>
+<p>The estimates agree to better than 1e-8 and the standard errors to
+1e-6 (<code><a href="https://rdrr.io/r/stats/summary.glm.html" class="external-link">summary.glm()</a></code> takes its weights from the step before
+the estimate). Wald tests are weakest near separation and in small
+samples, and no likelihood-ratio test is offered. A 0 is an outcome:
+blank only a cell you genuinely do not know.</p>
+</div>
+<div class="section level2">
+<h2 id="when-samples-come-in-groups">When samples come in groups<a class="anchor" aria-label="anchor" href="#when-samples-come-in-groups"></a>
+</h2>
+<p>Runs acquired on different days, replicates from one donor, studies
+pooled into one analysis: each group can sit at its own baseline.
+<code><a href="../reference/stats_fit.html">stats_fit()</a></code> treats every sample as independent, so a
+day-to-day shift either inflates its residual variance or, when the days
+are unbalanced, leaks into the effect. A <strong>mixed model</strong>
+gives every group its own baseline, a random intercept with variance
+tau^2, and estimates each coefficient <em>within</em> groups:
+<code><a href="../reference/stats_fit_mixed.html">stats_fit_mixed()</a></code>, as
+<code>nlme::lme(y ~ ..., random = ~ 1 | group)</code> per feature. The
+dilution series’ runs were acquired on five days; a
+<strong>groups</strong> table says which:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_fit_mixed.html">stats_fit_mixed</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_log2_vs_fluc.tsv"</span><span class="op">)</span>,</span>
+<span>                         <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_design.tsv"</span><span class="op">)</span>,</span>
+<span>                         <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"malat_dilution_day.tsv"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"malat_250ng"</span>, <span class="st">"malat_125ng"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mixed</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_mixed_model_fit&gt; 492 features x 27 samples in 5 groups (day), reml, reporting malat_250ng, malat_125ng</span></span>
+<span><span class="co">#&gt;   fitted 210, too_few_observations 214, rank_deficient 66, too_few_groups 2, variance_ratio_at_limit 0, not_converged 0</span></span>
+<span><span class="va">malat_medians</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">result</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"fitted"</span> <span class="op">&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">feature</span>, <span class="st">"MALAT1:"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">estimate</span>, <span class="va">standard_error</span><span class="op">)</span> <span class="op">~</span> <span class="va">coefficient</span>, data <span class="op">=</span> <span class="va">r</span>, FUN <span class="op">=</span> <span class="va">median</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">malat_medians</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   coefficient   estimate standard_error</span></span>
+<span><span class="co">#&gt; 1 malat_125ng -1.0144266      1.0888865</span></span>
+<span><span class="co">#&gt; 2 malat_250ng -0.8914901      0.9967881</span></span>
+<span><span class="fu">malat_medians</span><span class="op">(</span><span class="va">mixed</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   coefficient  estimate standard_error</span></span>
+<span><span class="co">#&gt; 1 malat_125ng -1.093018      0.6977282</span></span>
+<span><span class="co">#&gt; 2 malat_250ng -1.048479      0.7064118</span></span></code></pre></div>
+<p>The design is unchanged: do not add a column per day, the random
+intercept replaces it. <code>estimator</code> is <code>"reml"</code>
+because none was given and that is mzLib’s default. Within days, the
+median standard errors are smaller: the day-to-day shift no longer
+counts as noise.</p>
+<ul>
+<li>
+<strong>A coefficient constant within each group is tested on the
+groups.</strong> Its <code>df</code> is nlme’s “containment” df, a whole
+number per row; with too few groups there is none, and
+<code>p_value</code> is <code>NA</code> while <code>t</code> is
+reported.</li>
+<li>
+<strong><code>group_variance</code> 0 is the boundary</strong>: no
+group effect. nlme cannot reach 0 and reports a tiny positive value
+there instead.</li>
+<li>
+<strong>Under <code>"reml"</code> the log-likelihood is
+restricted</strong>: compare it only between models with the same fixed
+effects, and use <code>estimator = "ml"</code> to compare designs.</li>
+</ul>
+<p>Against nlme, on mzLib’s own reference input (seven groups of unequal
+size):</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lmm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_fit_mixed.html">stats_fit_mixed</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"lmm_reference_responses.tsv"</span><span class="op">)</span>,</span>
+<span>                       <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"lmm_reference_design.tsv"</span><span class="op">)</span>,</span>
+<span>                       <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"lmm_reference_groups.tsv"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Intercept"</span>, <span class="st">"age"</span>, <span class="st">"wp"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">nlme</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"lmm_reference_fit.tsv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">nlme</span> <span class="op">&lt;-</span> <span class="va">nlme</span><span class="op">[</span><span class="va">nlme</span><span class="op">$</span><span class="va">method</span> <span class="op">==</span> <span class="st">"REML"</span>, <span class="op">]</span></span>
+<span><span class="va">age</span> <span class="op">&lt;-</span> <span class="va">lmm</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">lmm</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">coefficient</span> <span class="op">==</span> <span class="st">"age"</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">age</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">nlme</span><span class="op">$</span><span class="va">b1</span><span class="op">)</span>, standard_error <span class="op">=</span> <span class="fu">worst</span><span class="op">(</span><span class="va">age</span><span class="op">$</span><span class="va">standard_error</span>, <span class="va">nlme</span><span class="op">$</span><span class="va">se1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       estimate standard_error </span></span>
+<span><span class="co">#&gt;   1.610138e-06   2.195060e-07</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">age</span><span class="op">$</span><span class="va">df</span> <span class="op">==</span> <span class="va">nlme</span><span class="op">$</span><span class="va">df1</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>mzLib matches nlme to 1e-5 relative (nlme’s own optimizer precision).
+Satterthwaite and Kenward-Roger df (lmerTest) are not implemented, so
+p-values differ from lmerTest’s.</p>
+</div>
+<div class="section level2">
+<h2 id="does-a-search-really-control-its-fdr">Does a search really control its FDR?<a class="anchor" aria-label="anchor" href="#does-a-search-really-control-its-fdr"></a>
+</h2>
+<p>An entrapment experiment adds peptides that cannot be in the sample
+to the search database. Every entrapment the search reports is then a
+known false discovery, which lets you check the search’s FDR claim
+instead of trusting it. <code><a href="../reference/stats_entrapment_fdp.html">stats_entrapment_fdp()</a></code> computes the
+three valid estimators of Wen et al. 2025 at each q-value threshold:
+<code>lower_bound</code> (above your claimed FDR, the search fails to
+control it; below, it proves nothing), <code>combined</code> (an upper
+bound: at or below your claimed FDR, evidence of control) and
+<code>paired</code> (a tighter upper bound for 1:1 pairing). The
+“sample” estimator N_E / (r N_T) is invalid in both directions and is
+deliberately absent.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fdp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_entrapment_fdp.html">stats_entrapment_fdp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"entrapment_reference_targets.tsv"</span><span class="op">)</span>,</span>
+<span>                            <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"entrapment_reference_entrapments.tsv"</span><span class="op">)</span>, ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">fdp</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_entrapment_fdp_estimates&gt; 7 targets, 4 entrapments, ratio 1, 100 of 100 thresholds with a discovery</span></span>
+<span><span class="va">fdp</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">fdp</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">q_value_threshold</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.003</span>, <span class="fl">0.01</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="co">#&gt;    q_value_threshold target_count entrapment_count lower_bound  combined</span></span>
+<span><span class="co">#&gt; 3              0.003            2                1   0.3333333 0.6666667</span></span>
+<span><span class="co">#&gt; 10             0.010            4                3   0.4285714 0.8571429</span></span>
+<span><span class="co">#&gt;       paired</span></span>
+<span><span class="co">#&gt; 3  0.3333333</span></span>
+<span><span class="co">#&gt; 10 0.8571429</span></span></code></pre></div>
+<p>This is mzLib’s hand-built search: seven targets and four
+entrapments. At 1% the search reports 7 discoveries, 3 of them
+entrapments: far from a 1% FDR. Give one row per unit you estimate for
+(precursor, peptide or protein group), decoys removed, each with its
+best q-value; mzLib does not deduplicate. <code>ratio</code> is
+required: mzLib has no default, and <code>paired</code> is reported only
+at a ratio of exactly 1, so for 1:1 pairing pass 1, not a ratio computed
+from database sizes after exclusions.</p>
+</div>
+<div class="section level2">
 <h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
 </h2>
 <p>The methods and resources behind the functions on this page, from
@@ -328,13 +888,55 @@ their specs:</p>
 the step-up adjustment (Benjamini and Hochberg, J R Stat Soc B 57:289,
 1995).</li>
 <li>
+<a href="https://doi.org/10.1111/j.1420-9101.2005.00917.x" class="external-link">doi:10.1111/j.1420-9101.2005.00917.x</a>:
+the weighted Z (Stouffer) method and why it outperforms Fisher’s for a
+shared effect (Whitlock, J Evol Biol 18:1368, 2005).</li>
+<li>
+<a href="https://doi.org/10.2307/1412159" class="external-link">doi:10.2307/1412159</a>:
+the rank correlation coefficient rho (Spearman, Am J Psychol 15:72,
+1904).</li>
+<li>
+<a href="https://doi.org/10.5351/CSAM.2015.22.6.665" class="external-link">doi:10.5351/CSAM.2015.22.6.665</a>:
+ppcor, whose pcor.test(method = ‘spearman’) the partial form (–given)
+reproduces (Kim, Commun Stat Appl Methods 22:665, 2015).</li>
+<li>
+<a href="https://doi.org/10.2307/2347111" class="external-link">doi:10.2307/2347111</a>:
+the Edgeworth series (AS 89) R’s cor.test uses by default for 10 &lt;= n
+&lt; 1290, which mzLib does NOT use (Best and Roberts, Appl Stat 24:377,
+1975).</li>
+<li>
+<a href="https://doi.org/10.1038/s41592-025-02719-x" class="external-link">doi:10.1038/s41592-025-02719-x</a>:
+the lower-bound (eq. 2), combined (eq. 1) and paired (eq. 4) entrapment
+estimators mzLib implements, and why the sample estimator is invalid
+(Wen et al., Nat Methods 22:1454, 2025; the method FDRBench
+implements).</li>
+<li>
+<a href="https://doi.org/10.2307/2344614" class="external-link">doi:10.2307/2344614</a>:
+generalized linear models and their fitting by iteratively reweighted
+least squares, the estimator mzLib implements (Nelder and Wedderburn, J
+R Stat Soc A 135:370, 1972).</li>
+<li>
+<a href="https://doi.org/10.1093/biomet/71.1.1" class="external-link">doi:10.1093/biomet/71.1.1</a>:
+separation: when the outcomes are split by the design the
+maximum-likelihood estimate does not exist, which is the separated
+status (Albert and Anderson, Biometrika 71:1, 1984).</li>
+<li>
+<a href="https://doi.org/10.2307/2529876" class="external-link">doi:10.2307/2529876</a>:
+the random-effects linear model y = X beta + Z u + e this verb fits with
+one random intercept (Laird and Ware, Biometrics 38:963, 1982).</li>
+<li>
+<a href="https://doi.org/10.1093/biomet/58.3.545" class="external-link">doi:10.1093/biomet/58.3.545</a>:
+restricted maximum likelihood, the default estimator (Patterson and
+Thompson, Biometrika 58:545, 1971).</li>
+<li>
 <a href="https://doi.org/10.2202/1544-6115.1027" class="external-link">doi:10.2202/1544-6115.1027</a>:
-the empirical-Bayes moderated t this verb computes (Smyth, Stat Appl
-Genet Mol Biol 3:3, 2004).</li>
+the empirical-Bayes moderated t this verb computes, for coefficients and
+contrasts (Smyth, Stat Appl Genet Mol Biol 3:3, 2004).</li>
 <li>
 <a href="https://doi.org/10.1093/nar/gkv007" class="external-link">doi:10.1093/nar/gkv007</a>:
-limma, whose eBayes(legacy = TRUE) mzLib reproduces to 1e-8 relative
-(Ritchie et al., Nucleic Acids Res 43:e47, 2015).</li>
+limma, whose eBayes(legacy = TRUE), and contrasts.fit with
+topTable(confint), mzLib reproduces to 1e-8 relative (Ritchie et al.,
+Nucleic Acids Res 43:e47, 2015).</li>
 <li>
 <a href="https://doi.org/10.1016/0197-2456%2886%2990046-2" class="external-link">doi:10.1016/0197-2456(86)90046-2</a>:
 the moment estimator of the between-study variance (DerSimonian and

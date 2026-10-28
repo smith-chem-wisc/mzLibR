@@ -57,7 +57,7 @@ instrument's intensity units. `files` has one row per input, with its
 
 Wire verb `readers read-features` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-features.yaml` (bridge commit
-`f85fef72f651`) by `scripts/build-man.R`; the spec owns these facts, and
+`60b1d25968a1`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`IMs1FeatureFile.GetMs1Features`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/IMs1FeatureFile.cs)

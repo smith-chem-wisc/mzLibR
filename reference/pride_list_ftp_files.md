@@ -63,7 +63,7 @@ rather than returning nothing.
 ## Wraps
 
 Wire verb `pride ftp-files`. Generated from the bridge's verb spec
-`pride.ftp-files.yaml` (bridge commit `f85fef72f651`) by
+`pride.ftp-files.yaml` (bridge commit `60b1d25968a1`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

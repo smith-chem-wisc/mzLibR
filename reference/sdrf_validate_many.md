@@ -56,7 +56,7 @@ are `NA` for a document that was read. A document that was not read has
 ## Wraps
 
 Wire verb `sdrf validate` with `--paths-stdin`. Generated from the
-bridge's verb spec `sdrf.validate.yaml` (bridge commit `f85fef72f651`)
+bridge's verb spec `sdrf.validate.yaml` (bridge commit `60b1d25968a1`)
 by `scripts/build-man.R`; the spec owns these facts, and all three
 bindings render the same ones.
 

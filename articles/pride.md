@@ -11,6 +11,7 @@ download the ones you choose, using mzLib’s paging and URL resolution.
 | how big is it, before I download? | [`pride_approximate_total_size_bytes()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_approximate_total_size_bytes.md), [`pride_total_size_bytes()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_total_size_bytes.md) | `PrideArchiveExtensions.TotalApproximateSizeBytes` |
 | download the files I picked | [`pride_download_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download_files.md) | `PrideArchiveClient.DownloadFileAsync` |
 | download by category or extension | [`pride_download()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download.md) | `PrideArchiveClient.DownloadProjectFilesAsync` |
+| is my download the file PRIDE holds? | [`pride_file_checksums()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_file_checksums.md) | `PrideArchiveClient.GetFileChecksumsAsync` |
 
 ## Find a project
 
@@ -232,9 +233,179 @@ is not yet on the path
 and
 [`pride_download_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download_files.md)
 use, so a file can be reported as downloaded when its bytes are wrong.
-For files that matter, compare their sizes with
+For files that matter, check each one against
+[`pride_file_checksums()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_file_checksums.md)
+before you search it, as the next section shows.
+
+## Checking a download against PRIDE’s checksums
+
+**Is the file on your disk the file PRIDE holds?** The download
+functions cannot tell you yet. PRIDE records an MD5 and the exact size
+of every file a submitter deposits, and
+[`pride_file_checksums()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_file_checksums.md)
+returns that record. Its row names are the file names, so look a file up
+by the name it was downloaded under:
+
+``` r
+
+checksums <- pride_file_checksums("PXD000001")
+nrow(checksums)
+#> [1] 12
+checksums["TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw", c("md5", "size_bytes")]
+#>                                                                                        md5
+#> TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw c567cecbb9866796e690a4958746f7b6
+#>                                                           size_bytes
+#> TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw  220475548
+```
+
+`md5` is 32 hexadecimal characters, as PRIDE wrote them; compare it
+without regard to case. `size_bytes` is the exact length a download of
+the file comes to, which neither other listing gives you.
+[`pride_list_ftp_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_ftp_files.md)
+rounds its sizes, and
 [`pride_list_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md)
-and their checksums with PRIDE’s before you search them.
+can be wrong:
+
+``` r
+
+gz <- "PRIDE_Exp_Complete_Ac_22134.xml.gz"
+c(manifest = files$file_size_bytes[files$file_name == gz], checksums = checksums[gz, "size_bytes"])
+#>  manifest checksums 
+#>  10677205  10668000
+```
+
+The download is 10,668,000 bytes, the checksum list’s number. Because
+each size is exact, so is their sum: what the deposited files weigh,
+without the `generated/` files, which have no row (below).
+
+``` r
+
+round(sum(checksums$size_bytes) / 1e9, 2)   # GB
+#> [1] 1.43
+```
+
+### The check
+
+A file is PRIDE’s when its length and its MD5 both match. The length
+costs nothing to check. The MD5 reads the whole file, a few seconds per
+gigabyte. Check both, because the length alone does not prove the bytes:
+on 7 and 8 October 2026, EBI served about 23 of about 70 large transfers
+at the right size with its own error text written over part of them
+(mzLib \#1449). Base R has all it takes:
+
+``` r
+
+check_download <- function(path, expected) {
+  # NA when the file is the one PRIDE recorded, otherwise what is wrong with it.
+  size <- file.size(path)
+  if (size != expected$size_bytes) {
+    return(paste(size, "bytes where PRIDE records", expected$size_bytes))
+  }
+  md5 <- unname(tools::md5sum(path))
+  if (md5 != tolower(expected$md5)) {
+    return(paste("MD5", md5, "where PRIDE records", expected$md5))
+  }
+  NA_character_
+}
+```
+
+Here it is on two damaged copies of the project’s 1,645-byte
+`README.txt`. The first was cut short. The second is the right size with
+EBI’s error text inside, and only the MD5 catches it:
+
+``` r
+
+readme <- checksums["README.txt", ]
+damaged <- tempfile(fileext = ".txt")
+writeBin(charToRaw(strrep("x", 1000)), damaged)
+check_download(damaged, readme)
+#> [1] "1000 bytes where PRIDE records 1645"
+error_page <- "<Error><Code>ConnectionClosedException</Code></Error>"
+writeBin(charToRaw(paste0(error_page, strrep(".", 1645 - nchar(error_page)))), damaged)
+check_download(damaged, readme)
+#> [1] "MD5 6a8f1a7d39089d34bf9bc9b19e553dd4 where PRIDE records 492753137013825025e6729c8798664f"
+```
+
+After a real download, check every file it wrote:
+
+``` r
+
+# Not run: downloads files from PRIDE.
+paths <- pride_download("PXD000001", "downloads", category = "RAW")
+checksums <- pride_file_checksums("PXD000001")
+for (path in paths) {
+  name <- basename(path)
+  if (!name %in% rownames(checksums)) {
+    message(name, ": PRIDE has no checksum for it, so it cannot be checked")
+    next
+  }
+  problem <- check_download(path, checksums[name, ])
+  if (!is.na(problem)) message(name, ": ", problem, ". Download it again.")
+}
+```
+
+To download a damaged file again, pass its row to
+[`pride_download_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download_files.md),
+or call
+[`pride_download()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download.md)
+with `overwrite = TRUE`, the default. `overwrite = FALSE` would skip it,
+because it is already there.
+
+### What the list covers
+
+It covers the files the submitter deposited at the project’s root. It is
+a third list, not a view of either of the others, and three things
+follow from that.
+
+**PRIDE’s own `generated/` files have no row.** A file without a row
+cannot be checked; that does not make it invalid. In PXD000001 those are
+the two files under `generated/`, which
+[`pride_list_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md)
+names without their folder:
+
+``` r
+
+listing$relative_path[!listing$relative_path %in% checksums$file_name]
+#> [1] "generated/PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz"  
+#> [2] "generated/PRIDE_Exp_Complete_Ac_22134.pride.mztab.gz"
+files$file_name[!files$file_name %in% checksums$file_name]
+#> [1] "PRIDE_Exp_Complete_Ac_22134.pride.mztab.gz"
+#> [2] "PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz"
+```
+
+**It names files the REST manifest omits,** such as the 450 MB `.mzML`
+that only the FTP listing showed above:
+
+``` r
+
+"TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01-20141210.mzML" %in% checksums$file_name
+#> [1] TRUE
+```
+
+**It can name files that are not deposits at all.** PXD015239’s list
+includes a 2.3 GB NFS temp file, `.nfs80360b91005fae5300002478`. Look up
+the files you have by name; do not read the list as the project’s
+contents.
+
+### Two traps
+
+**The manifest’s `checksum` column is not this MD5.** Where PRIDE fills
+it in, it is a 40-character SHA-1, a different digest of the same bytes.
+For every PXD000001 file it is empty:
+
+``` r
+
+unique(files$checksum)
+#> [1] ""
+```
+
+**Zero rows is an answer.** It means the project exists but PRIDE holds
+no checksums for it, so nothing can be checked. An accession PRIDE does
+not know raises `mzlib_project_not_found`, and so does a project not yet
+published: PRIDE holds no checksums before publication. A list mzLib
+cannot read (a new header, a malformed row, a name listed twice) is an
+`mzlib_bridge_error` with `error_type` `"MzLibException"`: not your bug,
+and mzLib does not retry it, so report it.
 
 ## What to cite
 
@@ -242,5 +413,5 @@ The methods and resources behind the functions on this page, from their
 specs:
 
 - [doi:10.1093/nar/gkae1011](https://doi.org/10.1093/nar/gkae1011): The
-  PRIDE Archive, the repository files are fetched from (Perez-Riverol et
+  PRIDE Archive, whose checksum list this verb reads (Perez-Riverol et
   al., The PRIDE database at 20 years: 2025 update, NAR).

@@ -19,13 +19,16 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
+    <li><a class="dropdown-item" href="../articles/library.html">Spectral libraries</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
     <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
-    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, contrasts, and the tests around it</a></li>
+    <li><a class="dropdown-item" href="../articles/diff.html">Differential design and observations: the design matrix and every peptide, by mzLib</a></li>
+    <li><a class="dropdown-item" href="../articles/ptmqtl.html">PTM site occupancy and PTM-QTL: occupancy, pairs and trait effects, by mzLib</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -192,9 +195,32 @@
         </dt>
         <dd>Retention times in minutes, whatever unit the format wrote</dd>
       </dl></div><div class="section level2">
+      <h2 id="spectral-libraries">Spectral libraries<a class="anchor" aria-label="anchor" href="#spectral-libraries"></a></h2>
+
+      <div class="section-desc"><p>mzLib’s .msl spectral libraries, read with mzLib’s own reader: every precursor, and its fragment ions on request.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="library_read.html">library_read()</a></code>
+
+        </dt>
+        <dd>Read an mzLib spectral library (<code>.msl</code>): one row per precursor, or per fragment ion</dd>
+
+        <dt>
+
+          <code><a href="library_read_many.html">library_read_many()</a></code>
+
+        </dt>
+        <dd>Read many spectral libraries into one long table, in one bridge call</dd>
+      </dl></div><div class="section level2">
       <h2 id="sdrf-proteomics-experimental-designs">SDRF-Proteomics experimental designs<a class="anchor" aria-label="anchor" href="#sdrf-proteomics-experimental-designs"></a></h2>
 
-      <div class="section-desc"><p>Read one design file or pool several, ask whether each is well-formed and informative, and read the label-free design a quantification takes.</p></div>
+      <div class="section-desc"><p>Read one design file or pool several, ask whether each is well-formed and informative, and read the label-free or isobaric design a quantification takes, restricted to one search’s files.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -266,6 +292,13 @@
 
         <dt>
 
+          <code><a href="sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code>
+
+        </dt>
+        <dd>Read an isobaric (TMT, TMTpro, iTRAQ, DiLeu) design out of an SDRF, or every reason it cannot be read</dd>
+
+        <dt>
+
           <code><a href="sdrf_lint.html">sdrf_lint()</a></code>
 
         </dt>
@@ -308,6 +341,13 @@
 
         <dt>
 
+          <code><a href="sdrf_restrict.html">sdrf_restrict()</a></code>
+
+        </dt>
+        <dd>Restrict an SDRF to the files one search read, and report what could not be placed</dd>
+
+        <dt>
+
           <code><a href="sdrf_samples.html">sdrf_samples()</a></code>
 
         </dt>
@@ -319,6 +359,13 @@
 
         </dt>
         <dd>The samples of many SDRF files, in one bridge call</dd>
+
+        <dt>
+
+          <code><a href="sdrf_searched_data_files.html">sdrf_searched_data_files()</a></code>
+
+        </dt>
+        <dd>The searched file each row of a restricted SDRF was joined to</dd>
 
         <dt>
 
@@ -366,7 +413,7 @@
       </dl></div><div class="section level2">
       <h2 id="protein-databases">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases"></a></h2>
 
-      <div class="section-desc"><p>What an accession is, which gene it resolves to, whether a peptide is unique, and what each protein group does in Gene Ontology terms.</p></div>
+      <div class="section-desc"><p>What an accession is, which gene it resolves to, whether a peptide is unique, and what each protein group does in Gene Ontology terms; where a residue is in another sequence, which entry an accession names, and which genes are orthologous across species.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -375,6 +422,20 @@
 
       <dl><dt>
 
+          <code><a href="proteins_align.html">proteins_align()</a></code>
+
+        </dt>
+        <dd>Align protein sequences with mzLib, and map every residue onto the other sequence</dd>
+
+        <dt>
+
+          <code><a href="proteins_alignments.html">proteins_alignments()</a></code>
+
+        </dt>
+        <dd>One alignment per pair, each with its residue map</dd>
+
+        <dt>
+
           <code><a href="proteins_annotate_go.html">proteins_annotate_go()</a></code>
 
         </dt>
@@ -382,10 +443,45 @@
 
         <dt>
 
+          <code><a href="proteins_build_orthology.html">proteins_build_orthology()</a></code>
+
+        </dt>
+        <dd>Build an Ensembl Compara orthology snapshot for your species, and write it as Parquet</dd>
+
+        <dt>
+
           <code><a href="proteins_classify_peptides.html">proteins_classify_peptides()</a></code>
 
         </dt>
         <dd>Classify peptides by how widely they are shared across protein databases, with I = L</dd>
+
+        <dt>
+
+          <code><a href="proteins_map_source_to_target.html">proteins_map_source_to_target()</a></code>
+
+        </dt>
+        <dd>The target position paired with each source position</dd>
+
+        <dt>
+
+          <code><a href="proteins_map_target_to_source.html">proteins_map_target_to_source()</a></code>
+
+        </dt>
+        <dd>The source position paired with each target position</dd>
+
+        <dt>
+
+          <code><a href="proteins_orthology_pair.html">proteins_orthology_pair()</a></code>
+
+        </dt>
+        <dd>One species pair's counts, in either order</dd>
+
+        <dt>
+
+          <code><a href="proteins_parse_accessions.html">proteins_parse_accessions()</a></code>
+
+        </dt>
+        <dd>Read accessions into entry, isoform or version, and applied variants, with mzLib</dd>
 
         <dt>
 
@@ -410,7 +506,7 @@
       </dl></div><div class="section level2">
       <h2 id="pride-archive">PRIDE Archive<a class="anchor" aria-label="anchor" href="#pride-archive"></a></h2>
 
-      <div class="section-desc"><p>List a project’s files and download the ones you choose.</p></div>
+      <div class="section-desc"><p>List a project’s files, download the ones you choose, and check a download against the MD5 and exact size PRIDE recorded.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -437,6 +533,13 @@
 
         </dt>
         <dd>Download exactly the files you selected</dd>
+
+        <dt>
+
+          <code><a href="pride_file_checksums.html">pride_file_checksums()</a></code>
+
+        </dt>
+        <dd>The MD5 and exact size PRIDE recorded for each file deposited in a project</dd>
 
         <dt>
 
@@ -605,7 +708,7 @@
       </dl></div><div class="section level2">
       <h2 id="differential-abundance">Differential abundance<a class="anchor" aria-label="anchor" href="#differential-abundance"></a></h2>
 
-      <div class="section-desc"><p>limma’s moderated t-test, Benjamini-Hochberg adjustment and random-effects meta-analysis, computed by mzLib.</p></div>
+      <div class="section-desc"><p>limma’s moderated t-test with contrasts, Benjamini-Hochberg adjustment, random-effects meta-analysis, combined p-values, Spearman correlation, logistic and mixed models per feature, and entrapment FDP estimates, computed by mzLib.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -621,10 +724,45 @@
 
         <dt>
 
+          <code><a href="stats_combine_p.html">stats_combine_p()</a></code>
+
+        </dt>
+        <dd>Combine several independent p-values per feature into one, by Fisher's or Stouffer's method</dd>
+
+        <dt>
+
+          <code><a href="stats_correlate.html">stats_correlate()</a></code>
+
+        </dt>
+        <dd>Spearman-correlate every feature with a per-sample trait, optionally given covariates</dd>
+
+        <dt>
+
+          <code><a href="stats_entrapment_fdp.html">stats_entrapment_fdp()</a></code>
+
+        </dt>
+        <dd>Estimate a search's false discovery proportion from its entrapment hits</dd>
+
+        <dt>
+
           <code><a href="stats_fit.html">stats_fit()</a></code>
 
         </dt>
-        <dd>Fit one linear model per feature and test coefficients with limma's moderated t</dd>
+        <dd>Fit one linear model per feature and test coefficients, and contrasts, with limma's moderated t</dd>
+
+        <dt>
+
+          <code><a href="stats_fit_logistic.html">stats_fit_logistic()</a></code>
+
+        </dt>
+        <dd>Fit one logistic regression per feature of a 0/1 table, such as a detection table</dd>
+
+        <dt>
+
+          <code><a href="stats_fit_mixed.html">stats_fit_mixed()</a></code>
+
+        </dt>
+        <dd>Fit one linear mixed model per feature, with a random intercept for each group of samples</dd>
 
         <dt>
 
@@ -632,6 +770,73 @@
 
         </dt>
         <dd>Pool one effect size per study into a random-effects estimate per feature</dd>
+      </dl></div><div class="section level2">
+      <h2 id="differential-design-and-observations">Differential design and observations<a class="anchor" aria-label="anchor" href="#differential-design-and-observations"></a></h2>
+
+      <div class="section-desc"><p>A sample sheet to mzLib’s design matrix and contrasts per stratum, and a peptide table to every peptide in every sample, with the reason for each missing value.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="diff_design.html">diff_design()</a></code>
+
+        </dt>
+        <dd>Build each stratum's design matrix and default contrasts from a sample sheet, with mzLib</dd>
+
+        <dt>
+
+          <code><a href="diff_observations.html">diff_observations()</a></code>
+
+        </dt>
+        <dd>Every peptide in every biological sample, as log2 intensity or NA with the reason, by mzLib</dd>
+
+        <dt>
+
+          <code><a href="factor_spec.html">factor_spec()</a></code>
+
+        </dt>
+        <dd>A condition factor of a model, as mzLib's FactorSpec</dd>
+
+        <dt>
+
+          <code><a href="covariate_spec.html">covariate_spec()</a></code>
+
+        </dt>
+        <dd>A numeric covariate of a model, as mzLib's CovariateSpec</dd>
+      </dl></div><div class="section level2">
+      <h2 id="ptm-site-occupancy-and-ptm-qtl">PTM site occupancy and PTM-QTL<a class="anchor" aria-label="anchor" href="#ptm-site-occupancy-and-ptm-qtl"></a></h2>
+
+      <div class="section-desc"><p>Every site’s occupancy in every run, pairs of modifications, and a trait’s effect on occupancy, computed by mzLib.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ptmqtl_occupancy.html">ptmqtl_occupancy()</a></code>
+
+        </dt>
+        <dd>Compute every site's occupancy in every run, with mzLib's SiteOccupancyCalculator</dd>
+
+        <dt>
+
+          <code><a href="ptmqtl_pairs.html">ptmqtl_pairs()</a></code>
+
+        </dt>
+        <dd>Find PTM-PTM pairs within one dataset, with mzLib's PtmPairEngine</dd>
+
+        <dt>
+
+          <code><a href="ptmqtl_trait_effects.html">ptmqtl_trait_effects()</a></code>
+
+        </dt>
+        <dd>Fit, per site, the effect of a per-run trait on logit occupancy, with mzLib's SiteTraitEffects</dd>
       </dl></div><div class="section level2">
       <h2 id="the-bridge">The bridge<a class="anchor" aria-label="anchor" href="#the-bridge"></a></h2>
 
@@ -697,6 +902,20 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_alignment.html">print(<i>&lt;mzlibr_alignment&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print one pair's alignment</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_alignments.html">print(<i>&lt;mzlibr_alignments&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print protein alignments</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_batch.html">print(<i>&lt;mzlibr_batch&gt;</i>)</a></code>
 
         </dt>
@@ -711,10 +930,59 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_combined_p_values.html">print(<i>&lt;mzlibr_combined_p_values&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print combined p-values</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_correlations.html">print(<i>&lt;mzlibr_correlations&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print Spearman correlations</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_covariate_spec.html">print(<i>&lt;mzlibr_covariate_spec&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a covariate of a model</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_design_stratum.html">print(<i>&lt;mzlibr_design_stratum&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print one stratum's design</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_diff_design.html">print(<i>&lt;mzlibr_diff_design&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a design</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_digest.html">print(<i>&lt;mzlibr_digest&gt;</i>)</a></code>
 
         </dt>
         <dd>Print a digest</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_entrapment_fdp_estimates.html">print(<i>&lt;mzlibr_entrapment_fdp_estimates&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print entrapment FDP estimates</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_factor_spec.html">print(<i>&lt;mzlibr_factor_spec&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a factor of a model</dd>
 
         <dt>
 
@@ -760,6 +1028,20 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_library_records.html">print(<i>&lt;mzlibr_library_records&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a spectral library read</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_logistic_model_fit.html">print(<i>&lt;mzlibr_logistic_model_fit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a logistic fit</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_match_records.html">print(<i>&lt;mzlibr_match_records&gt;</i>)</a></code>
 
         </dt>
@@ -781,6 +1063,20 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_mixed_model_fit.html">print(<i>&lt;mzlibr_mixed_model_fit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a mixed-model fit</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_moderated_contrasts.html">print(<i>&lt;mzlibr_moderated_contrasts&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print the contrasts of a moderated fit</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_moderated_fit.html">print(<i>&lt;mzlibr_moderated_fit&gt;</i>)</a></code>
 
         </dt>
@@ -795,10 +1091,31 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_observations.html">print(<i>&lt;mzlibr_observations&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an observation table</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_occupancy_records.html">print(<i>&lt;mzlibr_occupancy_records&gt;</i>)</a></code>
 
         </dt>
         <dd>Print a site-occupancy table</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_orthology_snapshot.html">print(<i>&lt;mzlibr_orthology_snapshot&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an orthology snapshot</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_parsed_accessions.html">print(<i>&lt;mzlibr_parsed_accessions&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print parsed accessions</dd>
 
         <dt>
 
@@ -830,6 +1147,13 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_ptm_pairs.html">print(<i>&lt;mzlibr_ptm_pairs&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print PTM pairs</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_quant.html">print(<i>&lt;mzlibr_quant&gt;</i>)</a></code>
 
         </dt>
@@ -841,6 +1165,13 @@
 
         </dt>
         <dd>Print a quantified-peptide table</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_restricted_sdrf.html">print(<i>&lt;mzlibr_restricted_sdrf&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a restricted SDRF</dd>
 
         <dt>
 
@@ -893,6 +1224,13 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_sdrf_isobaric_design.html">print(<i>&lt;mzlibr_sdrf_isobaric_design&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print an isobaric design</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_sdrf_samples.html">print(<i>&lt;mzlibr_sdrf_samples&gt;</i>)</a></code>
 
         </dt>
@@ -911,6 +1249,20 @@
 
         </dt>
         <dd>Print sequence conversions</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_site_occupancy.html">print(<i>&lt;mzlibr_site_occupancy&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print site occupancy</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_trait_effects.html">print(<i>&lt;mzlibr_trait_effects&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print trait effects</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

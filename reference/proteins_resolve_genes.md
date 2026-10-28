@@ -107,7 +107,7 @@ them for you.
 ## Wraps
 
 Wire verb `genes resolve`. Generated from the bridge's verb spec
-`genes.resolve.yaml` (bridge commit `f85fef72f651`) by
+`genes.resolve.yaml` (bridge commit `60b1d25968a1`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

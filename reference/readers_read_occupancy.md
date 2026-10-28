@@ -71,7 +71,7 @@ An entity with no modified sites is dropped from the cell, so
 ## Wraps
 
 Wire verb `readers read-occupancy`. Generated from the bridge's verb
-spec `readers.read-occupancy.yaml` (bridge commit `f85fef72f651`) by
+spec `readers.read-occupancy.yaml` (bridge commit `60b1d25968a1`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

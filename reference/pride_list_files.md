@@ -76,7 +76,7 @@ sum as an upper bound on transfer, and see
 ## Wraps
 
 Wire verb `pride files`. Generated from the bridge's verb spec
-`pride.files.yaml` (bridge commit `f85fef72f651`) by
+`pride.files.yaml` (bridge commit `60b1d25968a1`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -148,14 +148,19 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `file_size_bytes`:
 
-  int; in **bytes**; never `NA`. Size as PRIDE reports it. For
-  compressed files PRIDE often reports the DECOMPRESSED size
-  (PXD000001's .mgf.gz: 16448103 reported vs 5984662 transferred).
+  int; in **bytes**; never `NA`. Size as PRIDE reports it, which is not
+  the download length. For compressed files PRIDE often reports the
+  DECOMPRESSED size (PXD000001's .mgf.gz: 16448103 reported vs 5984662
+  transferred; its .xml.gz: 10,677,205 reported vs 10,668,000). pride
+  checksums gives the exact length.
 
 - `checksum`:
 
   string; never `NA`. The repository's checksum; the empty string when
-  PRIDE provides none (never null).
+  PRIDE provides none (never null). It is a SHA-1 where PRIDE gives one
+  (40 hex digits; measured 2026-10-21 by hashing PXD010820's
+  Maxquant_Output.zip), not the MD5 that pride checksums lists, and it
+  is empty for every PXD000001 file.
 
 - `category`:
 

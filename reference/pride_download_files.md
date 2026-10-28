@@ -6,7 +6,11 @@ directory and report the paths written.
 The counterpart to
 [`pride_list_files`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md),
 and usually the one you want: filter the data.frame however you like,
-then pass the rows.
+then pass the rows. As with
+[`pride_download`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download.md),
+the bytes are not checked against PRIDE's record; compare a file that
+matters with
+[`pride_file_checksums`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_file_checksums.md).
 
 ## Usage
 
@@ -50,7 +54,7 @@ present is left alone and its path is still returned. Do not read
 ## Wraps
 
 Wire verb `pride download`. Generated from the bridge's verb spec
-`pride.download.yaml` (bridge commit `f85fef72f651`) by
+`pride.download.yaml` (bridge commit `60b1d25968a1`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -230,7 +234,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   DownloadFileAsync overload that takes a PrideFileChecksum.
   DownloadProjectFilesAsync, which this verb calls, uses the overload
   without one, so such a file is reported as downloaded. Verify large
-  files yourself until the bridge can ask for the check.
+  files yourself, against the size and MD5 pride checksums lists, until
+  the bridge can ask for the check.
 
 - A filter that matches nothing, or an unknown accession, succeeds with
   downloaded_count 0 on the wire. The bindings raise a usage error when

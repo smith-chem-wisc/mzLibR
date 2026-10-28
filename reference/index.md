@@ -74,10 +74,25 @@ matches, or any recognised format in its own fields.
 - [`readers_retention_time_in_minutes()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_retention_time_in_minutes.md)
   : Retention times in minutes, whatever unit the format wrote
 
+## Spectral libraries
+
+mzLib’s .msl spectral libraries, read with mzLib’s own reader: every
+precursor, and its fragment ions on request.
+
+- [`library_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_read.md)
+  :
+
+  Read an mzLib spectral library (`.msl`): one row per precursor, or per
+  fragment ion
+
+- [`library_read_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_read_many.md)
+  : Read many spectral libraries into one long table, in one bridge call
+
 ## SDRF-Proteomics experimental designs
 
 Read one design file or pool several, ask whether each is well-formed
-and informative, and read the label-free design a quantification takes.
+and informative, and read the label-free or isobaric design a
+quantification takes, restricted to one search’s files.
 
 - [`sdrf_all()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_all.md)
   : Every cell under a column, one list element per row
@@ -116,6 +131,10 @@ and informative, and read the label-free design a quantification takes.
 - [`sdrf_indexes_of()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_indexes_of.md)
   : Every position a column name occupies in an SDRF document
 
+- [`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md)
+  : Read an isobaric (TMT, TMTpro, iTRAQ, DiLeu) design out of an SDRF,
+  or every reason it cannot be read
+
 - [`sdrf_lint()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_lint.md)
   : Find the concepts a set of SDRF documents annotated inconsistently
 
@@ -135,12 +154,19 @@ and informative, and read the label-free design a quantification takes.
 - [`sdrf_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_records.md)
   : An SDRF document as a data.frame, when its shape allows one
 
+- [`sdrf_restrict()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_restrict.md)
+  : Restrict an SDRF to the files one search read, and report what could
+  not be placed
+
 - [`sdrf_samples()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples.md)
   : Each sample's characteristics and factor values, merged over its
   rows, ages parsed
 
 - [`sdrf_samples_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_samples_many.md)
   : The samples of many SDRF files, in one bridge call
+
+- [`sdrf_searched_data_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_searched_data_files.md)
+  : The searched file each row of a restricted SDRF was joined to
 
 - [`sdrf_source_documents()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_source_documents.md)
   : Which document each pooled row came from
@@ -165,14 +191,33 @@ TMT, TMTpro, iTRAQ and DiLeu channels, with mzLib’s reporter-ion m/z.
 ## Protein databases
 
 What an accession is, which gene it resolves to, whether a peptide is
-unique, and what each protein group does in Gene Ontology terms.
+unique, and what each protein group does in Gene Ontology terms; where a
+residue is in another sequence, which entry an accession names, and
+which genes are orthologous across species.
 
+- [`proteins_align()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_align.md)
+  : Align protein sequences with mzLib, and map every residue onto the
+  other sequence
+- [`proteins_alignments()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_alignments.md)
+  : One alignment per pair, each with its residue map
 - [`proteins_annotate_go()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.md)
   : Annotate MetaMorpheus protein groups with Gene Ontology terms,
   keeping every member
+- [`proteins_build_orthology()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_build_orthology.md)
+  : Build an Ensembl Compara orthology snapshot for your species, and
+  write it as Parquet
 - [`proteins_classify_peptides()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.md)
   : Classify peptides by how widely they are shared across protein
   databases, with I = L
+- [`proteins_map_source_to_target()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_source_to_target.md)
+  : The target position paired with each source position
+- [`proteins_map_target_to_source()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_target_to_source.md)
+  : The source position paired with each target position
+- [`proteins_orthology_pair()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_orthology_pair.md)
+  : One species pair's counts, in either order
+- [`proteins_parse_accessions()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_parse_accessions.md)
+  : Read accessions into entry, isoform or version, and applied
+  variants, with mzLib
 - [`proteins_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_read.md)
   : Read protein databases: one row per protein, with GO terms and
   Ensembl genes on request
@@ -184,7 +229,8 @@ unique, and what each protein group does in Gene Ontology terms.
 
 ## PRIDE Archive
 
-List a project’s files and download the ones you choose.
+List a project’s files, download the ones you choose, and check a
+download against the MD5 and exact size PRIDE recorded.
 
 - [`pride_approximate_total_size_bytes()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_approximate_total_size_bytes.md)
   : Sum the approximate sizes of some FTP files
@@ -192,6 +238,9 @@ List a project’s files and download the ones you choose.
   : Download files from a PRIDE Archive project
 - [`pride_download_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_download_files.md)
   : Download exactly the files you selected
+- [`pride_file_checksums()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_file_checksums.md)
+  : The MD5 and exact size PRIDE recorded for each file deposited in a
+  project
 - [`pride_list_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_files.md)
   : List the files in a PRIDE Archive project
 - [`pride_list_ftp_files()`](https://smith-chem-wisc.github.io/mzLibR/reference/pride_list_ftp_files.md)
@@ -251,17 +300,65 @@ Label-free quantification with FlashLFQ.
 
 ## Differential abundance
 
-limma’s moderated t-test, Benjamini-Hochberg adjustment and
-random-effects meta-analysis, computed by mzLib.
+limma’s moderated t-test with contrasts, Benjamini-Hochberg adjustment,
+random-effects meta-analysis, combined p-values, Spearman correlation,
+logistic and mixed models per feature, and entrapment FDP estimates,
+computed by mzLib.
 
 - [`stats_adjust()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_adjust.md)
   : Benjamini-Hochberg adjust p-values, keeping every position
+- [`stats_combine_p()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_combine_p.md)
+  : Combine several independent p-values per feature into one, by
+  Fisher's or Stouffer's method
+- [`stats_correlate()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_correlate.md)
+  : Spearman-correlate every feature with a per-sample trait, optionally
+  given covariates
+- [`stats_entrapment_fdp()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_entrapment_fdp.md)
+  : Estimate a search's false discovery proportion from its entrapment
+  hits
 - [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
-  : Fit one linear model per feature and test coefficients with limma's
-  moderated t
+  : Fit one linear model per feature and test coefficients, and
+  contrasts, with limma's moderated t
+- [`stats_fit_logistic()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_logistic.md)
+  : Fit one logistic regression per feature of a 0/1 table, such as a
+  detection table
+- [`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)
+  : Fit one linear mixed model per feature, with a random intercept for
+  each group of samples
 - [`stats_meta()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.md)
   : Pool one effect size per study into a random-effects estimate per
   feature
+
+## Differential design and observations
+
+A sample sheet to mzLib’s design matrix and contrasts per stratum, and a
+peptide table to every peptide in every sample, with the reason for each
+missing value.
+
+- [`diff_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/diff_design.md)
+  : Build each stratum's design matrix and default contrasts from a
+  sample sheet, with mzLib
+- [`diff_observations()`](https://smith-chem-wisc.github.io/mzLibR/reference/diff_observations.md)
+  : Every peptide in every biological sample, as log2 intensity or NA
+  with the reason, by mzLib
+- [`factor_spec()`](https://smith-chem-wisc.github.io/mzLibR/reference/factor_spec.md)
+  : A condition factor of a model, as mzLib's FactorSpec
+- [`covariate_spec()`](https://smith-chem-wisc.github.io/mzLibR/reference/covariate_spec.md)
+  : A numeric covariate of a model, as mzLib's CovariateSpec
+
+## PTM site occupancy and PTM-QTL
+
+Every site’s occupancy in every run, pairs of modifications, and a
+trait’s effect on occupancy, computed by mzLib.
+
+- [`ptmqtl_occupancy()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_occupancy.md)
+  : Compute every site's occupancy in every run, with mzLib's
+  SiteOccupancyCalculator
+- [`ptmqtl_pairs()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_pairs.md)
+  : Find PTM-PTM pairs within one dataset, with mzLib's PtmPairEngine
+- [`ptmqtl_trait_effects()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_trait_effects.md)
+  : Fit, per site, the effect of a per-run trait on logit occupancy,
+  with mzLib's SiteTraitEffects
 
 ## The bridge
 
@@ -291,12 +388,30 @@ what it is.
 
 - [`print(`*`<mzlibr_adjusted>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_adjusted.md)
   : Print Benjamini-Hochberg adjusted p-values
+- [`print(`*`<mzlibr_alignment>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_alignment.md)
+  : Print one pair's alignment
+- [`print(`*`<mzlibr_alignments>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_alignments.md)
+  : Print protein alignments
 - [`print(`*`<mzlibr_batch>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_batch.md)
   : Print a batch read from many files
 - [`print(`*`<mzlibr_census>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_census.md)
   : Print a modification census
+- [`print(`*`<mzlibr_combined_p_values>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_combined_p_values.md)
+  : Print combined p-values
+- [`print(`*`<mzlibr_correlations>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_correlations.md)
+  : Print Spearman correlations
+- [`print(`*`<mzlibr_covariate_spec>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_covariate_spec.md)
+  : Print a covariate of a model
+- [`print(`*`<mzlibr_design_stratum>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_design_stratum.md)
+  : Print one stratum's design
+- [`print(`*`<mzlibr_diff_design>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_diff_design.md)
+  : Print a design
 - [`print(`*`<mzlibr_digest>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_digest.md)
   : Print a digest
+- [`print(`*`<mzlibr_entrapment_fdp_estimates>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_entrapment_fdp_estimates.md)
+  : Print entrapment FDP estimates
+- [`print(`*`<mzlibr_factor_spec>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_factor_spec.md)
+  : Print a factor of a model
 - [`print(`*`<mzlibr_feature_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_feature_records.md)
   : Print an MS1 feature table
 - [`print(`*`<mzlibr_file_info>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_file_info.md)
@@ -309,18 +424,32 @@ what it is.
   : Print a Gene Ontology update
 - [`print(`*`<mzlibr_isobaric_kits>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_isobaric_kits.md)
   : Print isobaric kits
+- [`print(`*`<mzlibr_library_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_library_records.md)
+  : Print a spectral library read
+- [`print(`*`<mzlibr_logistic_model_fit>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_logistic_model_fit.md)
+  : Print a logistic fit
 - [`print(`*`<mzlibr_match_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_match_records.md)
   : Print a spectral-match table
 - [`print(`*`<mzlibr_median_polish>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_median_polish.md)
   : Print a median-polish result
 - [`print(`*`<mzlibr_meta_analysis>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_meta_analysis.md)
   : Print a meta-analysis
+- [`print(`*`<mzlibr_mixed_model_fit>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_mixed_model_fit.md)
+  : Print a mixed-model fit
+- [`print(`*`<mzlibr_moderated_contrasts>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_moderated_contrasts.md)
+  : Print the contrasts of a moderated fit
 - [`print(`*`<mzlibr_moderated_fit>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_moderated_fit.md)
   : Print a moderated fit
 - [`print(`*`<mzlibr_native_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_native_records.md)
   : Print a native record table
+- [`print(`*`<mzlibr_observations>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_observations.md)
+  : Print an observation table
 - [`print(`*`<mzlibr_occupancy_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_occupancy_records.md)
   : Print a site-occupancy table
+- [`print(`*`<mzlibr_orthology_snapshot>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_orthology_snapshot.md)
+  : Print an orthology snapshot
+- [`print(`*`<mzlibr_parsed_accessions>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_parsed_accessions.md)
+  : Print parsed accessions
 - [`print(`*`<mzlibr_peptide_classification>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_peptide_classification.md)
   : Print a peptide classification
 - [`print(`*`<mzlibr_pooled_sdrf>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_pooled_sdrf.md)
@@ -329,10 +458,14 @@ what it is.
   : Print a protein database read
 - [`print(`*`<mzlibr_protein_group_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_protein_group_records.md)
   : Print a protein-group table
+- [`print(`*`<mzlibr_ptm_pairs>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_ptm_pairs.md)
+  : Print PTM pairs
 - [`print(`*`<mzlibr_quant>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_quant.md)
   : Print a quantification result
 - [`print(`*`<mzlibr_quantified_peptide_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_quantified_peptide_records.md)
   : Print a quantified-peptide table
+- [`print(`*`<mzlibr_restricted_sdrf>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_restricted_sdrf.md)
+  : Print a restricted SDRF
 - [`print(`*`<mzlibr_result_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_result_records.md)
   : Print a record view
 - [`print(`*`<mzlibr_scan_records>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_scan_records.md)
@@ -347,9 +480,15 @@ what it is.
   : Print a label-free design
 - [`print(`*`<mzlibr_sdrf_drift>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_drift.md)
   : Print SDRF drift findings
+- [`print(`*`<mzlibr_sdrf_isobaric_design>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_isobaric_design.md)
+  : Print an isobaric design
 - [`print(`*`<mzlibr_sdrf_samples>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_samples.md)
   : Print an SDRF document's samples
 - [`print(`*`<mzlibr_sdrf_validation>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_validation.md)
   : Print an SDRF validation
 - [`print(`*`<mzlibr_sequence_conversions>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sequence_conversions.md)
   : Print sequence conversions
+- [`print(`*`<mzlibr_site_occupancy>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_site_occupancy.md)
+  : Print site occupancy
+- [`print(`*`<mzlibr_trait_effects>`*`)`](https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_trait_effects.md)
+  : Print trait effects

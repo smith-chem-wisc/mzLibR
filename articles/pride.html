@@ -34,13 +34,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/readers.html">Reading mass-spectrometry and search-result files</a></li>
+    <li><a class="dropdown-item" href="../articles/library.html">Spectral libraries</a></li>
     <li><a class="dropdown-item" href="../articles/sdrf.html">SDRF-Proteomics experimental designs</a></li>
     <li><a class="dropdown-item" href="../articles/isobaric.html">Isobaric kits: TMT, TMTpro, iTRAQ and DiLeu channels</a></li>
     <li><a class="dropdown-item" href="../articles/pride.html">Finding and downloading PRIDE Archive data</a></li>
     <li><a class="dropdown-item" href="../articles/proteins.html">Protein databases: organisms, genes, unique peptides and GO</a></li>
     <li><a class="dropdown-item" href="../articles/peptidoforms.html">Digesting and fragmenting peptidoforms</a></li>
     <li><a class="dropdown-item" href="../articles/flashlfq.html">Label-free quantification with FlashLFQ</a></li>
-    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, BH and meta-analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/stats.html">Differential abundance: limma's moderated t, contrasts, and the tests around it</a></li>
+    <li><a class="dropdown-item" href="../articles/diff.html">Differential design and observations: the design matrix and every peptide, by mzLib</a></li>
+    <li><a class="dropdown-item" href="../articles/ptmqtl.html">PTM site occupancy and PTM-QTL: occupancy, pairs and trait effects, by mzLib</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -119,6 +122,11 @@ URL resolution.</p>
 <td>download by category or extension</td>
 <td><code><a href="../reference/pride_download.html">pride_download()</a></code></td>
 <td><code>PrideArchiveClient.DownloadProjectFilesAsync</code></td>
+</tr>
+<tr class="odd">
+<td>is my download the file PRIDE holds?</td>
+<td><code><a href="../reference/pride_file_checksums.html">pride_file_checksums()</a></code></td>
+<td><code>PrideArchiveClient.GetFileChecksumsAsync</code></td>
 </tr>
 </tbody>
 </table>
@@ -313,9 +321,149 @@ in place, or delete both to start over.</p>
 EBI error page served at the right size (mzLib #1427, #1449). That check
 is not yet on the path <code><a href="../reference/pride_download.html">pride_download()</a></code> and
 <code><a href="../reference/pride_download_files.html">pride_download_files()</a></code> use, so a file can be reported as
-downloaded when its bytes are wrong. For files that matter, compare
-their sizes with <code><a href="../reference/pride_list_files.html">pride_list_files()</a></code> and their checksums
-with PRIDE’s before you search them.</p>
+downloaded when its bytes are wrong. For files that matter, check each
+one against <code><a href="../reference/pride_file_checksums.html">pride_file_checksums()</a></code> before you search it, as
+the next section shows.</p>
+</div>
+<div class="section level2">
+<h2 id="checking-a-download-against-prides-checksums">Checking a download against PRIDE’s checksums<a class="anchor" aria-label="anchor" href="#checking-a-download-against-prides-checksums"></a>
+</h2>
+<p><strong>Is the file on your disk the file PRIDE holds?</strong> The
+download functions cannot tell you yet. PRIDE records an MD5 and the
+exact size of every file a submitter deposits, and
+<code><a href="../reference/pride_file_checksums.html">pride_file_checksums()</a></code> returns that record. Its row names
+are the file names, so look a file up by the name it was downloaded
+under:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">checksums</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pride_file_checksums.html">pride_file_checksums</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">checksums</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 12</span></span>
+<span><span class="va">checksums</span><span class="op">[</span><span class="st">"TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"md5"</span>, <span class="st">"size_bytes"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                                                                                        md5</span></span>
+<span><span class="co">#&gt; TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw c567cecbb9866796e690a4958746f7b6</span></span>
+<span><span class="co">#&gt;                                                           size_bytes</span></span>
+<span><span class="co">#&gt; TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.raw  220475548</span></span></code></pre></div>
+<p><code>md5</code> is 32 hexadecimal characters, as PRIDE wrote them;
+compare it without regard to case. <code>size_bytes</code> is the exact
+length a download of the file comes to, which neither other listing
+gives you. <code><a href="../reference/pride_list_ftp_files.html">pride_list_ftp_files()</a></code> rounds its sizes, and
+<code><a href="../reference/pride_list_files.html">pride_list_files()</a></code> can be wrong:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gz</span> <span class="op">&lt;-</span> <span class="st">"PRIDE_Exp_Complete_Ac_22134.xml.gz"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>manifest <span class="op">=</span> <span class="va">files</span><span class="op">$</span><span class="va">file_size_bytes</span><span class="op">[</span><span class="va">files</span><span class="op">$</span><span class="va">file_name</span> <span class="op">==</span> <span class="va">gz</span><span class="op">]</span>, checksums <span class="op">=</span> <span class="va">checksums</span><span class="op">[</span><span class="va">gz</span>, <span class="st">"size_bytes"</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  manifest checksums </span></span>
+<span><span class="co">#&gt;  10677205  10668000</span></span></code></pre></div>
+<p>The download is 10,668,000 bytes, the checksum list’s number. Because
+each size is exact, so is their sum: what the deposited files weigh,
+without the <code>generated/</code> files, which have no row
+(below).</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">checksums</span><span class="op">$</span><span class="va">size_bytes</span><span class="op">)</span> <span class="op">/</span> <span class="fl">1e9</span>, <span class="fl">2</span><span class="op">)</span>   <span class="co"># GB</span></span>
+<span><span class="co">#&gt; [1] 1.43</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="the-check">The check<a class="anchor" aria-label="anchor" href="#the-check"></a>
+</h3>
+<p>A file is PRIDE’s when its length and its MD5 both match. The length
+costs nothing to check. The MD5 reads the whole file, a few seconds per
+gigabyte. Check both, because the length alone does not prove the bytes:
+on 7 and 8 October 2026, EBI served about 23 of about 70 large transfers
+at the right size with its own error text written over part of them
+(mzLib #1449). Base R has all it takes:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">check_download</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span>, <span class="va">expected</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># NA when the file is the one PRIDE recorded, otherwise what is wrong with it.</span></span>
+<span>  <span class="va">size</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">size</span> <span class="op">!=</span> <span class="va">expected</span><span class="op">$</span><span class="va">size_bytes</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">size</span>, <span class="st">"bytes where PRIDE records"</span>, <span class="va">expected</span><span class="op">$</span><span class="va">size_bytes</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span>  <span class="va">md5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/md5sum.html" class="external-link">md5sum</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">md5</span> <span class="op">!=</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower</a></span><span class="op">(</span><span class="va">expected</span><span class="op">$</span><span class="va">md5</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"MD5"</span>, <span class="va">md5</span>, <span class="st">"where PRIDE records"</span>, <span class="va">expected</span><span class="op">$</span><span class="va">md5</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span>  <span class="cn">NA_character_</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Here it is on two damaged copies of the project’s 1,645-byte
+<code>README.txt</code>. The first was cut short. The second is the
+right size with EBI’s error text inside, and only the MD5 catches
+it:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">readme</span> <span class="op">&lt;-</span> <span class="va">checksums</span><span class="op">[</span><span class="st">"README.txt"</span>, <span class="op">]</span></span>
+<span><span class="va">damaged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".txt"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">writeBin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strrep.html" class="external-link">strrep</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span>, <span class="va">damaged</span><span class="op">)</span></span>
+<span><span class="fu">check_download</span><span class="op">(</span><span class="va">damaged</span>, <span class="va">readme</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "1000 bytes where PRIDE records 1645"</span></span>
+<span><span class="va">error_page</span> <span class="op">&lt;-</span> <span class="st">"&lt;Error&gt;&lt;Code&gt;ConnectionClosedException&lt;/Code&gt;&lt;/Error&gt;"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">writeBin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">error_page</span>, <span class="fu"><a href="https://rdrr.io/r/base/strrep.html" class="external-link">strrep</a></span><span class="op">(</span><span class="st">"."</span>, <span class="fl">1645</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">error_page</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="va">damaged</span><span class="op">)</span></span>
+<span><span class="fu">check_download</span><span class="op">(</span><span class="va">damaged</span>, <span class="va">readme</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "MD5 6a8f1a7d39089d34bf9bc9b19e553dd4 where PRIDE records 492753137013825025e6729c8798664f"</span></span></code></pre></div>
+<p>After a real download, check every file it wrote:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Not run: downloads files from PRIDE.</span></span>
+<span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pride_download.html">pride_download</a></span><span class="op">(</span><span class="st">"PXD000001"</span>, <span class="st">"downloads"</span>, category <span class="op">=</span> <span class="st">"RAW"</span><span class="op">)</span></span>
+<span><span class="va">checksums</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pride_file_checksums.html">pride_file_checksums</a></span><span class="op">(</span><span class="st">"PXD000001"</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">path</span> <span class="kw">in</span> <span class="va">paths</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="va">name</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">checksums</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="va">name</span>, <span class="st">": PRIDE has no checksum for it, so it cannot be checked"</span><span class="op">)</span></span>
+<span>    <span class="kw">next</span></span>
+<span>  <span class="op">}</span></span>
+<span>  <span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu">check_download</span><span class="op">(</span><span class="va">path</span>, <span class="va">checksums</span><span class="op">[</span><span class="va">name</span>, <span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="va">name</span>, <span class="st">": "</span>, <span class="va">problem</span>, <span class="st">". Download it again."</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>To download a damaged file again, pass its row to
+<code><a href="../reference/pride_download_files.html">pride_download_files()</a></code>, or call
+<code><a href="../reference/pride_download.html">pride_download()</a></code> with <code>overwrite = TRUE</code>, the
+default. <code>overwrite = FALSE</code> would skip it, because it is
+already there.</p>
+</div>
+<div class="section level3">
+<h3 id="what-the-list-covers">What the list covers<a class="anchor" aria-label="anchor" href="#what-the-list-covers"></a>
+</h3>
+<p>It covers the files the submitter deposited at the project’s root. It
+is a third list, not a view of either of the others, and three things
+follow from that.</p>
+<p><strong>PRIDE’s own <code>generated/</code> files have no
+row.</strong> A file without a row cannot be checked; that does not make
+it invalid. In PXD000001 those are the two files under
+<code>generated/</code>, which <code><a href="../reference/pride_list_files.html">pride_list_files()</a></code> names
+without their folder:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">listing</span><span class="op">$</span><span class="va">relative_path</span><span class="op">[</span><span class="op">!</span><span class="va">listing</span><span class="op">$</span><span class="va">relative_path</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">checksums</span><span class="op">$</span><span class="va">file_name</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "generated/PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz"  </span></span>
+<span><span class="co">#&gt; [2] "generated/PRIDE_Exp_Complete_Ac_22134.pride.mztab.gz"</span></span>
+<span><span class="va">files</span><span class="op">$</span><span class="va">file_name</span><span class="op">[</span><span class="op">!</span><span class="va">files</span><span class="op">$</span><span class="va">file_name</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">checksums</span><span class="op">$</span><span class="va">file_name</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "PRIDE_Exp_Complete_Ac_22134.pride.mztab.gz"</span></span>
+<span><span class="co">#&gt; [2] "PRIDE_Exp_Complete_Ac_22134.pride.mgf.gz"</span></span></code></pre></div>
+<p><strong>It names files the REST manifest omits,</strong> such as the
+450 MB <code>.mzML</code> that only the FTP listing showed above:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="st">"TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01-20141210.mzML"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">checksums</span><span class="op">$</span><span class="va">file_name</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p><strong>It can name files that are not deposits at all.</strong>
+PXD015239’s list includes a 2.3 GB NFS temp file,
+<code>.nfs80360b91005fae5300002478</code>. Look up the files you have by
+name; do not read the list as the project’s contents.</p>
+</div>
+<div class="section level3">
+<h3 id="two-traps">Two traps<a class="anchor" aria-label="anchor" href="#two-traps"></a>
+</h3>
+<p><strong>The manifest’s <code>checksum</code> column is not this
+MD5.</strong> Where PRIDE fills it in, it is a 40-character SHA-1, a
+different digest of the same bytes. For every PXD000001 file it is
+empty:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">files</span><span class="op">$</span><span class="va">checksum</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] ""</span></span></code></pre></div>
+<p><strong>Zero rows is an answer.</strong> It means the project exists
+but PRIDE holds no checksums for it, so nothing can be checked. An
+accession PRIDE does not know raises
+<code>mzlib_project_not_found</code>, and so does a project not yet
+published: PRIDE holds no checksums before publication. A list mzLib
+cannot read (a new header, a malformed row, a name listed twice) is an
+<code>mzlib_bridge_error</code> with <code>error_type</code>
+<code>"MzLibException"</code>: not your bug, and mzLib does not retry
+it, so report it.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
@@ -326,8 +474,8 @@ their specs:</p>
 <ul>
 <li>
 <a href="https://doi.org/10.1093/nar/gkae1011" class="external-link">doi:10.1093/nar/gkae1011</a>:
-The PRIDE Archive, the repository files are fetched from (Perez-Riverol
-et al., The PRIDE database at 20 years: 2025 update, NAR).</li>
+The PRIDE Archive, whose checksum list this verb reads (Perez-Riverol et
+al., The PRIDE database at 20 years: 2025 update, NAR).</li>
 </ul>
 <!-- END cite -->
 </div>
