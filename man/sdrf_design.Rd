@@ -21,7 +21,8 @@ sdrf_design(path, condition_columns = NULL, searched_files = NULL, out = NULL,
 
 \item{out}{Also write MetaMorpheus's \code{ExperimentalDesign.tsv} (1-based) here. Must end in \code{.tsv}.
   Written only when the design is valid. MetaMorpheus finds the file only when it is named
-  \code{ExperimentalDesign.tsv} and sits beside the spectra.}
+  \code{ExperimentalDesign.tsv} and sits beside the spectra, and refuses one whose replicate numbers
+  have gaps until a MetaMorpheus release carries smith-chem-wisc/MetaMorpheus#2928.}
 
 \item{timeout}{Seconds to allow, or \code{NULL} to wait indefinitely.
 }
@@ -33,9 +34,13 @@ Read a label-free experimental design out of an SDRF, in MetaMorpheus's terms, o
 Calls mzLib's \code{SdrfLabelFreeDesign.Read}. It runs every check MetaMorpheus's own design validator
 runs and \strong{refuses rather than repairs}: a factor written \code{not available}, two files claiming the
 same replicate and fraction, a document with several factor columns and no declaration - each is
-a refusal, and all of them are reported at once. It relabels in only two ways, both recorded in
-\code{notes}: study-wide biological replicate numbers are ranked within each condition (\code{22 -> 1}),
-and rows for files the search does not read are dropped.
+a refusal, and all of them are reported at once. \strong{Replicate and fraction numbers are the
+SDRF's, gaps included} (mzLib #1426): mzLib never ranks or closes them up, because replicate 4 of
+one condition can be the same subject as replicate 4 of another, and a gap can be a lost sample.
+\code{notes} records what mzLib added, dropped or wants checked: a biological replicate it added where
+the SDRF gives none (no column, or \code{not available}), after the highest the condition uses; rows
+for files the search does not read, which are dropped; conditions whose numbers are not 1..N;
+and sample names whose one number disagrees with their replicate.
 }
 \details{
 \strong{A refusal is an answer, not an error.} When \code{is_valid} is \code{FALSE}, \code{refusals} lists every
@@ -51,7 +56,8 @@ An \code{mzlibr_sdrf_design}: \code{path}; \code{is_valid}; \code{file_key_colum
   all of it; \code{written} (\code{path}, \code{file_count}), or \code{NULL}; \code{caveats}; and \code{records}, one row per
   run in SDRF row order: \code{full_path}, \code{file_name} (the run key, \code{Intensity_<file_name>}),
   \code{condition}, and \code{biological_replicate}, \code{technical_replicate} and \code{fraction}, \strong{0-based}, as
-  the quant functions take them. \code{ExperimentalDesign.tsv} writes the same numbers plus one.
+  the quant functions take them: the SDRF's own numbers minus one, gaps included.
+  \code{ExperimentalDesign.tsv} writes the same numbers plus one.
 
 }
 \section{From SDRF to FlashLFQ}{
@@ -66,10 +72,10 @@ Label-free only: an isobaric (TMT, iTRAQ) SDRF needs a channel design this does 
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesign.Read}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{0a808fec}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesign.Read}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{cc67b7a2}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesign.WriteExperimentalDesignTsv}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{0a808fec}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesignOptions}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{0a808fec}
 }
@@ -94,7 +100,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{searched_files_given}}{bool; never \code{NA}. Whether \code{--searched-files-stdin} was given.}
 \item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Rows in the table; 0 when refused.}
 \item{\code{refusals}}{string[]; never \code{NA}. Every reason the design was refused, all at once, in mzLib's words. Empty when valid.}
-\item{\code{notes}}{string[]; never \code{NA}. Every relabelling on the way to a valid design: biological replicates ranked within a condition, with the old -> new mapping (MAP-33), and rows dropped because the search does not read their file.}
+\item{\code{notes}}{string[]; never \code{NA}. What mzLib added, dropped or wants checked on the way to a valid design (SdrfLabelFreeDesign.Notes): biological replicates it added where the SDRF gives none, with the numbers; rows dropped because the search does not read their file; conditions whose numbers are not 1..N; and sample names whose one number disagrees with their replicate.}
 \item{\code{report}}{string; never \code{NA}. mzLib's human-readable account (SdrfLabelFreeDesign.Report): counts, key column, condition columns, notes, refusals.}
 \item{\code{column_names}}{string[]; never \code{NA}. The table's columns in order.}
 \item{\code{records} (wire \code{columns})}{table; never \code{NA}. Column name to one value per file, in SDRF row order.}
@@ -107,7 +113,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{full_path}}{string; never \code{NA}. The file as the SDRF's key column names it, or the matching searched path when \code{--searched-files-stdin} was given.}
 \item{\code{file_name}}{string; never \code{NA}. full_path's file name without its extension (SpectraFileInfo.FilenameWithoutExtension): the run key the quant verbs use.}
 \item{\code{condition}}{string; never \code{NA}. The condition columns' values joined with _.}
-\item{\code{biological_replicate}}{int; never \code{NA}. 0-based, ranked within the condition (ExperimentalDesign.tsv's Biorep minus 1).}
+\item{\code{biological_replicate}}{int; never \code{NA}. 0-based: the SDRF's own number minus 1, gaps included and never ranked (since mzLib #1426). Where the SDRF gives none (no column, or not available), the number mzLib added, after the highest the condition uses. ExperimentalDesign.tsv's Biorep minus 1.}
 \item{\code{technical_replicate}}{int; never \code{NA}. 0-based (Techrep minus 1).}
 \item{\code{fraction}}{int; never \code{NA}. 0-based (Fraction minus 1).}
 }
@@ -128,7 +134,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item Label-free only. An isobaric (TMT, iTRAQ) SDRF needs a channel design this verb does not produce.
 \item is_valid = false is an answer: refusals lists every reason at once and the table is empty. mzLib refuses rather than repairs because MetaMorpheus skips quantification with only a warning when its design file is invalid.
 \item The table is 0-based, as SpectraFileInfo and the quant verbs take it. ExperimentalDesign.tsv is 1-based; mzLib converts when it writes.
-\item notes is the only record of a renumbering; read it.
+\item Replicate and fraction numbers are the SDRF's, gaps included: mzLib never ranks or closes them up (since #1426), because replicate 4 of one condition can be the same subject as replicate 4 of another, and a gap can be a lost sample. notes flags the gaps and is the only record of a number mzLib added; read it.
+\item MetaMorpheus refuses a design file whose replicate numbers have gaps until a release carries smith-chem-wisc/MetaMorpheus#2928 (merged 2026-10-28), which quantifies it with a warning; \code{--out} can now write such a file.
 \item A factor holding not available or not applicable is refused: it would pair samples nobody said were alike.
 \item A fraction or technical replicate of not available is refused as not an integer of 1 or more (SdrfDesignRules.ReadPositiveInteger). Since mzLib 1.0.594 (#1378) SdrfBuilder can write one, for a run with no design (MetaMorpheus #2816 will), so an SDRF mzLib itself wrote can be refused here.
 \item MetaMorpheus finds the design only as a file named ExperimentalDesign.tsv beside the spectra; \code{--out} writes any .tsv path.
@@ -176,8 +183,8 @@ refused$is_valid
 length(refused$refusals)
 writeLines(refused$refusals[[1]])
 
-# Study-wide replicate numbers are ranked within each condition, and the mapping is kept:
-ranked <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
-writeLines(ranked$notes[[2]])
+# Study-wide replicate numbers are kept as the SDRF writes them, and the gaps are noted:
+kept <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
+writeLines(kept$notes[[2]])
 \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }

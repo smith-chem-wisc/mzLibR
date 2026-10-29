@@ -39,7 +39,7 @@ A character vector of paths. These say \strong{where each file is}, not what was
   path is still returned. Do not read \code{length()} of this as work done.
 }
 \section{Wraps}{
-Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.DownloadProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}

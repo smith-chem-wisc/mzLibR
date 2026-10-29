@@ -110,6 +110,10 @@ sdrf_parse_isobaric_design <- function(data) {
 #' not the plex, which you declare with exactly one of `plex_column`, `plex_file_name_pattern` and
 #' `single_plex`. Giving none, or several, is mzLib's refusal.
 #'
+#' Channel labels are read by mzLib's `SdrfIsobaricLabels`, the rule [isobaric_kits()]'s
+#' `sdrf_label` writes: for TMT10, `TMT131` (PRIDE's spelling of the last channel) names `131N`
+#' (mzLib #1467); for TMT11, where `131N` and `131C` are both channels, it is still refused.
+#'
 #' **The numbers are 1-based, as the SDRF writes them.** [sdrf_design()]'s are 0-based. That split
 #' is mzLib's, and mzLibR converts neither.
 #'

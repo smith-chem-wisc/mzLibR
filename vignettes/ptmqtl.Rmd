@@ -125,9 +125,15 @@ r[r$protein_accession == "STATES", c("run", "state", "fraction")]
 | `quantified` | the modified form was quantified | a measured fraction |
 | `floor` | the modified form was identified but not quantified, while forms covering the site were | low, **not zero** |
 | `count_only` | the modified form was identified, but nothing covering the site was quantified | present, amount unknown |
-| `not_detected` | the site was covered, but no modified form was identified | unknown, **not zero** |
+| `not_detected` | forms covering the site were identified (quantified or not), and none carried the modification | a bound below detection, **not zero** |
 
-So never average `fraction` with the `NA`s read as 0: they are censored, not absent.
+So never average `fraction` with the `NA`s read as 0: they are censored, not absent. Each cell
+also counts the peptidoforms behind it, identifications rather than intensity: of the
+`covering_peptidoforms` identified there, `modified_peptidoforms` carried the modification.
+
+```{r}
+r[r$protein_accession == "STATES", c("run", "state", "covering_peptidoforms", "modified_peptidoforms")]
+```
 
 **A 1 can be a ceiling.** When a site is seen only in its modified form, every quantified form
 covering it carries the modification, so the fraction is 1. The unmodified form may be there below
@@ -198,8 +204,16 @@ pair_of <- function(result) {
 pair_of(plain)
 ```
 
-`0.7` and `TRUE` are mzLib's defaults, reported because you did not set them: a site enters pairs
-only if it is quantified in at least 70% of the runs, and ceilings are left out.
+`0.7` is mzLib's default, reported because you did not set it: a site enters pairs only if it is
+quantified in at least 70% of the runs. `exclude_ceiling` is `NA` because you did not choose:
+mzLib decides it inside `PtmPairEngine.CoVarying`, and leaves ceilings out. It is `FALSE` with
+`keep_ceiling = TRUE`.
+
+A co-varying pair that was not tested says why in `test_status` (`"not_estimable"`,
+`"too_few_shared_runs"` or `"both_sites_mostly_bounds"`; `"tested"` otherwise, `NA` for physical
+pairs). `run_level_removed` says whether rho is partial given the run level; `bounds_included` and
+`run_covariate_removed` report two mzLib options (#1468) that `ptmqtl_pairs()` does not send yet, so
+here they are `FALSE`.
 
 **The trap: a batch correlates everything.** These twelve runs come in two batches, and every site
 reads 0.2 higher in the second. That alone gives `PAIR_S` and `PAIR_T` a high rho, though within a
@@ -256,8 +270,8 @@ effects$records[, c("protein_accession", "status", "effect", "standard_error", "
 ```
 
 `TRAIT_SITE` recovers the 0.5 it was built with. **`effect` is in logit units per unit of the
-trait**, so `exp(0.5)` = 1.65: each dose unit multiplies the odds of the modified form by about
-1.65. The degrees of freedom are between replicates (six replicates, less the intercept and the
+trait** - natural-log odds, mzLib's default scale, which `effects$scale` reports - so `exp(0.5)` =
+1.65: each dose unit multiplies the odds of the modified form by about 1.65. The degrees of freedom are between replicates (six replicates, less the intercept and the
 dose), because the dose never varies within a replicate. `CENSORED_SITE` is the same site with one
 replicate's two runs replaced by a floor and a ceiling. Both leave the fit - only quantified,
 non-ceiling cells are responses - so it rests on five replicates and three degrees of freedom.

@@ -62,7 +62,7 @@ An \code{mzlibr_library_batch} (an \code{mzlibr_batch}). \code{records} begins w
 
 }
 \section{Wraps}{
-Wire verb \code{library read} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{library.read.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{library read} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{library.read.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Readers/SpectralLibrary/Mslfiletypehandler.cs}{\code{MslFileTypeHandler.Open}} in \code{mzLib/Readers/SpectralLibrary/Mslfiletypehandler.cs} at mzLib \code{d10017ce}

@@ -73,7 +73,7 @@ starts with \code{XXX}. A database whose decoys carry a different prefix reads e
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-matches}. Generated from the bridge's verb spec \code{readers.read-matches.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-matches}. Generated from the bridge's verb spec \code{readers.read-matches.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/BaseClasses/ISpectralMatch.cs}{\code{ISpectralMatch}} in \code{mzLib/Readers/BaseClasses/ISpectralMatch.cs} at mzLib \code{23c2490e}

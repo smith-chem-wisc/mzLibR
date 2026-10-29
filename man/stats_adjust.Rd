@@ -33,7 +33,7 @@ An \code{mzlibr_adjusted}: \code{records}, a data.frame with row i for \code{p_v
 
 }
 \section{Wraps}{
-Wire verb \code{stats adjust}. Generated from the bridge's verb spec \code{stats.adjust.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats adjust}. Generated from the bridge's verb spec \code{stats.adjust.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/MultipleTesting.cs}{\code{MultipleTesting.BenjaminiHochberg}} in \code{mzLib/StatisticalModels/MultipleTesting.cs} at mzLib \code{0a808fec}

@@ -43,7 +43,7 @@ returns.
 
 }
 \section{Wraps}{
-Wire verb \code{readers identify}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers identify}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -75,12 +75,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item{\code{mzlib_usage_error} (usage)}{paths-stdin with path, offset or limit; paths-stdin with a value; no paths on stdin; a repeated path; threads 0 or below -1; on-error not fail or skip; on-error skip with a single path; out naming an input}
 \item{\code{mzlib_usage_error} (usage)}{with on-error fail, an input that is missing or not this view: the usage error of that input, prefixed 'Input <i> (<path>)'}
 \item{\code{mzlib_usage_error} (usage)}{out with paths-stdin: identify returns no table}
+\item{\code{mzlib_bridge_error} (correctness)}{a .parquet that exists but cannot be opened, because another process holds it or the user may not read it: IOException or UnauthorizedAccessException from mzLib's detection (since mzLib #1478), not the not-supported usage error}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
 }
 }
 \section{Caveats}{
 \itemize{
-\item Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and a .mztab's first five, a .parquet's column schema and a .d directory's listing to dispatch them. A .parquet without the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run) is a usage error, 'Parquet file type not supported' (mzLib 1.0.595, #1384).
+\item Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and a .mztab's first five, a .parquet's column schema and a .d directory's listing to dispatch them. A .parquet mzLib can open and read without the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run), or bytes that are not Parquet at all, is a usage error, 'Parquet file type not supported' (mzLib #1384). One it cannot open is an I/O error instead (#1478).
 \item No software field: mzLib's Software property is Unspecified for everything its factory builds; file_type already names the tool.
 \item Many paths: \code{--paths-stdin} (newline-delimited paths on stdin) with \code{--threads} N (default 1, -1 = one per core; the answer is identical at any value) and \code{--on-error} fail|skip answers \{file_count, read_count, failed_count, on_error, files\}, files[i] being path i's answer in input order with error set when it could not be identified under skip (readers_many_identify.json). There is no table and no \code{--out}.
 }

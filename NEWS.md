@@ -3,11 +3,118 @@
 The first release. Versions follow each wire verb's `since.mzlibr` in the bridge's verb specs,
 which every help page's **Since** section renders.
 
-This release projects mzLib 1.0.595. The verbs marked *needs the pyMzLib 0.2.0 bridge*, *needs
+This release projects mzLib 1.0.596. The verbs marked *needs the pyMzLib 0.2.0 bridge*, *needs
 the pyMzLib 0.3.0 bridge*, *needs the pyMzLib 0.4.0 bridge* or *needs the pyMzLib 0.6.0 bridge*
 below are new in the bridge that release publishes; with an older bridge they are refused, naming
-the release they need. `mzlibr_install_bridge()` installs the bridge pyMzLib 0.6.0 publishes
-(mzLib 1.0.595, `d10017ce`), verified against that release's SHA256SUMS.
+the release they need. `mzlibr_install_bridge()` installs the bridge pyMzLib 0.7.0 publishes
+(mzLib 1.0.596, `cc67b7a2`), verified against that release's SHA256SUMS.
+
+## mzLib 1.0.596 (the pyMzLib 0.7.0 bridge)
+
+`mzlibr_install_bridge()` now installs the pyMzLib 0.7.0 bridge, built from mzLib 1.0.596 (tag
+commit `cc67b7a2`), up from 1.0.595. Several existing functions give a different answer, most
+because mzLib changed them; each is listed below, as pyMzLib 0.7.0's upgrading notes list them.
+Every recording the help pages and articles replay was re-recorded from the 0.7.0 bridge (pyMzLib's,
+byte for byte), and the live tests hold each to what that bridge returns.
+
+The 0.7.0 bridge also has four verbs and three options this package does not project yet:
+`genes map-residues` (pyMzLib's `proteins.map_residues()`), `library calibrate-rt`,
+`stats fit-latent-mixed` and `stats fit-link`; and `ptmqtl pairs`' `include_bounds` and
+`run_covariate` and `ptmqtl trait-effects`' `scale = "log2_odds"`. `docs/name-parity.md` lists
+them as not yet ported. The fields they report on every call are projected now (below).
+
+*Calls that used to fail now succeed.*
+
+* **`sdrf_isobaric_design()` on a TMT10 SDRF that names its last channel `TMT131`** (mzLib #1467).
+  PRIDE spells TMT10's last channel `TMT131`, and it was refused as not a channel of TMT10. It now
+  reads as channel `131N`. `TMT131` is still refused for TMT11, where `131N` and `131C` are both
+  channels.
+* **`sdrf_design()` on an SDRF with a missing replicate or a numbering gap** (mzLib #1426). A
+  biological replicate of `not available`, or no replicate column at all, was refused; mzLib now
+  adds a number after the highest one the condition uses, and says so in `notes`. A gap in the
+  fraction or technical replicate numbers is noted instead of refused.
+* **A `peptidoform_convert()` batch with two modifications on one residue** (mzLib #1457). One such
+  line, for example `PEPM[A][B]TIDE`, failed the whole call with an `mzlib_bridge_error`
+  (`ArgumentException`). Now only that line fails (below), and the rest of the batch converts.
+
+*Calls that used to succeed are now refused.*
+
+* **Malformed modification text in `peptidoform_convert()`** (mzLib #1457), with `source =
+  "mzLib"` (the default) or `"MassShift"`. An empty modification (`PEP[]TIDE`), a modification that
+  does not follow an unmodified residue (two leading groups, or two on one residue) and anything
+  after the C-terminal modification were converted with a modification lost or moved. Each is now a
+  `"failed"` row with `failure_reason` `"UnknownFormat"`. An ambiguous MetaMorpheus sequence
+  (`|`-joined candidates) still converts with a warning, unless a candidate ends in a C-terminal
+  modification or the next one's N-terminal modification lands on an already modified residue.
+
+*Same failure, different error.*
+
+* **A `.parquet` another process holds, or that you may not read** (mzLib #1478). Every reader
+  raised an `mzlib_usage_error` (`Parquet file type not supported`). It now raises an
+  `mzlib_bridge_error` naming the I/O failure (`IOException` or `UnauthorizedAccessException`). A
+  file that is not Parquet at all is still the usage error.
+
+*Same file, different value.*
+
+* **`sdrf_design()` keeps the SDRF's biological replicate numbers** (mzLib #1426). It used to rank
+  them within each condition, so an SDRF that numbers a condition's samples 22, 23, 24 gave 0, 1, 2.
+  It now gives 21, 22, 23 (0-based), gaps included, because replicate 4 of one condition can be the
+  same subject as replicate 4 of another, and a gap can be a lost sample. `notes` flags each
+  condition whose numbers are not 1..N, where it used to list the renumbering, and the result
+  carries a seventh caveat saying so. A design written with `out` carries those numbers too;
+  MetaMorpheus refuses one with gaps until a release carries smith-chem-wisc/MetaMorpheus#2928.
+* **`diff_design()` numbers contrast ids once over the whole analysis** (mzLib #1476). With
+  `strata`, `c1` used to be each stratum's own first comparison; it is now one comparison in every
+  stratum, and a stratum that cannot run it skips the id. A stratum's `not_run` lists the skipped
+  contrast under its own label (`condition=B vs condition=A`, where it said
+  `condition (one level: A)`) and gains an `id` column, `NA` when no default contrast stands for
+  the entry. Two caveats are reworded to say so. Designs without strata are unchanged.
+* **`ptmqtl_occupancy()` reports more `"not_detected"` cells** (mzLib #1468). mzLib now defines
+  `not_detected` as a covered-zero: peptidoforms covering the site were identified in the run and
+  none carried the modification. The covering forms no longer have to be quantified, so a site
+  covered only by unquantified forms gets a row it did not get before. `fraction` stays `NA`.
+* **`ptmqtl_occupancy()` gains two columns, and `out` writes them**: `covering_peptidoforms` and
+  `modified_peptidoforms`, after `unmodified_quantified` (mzLib #1468), the k of n of each cell,
+  counting identifications rather than intensity. Read a written table by header name, not by
+  position; `ptmqtl_trait_effects()` reads both the old and the new layout. A new caveat says what
+  the counts are. The shipped `extdata/ptmqtl/trait_occupancy.tsv` is the new layout.
+* **`ptmqtl_pairs(type = "covarying")` reports `exclude_ceiling` `NA`** when you do not pass
+  `keep_ceiling = TRUE`, where it reported `TRUE`. mzLib made the option nullable and decides it
+  inside `PtmPairEngine.CoVarying` (mzLib #1468); mzLibR does not restate mzLib's rule to name the
+  value. The pairs themselves are unchanged: ceilings are still left out by default.
+* **`ptmqtl_pairs()` says why a co-varying pair was not tested**, in a new `test_status` column
+  (`"tested"`, `"not_estimable"`, `"too_few_shared_runs"`, `"both_sites_mostly_bounds"`; `NA` for
+  physical pairs), beside `bounds_included` and `run_covariate_removed`. The result gains
+  `include_bounds`, `min_untied_share`, `run_covariate_file`, `run_covariate_name` and
+  `run_covariate_runs_missing`, mzLib's echo of the two options not yet projected. Its caveat now
+  counts untested pairs by reason ("N co-varying pairs were not tested (...)"), where it said "N
+  co-varying pairs are not_estimable". `spearman_method` is still `"not_estimable"` for every
+  untested pair.
+* **`ptmqtl_trait_effects()` reports its `scale`** (mzLib #1464), `"natural_log_odds"` at mzLib's
+  default, the unit of every effect, standard error and variance; a seventh caveat names it. The
+  numbers are unchanged.
+* **`isobaric_kits()` gains an `sdrf_label` column** (mzLib #1467): each channel's SDRF
+  `comment[label]` by mzLib's `SdrfIsobaricLabels`, such as `TMT127N`, `ITRAQ114`, `DiLeu115a`, and
+  `TMT131` for TMT10's 131N. A sixth caveat says what the label is.
+* **ProForma and Unimod output for a terminal modification that shares its name** (mzLib #1442).
+  Entries such as `Methyl on X` and `Less Common:Methylation on X` exist once for a side chain and
+  once for a terminus. The terminal one now resolves, so `peptidoform_convert(..., target =
+  "ProForma")` and `target = "Unimod"`, and `readers_read_records()`'s `pro_forma` column, write its
+  `UNIMOD:` accession where they wrote its typed name or left it unresolved.
+* **`peptidoform_fragments()` gives a peptide with a permanently charged modification a mass one
+  proton lower per charge.** The bridge now takes UniProt's modifications from mzLib's own
+  corrected list (`Mods.UniprotModifications`), as MetaMorpheus does. Trimethyllysine counts as
+  C3H6, 42.046951 Da (Unimod's Trimethyl), not UniProt's charged 43.054227; the other modifications
+  PSI-MOD marks charged move the same way (trimethylalanine, dimethylproline,
+  O-(2-cholinephosphoryl)serine). This changes `monoisotopic_mass`, the `modifications` table's
+  `mass` and every fragment's `neutral_mass` that includes it. `peptide_mz()` is unchanged, because
+  `fixed_charges` drops from 1 to 0 at the same time. N,N,N-trimethylglycine is the exception: it
+  stays at UniProt's mass, one hydrogen heavy, until the bridge builds from an mzLib that includes
+  mzLib #1415.
+* **`fixed_charges` (in `peptides`) and `formal_charge` (in `modifications`) are deprecated** and
+  always 0. No peptide carries a charge on top of its mass any more; both columns stay until the
+  bridge's next protocol version removes them. `?peptide_mz` and `?peptidoform_fragments` say so,
+  and a fragment's m/z at charge z is now simply `(neutral_mass + z * 1.00727646677) / z`.
 
 ## Statistics, designs and PTM-QTL (the pyMzLib 0.6.0 bridge)
 

@@ -41,7 +41,9 @@ quantified peptidoforms that carry the modification there, over the summed inten
 quantified peptidoform that covers the position - the estimator MetaMorpheus writes as
 \code{IntensityOccupancy_}. Each cell keeps its state, so a censored cell is never mistaken for a 0: a
 \code{"floor"} (the modified form was identified but not quantified) is low but not zero, and
-\code{"not_detected"} is unknown. Neither has a \code{fraction}.
+\code{"not_detected"} (peptidoforms covering the site were identified in the run, quantified or not, and
+none carried the modification; mzLib #1468) is a bound below what the run could detect. Neither
+has a \code{fraction}.
 }
 \details{
 mzLib always leaves out the categories \code{Common Variable} and \code{Common Fixed}, peptide-terminal
@@ -62,8 +64,13 @@ An \code{mzlibr_site_occupancy}:
     the quantified forms carrying the modification here, 0 unless quantified; \code{covering_intensity}
     (intensity, instrument units), of every quantified form covering the position, 0 for
     \code{"count_only"}; \code{fraction} (fraction, 0 to 1), modified over covering intensity, \code{NA} unless
-    \code{state} is \code{"quantified"} - censored, never 0; and \code{unmodified_quantified}, where \code{FALSE}
-    with \code{fraction} 1 is a \strong{ceiling}: the site was seen only modified.
+    \code{state} is \code{"quantified"} - censored, never 0; \code{unmodified_quantified}, where \code{FALSE}
+    with \code{fraction} 1 is a \strong{ceiling}: the site was seen only modified; and the peptidoform
+    counts (mzLib #1468), which count identifications, not intensity: \code{covering_peptidoforms}
+    (peptidoforms), the distinct peptidoforms covering the position identified in the run,
+    quantified or not - the n of a cell's k of n - and \code{modified_peptidoforms} (peptidoforms),
+    those of them carrying this modification here - the k, 0 for \code{"not_detected"}. Both are \code{NA}
+    only from a table that did not supply them; mzLib's calculation always does.
   - \code{observations_file} and \code{samples_file} (\code{NA} without \code{samples}), as absolute paths;
     \code{observation_count} rows read; \code{run_count} runs; \code{sample_count} samples, \code{NA} without
     \code{samples}; \code{run_names}; \code{site_count} sites; \code{state_counts}, cells per state;
@@ -82,12 +89,12 @@ protein group, so its \code{IntensityOccupancy_} can differ.
 
 }
 \section{Wraps}{
-Wire verb \code{ptmqtl occupancy}. Generated from the bridge's verb spec \code{ptmqtl.occupancy.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{ptmqtl occupancy}. Generated from the bridge's verb spec \code{ptmqtl.occupancy.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteOccupancyCalculator.Calculate}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteOccupancyCalculator.Calculate}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{cc67b7a2}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{PeptidoformObservation}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteRunOccupancy}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteRunOccupancy}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{cc67b7a2}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{ModificationSite}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{OccupancyState}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
 }
@@ -120,7 +127,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{column_names}}{string[]; never \code{NA}. The table's columns, in order; also the header \code{--out} writes.}
 \item{\code{records} (wire \code{columns})}{table; \code{NA} when the table was written to \code{--out} instead. One row per (site, run) where the site was identified or covered, in mzLib's order: by protein, then run, then position and modification.}
 \item{\code{written}}{object; \code{NA} when \code{--out} was not given. \{path, format: tsv, row_count\} of the file \code{--out} wrote.}
-\item{\code{caveats}}{string[]; never \code{NA}. Six static caveats; one more with \code{--samples}, one when columns were not read, and one counting the censored (floor or not_detected) cells when there are any.}
+\item{\code{caveats}}{string[]; never \code{NA}. Seven static caveats; one more with \code{--samples}, one when columns were not read, and one counting the censored (floor or not_detected) cells when there are any.}
 }
 }
 \section{Columns of \code{records}}{
@@ -132,11 +139,13 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{modification}}{string; never \code{NA}. The modification as full_sequence names it, Category:IdWithMotif.}
 \item{\code{category}}{string; never \code{NA}. The text before the first ':' of modification (mzLib's ModificationSite.Category); empty when the name has none.}
 \item{\code{run}}{string; never \code{NA}. The run, or with \code{--samples} the sample.}
-\item{\code{state}}{string; never \code{NA}. quantified (the modified form was quantified: a fraction in (0, 1]) | floor (the modified form was identified but not quantified while forms covering the site were: low but NOT zero) | count_only (the modified form was identified, but nothing covering the site was quantified) | not_detected (the site was covered by quantified peptides but no modified form was identified: unknown, not 0).}
+\item{\code{state}}{string; never \code{NA}. quantified (the modified form was quantified: a fraction in (0, 1]) | floor (the modified form was identified but not quantified while forms covering the site were: low but NOT zero) | count_only (the modified form was identified, but nothing covering the site was quantified) | not_detected (a covered-zero, mzLib's DEF-OCC-COVERED-ZERO: peptidoforms covering the site were identified in this run and none carried the modification; a bound below what the run could detect, not a measured 0; since mzLib #1468 the covering forms need not be quantified).}
 \item{\code{modified_intensity}}{float; in \strong{intensity (instrument units)}; never \code{NA}. Summed intensity of the quantified peptidoforms carrying this modification at this position; 0 unless state is quantified.}
 \item{\code{covering_intensity}}{float; in \strong{intensity (instrument units)}; never \code{NA}. Summed intensity of every quantified peptidoform covering the position, modified or not; 0 for count_only.}
-\item{\code{fraction}}{float; in \strong{fraction (0 to 1)}; \code{NA} when state is not quantified: the occupancy is censored (floor) or unknown (count_only, not_detected), never 0. modified_intensity / covering_intensity.}
+\item{\code{fraction}}{float; in \strong{fraction (0 to 1)}; \code{NA} when state is not quantified: the occupancy is censored (floor), a bound (not_detected) or unknown (count_only), never 0. modified_intensity / covering_intensity.}
 \item{\code{unmodified_quantified}}{bool; never \code{NA}. Whether some quantified form covering the position does not carry this modification there (the unmodified form, or another modification at the same position). false with fraction 1 is a ceiling: the site was seen only modified.}
+\item{\code{covering_peptidoforms}}{int; in \strong{peptidoforms}; \code{NA} when not supplied (Calculate always supplies it; a stored table may not). Distinct peptidoforms covering the position identified in this run (or sample), quantified or not: mzLib's SiteRunOccupancy.CoveringPeptidoforms (#1468). It counts identifications, not intensity: the n of a cell's k of n.}
+\item{\code{modified_peptidoforms}}{int; in \strong{peptidoforms}; \code{NA} when not supplied, as covering_peptidoforms. Of covering_peptidoforms, those carrying this modification at the position (SiteRunOccupancy.ModifiedPeptidoforms): the k. 0 for not_detected. A count_only cell with k = n was seen only modified; with k < n both forms were identified.}
 }
 }
 \section{Errors}{
@@ -153,12 +162,13 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \section{Caveats}{
 \itemize{
 \item Intensity occupancy, as MetaMorpheus writes IntensityOccupancy_ (QuantProject DEF-OCC-INT): for a site in a run, the summed intensity of the quantified peptidoforms carrying the modification at that position over the summed intensity of every quantified peptidoform covering it. Supply MS/MS identifications only: a match-between-runs transfer must not be a row.
-\item fraction is null unless state is quantified. A floor (identified, not quantified, while the site was covered) is low but not zero, and not_detected is unknown: neither may be averaged in as 0.
+\item fraction is null unless state is quantified. A floor (identified, not quantified, while the site was covered) is low but not zero, and not_detected is a bound below detection: neither may be averaged in as 0.
 \item A fraction of 1 with unmodified_quantified false is a ceiling: the unmodified form may be present below detection.
 \item position is 1-based, with a protein N-terminal modification at the residue it sits on; readers read-occupancy puts the N-terminus at 0.
 \item mzLib always excludes the categories Common Variable and Common Fixed, peptide-terminal modifications, and every C-terminal modification (the protein's length is not supplied). An N-terminal modification is a site only on a peptide starting at residue 1, or at 2 when previous_residue is M or blank. Whether it is protein- or peptide-terminal is read from mzLib's modification registry; a name the registry does not know is treated as protein N-terminal.
 \item A peptide shared by several proteins counts in full for each; MetaMorpheus gives it a proportional share per protein group, so its IntensityOccupancy_ can differ.
 \item With samples, fractions are summed before the ratio. Map only fractions of one sample together; technical replicates keep their own run.
+\item covering_peptidoforms and modified_peptidoforms count identifications, not intensity: the k of n of a cell with no fraction. They tell a count_only cell seen only modified from one where both forms were identified, which is what ptmqtl pairs \code{--include-bounds} ranks as a high bound or leaves out.
 }
 }
 \section{Performance}{

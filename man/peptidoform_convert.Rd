@@ -12,7 +12,8 @@ peptidoform_convert(sequences, source = "mzLib", target = "Unimod", mode = "Retu
   included, sent to mzLib exactly as given. An \code{NA}, a blank entry or one with a line break is
   refused, because it would shift every later row. Split an ambiguous MetaMorpheus full sequence
   (\code{|}-joined candidates) first: mzLib joins the candidates into one sequence, with only a
-  warning.}
+  warning - or fails it (\code{"UnknownFormat"}) when a candidate ends in a C-terminal modification
+  or the next one's N-terminal modification lands on an already modified residue.}
 
 \item{source}{The notation the sequences are in: one of mzLib's registered source formats (the
   result's \code{source_formats}), matched case-insensitively. Sent as the wire's \code{--from}.}
@@ -48,6 +49,12 @@ under its own name, with status \code{"converted"}, where Unimod fails the row o
 on \code{mode}. In ProForma output, treat any bracket that is not a \code{UNIMOD:} term as unresolved. The
 \code{pro_forma} column \code{\link{readers_read_records}} computes for a \code{.psmtsv} written without one comes
 from the same serializer.
+
+\strong{Malformed modification text fails its row} (mzLib #1457), with \code{source = "mzLib"} or
+\code{"MassShift"}: an empty modification (\code{PEP[]TIDE}), a modification that does not follow an
+unmodified residue (two leading groups, or two on one residue, \code{PEPM[A][B]TIDE}) and anything
+after the C-terminal modification are each a \code{"failed"} row with \code{failure_reason}
+\code{"UnknownFormat"}, under every \code{mode} but \code{"ThrowException"}. The rest of the batch converts.
 }
 \value{
 An \code{mzlibr_sequence_conversions}:
@@ -70,7 +77,7 @@ An \code{mzlibr_sequence_conversions}:
 
 }
 \section{Wraps}{
-Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{peptidoform convert}. Generated from the bridge's verb spec \code{peptidoform.convert.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs}{\code{SequenceConversionService.Default}} in \code{mzLib/Omics/SequenceConversion/SequenceConversionService.cs} at mzLib \code{0a808fec}
@@ -135,7 +142,8 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \item ProForma writes a modification it cannot resolve under its mzLib name and the row is still converted, so status converted does not mean every bracket in a ProForma output is a controlled-vocabulary term. Unimod either names a modification by its UNIMOD accession or reports it in incompatible_items.
 \item A modification the target cannot write: under ReturnNull the row fails (output null); under RemoveIncompatibleElements and UsePrimarySequence it is dropped from output, named in incompatible_items, and the row is converted_with_warnings; under ThrowException the first such input fails the whole call as a usage error.
 \item status is mzLib's verdict read off ConversionWarnings; failure_reason can be null on a failed row (the Unimod target under ReturnNull records only incompatible_items).
-\item An ambiguous MetaMorpheus full sequence ('|'-joined candidates) is not refused: mzLib's parser skips each '|' with a warning and joins the candidates into one sequence, status converted_with_warnings. Split ambiguous full sequences before converting them.
+\item Since mzLib #1457, \code{--from} mzLib and \code{--from} MassShift refuse malformed modification text they used to convert with part of it lost or misplaced: an empty modification (PEP[]TIDE), a modification that does not follow an unmodified residue (two leading groups, or two groups on one residue), and anything but whitespace after the C-terminal modification. Each such line is a failed row with failure_reason UnknownFormat, under every mode but ThrowException. Two groups on one residue used to fail the whole call with an ArgumentException; now only that line fails.
+\item An ambiguous MetaMorpheus full sequence ('|'-joined candidates) is usually not refused: mzLib's parser skips each '|' with a warning and joins the candidates into one sequence, status converted_with_warnings. It fails (UnknownFormat, since #1457) when a candidate ends in a C-terminal modification, or when the next candidate's N-terminal group lands on a residue that already carries one. Split ambiguous full sequences before converting them.
 \item Each stdin line is one input, given to mzLib exactly as read; blank lines are skipped; rows are in input order at any \code{--threads}.
 }
 }

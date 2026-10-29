@@ -69,23 +69,33 @@ An \code{mzlibr_ptm_pairs}:
     the two sites' keys, \code{site_a} first by ordinal order; \code{same_protein}; \code{overlapping}, one
     peptide covers both (such a co-varying pair is correlated by construction); \code{statistic} (physical:
     fraction (0 to 1), the median co-occupancy; covarying: unitless correlation (-1 to 1),
-    Spearman's rho), \code{NA} when physical pairs were never quantified together, or not estimable;
+    Spearman's rho), \code{NA} when physical pairs were never quantified together, or not tested;
     \code{p_value}, a fraction (0 to 1), two-sided Spearman, \code{NA} for physical (no test) or not
-    estimable; \code{q}, a fraction (0 to 1), Benjamini-Hochberg within \code{fdr_family}, \code{NA} when not
-    tested (physical, overlapping, not estimable), not a target-decoy q-value; \code{fdr_family}, \code{P}
+    tested; \code{q}, a fraction (0 to 1), Benjamini-Hochberg within \code{fdr_family}, \code{NA} when not in
+    the family (physical, overlapping, not tested), not a target-decoy q-value; \code{fdr_family}, \code{P}
     or \code{A} then \code{intra} or \code{inter} protein, e.g. \code{"A:inter"}; \code{n} (runs), physical: runs
-    identified together, covarying: runs where both were quantified; \code{statistic_n} (runs), the
+    identified together, covarying: runs where both sites have a value; \code{statistic_n} (runs), the
     runs \code{statistic} was computed on; \code{spearman_method}, \code{"exact"}, \code{"asymptotic"} or
-    \code{"not_estimable"}, \code{NA} for physical; and \code{run_level_removed}.
+    \code{"not_estimable"} (every untested pair), \code{NA} for physical; \code{run_level_removed};
+    \code{test_status}, mzLib's \code{PairTestStatus} (#1468): \code{"tested"}, or why not - \code{"not_estimable"},
+    \code{"too_few_shared_runs"} or \code{"both_sites_mostly_bounds"} - \code{NA} for physical; and
+    \code{bounds_included} and \code{run_covariate_removed}, whether one-form cells entered as tied bounds
+    and whether rho is partial given a run covariate, two mzLib options this function does not
+    send yet (always \code{FALSE} for physical).
   - \code{observations_file}, \code{samples_file} and \code{run_level_groups_file} (\code{NA} when not given), as
     absolute paths; \code{type}; \code{observation_count} rows read; \code{run_count} runs; \code{sample_count}
     samples, \code{NA} without \code{samples}; \code{run_names}; and, \code{NA} for \code{type = "physical"}:
     \code{covarying_run_count} (runs), the runs where any site was identified or covered, the
     denominator of \code{min_quantified_fraction} (fraction of the runs, 0 to 1), the guard used;
-    \code{exclude_ceiling} and \code{remove_run_level}; \code{run_level_group}, \code{"none"}, \code{"category"},
-    \code{"modification"} or \code{"file"}, \code{NA} when the run level was not removed;
+    \code{exclude_ceiling}, \code{FALSE} with \code{keep_ceiling = TRUE} and \code{NA} when you did not choose (mzLib
+    decides inside \code{PtmPairEngine.CoVarying}, and leaves ceilings out; mzLib #1468);
+    \code{include_bounds}, mzLib's default (\code{FALSE}) here; \code{remove_run_level}; \code{run_level_group},
+    \code{"none"}, \code{"category"}, \code{"modification"} or \code{"file"}, \code{NA} when the run level was not removed;
     \code{min_runs_for_run_level} (runs) and \code{min_sites_for_run_level} (sites), mzLib's thresholds,
-    \code{NA} when not removed; \code{modifications} and \code{categories}, \code{NULL} for no filter;
+    \code{NA} when not removed; \code{min_untied_share} (fraction of the shared runs, 0 to 1), mzLib's
+    guard with bounds, \code{NA} without them; \code{run_covariate_file} and \code{run_covariate_name}, \code{NA}, and
+    \code{run_covariate_runs_missing}, \code{NULL}, without a run covariate; \code{modifications} and
+    \code{categories}, \code{NULL} for no filter;
     \code{ignored_columns}; \code{physical_count} pairs (\code{NA} for \code{"covarying"}) and \code{covarying_count}
     pairs (\code{NA} for \code{"physical"}); \code{row_count} rows; \code{column_names}.
   - \code{caveats}: what each pair type means, and the run level when it was removed, plus any that
@@ -93,15 +103,17 @@ An \code{mzlibr_ptm_pairs}:
 
 }
 \section{Wraps}{
-Wire verb \code{ptmqtl pairs}. Generated from the bridge's verb spec \code{ptmqtl.pairs.yaml} (bridge commit \code{60b1d25968a1}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{ptmqtl pairs}. Generated from the bridge's verb spec \code{ptmqtl.pairs.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.Physical}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.CoVarying}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.CoVarying}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{cc67b7a2}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.DefaultMinQuantifiedFraction}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.MinRunsForRunLevel}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.MinSitesForRunLevel}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}
-\item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPair}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.MinUntiedShare}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{cc67b7a2}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPair}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{cc67b7a2}
+\item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PairTestStatus}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{cc67b7a2}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteOccupancyCalculator.Calculate}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteOccupancyCalculator.CombineObservations}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{d10017ce}
 }
@@ -114,7 +126,9 @@ Wire verb \code{ptmqtl pairs}. Generated from the bridge's verb spec \code{ptmqt
 \item{\code{modifications}}{string; default absent; range \code{exact names, tab-separated, none blank}. Optional. As ptmqtl occupancy: count only these modifications (Category:IdWithMotif, separated by tabs) as sites. Not with categories. Absent, no filter.}
 \item{\code{categories}}{string; default absent; range \code{category names, tab-separated, none blank}. Optional. As ptmqtl occupancy: count only modifications of these categories. Not with modifications. Absent, no filter.}
 \item{\code{min_quantified_fraction} (wire \code{--min-quantified-fraction})}{float; in \strong{fraction of the runs (0 to 1)}; default \samp{mzLib's PtmPairEngine.DefaultMinQuantifiedFraction, 0.7 at the pin}; range \code{> 0 and <= 1}. Co-varying only. A site enters co-varying pairs only if its occupancy is quantified (a ceiling counts only with keep-ceiling) in at least this fraction of the runs, rounded up: the runs (or samples) where any site was identified or covered, reported as covarying_run_count. Absent, the bridge sends none and mzLib's default applies.}
-\item{\code{keep_ceiling} (wire \code{--keep-ceiling})}{flag; default \samp{absent: mzLib's excludeCeiling default, true at the pin, so ceilings are left out}. Co-varying only. Keep a run where a site was seen only modified (a fraction of 1 with unmodified_quantified false). Two unrelated sites both read 1 in low-load runs, so ceilings can correlate sites through detection alone; mzLib leaves them out unless asked.}
+\item{\code{keep_ceiling} (wire \code{--keep-ceiling})}{flag; default \samp{absent: null is sent, and mzLib's CoVarying resolves its nullable excludeCeiling itself (ceilings left out)}. Co-varying only. Keep a run where a site was seen only modified (a fraction of 1 with unmodified_quantified false). Two unrelated sites both read 1 in low-load runs, so ceilings can correlate sites through detection alone; mzLib leaves them out unless asked. With include-bounds it sends false, which mzLib accepts: a ceiling is then a high bound either way.}
+\item{wire \code{--include-bounds}}{flag; default \samp{absent: mzLib's includeBounds default, false at the pin, so one-form cells are left out}. Co-varying only. Let a run where a site was seen in only one form enter as a bound, never as an invented value (mzLib's includeBounds, #1468): not_detected (a covered-zero) and floor cells tie below every fraction of that site; a ceiling, or a count_only cell whose covering peptidoforms all carry the modification, ties above every fraction. A count_only cell where both forms were identified has no rank and is left out. Bounds count toward min-quantified-fraction and toward a run's level. A pair whose two sites are both mostly one bound is not tested (both_sites_mostly_bounds). The bridge never sends excludeCeiling true, so mzLib's refusal of the two together cannot arise from this verb. \emph{Not an argument here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later mzLibR port.}}
+\item{wire \code{--run-covariate}}{path; default absent. Co-varying only. A TSV with a header row whose second field names the covariate (for example target_psms), then run, value: one row per run (or with samples, per sample), in any unit. Pairs are then the partial Spearman correlation given it (mzLib's runCovariate, #1468), for example the run's depth: shallow runs make covered-zeros co-occur across unrelated sites. It is ranked, so any increasing transform (log2) gives the same result. A run left out of the file is left out of every pair; a blank, NA or NaN value is sent as NaN and mzLib refuses it (leave the run out instead). Absent, none is sent. \emph{Not an argument here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later mzLibR port.}}
 \item{\code{remove_run_level} (wire \code{--remove-run-level})}{flag; default \samp{absent: mzLib's removeRunLevel default, false at the pin}. Co-varying only. Correlate given each run's level: the partial Spearman correlation with the run's median occupancy over the other tested sites of the pair's group (the pair's own two left out). Removes a batch or loading shift that moves many sites in the same runs. Batch only: where the run level follows the design, removing it tests the correlation within conditions instead.}
 \item{\code{run_level_group} (wire \code{--run-level-group})}{string; default \samp{absent: mzLib's runLevelGroup default, null, one group of every site}; range \code{category | modification}. With remove-run-level only. Whose run level applies to a site: category, one level per modification category (mzLib's ModificationSite.Category); or modification, one level per modification name. A pair within one group is correlated given that group's level, a pair across two groups given both. Not with run-level-groups.}
 \item{\code{run_level_groups} (wire \code{--run-level-groups})}{path; default absent. With remove-run-level only. A TSV with a header row, then modification, group: one row per modification name, mapping it to its group, for example every phosphorylation to phospho. Every modification among the sites needs a group. The wire form of mzLib's runLevelGroup for any grouping, such as chemistry. Not with run-level-group.}
@@ -133,11 +147,16 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{run_names}}{string[]; never \code{NA}. The runs, or with \code{--samples} the samples, the pairs were computed over, in ordinal order.}
 \item{\code{covarying_run_count}}{int; in \strong{runs}; \code{NA} when type physical: no co-varying pairs computed. The runs (or samples) where any site was identified or covered: the denominator of min_quantified_fraction.}
 \item{\code{min_quantified_fraction}}{float; in \strong{fraction of the runs (0 to 1)}; \code{NA} when type physical. The guard used: as given, or mzLib's default.}
-\item{\code{exclude_ceiling}}{bool; \code{NA} when type physical. Whether ceilings were left out: false with \code{--keep-ceiling}, else mzLib's default.}
+\item{\code{exclude_ceiling}}{bool; \code{NA} when type physical, or covarying without \code{--keep-ceiling} (mzLib decided). false with \code{--keep-ceiling}. Null when the caller did not choose: mzLib's CoVarying resolved its nullable excludeCeiling itself (since mzLib #1468), and the bridge does not restate that rule to name the value.}
+\item{\code{include_bounds}}{bool; \code{NA} when type physical. Whether one-form cells entered as tied bounds: true with \code{--include-bounds}, else mzLib's default (false).}
+\item{\code{min_untied_share}}{float; in \strong{fraction of the shared runs (0 to 1)}; \code{NA} when bounds were not included (or type physical). mzLib's PtmPairEngine.MinUntiedShare: with bounds, a pair is tested only if one of its sites has at least this share of the shared runs outside its largest tie of bounds.}
+\item{\code{run_covariate_file}}{string; \code{NA} when no \code{--run-covariate}. Absolute path of the run covariate table.}
+\item{\code{run_covariate_name}}{string; \code{NA} when no \code{--run-covariate}. The covariate's name: the run covariate table's second header.}
+\item{\code{run_covariate_runs_missing}}{string[]; \code{NA} when no \code{--run-covariate}. Runs (or samples) of covarying_run_count with no value in the run covariate table, in ordinal order: mzLib left them out of every pair. Empty when every run has one.}
 \item{\code{remove_run_level}}{bool; \code{NA} when type physical. Whether co-varying pairs were correlated given the run level.}
 \item{\code{run_level_group}}{string; \code{NA} when the run level was not removed (or type physical). none (one group of every site, mzLib's default), category, modification, or file (\code{--run-level-groups}).}
 \item{\code{run_level_groups_file}}{string; \code{NA} when no \code{--run-level-groups}. Absolute path of the modification-to-group table.}
-\item{\code{min_runs_for_run_level}}{int; in \strong{runs}; \code{NA} when the run level was not removed. mzLib's PtmPairEngine.MinRunsForRunLevel: with the run level removed, a pair sharing fewer runs with a level is not_estimable.}
+\item{\code{min_runs_for_run_level}}{int; in \strong{runs}; \code{NA} when neither the run level nor a run covariate was removed. mzLib's PtmPairEngine.MinRunsForRunLevel: with the run level or a run covariate removed, a pair sharing fewer runs (with a level, and a covariate value) is not tested, test_status too_few_shared_runs.}
 \item{\code{min_sites_for_run_level}}{int; in \strong{sites}; \code{NA} when the run level was not removed. mzLib's PtmPairEngine.MinSitesForRunLevel: a run whose group has fewer other sites with a value there has no level.}
 \item{\code{modifications}}{string[]; \code{NA} when no \code{--modifications} filter. The modification names the sites were limited to.}
 \item{\code{categories}}{string[]; \code{NA} when no \code{--categories} filter. The categories the sites were limited to.}
@@ -147,7 +166,7 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{row_count}}{int; in \strong{rows}; never \code{NA}. Pairs in the table.}
 \item{\code{column_names}}{string[]; never \code{NA}. The table's columns, in order.}
 \item{\code{records} (wire \code{columns})}{table; never \code{NA}. One row per pair, physical first, each type in mzLib's order (by site_a, then site_b).}
-\item{\code{caveats}}{string[]; never \code{NA}. What each pair type means for the types computed, and the run level when removed; plus one with \code{--samples}, one when columns were not read, and one counting not_estimable pairs when there are any.}
+\item{\code{caveats}}{string[]; never \code{NA}. What each pair type means for the types computed, the bounds when included, and the run level or the run covariate when removed; plus one with \code{--samples}, one listing runs with no covariate value, one when columns were not read, and one counting untested pairs by test_status when there are any.}
 }
 }
 \section{Columns of \code{records}}{
@@ -157,14 +176,17 @@ Each field with its type, its unit, and what \code{NA} means when it is \code{NA
 \item{\code{site_b}}{string; never \code{NA}. The second site's key.}
 \item{\code{same_protein}}{bool; never \code{NA}. Both sites on the same protein accession.}
 \item{\code{overlapping}}{bool; never \code{NA}. Some peptide covers both sites: one span on one protein, or one peptide (by base sequence) mapped to both proteins. Always true for physical. A co-varying overlapping pair shares peptides, so it is correlated by construction, and is left out of its family's adjustment.}
-\item{\code{statistic}}{float; in \strong{physical: fraction (0 to 1), co-occupancy; covarying: unitless correlation (-1 to 1)}; \code{NA} when physical: never quantified together in any run; covarying: not_estimable. physical: median over runs of the co-occupancy, the intensity of peptidoforms carrying both modifications over the intensity of peptidoforms covering both positions. covarying: Spearman's rho of the two occupancies across runs; with the run level removed, the partial rho given it.}
-\item{\code{p_value}}{float; in \strong{fraction (0 to 1)}; \code{NA} when physical (no test in this mzLib), or not_estimable. Two-sided Spearman p-value against rho = 0, computed as spearman_method says.}
-\item{\code{q}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not tested: physical, overlapping, or not_estimable. Benjamini-Hochberg adjusted p within fdr_family, over that family's non-overlapping pairs. Not a target-decoy q-value.}
+\item{\code{statistic}}{float; in \strong{physical: fraction (0 to 1), co-occupancy; covarying: unitless correlation (-1 to 1)}; \code{NA} when physical: never quantified together in any run; covarying: not tested (test_status). physical: median over runs of the co-occupancy, the intensity of peptidoforms carrying both modifications over the intensity of peptidoforms covering both positions. covarying: Spearman's rho of the two occupancies across runs; with the run level or a run covariate removed, the partial rho given them.}
+\item{\code{p_value}}{float; in \strong{fraction (0 to 1)}; \code{NA} when physical (no test in this mzLib), or not tested (test_status). Two-sided Spearman p-value against rho = 0, computed as spearman_method says.}
+\item{\code{q}}{float; in \strong{fraction (0 to 1)}; \code{NA} when not in the family: physical, overlapping, or not tested (test_status). Benjamini-Hochberg adjusted p within fdr_family, over that family's non-overlapping tested pairs. Not a target-decoy q-value.}
 \item{\code{fdr_family}}{string; never \code{NA}. The family the adjustment runs over, mzLib's PtmPair.FdrFamily verbatim: P or A (physical or co-varying), then intra (same protein) or inter, for example A:inter.}
-\item{\code{n}}{int; in \strong{runs}; never \code{NA}. physical: runs where a doubly modified peptidoform was identified. covarying: runs where both occupancies were quantified (with the run level removed, and had a level).}
+\item{\code{n}}{int; in \strong{runs}; never \code{NA}. physical: runs where a doubly modified peptidoform was identified. covarying: runs where both sites have a value (with include-bounds, a value or a bound) and every covariate removed is known there (the run level, the run covariate).}
 \item{\code{statistic_n}}{int; in \strong{runs}; never \code{NA}. Runs statistic was computed on. physical: runs where the doubly modified form and the forms covering both positions were quantified, at most n. covarying: equal to n.}
-\item{\code{spearman_method}}{string; \code{NA} when physical: no correlation. exact (the full permutation distribution, for 9 or fewer runs without ties, plain only) | asymptotic (t on n - 2 degrees of freedom, or n - 2 - k given k run levels: one, or two for a pair across groups, less any level the other carries entirely) | not_estimable (too few runs, a constant occupancy, or with the run level removed fewer than min_runs_for_run_level runs).}
+\item{\code{spearman_method}}{string; \code{NA} when physical: no correlation. exact (the full permutation distribution, for 9 or fewer runs without ties, plain only) | asymptotic (t on n - 2 degrees of freedom, or n - 2 - k given k covariates: the run level, one or two for a pair across groups, less any level the other carries entirely, and the run covariate) | not_estimable (the pair was not tested, for the reason test_status gives).}
 \item{\code{run_level_removed}}{bool; never \code{NA}. Whether statistic and p_value are the partial correlation given the run level. Always false for physical.}
+\item{\code{test_status}}{string; \code{NA} when physical: no test. mzLib's PairTestStatus (#1468): tested (statistic, p_value and q, unless overlapping, are set) | not_estimable (too few complete runs, a site constant over them, or a covariate that carries a site entirely) | too_few_shared_runs (partial on the run level or a run covariate, on fewer than min_runs_for_run_level runs) | both_sites_mostly_bounds (with include-bounds, neither site has min_untied_share of the shared runs outside its largest tie).}
+\item{\code{bounds_included}}{bool; never \code{NA}. Whether one-form cells entered as tied bounds (include-bounds). Always false for physical.}
+\item{\code{run_covariate_removed}}{bool; never \code{NA}. Whether statistic and p_value are partial given the run covariate. Always false for physical.}
 }
 }
 \section{Errors}{
@@ -172,8 +194,9 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 
 \describe{
 \item{\code{mzlib_usage_error} (usage)}{observations missing, blank or not found; type missing or not physical, covarying or both; samples or run-level-groups given without a value or not found; modifications and categories both given, or either blank}
-\item{\code{mzlib_usage_error} (usage)}{min-quantified-fraction, keep-ceiling, remove-run-level, run-level-group or run-level-groups with type physical; run-level-group or run-level-groups without remove-run-level; both of them; run-level-group other than category or modification; min-quantified-fraction not above 0 and at most 1, or not a number; keep-ceiling or remove-run-level written with a value}
-\item{\code{mzlib_usage_error} (usage)}{a table malformed as ptmqtl occupancy describes; the run-level-groups file without two fields per row, with a blank or repeated modification, or with no group for a modification among the sites}
+\item{\code{mzlib_usage_error} (usage)}{min-quantified-fraction, keep-ceiling, include-bounds, run-covariate, remove-run-level, run-level-group or run-level-groups with type physical; run-level-group or run-level-groups without remove-run-level; both of them; run-level-group other than category or modification; min-quantified-fraction not above 0 and at most 1, or not a number; keep-ceiling, include-bounds or remove-run-level written with a value; run-covariate given without a value or not found}
+\item{\code{mzlib_usage_error} (usage)}{a table malformed as ptmqtl occupancy describes; the run-level-groups file without two fields per row, with a blank or repeated modification, or with no group for a modification among the sites; the run-covariate file without a two-field header, with a row not of two fields, an empty or repeated run, a value that is not a number, or no runs}
+\item{\code{mzlib_usage_error} (usage)}{mzLib refuses the run covariate, in its own words: a value that is not finite (blank, NA or NaN included)}
 \item{\code{mzlib_usage_error} (usage)}{mzLib refuses the observations, in its own words, as ptmqtl occupancy lists}
 \item{\code{mzlib_bridge_error} (correctness)}{never expected}
 \item{\code{mzlib_service_unavailable} (service_unavailable)}{Never raised by this verb.}
@@ -182,8 +205,10 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \section{Caveats}{
 \itemize{
 \item physical: both modifications on one peptidoform, so on one molecule. statistic is the median co-occupancy over the statistic_n runs where both were quantified. There is no test in this mzLib: p_value and q are null.
-\item covarying: Spearman's rho across runs on the runs where both sites are quantified. Floors and not_detected cells are not values and are left out, and so, unless keep-ceiling, are ceilings.
-\item A site enters co-varying pairs only if quantified in at least min_quantified_fraction of covarying_run_count, rounded up.
+\item covarying: Spearman's rho across runs on the runs where both sites are quantified. Floors and not_detected cells are not values and are left out, and so, unless keep-ceiling, are ceilings. With include-bounds they enter as tied bounds instead: low (not_detected, floor) below every fraction, high (a ceiling, or count_only seen only modified) above.
+\item A site enters co-varying pairs only if quantified (with include-bounds, a value or a bound) in at least min_quantified_fraction of covarying_run_count, rounded up.
+\item With include-bounds, a pair whose two sites are both mostly one bound (less than min_untied_share of the shared runs outside each site's largest tie) is not tested: mzLib's simulation found Spearman's t test then calls 2 to 5 times too many pairs at p < 0.001 with no relation (PtmPairEngine.MinUntiedShare).
+\item With run-covariate, rho is partial given the covariate, ranked like every variable. A run with no value is left out of every pair, and a pair sharing fewer than min_runs_for_run_level runs is too_few_shared_runs.
 \item q is Benjamini-Hochberg within fdr_family. An overlapping pair is reported with q null: shared peptides correlate it by construction. q is not a target-decoy q-value.
 \item With remove-run-level, a run's level is the median occupancy there of the other tested sites of the pair's group; a run with fewer than min_sites_for_run_level such sites has no level, and a pair sharing fewer than min_runs_for_run_level runs with a level is not_estimable (the partial test's t on n - 3 df is too liberal there). Use it for a batch or loading shift only: where the run level follows the design, it removes the effect under study.
 \item The observations follow ptmqtl occupancy's rules and exclusions: MS/MS identifications only, one row per (run, peptidoform, protein).

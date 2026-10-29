@@ -1,7 +1,7 @@
 {
   "verb": "isobaric kits",
   "module": "isobaric",
-  "summary": "List the isobaric labelling kits mzLib can name, with every channel's label and reporter-ion m/z.",
+  "summary": "List the isobaric labelling kits mzLib can name, with every channel's label, reporter-ion m/z and SDRF label.",
   "since": {
     "protocol": 1,
     "pymzlib": "0.3.0",
@@ -23,12 +23,21 @@
       "symbol": "IsobaricMassTagType",
       "path": "mzLib/Omics/Modifications/IsobaricMassTag.cs",
       "pin": "0a808fec"
+    },
+    {
+      "symbol": "SdrfIsobaricLabels.GetSdrfLabel",
+      "path": "mzLib/Readers/Sdrf/SdrfIsobaricLabels.cs",
+      "pin": "cc67b7a2"
     }
   ],
   "cite": [
     {
       "doi": "10.1021/acs.jproteome.1c00168",
       "for": "the TMTpro-18plex reagents paper (Li et al. 2021); mzLib cites it as the source of its 0.003 Da reporter-ion matching tolerance (IsobaricMassTag.AbsoluteToleranceValue, IsobaricMassTag.cs:41)"
+    },
+    {
+      "doi": "10.1038/s41467-021-26111-3",
+      "for": "SDRF-Proteomics, whose comment[label] column sdrf_label fills (Dai et al., Nat Commun 12, 5854, 2021)"
     }
   ],
   "params": [
@@ -106,7 +115,7 @@
         "unit": null,
         "nullable": false,
         "null_means": null,
-        "doc": "Five static caveats."
+        "doc": "Six static caveats."
       }
     ],
     "columns": [
@@ -157,6 +166,14 @@
         "nullable": false,
         "null_means": null,
         "doc": "reporter_ion_mz plus absolute_tolerance."
+      },
+      {
+        "wire": "sdrf_label",
+        "type": "string",
+        "unit": null,
+        "nullable": false,
+        "null_means": null,
+        "doc": "The SDRF comment[label] that names the channel, mzLib's SdrfIsobaricLabels.GetSdrfLabel (#1467): TMT, ITRAQ or DiLeu and the channel (TMT127N, ITRAQ114, DiLeu115a), except TMT10's 131N, which is TMT131 (PRIDE:0000529). Write it when building an SDRF; sdrf isobaric-design reads it back to channel_label."
       }
     ]
   },
@@ -178,7 +195,8 @@
     "reporter_ion_mz is theoretical, charge 1, derived from mzLib's TMT.txt; not calibrated or observed.",
     "mz_min and mz_max are mzLib's own reporter-ion matching window, the most intense peak inside it wins.",
     "TMT16 is the lowest sixteen channels of TMTpro 18-plex and has no modification entry of its own.",
-    "iTRAQ8 has no 120 channel (the phenylalanine immonium ion sits at 120.081); its eighth reagent is 121."
+    "iTRAQ8 has no 120 channel (the phenylalanine immonium ion sits at 120.081); its eighth reagent is 121.",
+    "sdrf_label is PRIDE's term as sdrf-pipelines reads it, by mzLib's one channel/label rule (SdrfIsobaricLabels). TMT10's last channel is TMT131, while TMT11 and TMTpro keep TMT131N. DiLeu has no PRIDE term; its label is DiLeu and the channel."
   ],
   "bindings": {
     "py": {

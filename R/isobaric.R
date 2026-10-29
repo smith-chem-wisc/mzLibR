@@ -63,7 +63,11 @@ isobaric_parse_kits <- function(data) {
 #'   data.frame of `kit` and `channel_count`, in mzLib's order; `caveats`; and `records`, a
 #'   data.frame with one row per (kit, channel): `kit`, `channel_index` (1-based within the kit,
 #'   ascending with the m/z), `channel_label` as MetaMorpheus spells it, `reporter_ion_mz` (m/z,
-#'   charge 1, theoretical), and `mz_min` and `mz_max`, the matching window in m/z.
+#'   charge 1, theoretical), `mz_min` and `mz_max`, the matching window in m/z, and `sdrf_label`,
+#'   the SDRF `comment[label]` that names the channel, by mzLib's `SdrfIsobaricLabels` (#1467):
+#'   `TMT127N`, `ITRAQ114`, `DiLeu115a`, and `TMT131` for TMT10's 131N, PRIDE's spelling. Write it
+#'   when you build an SDRF; [sdrf_isobaric_design()] reads it back to this channel. A bridge before
+#'   pyMzLib 0.7.0 sends no `sdrf_label` column.
 #'
 #' @section What the m/z are not:
 #'
@@ -79,6 +83,9 @@ isobaric_parse_kits <- function(data) {
 #' catalogue$kits
 #' catalogue$absolute_tolerance
 #' catalogue$records$channel_label[catalogue$records$kit == "iTRAQ8"]
+#'
+#' # The label an SDRF writes for each channel. TMT10's last channel is TMT131 there:
+#' utils::tail(catalogue$records$sdrf_label[catalogue$records$kit == "TMT10"], 2)
 #'
 #' # TMTpro 18-plex, whose top channel sits at 135.15:
 #' tmtpro <- isobaric_kits("TMT18")

@@ -345,11 +345,23 @@ diff_build_observations_request <- function(peptides, runs, basis, protein_group
 
 # ---------------------------------------------------------------- parsing
 
+# mzLib's NotRunContrast, one row each: label, reason and id. id is the default contrast's id, the
+# same in every stratum (mzLib #1476), and NA where the wire says null (no default contrast stands
+# for the entry) or, from a bridge before pyMzLib 0.7.0, does not send it.
+diff_parse_not_run <- function(value) {
+  frame <- wire_objects(value, empty = c("label", "reason", "id"))
+  for (column in c("label", "reason", "id")) {
+    cells <- if (column %in% names(frame)) frame[[column]] else rep(NA, nrow(frame))
+    frame[[column]] <- as.character(cells)
+  }
+  frame[, c("label", "reason", "id"), drop = FALSE]
+}
+
 diff_parse_stratum <- function(block) {
   sample_ids <- wire_strings(block[["sample_ids"]])
   column_names <- wire_strings(block[["column_names"]])
   fitted_names <- wire_strings(block[["fitted_column_names"]])
-  not_run <- wire_objects(block[["not_run"]], empty = c("label", "reason"))
+  not_run <- diff_parse_not_run(block[["not_run"]])
   structure(
     list(
       stratum = wire_field(block, "stratum", "character", NA_character_),
@@ -516,7 +528,8 @@ diff_parse_observations <- function(data) {
 #' @return An `mzlibr_diff_design`:
 #'
 #'   - `records`, a data.frame with one row per (stratum, default contrast), strata in order:
-#'     `stratum`, the stratum key; `contrast_id`, `c1`, `c2`, ... numbered **within the stratum**;
+#'     `stratum`, the stratum key; `contrast_id`, `c1`, `c2`, ... numbered **once over the whole
+#'     analysis** (mzLib #1476), so an id is the same comparison in every stratum;
 #'     `label`, `factor=level vs factor=reference`, or a slope's column; `numerator` and
 #'     `denominator`, `factor=level` (`NA` for a slope); `covariate`, `covariate_unit` (the unit a
 #'     slope is per, e.g. `decade`) and `covariate_scale` (e.g. `years/10, centred at 50 years`),
@@ -532,7 +545,10 @@ diff_parse_observations <- function(data) {
 #'     `name (per unit)` for a covariate, `a=level:b=level` for an interaction); `fitted_column_names`,
 #'     the columns a fit takes (the design file's coefficient columns); `rank` (columns);
 #'     `aliased_terms`, terms that share a direction with another; `warnings`; `not_run`, a
-#'     data.frame of the contrasts this stratum cannot run (`label`, `reason`); `covariate_centres`
+#'     data.frame of the contrasts this stratum cannot run (mzLib's `NotRunContrast`): `label`,
+#'     `reason` (`"not_in_stratum"`) and `id`, the default contrast's id, which this stratum skips
+#'     (`NA` when no default contrast stands for the entry, such as a factor with one level over the
+#'     whole analysis); `covariate_centres`
 #'     (the covariate's stored unit), the centre subtracted from each covariate; `matrix` and
 #'     `fitted_matrix`, R matrices with the sample ids as row names, in coding (0/1 indicators;
 #'     covariate columns in scaled units), equal to R's `model.matrix()`; and `design_file` and
@@ -553,7 +569,9 @@ diff_parse_observations <- function(data) {
 #' `"not_estimable:confounded"`, and one that needs a column no sample informs (an empty interaction
 #' cell) is `"not_estimable:rank_deficient"`. mzLib says so instead of returning a number. The design
 #' file still holds a design that can be fitted: `fitted_column_names` leaves out the later of two
-#' aliased columns. Contrast ids are numbered within each stratum, so match strata by `label`.
+#' aliased columns. Contrast ids are numbered once over every sample of the analysis, so `c1` is
+#' the same comparison in every stratum; a stratum without samples on both sides skips the id and
+#' lists it in `not_run`.
 #'
 #' @seealso [stats_fit()], which reads the files `out` writes; [diff_observations()]
 #' @examples

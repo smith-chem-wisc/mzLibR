@@ -174,11 +174,18 @@ peptidoform_parse_conversions <- function(data) {
 #' `pro_forma` column [readers_read_records()] computes for a `.psmtsv` written without one comes
 #' from the same serializer.
 #'
+#' **Malformed modification text fails its row** (mzLib #1457), with `source = "mzLib"` or
+#' `"MassShift"`: an empty modification (`PEP[]TIDE`), a modification that does not follow an
+#' unmodified residue (two leading groups, or two on one residue, `PEPM[A][B]TIDE`) and anything
+#' after the C-terminal modification are each a `"failed"` row with `failure_reason`
+#' `"UnknownFormat"`, under every `mode` but `"ThrowException"`. The rest of the batch converts.
+#'
 #' @param sequences A character vector of full sequences, one result row each, in order, duplicates
 #'   included, sent to mzLib exactly as given. An `NA`, a blank entry or one with a line break is
 #'   refused, because it would shift every later row. Split an ambiguous MetaMorpheus full sequence
 #'   (`|`-joined candidates) first: mzLib joins the candidates into one sequence, with only a
-#'   warning.
+#'   warning - or fails it (`"UnknownFormat"`) when a candidate ends in a C-terminal modification
+#'   or the next one's N-terminal modification lands on an already modified residue.
 #' @param source The notation the sequences are in: one of mzLib's registered source formats (the
 #'   result's `source_formats`), matched case-insensitively. Sent as the wire's `--from`.
 #' @param target The notation to write: one of mzLib's registered target formats (the result's

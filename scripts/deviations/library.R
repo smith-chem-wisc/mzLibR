@@ -28,3 +28,12 @@ FIELD_CHECKS[["library read"]] <- list("library_read_synthetic.json", function(d
 # The spectral-library article: one precursor's fragment ions, and an index-only read.
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "library read", fixture = "library_read_fragments.json")
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "library read", fixture = "library_read_index_only.json")
+
+# Not yet ported: the pyMzLib 0.7.0 bridge's library calibrate-rt (mzLib #1387), a later mzLibR port.
+PARENT_OMISSIONS[c("library.calibrate_rt", "RtCalibration.group", "RtCalibration.failed_groups",
+                   "RtCalibrationGroup.ok")] <- c(
+  "not ported yet: wire `library calibrate-rt` (mzLib #1387), new in the pyMzLib 0.7.0 bridge",
+  "not ported yet: part of `library.calibrate_rt`'s result",
+  "not ported yet: part of `library.calibrate_rt`'s result",
+  "not ported yet: part of `library.calibrate_rt`'s result"
+)

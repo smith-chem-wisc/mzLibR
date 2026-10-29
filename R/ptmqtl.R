@@ -200,6 +200,11 @@ ptmqtl_parse_pairs <- function(data) {
       covarying_run_count = ptmqtl_optional_count(data, "covarying_run_count"),
       min_quantified_fraction = ptmqtl_optional_count(data, "min_quantified_fraction"),
       exclude_ceiling = ptmqtl_optional_flag(data, "exclude_ceiling"),
+      include_bounds = ptmqtl_optional_flag(data, "include_bounds"),
+      min_untied_share = ptmqtl_optional_count(data, "min_untied_share"),
+      run_covariate_file = wire_field(data, "run_covariate_file", "character", NA_character_),
+      run_covariate_name = wire_field(data, "run_covariate_name", "character", NA_character_),
+      run_covariate_runs_missing = ptmqtl_optional_names(data[["run_covariate_runs_missing"]]),
       remove_run_level = ptmqtl_optional_flag(data, "remove_run_level"),
       run_level_group = wire_field(data, "run_level_group", "character", NA_character_),
       run_level_groups_file = wire_field(data, "run_level_groups_file", "character", NA_character_),
@@ -234,6 +239,7 @@ ptmqtl_parse_trait_effects <- function(data) {
       min_replicates = stats_count(data, "min_replicates"),
       logit_epsilon = stats_count(data, "logit_epsilon"),
       exclude_ceiling = isTRUE(data[["exclude_ceiling"]]),
+      scale = wire_field(data, "scale", "character", NA_character_),
       status_counts = proteins_parse_counts(data[["status_counts"]]),
       ignored_columns = wire_strings(data[["ignored_columns"]]),
       row_count = stats_count(data, "row_count"),
@@ -254,7 +260,9 @@ ptmqtl_parse_trait_effects <- function(data) {
 #' quantified peptidoform that covers the position - the estimator MetaMorpheus writes as
 #' `IntensityOccupancy_`. Each cell keeps its state, so a censored cell is never mistaken for a 0: a
 #' `"floor"` (the modified form was identified but not quantified) is low but not zero, and
-#' `"not_detected"` is unknown. Neither has a `fraction`.
+#' `"not_detected"` (peptidoforms covering the site were identified in the run, quantified or not, and
+#' none carried the modification; mzLib #1468) is a bound below what the run could detect. Neither
+#' has a `fraction`.
 #'
 #' mzLib always leaves out the categories `Common Variable` and `Common Fixed`, peptide-terminal
 #' modifications and every C-terminal modification. An N-terminal modification is a site only on a
@@ -291,8 +299,13 @@ ptmqtl_parse_trait_effects <- function(data) {
 #'     the quantified forms carrying the modification here, 0 unless quantified; `covering_intensity`
 #'     (intensity, instrument units), of every quantified form covering the position, 0 for
 #'     `"count_only"`; `fraction` (fraction, 0 to 1), modified over covering intensity, `NA` unless
-#'     `state` is `"quantified"` - censored, never 0; and `unmodified_quantified`, where `FALSE`
-#'     with `fraction` 1 is a **ceiling**: the site was seen only modified.
+#'     `state` is `"quantified"` - censored, never 0; `unmodified_quantified`, where `FALSE`
+#'     with `fraction` 1 is a **ceiling**: the site was seen only modified; and the peptidoform
+#'     counts (mzLib #1468), which count identifications, not intensity: `covering_peptidoforms`
+#'     (peptidoforms), the distinct peptidoforms covering the position identified in the run,
+#'     quantified or not - the n of a cell's k of n - and `modified_peptidoforms` (peptidoforms),
+#'     those of them carrying this modification here - the k, 0 for `"not_detected"`. Both are `NA`
+#'     only from a table that did not supply them; mzLib's calculation always does.
 #'   - `observations_file` and `samples_file` (`NA` without `samples`), as absolute paths;
 #'     `observation_count` rows read; `run_count` runs; `sample_count` samples, `NA` without
 #'     `samples`; `run_names`; `site_count` sites; `state_counts`, cells per state;
@@ -371,23 +384,33 @@ ptmqtl_occupancy <- function(observations, samples = NULL, modifications = NULL,
 #'     the two sites' keys, `site_a` first by ordinal order; `same_protein`; `overlapping`, one
 #'     peptide covers both (such a co-varying pair is correlated by construction); `statistic` (physical:
 #'     fraction (0 to 1), the median co-occupancy; covarying: unitless correlation (-1 to 1),
-#'     Spearman's rho), `NA` when physical pairs were never quantified together, or not estimable;
+#'     Spearman's rho), `NA` when physical pairs were never quantified together, or not tested;
 #'     `p_value`, a fraction (0 to 1), two-sided Spearman, `NA` for physical (no test) or not
-#'     estimable; `q`, a fraction (0 to 1), Benjamini-Hochberg within `fdr_family`, `NA` when not
-#'     tested (physical, overlapping, not estimable), not a target-decoy q-value; `fdr_family`, `P`
+#'     tested; `q`, a fraction (0 to 1), Benjamini-Hochberg within `fdr_family`, `NA` when not in
+#'     the family (physical, overlapping, not tested), not a target-decoy q-value; `fdr_family`, `P`
 #'     or `A` then `intra` or `inter` protein, e.g. `"A:inter"`; `n` (runs), physical: runs
-#'     identified together, covarying: runs where both were quantified; `statistic_n` (runs), the
+#'     identified together, covarying: runs where both sites have a value; `statistic_n` (runs), the
 #'     runs `statistic` was computed on; `spearman_method`, `"exact"`, `"asymptotic"` or
-#'     `"not_estimable"`, `NA` for physical; and `run_level_removed`.
+#'     `"not_estimable"` (every untested pair), `NA` for physical; `run_level_removed`;
+#'     `test_status`, mzLib's `PairTestStatus` (#1468): `"tested"`, or why not - `"not_estimable"`,
+#'     `"too_few_shared_runs"` or `"both_sites_mostly_bounds"` - `NA` for physical; and
+#'     `bounds_included` and `run_covariate_removed`, whether one-form cells entered as tied bounds
+#'     and whether rho is partial given a run covariate, two mzLib options this function does not
+#'     send yet (always `FALSE` for physical).
 #'   - `observations_file`, `samples_file` and `run_level_groups_file` (`NA` when not given), as
 #'     absolute paths; `type`; `observation_count` rows read; `run_count` runs; `sample_count`
 #'     samples, `NA` without `samples`; `run_names`; and, `NA` for `type = "physical"`:
 #'     `covarying_run_count` (runs), the runs where any site was identified or covered, the
 #'     denominator of `min_quantified_fraction` (fraction of the runs, 0 to 1), the guard used;
-#'     `exclude_ceiling` and `remove_run_level`; `run_level_group`, `"none"`, `"category"`,
-#'     `"modification"` or `"file"`, `NA` when the run level was not removed;
+#'     `exclude_ceiling`, `FALSE` with `keep_ceiling = TRUE` and `NA` when you did not choose (mzLib
+#'     decides inside `PtmPairEngine.CoVarying`, and leaves ceilings out; mzLib #1468);
+#'     `include_bounds`, mzLib's default (`FALSE`) here; `remove_run_level`; `run_level_group`,
+#'     `"none"`, `"category"`, `"modification"` or `"file"`, `NA` when the run level was not removed;
 #'     `min_runs_for_run_level` (runs) and `min_sites_for_run_level` (sites), mzLib's thresholds,
-#'     `NA` when not removed; `modifications` and `categories`, `NULL` for no filter;
+#'     `NA` when not removed; `min_untied_share` (fraction of the shared runs, 0 to 1), mzLib's
+#'     guard with bounds, `NA` without them; `run_covariate_file` and `run_covariate_name`, `NA`, and
+#'     `run_covariate_runs_missing`, `NULL`, without a run covariate; `modifications` and
+#'     `categories`, `NULL` for no filter;
 #'     `ignored_columns`; `physical_count` pairs (`NA` for `"covarying"`) and `covarying_count`
 #'     pairs (`NA` for `"physical"`); `row_count` rows; `column_names`.
 #'   - `caveats`: what each pair type means, and the run level when it was removed, plus any that
@@ -439,7 +462,9 @@ ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NUL
 #' detected more often?". Ceilings are left out by default.
 #'
 #' @param occupancy The table [ptmqtl_occupancy()] writes with `out` (columns found by header name).
-#'   A `fraction` cell is used as written, as mzLib does for a stored fraction.
+#'   A `fraction` cell is used as written, as mzLib does for a stored fraction. The peptidoform
+#'   counts the 0.7.0 bridge writes are read if present and not used by the fit, so a table written
+#'   before them reads too.
 #' @param runs A TSV with a header row, then one row per run: the run, its biological replicate, the
 #'   trait (its header names it; any unit), then any covariates (each header names one). A run with
 #'   a blank trait is not used.
@@ -459,22 +484,27 @@ ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NUL
 #'     `site_key`, `protein_accession`, `position`, `residue` and `modification`, as
 #'     [ptmqtl_occupancy()] writes them; `status`, one of `"fitted"`, `"below_support"`,
 #'     `"too_few_observations"`, `"rank_deficient"`, `"too_few_groups"`, `"variance_ratio_at_limit"`
-#'     or `"not_converged"`; `effect` (logit occupancy per trait unit), the change in
-#'     logit(occupancy) per unit of the trait, so `exp(effect)` is the odds ratio, `NA` when not
-#'     fitted; `standard_error` (logit occupancy per trait unit); `df` (degrees of freedom), by the
+#'     or `"not_converged"`; `effect` (log odds of occupancy per trait unit, on the scale `scale`
+#'     reports; logit occupancy per trait unit at mzLib's default, `"natural_log_odds"`), the change in
+#'     the log odds of occupancy per unit of the trait, so `exp(effect)` is the odds ratio, `NA` when
+#'     not fitted; `standard_error` (log odds of occupancy per trait unit, as `scale`); `df`
+#'     (degrees of freedom), by the
 #'     containment rule; `p_value`, a fraction (0 to 1), two-sided, for the trait; `q`, a fraction
 #'     (0 to 1), Benjamini-Hochberg over this call's fitted sites; `runs`, runs contributing a
 #'     response; `replicates`, distinct replicates among them; `median_fraction` (fraction, 0 to 1),
-#'     median occupancy over those runs; `covariate_effects` (logit occupancy per covariate unit), a
-#'     list column, one per covariate in `covariate_names` order, each `NA` when not fitted;
-#'     `replicate_variance` (squared logit occupancy), between replicates; and `residual_variance`
-#'     (squared logit occupancy), run to run within a replicate. Statistics are `NA` where `status`
+#'     median occupancy over those runs; `covariate_effects` (log odds of occupancy per covariate
+#'     unit, as `scale`), a list column, one per covariate in `covariate_names` order, each `NA` when
+#'     not fitted; `replicate_variance` (squared log odds of occupancy, as `scale`), between
+#'     replicates; and `residual_variance` (squared log odds of occupancy, as `scale`), run to run
+#'     within a replicate. Statistics are `NA` where `status`
 #'     is not `"fitted"`.
 #'   - `occupancy_file` and `runs_file`, as absolute paths; `trait_name`, the runs table's third
 #'     header; `covariate_names`; `cell_count` occupancy rows (cells) read; `run_count` runs in the
 #'     runs table; `trait_run_count`, runs with a trait value (runs); `occupancy_runs_not_used`;
 #'     `min_runs` (runs) and `min_replicates` (replicates), the thresholds used, yours or mzLib's
-#'     default; `logit_epsilon` (fraction, 0 to 1), the clamp used; `exclude_ceiling`;
+#'     default; `logit_epsilon` (fraction, 0 to 1), the clamp used; `exclude_ceiling`; `scale`,
+#'     the unit of every effect, standard error and variance, `"natural_log_odds"` (mzLib's default,
+#'     the logit) or `"log2_odds"` (mzLib #1464; `NA` from a bridge before pyMzLib 0.7.0);
 #'     `status_counts`, sites (sites) per status; `ignored_columns`; `row_count` rows;
 #'     `column_names`.
 #'   - `caveats`: the model and what it leaves out, plus any that apply to this input.

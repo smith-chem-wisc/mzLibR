@@ -168,3 +168,9 @@ FIELD_CHECKS[["genes orthology"]] <- list("genes_orthology_pair_status.json", fu
   snapshot$written <- mz$proteins_parse_orthology(read_fixture("genes_orthology_written.json"))$written
   snapshot
 })
+
+# Not yet ported: the pyMzLib 0.7.0 bridge's genes map-residues (mzLib #1465), a later mzLibR port.
+PARENT_OMISSIONS[c("proteins.map_residues", "AlignedProteins.sequences")] <- c(
+  "not ported yet: wire `genes map-residues` (mzLib #1465), new in the pyMzLib 0.7.0 bridge",
+  "not ported yet: part of `proteins.map_residues`'s result"
+)
