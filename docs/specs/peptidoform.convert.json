@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.4.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {

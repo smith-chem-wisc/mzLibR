@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -858,11 +858,10 @@
     "rust": {
       "name": "mzlib::proteins::build_orthology_with",
       "options": "OrthologyOptions",
-      "note": "planned; not yet ported"
+      "note": "status_counts is a BTreeMap, so it iterates in name order, not in mzLib's OrthologyStatus order."
     },
     "r": {
-      "name": "proteins_build_orthology",
-      "note": "planned; not yet ported"
+      "name": "proteins_build_orthology"
     }
   },
   "examples": [

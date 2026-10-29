@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -483,12 +483,10 @@
     },
     "rust": {
       "name": "mzlib::diff::design_with",
-      "options": "DesignOptions",
-      "note": "not yet ported"
+      "options": "DesignOptions"
     },
     "r": {
-      "name": "diff_design",
-      "note": "not yet ported"
+      "name": "diff_design"
     }
   },
   "examples": [

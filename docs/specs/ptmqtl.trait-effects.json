@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -451,11 +451,11 @@
     "rust": {
       "name": "mzlib::ptmqtl::trait_effects_with",
       "options": "TraitEffectsOptions",
-      "note": "not yet ported"
+      "note": "scale (pyMzLib 0.7.0) is not yet ported."
     },
     "r": {
       "name": "ptmqtl_trait_effects",
-      "note": "not yet ported"
+      "note": "scale (pyMzLib 0.7.0) is not yet ported."
     }
   },
   "examples": [

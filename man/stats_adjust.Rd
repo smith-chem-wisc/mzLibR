@@ -33,7 +33,7 @@ An \code{mzlibr_adjusted}: \code{records}, a data.frame with row i for \code{p_v
 
 }
 \section{Wraps}{
-Wire verb \code{stats adjust}. Generated from the bridge's verb spec \code{stats.adjust.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats adjust}. Generated from the bridge's verb spec \code{stats.adjust.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/StatisticalModels/MultipleTesting.cs}{\code{MultipleTesting.BenjaminiHochberg}} in \code{mzLib/StatisticalModels/MultipleTesting.cs} at mzLib \code{0a808fec}
@@ -89,7 +89,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.3.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.3.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \references{
 \itemize{

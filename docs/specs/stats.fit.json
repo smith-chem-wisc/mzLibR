@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.3.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -713,12 +713,10 @@
     },
     "rust": {
       "name": "mzlib::stats::fit_with",
-      "options": "FitOptions",
-      "note": "on main (mzLibRust #31), not yet released; contrasts, confidence and estimator not yet ported"
+      "options": "FitOptions"
     },
     "r": {
-      "name": "stats_fit",
-      "note": "on main (mzLibR #31), not yet released; contrasts, confidence and estimator not yet ported"
+      "name": "stats_fit"
     }
   },
   "examples": [

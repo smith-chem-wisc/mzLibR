@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.3.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -126,12 +126,11 @@
       "name": "pymzlib.stats.adjust"
     },
     "rust": {
-      "name": "mzlib::stats::adjust",
-      "note": "on main (mzLibRust #31), not yet released"
+      "name": "mzlib::stats::adjust"
     },
     "r": {
       "name": "stats_adjust",
-      "note": "on main (mzLibR #31), not yet released. NA in the input crosses as an empty line."
+      "note": "NA in the input crosses as an empty line."
     }
   },
   "examples": [

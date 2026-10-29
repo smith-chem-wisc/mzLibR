@@ -49,7 +49,7 @@ mzLib #1478), not that refusal.
 
 }
 \section{Wraps}{
-Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers formats}. Generated from the bridge's verb spec \code{readers.formats.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs}{\code{SupportedFileType}} in \code{mzLib/Readers/Util/SupportedFileTypes.cs} at mzLib \code{23c2490e}

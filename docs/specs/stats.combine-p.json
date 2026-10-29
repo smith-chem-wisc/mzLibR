@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -208,11 +208,11 @@
     },
     "rust": {
       "name": "mzlib::stats::combine_p",
-      "note": "not yet ported"
+      "note": "The tests are a slice of PValueTest."
     },
     "r": {
       "name": "stats_combine_p",
-      "note": "not yet ported"
+      "note": "Takes a data.frame with feature and p_value columns, and optionally weight."
     }
   },
   "examples": [

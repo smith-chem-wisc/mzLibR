@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -352,12 +352,10 @@
     },
     "rust": {
       "name": "mzlib::stats::fit_logistic_with",
-      "options": "FitLogisticOptions",
-      "note": "not yet ported"
+      "options": "FitLogisticOptions"
     },
     "r": {
-      "name": "stats_fit_logistic",
-      "note": "not yet ported"
+      "name": "stats_fit_logistic"
     }
   },
   "examples": [
