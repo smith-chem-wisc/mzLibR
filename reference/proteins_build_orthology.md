@@ -197,7 +197,7 @@ a snapshot is written once, and next release's goes in a new directory.
 ## Wraps
 
 Wire verb `genes orthology`. Generated from the bridge's verb spec
-`genes.orthology.yaml` (bridge commit `45833ca804d6`) by
+`genes.orthology.yaml` (bridge commit `4e180efe8b59`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -932,8 +932,7 @@ start-up before any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib 0.6.0; mzLibRust not yet shipped; mzLibR not
-yet shipped.
+Wire protocol 1; pyMzLib 0.6.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 

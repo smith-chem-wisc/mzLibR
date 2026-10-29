@@ -150,7 +150,7 @@ precursors (`ET`, `ED`) are rows; filter on `is_decoy` or
 ## Wraps
 
 Wire verb `library read`. Generated from the bridge's verb spec
-`library.read.yaml` (bridge commit `45833ca804d6`) by
+`library.read.yaml` (bridge commit `4e180efe8b59`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -731,8 +731,7 @@ the thread count stated on the wire.
 
 ## Since
 
-Wire protocol 1; pyMzLib 0.6.0; mzLibRust not yet shipped; mzLibR not
-yet shipped.
+Wire protocol 1; pyMzLib 0.6.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## Not yet verified
 

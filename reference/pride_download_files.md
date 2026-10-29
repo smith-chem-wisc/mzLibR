@@ -54,7 +54,7 @@ present is left alone and its path is still returned. Do not read
 ## Wraps
 
 Wire verb `pride download`. Generated from the bridge's verb spec
-`pride.download.yaml` (bridge commit `45833ca804d6`) by
+`pride.download.yaml` (bridge commit `4e180efe8b59`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

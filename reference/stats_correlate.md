@@ -90,7 +90,7 @@ for Benjamini-Hochberg.
 ## Wraps
 
 Wire verb `stats correlate`. Generated from the bridge's verb spec
-`stats.correlate.yaml` (bridge commit `45833ca804d6`) by
+`stats.correlate.yaml` (bridge commit `4e180efe8b59`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -347,8 +347,7 @@ any work.
 
 ## Since
 
-Wire protocol 1; pyMzLib 0.6.0; mzLibRust not yet shipped; mzLibR not
-yet shipped.
+Wire protocol 1; pyMzLib 0.6.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 
 ## References
 
