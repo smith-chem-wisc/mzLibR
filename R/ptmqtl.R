@@ -4,10 +4,10 @@
 #                           every run, each cell with its state
 #   ptmqtl_pairs()          PtmPairEngine.Physical / .CoVarying: modifications on one molecule, or
 #                           rising and falling together across runs
-#   ptmqtl_trait_effects()  SiteTraitEffects.Fit: per site, a trait's effect on logit occupancy,
-#                           with a random intercept per biological replicate
+#   ptmqtl_trait_effects()  SiteTraitEffects.Fit: per site, a trait's effect on the log odds of
+#                           occupancy, with a random intercept per biological replicate
 #
-# Ported from pyMzLib's `ptmqtl.py` (mzLib #1369, #1430, #1446). Every number is mzLib's: this file
+# Ported from pyMzLib's `ptmqtl.py` (mzLib #1369, #1430, #1446, #1464, #1468). Every number is mzLib's: this file
 # names the files and options and projects each result into a data.frame, `records`.
 
 # The first pyMzLib whose bridge has the ptmqtl verbs (their specs' since.pymzlib).
@@ -23,6 +23,14 @@ PTMQTL_PAIR_TYPES <- c("physical", "covarying", "both")
 # The named rules ptmqtl_pairs() takes as `run_level_group`. For any other grouping, map each
 # modification to a group in a file and pass it as `run_level_groups`.
 PTMQTL_RUN_LEVEL_GROUPS <- c("category", "modification")
+
+# Every value of the ptmqtl_pairs() `test_status` column (mzLib's PairTestStatus), for co-varying
+# pairs; physical pairs have NA. Only "tested" pairs carry a statistic.
+PTMQTL_PAIR_TEST_STATUSES <- c("tested", "not_estimable", "too_few_shared_runs", "both_sites_mostly_bounds")
+
+# What ptmqtl_trait_effects() takes as `scale` (mzLib's OccupancyScale): the log odds of occupancy in
+# natural log (mzLib's default) or in log2, where an effect of +1 doubles the odds.
+PTMQTL_OCCUPANCY_SCALES <- c("natural_log_odds", "log2_odds")
 
 # Every value of the ptmqtl_trait_effects() `status` column. Only "fitted" rows carry statistics.
 PTMQTL_TRAIT_STATUSES <- c(
@@ -78,7 +86,8 @@ ptmqtl_build_occupancy_args <- function(observations, samples, modifications, ca
 
 ptmqtl_build_pairs_args <- function(observations, type, samples, modifications, categories,
                                     min_quantified_fraction, keep_ceiling, remove_run_level,
-                                    run_level_group, run_level_groups) {
+                                    run_level_group, run_level_groups, include_bounds = FALSE,
+                                    run_covariate = NULL) {
   if (!is.character(type) || length(type) != 1L || !type %in% PTMQTL_PAIR_TYPES) {
     stop(mzlib_usage_error(paste0(
       "type must be one of ", paste(PTMQTL_PAIR_TYPES, collapse = ", "), "; got ",
@@ -96,6 +105,12 @@ ptmqtl_build_pairs_args <- function(observations, type, samples, modifications, 
   # A flag left FALSE sends nothing, so mzLib's default applies.
   if (stats_flag(keep_ceiling, "keep_ceiling")) {
     args <- c(args, "--keep-ceiling")
+  }
+  if (stats_flag(include_bounds, "include_bounds")) {
+    args <- c(args, "--include-bounds")
+  }
+  if (!is.null(run_covariate)) {
+    args <- c(args, "--run-covariate", readers_normalise_path(run_covariate, "run_covariate"))
   }
   if (stats_flag(remove_run_level, "remove_run_level")) {
     args <- c(args, "--remove-run-level")
@@ -116,7 +131,8 @@ ptmqtl_build_pairs_args <- function(observations, type, samples, modifications, 
   args
 }
 
-ptmqtl_build_trait_args <- function(occupancy, runs, min_runs, min_replicates, logit_epsilon, keep_ceiling) {
+ptmqtl_build_trait_args <- function(occupancy, runs, min_runs, min_replicates, logit_epsilon, keep_ceiling,
+                                    scale = NULL) {
   args <- c(
     "ptmqtl", "trait-effects",
     "--occupancy", readers_normalise_path(occupancy, "occupancy"),
@@ -133,6 +149,15 @@ ptmqtl_build_trait_args <- function(occupancy, runs, min_runs, min_replicates, l
   }
   if (stats_flag(keep_ceiling, "keep_ceiling")) {
     args <- c(args, "--keep-ceiling")
+  }
+  if (!is.null(scale)) {
+    if (!is.character(scale) || length(scale) != 1L || !scale %in% PTMQTL_OCCUPANCY_SCALES) {
+      stop(mzlib_usage_error(paste0(
+        "scale must be one of ", paste(PTMQTL_OCCUPANCY_SCALES, collapse = ", "), ", or NULL for mzLib's default; got ",
+        paste(deparse(scale), collapse = " "), "."
+      )))
+    }
+    args <- c(args, "--scale", scale)
   }
   args
 }
@@ -351,7 +376,8 @@ ptmqtl_occupancy <- function(observations, samples = NULL, modifications = NULL,
 #'   oppositely) across runs. `statistic` is Spearman's rho on the runs where both are quantified,
 #'   with a Benjamini-Hochberg `q` per family. Floors, undetected cells and, by default, ceilings are
 #'   left out: two unrelated sites both read 1 in low-load runs, which would correlate them through
-#'   detection alone.
+#'   detection alone. `include_bounds = TRUE` lets them in as tied bounds instead, and
+#'   `run_covariate` correlates given each run's depth.
 #'
 #' Occupancy is computed inside by the same mzLib call [ptmqtl_occupancy()] makes.
 #'
@@ -367,6 +393,17 @@ ptmqtl_occupancy <- function(observations, samples = NULL, modifications = NULL,
 #'   reports.
 #' @param keep_ceiling Co-varying only. Keep runs where a site was seen only modified. `FALSE` sends
 #'   nothing, so mzLib's default (leave them out) applies.
+#' @param include_bounds Co-varying only. Let a run where a site was seen in only one form enter as a
+#'   tied bound, never an invented value (mzLib #1468): `"not_detected"` and `"floor"` cells rank
+#'   below every fraction of the site, ceilings and count-only cells seen only modified above. A site
+#'   often below detection can then be tested at all. A pair whose two sites are both mostly one
+#'   bound is not tested (`"both_sites_mostly_bounds"`). `FALSE` (the default) sends nothing:
+#'   mzLib's default, no bounds.
+#' @param run_covariate Co-varying only. A TSV with a header row whose second field names the
+#'   covariate (e.g. `target_psms`), then `run`, value: each run's depth, or any per-run value, in
+#'   any unit. Pairs become the partial Spearman correlation given it (mzLib #1468); it is ranked, so
+#'   log2 gives the same answer. Leave a run out for "unknown"; it is then left out of every pair.
+#'   mzLib refuses a value that is not finite. `NULL` (the default): no covariate.
 #' @param remove_run_level Co-varying only. Correlate given each run's level - the median occupancy
 #'   of the other tested sites of the pair's group - to remove a batch or loading shift. **Batch
 #'   only**: where the level follows the design, it removes the effect you study.
@@ -395,8 +432,8 @@ ptmqtl_occupancy <- function(observations, samples = NULL, modifications = NULL,
 #'     `test_status`, mzLib's `PairTestStatus` (#1468): `"tested"`, or why not - `"not_estimable"`,
 #'     `"too_few_shared_runs"` or `"both_sites_mostly_bounds"` - `NA` for physical; and
 #'     `bounds_included` and `run_covariate_removed`, whether one-form cells entered as tied bounds
-#'     and whether rho is partial given a run covariate, two mzLib options this function does not
-#'     send yet (always `FALSE` for physical).
+#'     (`include_bounds`) and whether rho is partial given the run covariate (`run_covariate`),
+#'     always `FALSE` for physical.
 #'   - `observations_file`, `samples_file` and `run_level_groups_file` (`NA` when not given), as
 #'     absolute paths; `type`; `observation_count` rows read; `run_count` runs; `sample_count`
 #'     samples, `NA` without `samples`; `run_names`; and, `NA` for `type = "physical"`:
@@ -404,12 +441,19 @@ ptmqtl_occupancy <- function(observations, samples = NULL, modifications = NULL,
 #'     denominator of `min_quantified_fraction` (fraction of the runs, 0 to 1), the guard used;
 #'     `exclude_ceiling`, `FALSE` with `keep_ceiling = TRUE` and `NA` when you did not choose (mzLib
 #'     decides inside `PtmPairEngine.CoVarying`, and leaves ceilings out; mzLib #1468);
-#'     `include_bounds`, mzLib's default (`FALSE`) here; `remove_run_level`; `run_level_group`,
+#'     `include_bounds`, whether one-form cells entered as tied bounds, yours or mzLib's default
+#'     (`FALSE`); `remove_run_level`; `run_level_group`,
 #'     `"none"`, `"category"`, `"modification"` or `"file"`, `NA` when the run level was not removed;
-#'     `min_runs_for_run_level` (runs) and `min_sites_for_run_level` (sites), mzLib's thresholds,
-#'     `NA` when not removed; `min_untied_share` (fraction of the shared runs, 0 to 1), mzLib's
-#'     guard with bounds, `NA` without them; `run_covariate_file` and `run_covariate_name`, `NA`, and
-#'     `run_covariate_runs_missing`, `NULL`, without a run covariate; `modifications` and
+#'     `min_runs_for_run_level` (runs), with the run level or a run covariate removed, the fewest
+#'     shared runs a pair is tested on (fewer is `"too_few_shared_runs"`), and
+#'     `min_sites_for_run_level` (sites), the fewest other sites a run's group needs to have a level,
+#'     mzLib's thresholds, `NA` when not removed; `min_untied_share` (fraction of the shared runs, 0
+#'     to 1), mzLib's guard with bounds - a pair is tested only if one of its sites has at least this
+#'     share of the shared runs outside its largest tie - `NA` without bounds; `run_covariate_file`
+#'     (absolute path) and `run_covariate_name` (the covariate table's second header), `NA` without
+#'     a run covariate; `run_covariate_runs_missing`, the runs (or samples) with no covariate value,
+#'     left out of every pair, empty when every run has one and `NULL` without a run covariate;
+#'     `modifications` and
 #'     `categories`, `NULL` for no filter;
 #'     `ignored_columns`; `physical_count` pairs (`NA` for `"covarying"`) and `covarying_count`
 #'     pairs (`NA` for `"physical"`); `row_count` rows; `column_names`.
@@ -431,12 +475,21 @@ ptmqtl_occupancy <- function(observations, samples = NULL, modifications = NULL,
 #' given <- ptmqtl_pairs(batch, type = "covarying", remove_run_level = TRUE)
 #' pick <- function(r) r$statistic[startsWith(r$site_a, "PAIR_S") & startsWith(r$site_b, "PAIR_T")]
 #' round(c(plain = pick(plain$records), given = pick(given$records)), 2)
+#'
+#' # Two sites with a value in six of ten runs and a bound in the rest (mzLib's
+#' # BoundsEnterTypeAAsTiedRanks). Six is below mzLib's 70% guard, so no pair is tested until the
+#' # bounds enter:
+#' bounds <- system.file("extdata", "ptmqtl", "bounds.tsv", package = "mzLibR")
+#' ptmqtl_pairs(bounds, type = "covarying")$row_count
+#' bounded <- ptmqtl_pairs(bounds, type = "covarying", include_bounds = TRUE)
+#' bounded$records[, c("n", "test_status", "bounds_included")]
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @spec ptmqtl.pairs
 #' @export
 ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NULL, categories = NULL,
-                         min_quantified_fraction = NULL, keep_ceiling = FALSE, remove_run_level = FALSE,
-                         run_level_group = NULL, run_level_groups = NULL, timeout = 600) {
+                         min_quantified_fraction = NULL, keep_ceiling = FALSE, include_bounds = FALSE,
+                         run_covariate = NULL, remove_run_level = FALSE, run_level_group = NULL,
+                         run_level_groups = NULL, timeout = 600) {
   if (missing(type)) {
     stop(mzlib_usage_error(paste0(
       "type is required: one of ", paste(PTMQTL_PAIR_TYPES, collapse = ", "),
@@ -444,13 +497,14 @@ ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NUL
     )))
   }
   args <- ptmqtl_build_pairs_args(observations, type, samples, modifications, categories,
-    min_quantified_fraction, keep_ceiling, remove_run_level, run_level_group, run_level_groups
+    min_quantified_fraction, keep_ceiling, remove_run_level, run_level_group, run_level_groups,
+    include_bounds = include_bounds, run_covariate = run_covariate
   )
   bridge_require_verb("ptmqtl pairs", PTMQTL_SINCE)
   ptmqtl_parse_pairs(bridge_invoke(args, timeout = timeout))
 }
 
-#' Fit, per site, the effect of a per-run trait on logit occupancy, with mzLib's SiteTraitEffects
+#' Fit, per site, the effect of a per-run trait on the log odds of occupancy, with mzLib's SiteTraitEffects
 #'
 #' The model, per site, is logit(occupancy) = b0 + b_trait x trait + covariates + a random intercept
 #' per biological replicate + error, fitted by REML (mzLib's `MixedModel`). The random intercept is
@@ -476,6 +530,11 @@ ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NUL
 #'   above 0 and below 0.5). `NULL`: mzLib's default (5e-5 at mzLib `d10017ce`).
 #' @param keep_ceiling Use runs where the site was seen only modified. `FALSE` sends nothing, so
 #'   mzLib's default (leave them out) applies.
+#' @param scale The unit of the effects and variances (mzLib #1464): `"natural_log_odds"`, where
+#'   `exp(effect)` is the odds ratio per trait unit, or `"log2_odds"`, where an effect of +1 doubles
+#'   the odds. mzLib divides the natural-log fit by ln 2 (variances by (ln 2)^2); `df`, `p_value` and
+#'   `q` do not change. `NULL` (the default) sends nothing: mzLib's default, `"natural_log_odds"`,
+#'   which `scale` in the result reports.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
 #'
 #' @return An `mzlibr_trait_effects`:
@@ -504,7 +563,8 @@ ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NUL
 #'     `min_runs` (runs) and `min_replicates` (replicates), the thresholds used, yours or mzLib's
 #'     default; `logit_epsilon` (fraction, 0 to 1), the clamp used; `exclude_ceiling`; `scale`,
 #'     the unit of every effect, standard error and variance, `"natural_log_odds"` (mzLib's default,
-#'     the logit) or `"log2_odds"` (mzLib #1464; `NA` from a bridge before pyMzLib 0.7.0);
+#'     the logit) or `"log2_odds"` (with `scale = "log2_odds"`; mzLib #1464; `NA` from a bridge
+#'     before pyMzLib 0.7.0);
 #'     `status_counts`, sites (sites) per status; `ignored_columns`; `row_count` rows;
 #'     `column_names`.
 #'   - `caveats`: the model and what it leaves out, plus any that apply to this input.
@@ -526,12 +586,18 @@ ptmqtl_pairs <- function(observations, type, samples = NULL, modifications = NUL
 #'   file.path(data, "trait_runs.tsv"))
 #' fit
 #' fit$records[, c("protein_accession", "status", "effect", "df", "runs", "replicates")]
+#'
+#' # The same fit in log2 odds, where +1 doubles the odds of the modified form:
+#' log2 <- ptmqtl_trait_effects(file.path(data, "trait_occupancy.tsv"),
+#'   file.path(data, "trait_runs.tsv"), scale = "log2_odds")
+#' trait <- log2$records[log2$records$protein_accession == "TRAIT_SITE", ]
+#' c(scale = log2$scale, effect = round(trait$effect, 2), p_value = signif(trait$p_value, 2))
 #' \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 #' @spec ptmqtl.trait-effects
 #' @export
 ptmqtl_trait_effects <- function(occupancy, runs, min_runs = NULL, min_replicates = NULL,
-                                 logit_epsilon = NULL, keep_ceiling = FALSE, timeout = 600) {
-  args <- ptmqtl_build_trait_args(occupancy, runs, min_runs, min_replicates, logit_epsilon, keep_ceiling)
+                                 logit_epsilon = NULL, keep_ceiling = FALSE, scale = NULL, timeout = 600) {
+  args <- ptmqtl_build_trait_args(occupancy, runs, min_runs, min_replicates, logit_epsilon, keep_ceiling, scale)
   bridge_require_verb("ptmqtl trait-effects", PTMQTL_SINCE)
   ptmqtl_parse_trait_effects(bridge_invoke(args, timeout = timeout))
 }
@@ -565,6 +631,8 @@ print.mzlibr_site_occupancy <- function(x, ...) {
 print.mzlibr_ptm_pairs <- function(x, ...) {
   cat("<mzlibr_ptm_pairs> ", x$type, ": ", format(x$row_count), " pair(s) over ",
     format(length(x$run_names)), " runs",
+    if (isTRUE(x$include_bounds)) ", one-form runs as tied bounds" else "",
+    if (!is.na(x$run_covariate_name)) paste0(", given ", x$run_covariate_name) else "",
     if (isTRUE(x$remove_run_level)) paste0(", given the run level (", x$run_level_group, ")") else "", "\n",
     sep = ""
   )
@@ -580,7 +648,8 @@ print.mzlibr_ptm_pairs <- function(x, ...) {
 print.mzlibr_trait_effects <- function(x, ...) {
   cat("<mzlibr_trait_effects> ", format(x$row_count), " sites against ", x$trait_name,
     if (length(x$covariate_names) > 0L) paste0(", given ", paste(x$covariate_names, collapse = ", ")) else "",
-    " (min ", format(x$min_runs), " runs, ", format(x$min_replicates), " replicates)\n",
+    " (min ", format(x$min_runs), " runs, ", format(x$min_replicates), " replicates)",
+    if (!is.na(x$scale)) paste0(", on ", x$scale) else "", "\n",
     sep = ""
   )
   if (length(x$status_counts) > 0L) {

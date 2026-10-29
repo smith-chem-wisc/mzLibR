@@ -2,10 +2,10 @@
 % Do not edit by hand; edit R/ and re-run.
 \name{ptmqtl_trait_effects}
 \alias{ptmqtl_trait_effects}
-\title{Fit, per site, the effect of a per-run trait on logit occupancy, with mzLib's SiteTraitEffects}
+\title{Fit, per site, the effect of a per-run trait on the log odds of occupancy, with mzLib's SiteTraitEffects}
 \usage{
 ptmqtl_trait_effects(occupancy, runs, min_runs = NULL, min_replicates = NULL,
-  logit_epsilon = NULL, keep_ceiling = FALSE, timeout = 600)
+  logit_epsilon = NULL, keep_ceiling = FALSE, scale = NULL, timeout = 600)
 }
 \arguments{
 \item{occupancy}{The table \code{\link{ptmqtl_occupancy}} writes with \code{out} (columns found by header name).
@@ -28,6 +28,12 @@ ptmqtl_trait_effects(occupancy, runs, min_runs = NULL, min_replicates = NULL,
 
 \item{keep_ceiling}{Use runs where the site was seen only modified. \code{FALSE} sends nothing, so
   mzLib's default (leave them out) applies.}
+
+\item{scale}{The unit of the effects and variances (mzLib #1464): \code{"natural_log_odds"}, where
+  \code{exp(effect)} is the odds ratio per trait unit, or \code{"log2_odds"}, where an effect of +1 doubles
+  the odds. mzLib divides the natural-log fit by ln 2 (variances by (ln 2)^2); \code{df}, \code{p_value} and
+  \code{q} do not change. \code{NULL} (the default) sends nothing: mzLib's default, \code{"natural_log_odds"},
+  which \code{scale} in the result reports.}
 
 \item{timeout}{Seconds to allow, or \code{NULL} to wait indefinitely.
 }
@@ -73,7 +79,8 @@ An \code{mzlibr_trait_effects}:
     \code{min_runs} (runs) and \code{min_replicates} (replicates), the thresholds used, yours or mzLib's
     default; \code{logit_epsilon} (fraction, 0 to 1), the clamp used; \code{exclude_ceiling}; \code{scale},
     the unit of every effect, standard error and variance, \code{"natural_log_odds"} (mzLib's default,
-    the logit) or \code{"log2_odds"} (mzLib #1464; \code{NA} from a bridge before pyMzLib 0.7.0);
+    the logit) or \code{"log2_odds"} (with \code{scale = "log2_odds"}; mzLib #1464; \code{NA} from a bridge
+    before pyMzLib 0.7.0);
     \code{status_counts}, sites (sites) per status; \code{ignored_columns}; \code{row_count} rows;
     \code{column_names}.
   - \code{caveats}: the model and what it leaves out, plus any that apply to this input.
@@ -107,7 +114,7 @@ Wire verb \code{ptmqtl trait-effects}. Generated from the bridge's verb spec \co
 \item{\code{min_replicates} (wire \code{--min-replicates})}{int; in \strong{replicates}; default \samp{mzLib's SiteTraitOptions.MinReplicates, 4 at the pin}; range \code{>= 0}. The fewest distinct biological replicates among those runs; fewer is below_support. Absent, mzLib's default applies.}
 \item{\code{logit_epsilon} (wire \code{--logit-epsilon})}{float; in \strong{fraction (0 to 1)}; default \samp{mzLib's SiteTraitOptions.LogitEpsilon, 5e-5 at the pin (half the 4-decimal resolution of stored fractions)}; range \code{> 0 and < 0.5}. Each fraction is clamped to [epsilon, 1 - epsilon] before the logit, so 0 and 1 have finite logits. Absent, mzLib's default applies.}
 \item{\code{keep_ceiling} (wire \code{--keep-ceiling})}{flag; default \samp{absent: mzLib's SiteTraitOptions.ExcludeCeiling, true at the pin, so ceilings are left out}. Use a run where the site was seen only modified (a fraction of 1 with unmodified_quantified false) as a response, clamped below 1. mzLib leaves such a ceiling out unless asked.}
-\item{wire \code{--scale}}{string; default \samp{absent: mzLib's SiteTraitOptions.Scale, natural_log_odds at the pin}; range \code{natural_log_odds | log2_odds}. The unit the effects and variances are reported in (mzLib's OccupancyScale, #1464). natural_log_odds: ln(f / (1 - f)), the logit, so exp(effect) is the odds ratio per unit. log2_odds: log2(f / (1 - f)), so an effect of +1 doubles the odds per unit; mzLib divides the natural-log fit's effects and standard errors by ln 2 and its variances by (ln 2)^2, and leaves df, p and q unchanged: a change of unit, not a refit. Absent, the bridge sets nothing and mzLib's default applies. \emph{Not an argument here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later mzLibR port; mzLib's default, natural_log_odds, always applies, and the result's scale says so.}}
+\item{\code{scale}}{string; default \samp{absent: mzLib's SiteTraitOptions.Scale, natural_log_odds at the pin}; range \code{natural_log_odds | log2_odds}. The unit the effects and variances are reported in (mzLib's OccupancyScale, #1464). natural_log_odds: ln(f / (1 - f)), the logit, so exp(effect) is the odds ratio per unit. log2_odds: log2(f / (1 - f)), so an effect of +1 doubles the odds per unit; mzLib divides the natural-log fit's effects and standard errors by ln 2 and its variances by (ln 2)^2, and leaves df, p and q unchanged: a change of unit, not a refit. Absent, the bridge sets nothing and mzLib's default applies.}
 }
 }
 \section{Returned fields}{
@@ -212,5 +219,11 @@ fit <- ptmqtl_trait_effects(file.path(data, "trait_occupancy.tsv"),
   file.path(data, "trait_runs.tsv"))
 fit
 fit$records[, c("protein_accession", "status", "effect", "df", "runs", "replicates")]
+
+# The same fit in log2 odds, where +1 doubles the odds of the modified form:
+log2 <- ptmqtl_trait_effects(file.path(data, "trait_occupancy.tsv"),
+  file.path(data, "trait_runs.tsv"), scale = "log2_odds")
+trait <- log2$records[log2$records$protein_accession == "TRAIT_SITE", ]
+c(scale = log2$scale, effect = round(trait$effect, 2), p_value = signif(trait$p_value, 2))
 \dontshow{mzLibR:::replay_bridge_stop(.mzlibr_example)}
 }
