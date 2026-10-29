@@ -1,8 +1,8 @@
 # Fetching a bridge executable, on the user's explicit instruction and never otherwise.
 #
-# This package cannot carry the ~140 MB payload: CRAN's package size limit is about 5 MB, CRAN
-# policy forbids writing outside tempdir() without explicit user consent, and it forbids
-# downloading during install or .onLoad. So the design is forced: an exported function the user
+# This package cannot carry the bridge (about 65 MB to download, about 110 MB unpacked): CRAN's
+# package size limit is about 5 MB, CRAN policy forbids writing outside tempdir() without
+# explicit user consent, and it forbids downloading during install or .onLoad. So the design is forced: an exported function the user
 # calls, which asks first.
 #
 # It used to add that this was "different from both siblings", on the grounds that Python's wheel
@@ -73,7 +73,7 @@ bridge_release_url <- function(asset, version = MZLIB_BRIDGE_VERSION) {
 # The SHA-256 of a file, or NULL if this R cannot compute one.
 #
 # `tools::sha256sum()` is recent; on an older R the system tools are tried, and if none is
-# present the caller must decide. What is never done is to skip verification quietly: a 140 MB
+# present the caller must decide. What is never done is to skip verification quietly: a 100 MB
 # executable that is about to be run is not something to accept on the strength of HTTPS alone.
 bridge_sha256 <- function(path) {
   if (exists("sha256sum", where = asNamespace("tools"), inherits = FALSE)) {
@@ -132,9 +132,10 @@ bridge_ask_consent <- function(destination, size_note) {
 
 #' Download a bridge executable into a local cache
 #'
-#' mzLibR needs a bridge executable and does not ship one: it is about 140 MB, which no CRAN
-#' package may carry. This fetches the one built for your platform, verifies it against a
-#' recorded SHA-256, and unpacks it where [mzlibr_bridge_path()] will find it.
+#' mzLibR needs a bridge executable and does not ship one: it is about 65 MB to download and
+#' about 110 MB unpacked, which no CRAN package may carry. This fetches the one built for
+#' your platform, verifies it against a recorded SHA-256, and unpacks it where
+#' [mzlibr_bridge_path()] will find it.
 #'
 #' **It is never called for you.** CRAN policy forbids a package downloading anything at install
 #' time or writing outside the session's temporary directory without consent, and both are right
@@ -205,13 +206,13 @@ mzlibr_install_bridge <- function(version = MZLIB_BRIDGE_VERSION, destination = 
   }
 
   if (!isTRUE(consent)) {
-    bridge_ask_consent(target_dir, "140 MB")
+    bridge_ask_consent(target_dir, "65 MB (about 110 MB once unpacked)")
   }
 
   archive <- tempfile("mzlib-bridge-", fileext = ".tar.gz")
   on.exit(unlink(archive, recursive = TRUE), add = TRUE)
 
-  # R's download timeout defaults to 60 seconds, which a 140 MB payload will not meet.
+  # R's download timeout defaults to 60 seconds, which a 65 MB download often will not meet.
   previous <- options(timeout = max(timeout, getOption("timeout", 60)))
   on.exit(options(previous), add = TRUE)
 

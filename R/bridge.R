@@ -72,8 +72,8 @@ bridge_platform_tag <- function(sysname = Sys.info()[["sysname"]],
 #
 # `tools::R_user_dir()` does exactly this, but it arrived in R 4.0 and this package supports
 # 3.5, so the same locations are resolved by hand. The layout matches `R_user_dir()`'s on
-# purpose: a user on old R and a user on new R share one cache rather than downloading 140 MB
-# twice.
+# purpose: a user on old R and a user on new R share one cache rather than downloading the
+# bridge twice.
 mzlibr_cache_dir <- function() {
   explicit <- Sys.getenv("R_USER_CACHE_DIR", "")
   if (nzchar(explicit)) {

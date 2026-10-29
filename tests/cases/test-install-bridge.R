@@ -1,7 +1,7 @@
 # Fetching a bridge.
 #
 # Nothing here downloads anything. The parts worth testing are the refusals — mzLibR must never
-# install an executable it has not verified, and must never write 140 MB anywhere without being
+# install an executable it has not verified, and must never write 110 MB anywhere without being
 # asked — and those are all reachable before a byte moves.
 
 test_that("every published platform has a bridge tarball and a checksum", {
@@ -41,7 +41,7 @@ test_that("linux-arm64 is refused with the reason and a way forward", {
 })
 
 test_that("a url without a checksum is refused", {
-  # mzLibR will not install an executable it cannot verify, and an unverified 140 MB binary
+  # mzLibR will not install an executable it cannot verify, and an unverified 100 MB binary
   # about to be run is not something to accept on the strength of HTTPS alone.
   expect_error(
     mzlibr_install_bridge(url = "https://example.invalid/bridge.zip", consent = TRUE),
@@ -51,7 +51,7 @@ test_that("a url without a checksum is refused", {
 
 test_that("a non-interactive session without consent refuses before downloading", {
   # CRAN policy forbids writing outside tempdir() without explicit consent, and this is also
-  # simply correct: 140 MB should not appear on someone's disk because they mistyped.
+  # simply correct: 110 MB should not appear on someone's disk because they mistyped.
   #
   # `interactive()` is FALSE under Rscript, which is what makes this testable at all.
   skip_if(interactive(), "needs a non-interactive session")
@@ -65,9 +65,9 @@ test_that("the consent message names the size and the destination", {
   # Both are what a person needs to decide. A bare "proceed?" is not consent to anything in
   # particular.
   where <- file.path(tempfile("mzlibr-consent-"), "win-x64")
-  condition <- tryCatch(mz$bridge_ask_consent(where, "140 MB"), error = function(e) e)
+  condition <- tryCatch(mz$bridge_ask_consent(where, "65 MB"), error = function(e) e)
   expect_true(inherits(condition, "mzlib_usage_error"))
-  expect_true(grepl("140 MB", conditionMessage(condition), fixed = TRUE))
+  expect_true(grepl("65 MB", conditionMessage(condition), fixed = TRUE))
   expect_true(grepl(where, conditionMessage(condition), fixed = TRUE))
 })
 

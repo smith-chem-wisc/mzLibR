@@ -11,7 +11,7 @@ on:
 
 jobs:
   # The offline suite must pass with no network and no bridge staged, on every platform. That is
-  # the contract: a contributor clones, runs the tests, and is green without a 140 MB payload.
+  # the contract: a contributor clones, runs the tests, and is green without a 65 MB download.
   #
   # This job is also where the R port earns its cross-platform claim. It was authored only on
   # Windows R 4.6.1; the matrix below is the first time macOS, Linux, and the R 3.5 floor actually
