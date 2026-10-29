@@ -78,7 +78,8 @@ in R or in the bridge; every output and every status is mzLib's.</p>
   included, sent to mzLib exactly as given. An <code>NA</code>, a blank entry or one with a line break is
   refused, because it would shift every later row. Split an ambiguous MetaMorpheus full sequence
   (<code>|</code>-joined candidates) first: mzLib joins the candidates into one sequence, with only a
-  warning.</p></dd>
+  warning - or fails it (<code>"UnknownFormat"</code>) when a candidate ends in a C-terminal modification
+  or the next one's N-terminal modification lands on an already modified residue.</p></dd>
 
 
 <dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>
@@ -117,6 +118,11 @@ under its own name, with status <code>"converted"</code>, where Unimod fails the
 on <code>mode</code>. In ProForma output, treat any bracket that is not a <code>UNIMOD:</code> term as unresolved. The
 <code>pro_forma</code> column <code><a href="readers_read_records.html">readers_read_records</a></code> computes for a <code>.psmtsv</code> written without one comes
 from the same serializer.</p>
+<p><strong>Malformed modification text fails its row</strong> (mzLib #1457), with <code>source = "mzLib"</code> or
+<code>"MassShift"</code>: an empty modification (<code>PEP[]TIDE</code>), a modification that does not follow an
+unmodified residue (two leading groups, or two on one residue, <code>PEPM[A][B]TIDE</code>) and anything
+after the C-terminal modification are each a <code>"failed"</code> row with <code>failure_reason</code>
+<code>"UnknownFormat"</code>, under every <code>mode</code> but <code>"ThrowException"</code>. The rest of the batch converts.</p>
     </div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -138,7 +144,7 @@ from the same serializer.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>peptidoform convert</code>. Generated from the bridge's verb spec <code>peptidoform.convert.yaml</code> (bridge commit <code>60b1d25968a1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>peptidoform convert</code>. Generated from the bridge's verb spec <code>peptidoform.convert.yaml</code> (bridge commit <code>45833ca804d6</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs" class="external-link"><code>SequenceConversionService.Default</code></a> in <code>mzLib/Omics/SequenceConversion/SequenceConversionService.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConversionService.cs" class="external-link"><code>SequenceConversionService.GetConverter</code></a> in <code>mzLib/Omics/SequenceConversion/SequenceConversionService.cs</code> at mzLib <code>0a808fec</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Omics/SequenceConversion/SequenceConverter.cs" class="external-link"><code>ISequenceConverter.Convert</code></a> in <code>mzLib/Omics/SequenceConversion/SequenceConverter.cs</code> at mzLib <code>0a808fec</code></p></li>
@@ -257,7 +263,8 @@ from the same serializer.</p>
 <li><p>ProForma writes a modification it cannot resolve under its mzLib name and the row is still converted, so status converted does not mean every bracket in a ProForma output is a controlled-vocabulary term. Unimod either names a modification by its UNIMOD accession or reports it in incompatible_items.</p></li>
 <li><p>A modification the target cannot write: under ReturnNull the row fails (output null); under RemoveIncompatibleElements and UsePrimarySequence it is dropped from output, named in incompatible_items, and the row is converted_with_warnings; under ThrowException the first such input fails the whole call as a usage error.</p></li>
 <li><p>status is mzLib's verdict read off ConversionWarnings; failure_reason can be null on a failed row (the Unimod target under ReturnNull records only incompatible_items).</p></li>
-<li><p>An ambiguous MetaMorpheus full sequence ('|'-joined candidates) is not refused: mzLib's parser skips each '|' with a warning and joins the candidates into one sequence, status converted_with_warnings. Split ambiguous full sequences before converting them.</p></li>
+<li><p>Since mzLib #1457, <code>--from</code> mzLib and <code>--from</code> MassShift refuse malformed modification text they used to convert with part of it lost or misplaced: an empty modification (PEP[]TIDE), a modification that does not follow an unmodified residue (two leading groups, or two groups on one residue), and anything but whitespace after the C-terminal modification. Each such line is a failed row with failure_reason UnknownFormat, under every mode but ThrowException. Two groups on one residue used to fail the whole call with an ArgumentException; now only that line fails.</p></li>
+<li><p>An ambiguous MetaMorpheus full sequence ('|'-joined candidates) is usually not refused: mzLib's parser skips each '|' with a warning and joins the candidates into one sequence, status converted_with_warnings. It fails (UnknownFormat, since #1457) when a candidate ends in a C-terminal modification, or when the next candidate's N-terminal group lands on a residue that already carries one. Split ambiguous full sequences before converting them.</p></li>
 <li><p>Each stdin line is one input, given to mzLib exactly as read; blank lines are skipped; rows are in input order at any <code>--threads</code>.</p></li>
 </ul></div>
     <div class="section level2">

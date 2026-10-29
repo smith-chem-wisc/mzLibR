@@ -96,11 +96,14 @@ cross-format projection of it.</p>
 told apart by what the directory holds, and several formats share <code>.tsv</code>. Nor is it always how
 dispatch works: a DIA-NN report is recognised by its columns, not its name, so a renamed
 <code>report.tsv</code> still reads, and any <code>.parquet</code> whose columns include <code>Precursor.Id</code>,
-<code>Stripped.Sequence</code> and <code>Run</code> is a <code>DiaNnReportParquet</code> while any other <code>.parquet</code> is refused.</p>
+<code>Stripped.Sequence</code> and <code>Run</code> is a <code>DiaNnReportParquet</code> while any other <code>.parquet</code> is refused.
+A <code>.parquet</code> mzLib cannot open at all - another process holds it, or you may not read it - is an
+<code>mzlib_bridge_error</code> naming the I/O failure (<code>IOException</code> or <code>UnauthorizedAccessException</code>,
+mzLib #1478), not that refusal.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers formats</code>. Generated from the bridge's verb spec <code>readers.formats.yaml</code> (bridge commit <code>60b1d25968a1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers formats</code>. Generated from the bridge's verb spec <code>readers.formats.yaml</code> (bridge commit <code>45833ca804d6</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.GetFileExtension</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.GetResultFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>

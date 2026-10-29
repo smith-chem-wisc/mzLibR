@@ -197,7 +197,7 @@ a snapshot is written once, and next release's goes in a new directory.
 ## Wraps
 
 Wire verb `genes orthology`. Generated from the bridge's verb spec
-`genes.orthology.yaml` (bridge commit `60b1d25968a1`) by
+`genes.orthology.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

@@ -76,17 +76,17 @@ answer.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>The proton mass, not the hydrogen atom.</strong> 1.00727646677 against 1.007825 - a difference of
 0.55 mDa, or 1.1 ppm at m/z 500, which on an Orbitrap is a match versus a miss.</p>
-<p><strong>Fixed charges are not double-counted.</strong> A peptide whose modification leaves a permanently
-charged residue - trimethyl-lysine gives a quaternary ammonium, and UniProt records the delta
-as 43.054227, which is C3H7 *minus an electron* - already carries that charge in its
-<code>monoisotopic_mass</code>. Only <code>charge - fixed_charges</code> protons are added. Adding a full
-complement would put a 2+ trimethylated peptide half a Thomson high, on the most important
-histone modification there is.</p>
-<p>A peptide with a fixed charge is observable at that charge with no protonation at all, which
-is why <code>charge</code> may not be below it.</p>
-<p>Note that **fragments carry <code>neutral_mass</code> and deliberately have no m/z**: a c or z ion
-carries only the fixed charges within its own span, and per-fragment charge accounting does
-not exist on this wire.</p>
+<p><strong>Permanently charged modifications are not double-counted.</strong> Trimethylation of a lysine
+epsilon-amine gives a quaternary ammonium, which carries its charge with no proton. UniProt
+records the delta as 43.054227 (C3H7 *minus an electron*); mzLib loads it one proton lighter, at
+42.046951 (C3H6), so adding <code>charge</code> protons to <code>monoisotopic_mass</code> gives the right m/z. Adding a
+full complement to UniProt's mass would put a 2+ trimethylated peptide half a Thomson high.</p>
+<p><code>fixed_charges</code> is deprecated and always 0 from the pyMzLib 0.7.0 bridge, so the formula below
+adds <code>charge</code> protons. It still subtracts <code>fixed_charges</code>, which keeps the m/z right for a digest
+from an older bridge, whose <code>monoisotopic_mass</code> carried UniProt's charged mass: the m/z is the
+same from either.</p>
+<p>Fragments carry <code>neutral_mass</code>, charged modifications included at their corrected mass, so a
+fragment's m/z at charge z is <code>(neutral_mass + z * 1.00727646677) / z</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>

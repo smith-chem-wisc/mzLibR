@@ -85,7 +85,7 @@ A character vector of the paths where the files now are.
 ## Wraps
 
 Wire verb `pride download`. Generated from the bridge's verb spec
-`pride.download.yaml` (bridge commit `60b1d25968a1`) by
+`pride.download.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

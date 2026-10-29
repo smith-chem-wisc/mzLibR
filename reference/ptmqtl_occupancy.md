@@ -10,8 +10,10 @@ modification there, over the summed intensity of every quantified
 peptidoform that covers the position - the estimator MetaMorpheus writes
 as `IntensityOccupancy_`. Each cell keeps its state, so a censored cell
 is never mistaken for a 0: a `"floor"` (the modified form was identified
-but not quantified) is low but not zero, and `"not_detected"` is
-unknown. Neither has a `fraction`.
+but not quantified) is low but not zero, and `"not_detected"`
+(peptidoforms covering the site were identified in the run, quantified
+or not, and none carried the modification; mzLib \#1468) is a bound
+below what the run could detect. Neither has a `fraction`.
 
 ## Usage
 
@@ -91,18 +93,24 @@ of the quantified forms carrying the modification here, 0 unless
 quantified; `covering_intensity` (intensity, instrument units), of every
 quantified form covering the position, 0 for `"count_only"`; `fraction`
 (fraction, 0 to 1), modified over covering intensity, `NA` unless
-`state` is `"quantified"` - censored, never 0; and
-`unmodified_quantified`, where `FALSE` with `fraction` 1 is a
-**ceiling**: the site was seen only modified. - `observations_file` and
-`samples_file` (`NA` without `samples`), as absolute paths;
-`observation_count` rows read; `run_count` runs; `sample_count` samples,
-`NA` without `samples`; `run_names`; `site_count` sites; `state_counts`,
-cells per state; `modifications` and `categories`, the filter given,
-`NULL` for none; `ignored_columns`, columns that were not read (a
-misspelled `previous_residue` shows up here); `row_count` rows, returned
-or written; `column_names`; `written` (`path`, `format`, `row_count`),
-or `NULL`. - `caveats`: what the numbers are and are not, plus any that
-apply to this input.
+`state` is `"quantified"` - censored, never 0; `unmodified_quantified`,
+where `FALSE` with `fraction` 1 is a **ceiling**: the site was seen only
+modified; and the peptidoform counts (mzLib \#1468), which count
+identifications, not intensity: `covering_peptidoforms` (peptidoforms),
+the distinct peptidoforms covering the position identified in the run,
+quantified or not - the n of a cell's k of n - and
+`modified_peptidoforms` (peptidoforms), those of them carrying this
+modification here - the k, 0 for `"not_detected"`. Both are `NA` only
+from a table that did not supply them; mzLib's calculation always
+does. - `observations_file` and `samples_file` (`NA` without `samples`),
+as absolute paths; `observation_count` rows read; `run_count` runs;
+`sample_count` samples, `NA` without `samples`; `run_names`;
+`site_count` sites; `state_counts`, cells per state; `modifications` and
+`categories`, the filter given, `NULL` for none; `ignored_columns`,
+columns that were not read (a misspelled `previous_residue` shows up
+here); `row_count` rows, returned or written; `column_names`; `written`
+(`path`, `format`, `row_count`), or `NULL`. - `caveats`: what the
+numbers are and are not, plus any that apply to this input.
 
 ## Positions
 
@@ -115,18 +123,18 @@ group, so its `IntensityOccupancy_` can differ.
 ## Wraps
 
 Wire verb `ptmqtl occupancy`. Generated from the bridge's verb spec
-`ptmqtl.occupancy.yaml` (bridge commit `60b1d25968a1`) by
+`ptmqtl.occupancy.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
-- [`SiteOccupancyCalculator.Calculate`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs)
-  in `mzLib/Quantification/PtmQtl/SiteOccupancy.cs` at mzLib `d10017ce`
+- [`SiteOccupancyCalculator.Calculate`](https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteOccupancy.cs)
+  in `mzLib/Quantification/PtmQtl/SiteOccupancy.cs` at mzLib `cc67b7a2`
 
 - [`PeptidoformObservation`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs)
   in `mzLib/Quantification/PtmQtl/SiteOccupancy.cs` at mzLib `d10017ce`
 
-- [`SiteRunOccupancy`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs)
-  in `mzLib/Quantification/PtmQtl/SiteOccupancy.cs` at mzLib `d10017ce`
+- [`SiteRunOccupancy`](https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteOccupancy.cs)
+  in `mzLib/Quantification/PtmQtl/SiteOccupancy.cs` at mzLib `cc67b7a2`
 
 - [`ModificationSite`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/SiteOccupancy.cs)
   in `mzLib/Quantification/PtmQtl/SiteOccupancy.cs` at mzLib `d10017ce`
@@ -278,9 +286,9 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `caveats`:
 
-  string\[\]; never `NA`. Six static caveats; one more with `--samples`,
-  one when columns were not read, and one counting the censored (floor
-  or not_detected) cells when there are any.
+  string\[\]; never `NA`. Seven static caveats; one more with
+  `--samples`, one when columns were not read, and one counting the
+  censored (floor or not_detected) cells when there are any.
 
 ## Columns of `records`
 
@@ -326,9 +334,11 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   fraction in (0, 1\]) \| floor (the modified form was identified but
   not quantified while forms covering the site were: low but NOT zero)
   \| count_only (the modified form was identified, but nothing covering
-  the site was quantified) \| not_detected (the site was covered by
-  quantified peptides but no modified form was identified: unknown, not
-  0).
+  the site was quantified) \| not_detected (a covered-zero, mzLib's
+  DEF-OCC-COVERED-ZERO: peptidoforms covering the site were identified
+  in this run and none carried the modification; a bound below what the
+  run could detect, not a measured 0; since mzLib \#1468 the covering
+  forms need not be quantified).
 
 - `modified_intensity`:
 
@@ -345,8 +355,8 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `fraction`:
 
   float; in **fraction (0 to 1)**; `NA` when state is not quantified:
-  the occupancy is censored (floor) or unknown (count_only,
-  not_detected), never 0. modified_intensity / covering_intensity.
+  the occupancy is censored (floor), a bound (not_detected) or unknown
+  (count_only), never 0. modified_intensity / covering_intensity.
 
 - `unmodified_quantified`:
 
@@ -354,6 +364,22 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   does not carry this modification there (the unmodified form, or
   another modification at the same position). false with fraction 1 is a
   ceiling: the site was seen only modified.
+
+- `covering_peptidoforms`:
+
+  int; in **peptidoforms**; `NA` when not supplied (Calculate always
+  supplies it; a stored table may not). Distinct peptidoforms covering
+  the position identified in this run (or sample), quantified or not:
+  mzLib's SiteRunOccupancy.CoveringPeptidoforms (#1468). It counts
+  identifications, not intensity: the n of a cell's k of n.
+
+- `modified_peptidoforms`:
+
+  int; in **peptidoforms**; `NA` when not supplied, as
+  covering_peptidoforms. Of covering_peptidoforms, those carrying this
+  modification at the position (SiteRunOccupancy.ModifiedPeptidoforms):
+  the k. 0 for not_detected. A count_only cell with k = n was seen only
+  modified; with k \< n both forms were identified.
 
 ## Errors
 
@@ -403,7 +429,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - fraction is null unless state is quantified. A floor (identified, not
   quantified, while the site was covered) is low but not zero, and
-  not_detected is unknown: neither may be averaged in as 0.
+  not_detected is a bound below detection: neither may be averaged in as
+  0.
 
 - A fraction of 1 with unmodified_quantified false is a ceiling: the
   unmodified form may be present below detection.
@@ -426,6 +453,12 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - With samples, fractions are summed before the ratio. Map only
   fractions of one sample together; technical replicates keep their own
   run.
+
+- covering_peptidoforms and modified_peptidoforms count identifications,
+  not intensity: the k of n of a cell with no fraction. They tell a
+  count_only cell seen only modified from one where both forms were
+  identified, which is what ptmqtl pairs `--include-bounds` ranks as a
+  high bound or leaves out.
 
 ## Performance
 

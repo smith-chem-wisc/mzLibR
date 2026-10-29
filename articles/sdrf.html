@@ -490,7 +490,7 @@ their values are joined with <code>_</code>, in the order you give:</p>
 <code class="sourceCode R"><span><span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"factor value[genotype]"</span>, <span class="st">"factor value[treatment]"</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_design.html">sdrf_design</a></span><span class="op">(</span><span class="st">"PXD067622.sdrf.tsv"</span>, condition_columns <span class="op">=</span> <span class="va">both</span><span class="op">)</span></span>
 <span><span class="va">d</span></span>
-<span><span class="co">#&gt; &lt;mzlibr_sdrf_design&gt; PXD067622.sdrf.tsv: 24 runs in 8 condition(s)</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_sdrf_design&gt; F:\ClaudeTestBuilds\pymzlib-596\pkg\python\tests\fixtures\PXD067622.sdrf.tsv: 24 runs in 8 condition(s)</span></span>
 <span><span class="co">#&gt;   files keyed on: comment[data file]</span></span>
 <span><span class="co">#&gt;   condition from: factor value[genotype] + factor value[treatment]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file_name"</span>, <span class="st">"condition"</span>, <span class="st">"biological_replicate"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
@@ -555,18 +555,19 @@ refusal: joining every factor could split a condition on a nuisance
 factor.</p>
 </div>
 <div class="section level3">
-<h3 id="replicate-numbers-are-ranked-within-each-condition">Replicate numbers are ranked within each condition<a class="anchor" aria-label="anchor" href="#replicate-numbers-are-ranked-within-each-condition"></a>
+<h3 id="replicate-numbers-are-the-sdrfs-own">Replicate numbers are the SDRF’s own<a class="anchor" aria-label="anchor" href="#replicate-numbers-are-the-sdrfs-own"></a>
 </h3>
 <p>A drafted SDRF often copies the study-wide run index out of the file
-names. MetaMorpheus wants replicates numbered within each condition, so
-mzLib ranks them back, and records every renumbering in
-<code>notes</code>, the only place it is kept:</p>
+names. mzLib keeps those numbers as written, gaps included, and never
+ranks or closes them up: replicate 4 of one condition can be the same
+subject as replicate 4 of another, and a gap can be a lost sample.
+<code>notes</code> flags each condition whose numbers are not 1..N:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ranked</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_design.html">sdrf_design</a></span><span class="op">(</span><span class="st">"PXD067622_studywide.sdrf.tsv"</span>, condition_columns <span class="op">=</span> <span class="va">both</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="va">ranked</span><span class="op">$</span><span class="va">notes</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates renumbered 22 -&gt; 1, 23 -&gt; 2, 24 -&gt; 3.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">ranked</span><span class="op">$</span><span class="va">records</span>, <span class="va">d</span><span class="op">$</span><span class="va">records</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">kept</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdrf_design.html">sdrf_design</a></span><span class="op">(</span><span class="st">"PXD067622_studywide.sdrf.tsv"</span>, condition_columns <span class="op">=</span> <span class="va">both</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="va">kept</span><span class="op">$</span><span class="va">notes</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates 22, 23, 24, kept as the SDRF numbers them. Every row of the SDRF is searched, so the gaps are how the SDRF numbers its samples, not lost samples.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">kept</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">biological_replicate</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1]  0 23</span></span></code></pre></div>
 <p><strong>Label-free only.</strong> An isobaric SDRF needs a channel
 design, which <code><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code> reads, below. For the
 channels themselves, see the isobaric kits article.</p>

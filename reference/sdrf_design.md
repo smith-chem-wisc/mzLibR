@@ -8,9 +8,15 @@ MetaMorpheus's own design validator runs and **refuses rather than
 repairs**: a factor written `not available`, two files claiming the same
 replicate and fraction, a document with several factor columns and no
 declaration - each is a refusal, and all of them are reported at once.
-It relabels in only two ways, both recorded in `notes`: study-wide
-biological replicate numbers are ranked within each condition
-(`22 -> 1`), and rows for files the search does not read are dropped.
+**Replicate and fraction numbers are the SDRF's, gaps included** (mzLib
+\#1426): mzLib never ranks or closes them up, because replicate 4 of one
+condition can be the same subject as replicate 4 of another, and a gap
+can be a lost sample. `notes` records what mzLib added, dropped or wants
+checked: a biological replicate it added where the SDRF gives none (no
+column, or `not available`), after the highest the condition uses; rows
+for files the search does not read, which are dropped; conditions whose
+numbers are not 1..N; and sample names whose one number disagrees with
+their replicate.
 
 ## Usage
 
@@ -45,7 +51,9 @@ sdrf_design(path, condition_columns = NULL, searched_files = NULL, out = NULL,
   Also write MetaMorpheus's `ExperimentalDesign.tsv` (1-based) here.
   Must end in `.tsv`. Written only when the design is valid.
   MetaMorpheus finds the file only when it is named
-  `ExperimentalDesign.tsv` and sits beside the spectra.
+  `ExperimentalDesign.tsv` and sits beside the spectra, and refuses one
+  whose replicate numbers have gaps until a MetaMorpheus release carries
+  smith-chem-wisc/MetaMorpheus#2928.
 
 - timeout:
 
@@ -71,8 +79,8 @@ mzLib's words; `report`, mzLib's account of all of it; `written`
 run in SDRF row order: `full_path`, `file_name` (the run key,
 `Intensity_<file_name>`), `condition`, and `biological_replicate`,
 `technical_replicate` and `fraction`, **0-based**, as the quant
-functions take them. `ExperimentalDesign.tsv` writes the same numbers
-plus one.
+functions take them: the SDRF's own numbers minus one, gaps included.
+`ExperimentalDesign.tsv` writes the same numbers plus one.
 
 ## From SDRF to FlashLFQ
 
@@ -94,12 +102,12 @@ for the channels themselves.
 ## Wraps
 
 Wire verb `sdrf design`. Generated from the bridge's verb spec
-`sdrf.design.yaml` (bridge commit `60b1d25968a1`) by
+`sdrf.design.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
-- [`SdrfLabelFreeDesign.Read`](https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs)
-  in `mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs` at mzLib `0a808fec`
+- [`SdrfLabelFreeDesign.Read`](https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs)
+  in `mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs` at mzLib `cc67b7a2`
 
 - [`SdrfLabelFreeDesign.WriteExperimentalDesignTsv`](https://github.com/smith-chem-wisc/mzLib/blob/0a808fec/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs)
   in `mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs` at mzLib `0a808fec`
@@ -183,10 +191,12 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `notes`:
 
-  string\[\]; never `NA`. Every relabelling on the way to a valid
-  design: biological replicates ranked within a condition, with the old
-  -\> new mapping (MAP-33), and rows dropped because the search does not
-  read their file.
+  string\[\]; never `NA`. What mzLib added, dropped or wants checked on
+  the way to a valid design (SdrfLabelFreeDesign.Notes): biological
+  replicates it added where the SDRF gives none, with the numbers; rows
+  dropped because the search does not read their file; conditions whose
+  numbers are not 1..N; and sample names whose one number disagrees with
+  their replicate.
 
 - `report`:
 
@@ -232,8 +242,10 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `biological_replicate`:
 
-  int; never `NA`. 0-based, ranked within the condition
-  (ExperimentalDesign.tsv's Biorep minus 1).
+  int; never `NA`. 0-based: the SDRF's own number minus 1, gaps included
+  and never ranked (since mzLib \#1426). Where the SDRF gives none (no
+  column, or not available), the number mzLib added, after the highest
+  the condition uses. ExperimentalDesign.tsv's Biorep minus 1.
 
 - `technical_replicate`:
 
@@ -283,7 +295,16 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - The table is 0-based, as SpectraFileInfo and the quant verbs take it.
   ExperimentalDesign.tsv is 1-based; mzLib converts when it writes.
 
-- notes is the only record of a renumbering; read it.
+- Replicate and fraction numbers are the SDRF's, gaps included: mzLib
+  never ranks or closes them up (since \#1426), because replicate 4 of
+  one condition can be the same subject as replicate 4 of another, and a
+  gap can be a lost sample. notes flags the gaps and is the only record
+  of a number mzLib added; read it.
+
+- MetaMorpheus refuses a design file whose replicate numbers have gaps
+  until a release carries smith-chem-wisc/MetaMorpheus#2928 (merged
+  2026-10-28), which quantifies it with a warning; `--out` can now write
+  such a file.
 
 - A factor holding not available or not applicable is refused: it would
   pair samples nobody said were alike.
@@ -344,7 +365,7 @@ The spec records these as open. They are listed rather than hidden:
 both <- c("factor value[genotype]", "factor value[treatment]")
 d <- sdrf_design("PXD067622.sdrf.tsv", condition_columns = both)
 d
-#> <mzlibr_sdrf_design> PXD067622.sdrf.tsv: 24 runs in 8 condition(s)
+#> <mzlibr_sdrf_design> F:\ClaudeTestBuilds\pymzlib-596\pkg\python\tests\fixtures\PXD067622.sdrf.tsv: 24 runs in 8 condition(s)
 #>   files keyed on: comment[data file]
 #>   condition from: factor value[genotype] + factor value[treatment]
 head(d$records[, c("file_name", "condition", "biological_replicate")], 4)
@@ -368,8 +389,8 @@ length(refused$refusals)
 writeLines(refused$refusals[[1]])
 #> Line 2 (MSB67868ABand_01.raw): 'factor value[treatment]' is 'not available'. A condition cannot be built from an unknown factor; fill it in, or leave the column out of the declared condition columns to pool these rows.
 
-# Study-wide replicate numbers are ranked within each condition, and the mapping is kept:
-ranked <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
-writeLines(ranked$notes[[2]])
-#> Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates renumbered 22 -> 1, 23 -> 2, 24 -> 3.
+# Study-wide replicate numbers are kept as the SDRF writes them, and the gaps are noted:
+kept <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
+writeLines(kept$notes[[2]])
+#> Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates 22, 23, 24, kept as the SDRF numbers them. Every row of the SDRF is searched, so the gaps are how the SDRF numbers its samples, not lost samples.
 ```

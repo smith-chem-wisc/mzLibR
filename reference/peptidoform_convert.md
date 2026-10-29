@@ -27,7 +27,9 @@ peptidoform_convert(sequences, source = "mzLib", target = "Unimod", mode = "Retu
   entry or one with a line break is refused, because it would shift
   every later row. Split an ambiguous MetaMorpheus full sequence
   (`|`-joined candidates) first: mzLib joins the candidates into one
-  sequence, with only a warning.
+  sequence, with only a warning - or fails it (`"UnknownFormat"`) when a
+  candidate ends in a C-terminal modification or the next one's
+  N-terminal modification lands on an already modified residue.
 
 - source:
 
@@ -72,6 +74,14 @@ that is not a `UNIMOD:` term as unresolved. The `pro_forma` column
 computes for a `.psmtsv` written without one comes from the same
 serializer.
 
+**Malformed modification text fails its row** (mzLib \#1457), with
+`source = "mzLib"` or `"MassShift"`: an empty modification
+(`PEP[]TIDE`), a modification that does not follow an unmodified residue
+(two leading groups, or two on one residue, `PEPM[A][B]TIDE`) and
+anything after the C-terminal modification are each a `"failed"` row
+with `failure_reason` `"UnknownFormat"`, under every `mode` but
+`"ThrowException"`. The rest of the batch converts.
+
 ## Value
 
 An `mzlibr_sequence_conversions`:
@@ -100,7 +110,7 @@ The failed and warned rows are
 ## Wraps
 
 Wire verb `peptidoform convert`. Generated from the bridge's verb spec
-`peptidoform.convert.yaml` (bridge commit `60b1d25968a1`) by
+`peptidoform.convert.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -326,10 +336,23 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   can be null on a failed row (the Unimod target under ReturnNull
   records only incompatible_items).
 
+- Since mzLib \#1457, `--from` mzLib and `--from` MassShift refuse
+  malformed modification text they used to convert with part of it lost
+  or misplaced: an empty modification (PEP\[\]TIDE), a modification that
+  does not follow an unmodified residue (two leading groups, or two
+  groups on one residue), and anything but whitespace after the
+  C-terminal modification. Each such line is a failed row with
+  failure_reason UnknownFormat, under every mode but ThrowException. Two
+  groups on one residue used to fail the whole call with an
+  ArgumentException; now only that line fails.
+
 - An ambiguous MetaMorpheus full sequence ('\|'-joined candidates) is
-  not refused: mzLib's parser skips each '\|' with a warning and joins
-  the candidates into one sequence, status converted_with_warnings.
-  Split ambiguous full sequences before converting them.
+  usually not refused: mzLib's parser skips each '\|' with a warning and
+  joins the candidates into one sequence, status
+  converted_with_warnings. It fails (UnknownFormat, since \#1457) when a
+  candidate ends in a C-terminal modification, or when the next
+  candidate's N-terminal group lands on a residue that already carries
+  one. Split ambiguous full sequences before converting them.
 
 - Each stdin line is one input, given to mzLib exactly as read; blank
   lines are skipped; rows are in input order at any `--threads`.

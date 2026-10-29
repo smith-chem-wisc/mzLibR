@@ -367,7 +367,7 @@ values are joined with `_`, in the order you give:
 both <- c("factor value[genotype]", "factor value[treatment]")
 d <- sdrf_design("PXD067622.sdrf.tsv", condition_columns = both)
 d
-#> <mzlibr_sdrf_design> PXD067622.sdrf.tsv: 24 runs in 8 condition(s)
+#> <mzlibr_sdrf_design> F:\ClaudeTestBuilds\pymzlib-596\pkg\python\tests\fixtures\PXD067622.sdrf.tsv: 24 runs in 8 condition(s)
 #>   files keyed on: comment[data file]
 #>   condition from: factor value[genotype] + factor value[treatment]
 head(d$records[, c("file_name", "condition", "biological_replicate")], 3)
@@ -436,20 +436,21 @@ so a refused design cannot reach FlashLFQ by accident. Without
 PXD067622 has two, so leaving them undeclared is itself a refusal:
 joining every factor could split a condition on a nuisance factor.
 
-### Replicate numbers are ranked within each condition
+### Replicate numbers are the SDRF’s own
 
 A drafted SDRF often copies the study-wide run index out of the file
-names. MetaMorpheus wants replicates numbered within each condition, so
-mzLib ranks them back, and records every renumbering in `notes`, the
-only place it is kept:
+names. mzLib keeps those numbers as written, gaps included, and never
+ranks or closes them up: replicate 4 of one condition can be the same
+subject as replicate 4 of another, and a gap can be a lost sample.
+`notes` flags each condition whose numbers are not 1..N:
 
 ``` r
 
-ranked <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
-writeLines(ranked$notes[[2]])
-#> Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates renumbered 22 -> 1, 23 -> 2, 24 -> 3.
-identical(ranked$records, d$records)
-#> [1] TRUE
+kept <- sdrf_design("PXD067622_studywide.sdrf.tsv", condition_columns = both)
+writeLines(kept$notes[[2]])
+#> Condition 'SPRTN-TurboID CA_formaldehyde 1 mM, 1 h': biological replicates 22, 23, 24, kept as the SDRF numbers them. Every row of the SDRF is searched, so the gaps are how the SDRF numbers its samples, not lost samples.
+range(kept$records$biological_replicate)
+#> [1]  0 23
 ```
 
 **Label-free only.** An isobaric SDRF needs a channel design, which

@@ -57,7 +57,7 @@ records; `row_count` counts the rows of `records`.
 
 Wire verb `readers read-records` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-records.yaml` (bridge commit
-`60b1d25968a1`) by `scripts/build-man.R`; the spec owns these facts, and
+`45833ca804d6`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)

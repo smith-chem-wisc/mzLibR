@@ -249,8 +249,8 @@ lapply(design$strata, function(s) s$sample_ids)
 #> $`organism part=muscle`
 #> [1] "s2" "s4" "s6"
 design$strata[["organism part=kidney"]]$not_run
-#>                      label         reason
-#> 1 condition (one level: A) not_in_stratum
+#>                        label         reason id
+#> 1 condition=B vs condition=A not_in_stratum c1
 design$records[, c("stratum", "contrast_id", "label")]
 #>                stratum contrast_id                      label
 #> 1  organism part=liver          c1 condition=B vs condition=A
@@ -258,11 +258,12 @@ design$records[, c("stratum", "contrast_id", "label")]
 ```
 
 Kidney has only condition A, so there is nothing to compare there, and
-`not_run` says so. **A contrast id is numbered within its stratum:**
-`c1` is liver’s first comparison and muscle’s first, so match strata by
-`label`. With `out`, stratum *i* writes `design_i.tsv`, numbered in the
-order of `strata`, because a stratum key can hold characters a file name
-cannot.
+`not_run` says so: it skips `c1`, `condition=B vs condition=A`. **A
+contrast id is numbered once over the whole analysis:** `c1` is the same
+comparison in liver and in muscle, and a stratum that cannot run it
+skips the id. With `out`, stratum *i* writes `design_i.tsv`, numbered in
+the order of `strata`, because a stratum key can hold characters a file
+name cannot.
 
 ## From a peptide table to observations
 

@@ -279,20 +279,31 @@ quantified</td>
 </tr>
 <tr class="even">
 <td><code>not_detected</code></td>
-<td>the site was covered, but no modified form was identified</td>
-<td>unknown, <strong>not zero</strong>
+<td>forms covering the site were identified (quantified or not), and
+none carried the modification</td>
+<td>a bound below detection, <strong>not zero</strong>
 </td>
 </tr>
 </tbody>
 </table>
 <p>So never average <code>fraction</code> with the <code>NA</code>s read
-as 0: they are censored, not absent.</p>
+as 0: they are censored, not absent. Each cell also counts the
+peptidoforms behind it, identifications rather than intensity: of the
+<code>covering_peptidoforms</code> identified there,
+<code>modified_peptidoforms</code> carried the modification.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">protein_accession</span> <span class="op">==</span> <span class="st">"STATES"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"run"</span>, <span class="st">"state"</span>, <span class="st">"covering_peptidoforms"</span>, <span class="st">"modified_peptidoforms"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;           run        state covering_peptidoforms modified_peptidoforms</span></span>
+<span><span class="co">#&gt; 6   countOnly   count_only                     1                     1</span></span>
+<span><span class="co">#&gt; 7       floor        floor                     2                     1</span></span>
+<span><span class="co">#&gt; 8 notDetected not_detected                     1                     0</span></span>
+<span><span class="co">#&gt; 9       quant   quantified                     2                     1</span></span></code></pre></div>
 <p><strong>A 1 can be a ceiling.</strong> When a site is seen only in
 its modified form, every quantified form covering it carries the
 modification, so the fraction is 1. The unmodified form may be there
 below detection. <code>unmodified_quantified</code> is
 <code>FALSE</code> then:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">protein_accession</span> <span class="op">==</span> <span class="st">"CEILING"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fraction"</span>, <span class="st">"unmodified_quantified"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   fraction unmodified_quantified</span></span>
 <span><span class="co">#&gt; 1        1                 FALSE</span></span>
@@ -323,7 +334,7 @@ names) or <code>categories</code> (for example
 </h2>
 <p>Fractions of one sample are summed before the ratio, as FlashLFQ sums
 them. Give the run-to-sample map as a file:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fractions</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_occupancy.html">ptmqtl_occupancy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"fractions.tsv"</span><span class="op">)</span>,</span>
 <span>                              samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"fractions_samples.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>runs <span class="op">=</span> <span class="va">fractions</span><span class="op">$</span><span class="va">run_count</span>, samples <span class="op">=</span> <span class="va">fractions</span><span class="op">$</span><span class="va">sample_count</span><span class="op">)</span></span>
@@ -348,7 +359,7 @@ replicates of one biological sample.</p>
 </h2>
 <p>A peptidoform carrying two modifications is direct evidence that both
 sit on one molecule:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">physical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"cases.tsv"</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"physical"</span><span class="op">)</span></span>
 <span><span class="va">physical</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"site_a"</span>, <span class="st">"site_b"</span>, <span class="st">"statistic"</span>, <span class="st">"n"</span>, <span class="st">"statistic_n"</span>, <span class="st">"p_value"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                                              site_a</span></span>
@@ -368,14 +379,14 @@ mzLib correlates their occupancies with Spearman’s rho, on the runs
 where both were quantified, and adjusts the p-values with
 Benjamini-Hochberg within each family. <code>type</code> is required:
 mzLib has no default between its two methods.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"batch.tsv"</span><span class="op">)</span></span>
 <span><span class="va">plain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">batch</span>, type <span class="op">=</span> <span class="st">"covarying"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">plain</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"covarying_run_count"</span>, <span class="st">"min_quantified_fraction"</span>, <span class="st">"exclude_ceiling"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 3</span></span>
 <span><span class="co">#&gt;  $ covarying_run_count    : num 12</span></span>
 <span><span class="co">#&gt;  $ min_quantified_fraction: num 0.7</span></span>
-<span><span class="co">#&gt;  $ exclude_ceiling        : logi TRUE</span></span>
+<span><span class="co">#&gt;  $ exclude_ceiling        : logi NA</span></span>
 <span><span class="va">pair_of</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">records</span></span>
 <span>  <span class="va">r</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">site_a</span>, <span class="st">"PAIR_S"</span><span class="op">)</span> <span class="op">&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">site_b</span>, <span class="st">"PAIR_T"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"statistic"</span>, <span class="st">"p_value"</span>, <span class="st">"q"</span>, <span class="st">"fdr_family"</span>, <span class="st">"n"</span><span class="op">)</span><span class="op">]</span></span>
@@ -383,9 +394,22 @@ mzLib has no default between its two methods.</p>
 <span><span class="fu">pair_of</span><span class="op">(</span><span class="va">plain</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    statistic     p_value           q fdr_family  n</span></span>
 <span><span class="co">#&gt; 15 0.7622378 0.003950449 0.003950449    A:inter 12</span></span></code></pre></div>
-<p><code>0.7</code> and <code>TRUE</code> are mzLib’s defaults, reported
-because you did not set them: a site enters pairs only if it is
-quantified in at least 70% of the runs, and ceilings are left out.</p>
+<p><code>0.7</code> is mzLib’s default, reported because you did not set
+it: a site enters pairs only if it is quantified in at least 70% of the
+runs. <code>exclude_ceiling</code> is <code>NA</code> because you did
+not choose: mzLib decides it inside
+<code>PtmPairEngine.CoVarying</code>, and leaves ceilings out. It is
+<code>FALSE</code> with <code>keep_ceiling = TRUE</code>.</p>
+<p>A co-varying pair that was not tested says why in
+<code>test_status</code> (<code>"not_estimable"</code>,
+<code>"too_few_shared_runs"</code> or
+<code>"both_sites_mostly_bounds"</code>; <code>"tested"</code>
+otherwise, <code>NA</code> for physical pairs).
+<code>run_level_removed</code> says whether rho is partial given the run
+level; <code>bounds_included</code> and
+<code>run_covariate_removed</code> report two mzLib options (#1468) that
+<code><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs()</a></code> does not send yet, so here they are
+<code>FALSE</code>.</p>
 <p><strong>The trap: a batch correlates everything.</strong> These
 twelve runs come in two batches, and every site reads 0.2 higher in the
 second. That alone gives <code>PAIR_S</code> and <code>PAIR_T</code> a
@@ -393,7 +417,7 @@ high rho, though within a batch they are nearly unrelated.
 <code>remove_run_level = TRUE</code> correlates the two sites given each
 run’s <strong>level</strong>, the median occupancy of the other sites in
 that run:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">given</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">batch</span>, type <span class="op">=</span> <span class="st">"covarying"</span>, remove_run_level <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu">pair_of</span><span class="op">(</span><span class="va">given</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     statistic  p_value        q fdr_family  n</span></span>
@@ -440,7 +464,7 @@ are not counted as independent evidence. The example is mzLib’s
 <code>TraitDesign</code>: six replicates at three doses, two injections
 each, built so that logit(occupancy) = -2 + 0.5 x dose + a replicate
 offset. First compute occupancy, and write it to a file:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">written</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_occupancy.html">ptmqtl_occupancy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait.tsv"</span><span class="op">)</span>,</span>
 <span>                            out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cells_written <span class="op">=</span> <span class="va">written</span><span class="op">$</span><span class="va">written</span><span class="op">$</span><span class="va">row_count</span>, rows_returned <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">written</span><span class="op">$</span><span class="va">records</span><span class="op">)</span><span class="op">)</span></span>
@@ -457,7 +481,7 @@ offset. First compute occupancy, and write it to a file:</p>
 <p>The runs table gives each run its replicate, then the trait, then any
 covariates, each column named by its header. Then fit (here on the file
 the call above writes, as this package ships it):</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">effects</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span>,</span>
 <span>                                <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_runs.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">effects</span></span>
@@ -472,19 +496,20 @@ the call above writes, as this package ships it):</p>
 <span><span class="co">#&gt; 2          6</span></span></code></pre></div>
 <p><code>TRAIT_SITE</code> recovers the 0.5 it was built with.
 <strong><code>effect</code> is in logit units per unit of the
-trait</strong>, so <code>exp(0.5)</code> = 1.65: each dose unit
-multiplies the odds of the modified form by about 1.65. The degrees of
-freedom are between replicates (six replicates, less the intercept and
-the dose), because the dose never varies within a replicate.
-<code>CENSORED_SITE</code> is the same site with one replicate’s two
-runs replaced by a floor and a ceiling. Both leave the fit - only
-quantified, non-ceiling cells are responses - so it rests on five
-replicates and three degrees of freedom.</p>
+trait</strong> - natural-log odds, mzLib’s default scale, which
+<code>effects$scale</code> reports - so <code>exp(0.5)</code> = 1.65:
+each dose unit multiplies the odds of the modified form by about 1.65.
+The degrees of freedom are between replicates (six replicates, less the
+intercept and the dose), because the dose never varies within a
+replicate. <code>CENSORED_SITE</code> is the same site with one
+replicate’s two runs replaced by a floor and a ceiling. Both leave the
+fit - only quantified, non-ceiling cells are responses - so it rests on
+five replicates and three degrees of freedom.</p>
 <p><strong>Support.</strong> A site needs <code>min_runs</code> runs and
 <code>min_replicates</code> replicates with a response, mzLib’s defaults
 reported in the result. Ask for six replicates, and
 <code>CENSORED_SITE</code> is below support:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">strict</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span>,</span>
 <span>                               <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_runs.tsv"</span><span class="op">)</span>, min_replicates <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">strict</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"protein_accession"</span>, <span class="st">"status"</span>, <span class="st">"effect"</span>, <span class="st">"replicates"</span><span class="op">)</span><span class="op">]</span></span>

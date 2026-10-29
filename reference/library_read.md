@@ -150,7 +150,7 @@ precursors (`ET`, `ED`) are rows; filter on `is_decoy` or
 ## Wraps
 
 Wire verb `library read`. Generated from the bridge's verb spec
-`library.read.yaml` (bridge commit `60b1d25968a1`) by
+`library.read.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

@@ -48,7 +48,7 @@ and `error_message`, which are `NA` for a path that was identified.
 
 Wire verb `readers identify` with `--paths-stdin`. Generated from the
 bridge's verb spec `readers.identify.yaml` (bridge commit
-`60b1d25968a1`) by `scripts/build-man.R`; the spec owns these facts, and
+`45833ca804d6`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)
@@ -117,6 +117,13 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
   out with paths-stdin: identify returns no table
 
+- `mzlib_bridge_error` (correctness):
+
+  a .parquet that exists but cannot be opened, because another process
+  holds it or the user may not read it: IOException or
+  UnauthorizedAccessException from mzLib's detection (since mzLib
+  \#1478), not the not-supported usage error
+
 - `mzlib_service_unavailable` (service_unavailable):
 
   Never raised by this verb.
@@ -125,9 +132,11 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and
   a .mztab's first five, a .parquet's column schema and a .d directory's
-  listing to dispatch them. A .parquet without the DIA-NN report columns
-  (Precursor.Id, Stripped.Sequence, Run) is a usage error, 'Parquet file
-  type not supported' (mzLib 1.0.595, \#1384).
+  listing to dispatch them. A .parquet mzLib can open and read without
+  the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run), or
+  bytes that are not Parquet at all, is a usage error, 'Parquet file
+  type not supported' (mzLib \#1384). One it cannot open is an I/O error
+  instead (#1478).
 
 - No software field: mzLib's Software property is Unspecified for
   everything its factory builds; file_type already names the tool.

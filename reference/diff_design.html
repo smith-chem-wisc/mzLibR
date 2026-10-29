@@ -123,7 +123,8 @@ each can be estimated at all from these samples.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code>mzlibr_diff_design</code>:</p>
 <p>- <code>records</code>, a data.frame with one row per (stratum, default contrast), strata in order:
-    <code>stratum</code>, the stratum key; <code>contrast_id</code>, <code>c1</code>, <code>c2</code>, ... numbered <strong>within the stratum</strong>;
+    <code>stratum</code>, the stratum key; <code>contrast_id</code>, <code>c1</code>, <code>c2</code>, ... numbered <strong>once over the whole
+    analysis</strong> (mzLib #1476), so an id is the same comparison in every stratum;
     <code>label</code>, <code>factor=level vs factor=reference</code>, or a slope's column; <code>numerator</code> and
     <code>denominator</code>, <code>factor=level</code> (<code>NA</code> for a slope); <code>covariate</code>, <code>covariate_unit</code> (the unit a
     slope is per, e.g. <code>decade</code>) and <code>covariate_scale</code> (e.g. <code>years/10, centred at 50 years</code>),
@@ -139,7 +140,10 @@ each can be estimated at all from these samples.</p>
     <code>name (per unit)</code> for a covariate, <code>a=level:b=level</code> for an interaction); <code>fitted_column_names</code>,
     the columns a fit takes (the design file's coefficient columns); <code>rank</code> (columns);
     <code>aliased_terms</code>, terms that share a direction with another; <code>warnings</code>; <code>not_run</code>, a
-    data.frame of the contrasts this stratum cannot run (<code>label</code>, <code>reason</code>); <code>covariate_centres</code>
+    data.frame of the contrasts this stratum cannot run (mzLib's <code>NotRunContrast</code>): <code>label</code>,
+    <code>reason</code> (<code>"not_in_stratum"</code>) and <code>id</code>, the default contrast's id, which this stratum skips
+    (<code>NA</code> when no default contrast stands for the entry, such as a factor with one level over the
+    whole analysis); <code>covariate_centres</code>
     (the covariate's stored unit), the centre subtracted from each covariate; <code>matrix</code> and
     <code>fitted_matrix</code>, R matrices with the sample ids as row names, in coding (0/1 indicators;
     covariate columns in scaled units), equal to R's <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code>; and <code>design_file</code> and
@@ -163,12 +167,15 @@ each can be estimated at all from these samples.</p>
 <code>"not_estimable:confounded"</code>, and one that needs a column no sample informs (an empty interaction
 cell) is <code>"not_estimable:rank_deficient"</code>. mzLib says so instead of returning a number. The design
 file still holds a design that can be fitted: <code>fitted_column_names</code> leaves out the later of two
-aliased columns. Contrast ids are numbered within each stratum, so match strata by <code>label</code>.</p>
+aliased columns. Contrast ids are numbered once over every sample of the analysis, so <code>c1</code> is
+the same comparison in every stratum; a stratum without samples on both sides skips the id and
+lists it in <code>not_run</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>diff design</code>. Generated from the bridge's verb spec <code>diff.design.yaml</code> (bridge commit <code>60b1d25968a1</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
-<ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/Differential/AnalysisDesign.cs" class="external-link"><code>AnalysisDesign.ByStratum</code></a> in <code>mzLib/Quantification/Differential/AnalysisDesign.cs</code> at mzLib <code>d10017ce</code></p></li>
+    <p>Wire verb <code>diff design</code>. Generated from the bridge's verb spec <code>diff.design.yaml</code> (bridge commit <code>45833ca804d6</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+<ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/Differential/AnalysisDesign.cs" class="external-link"><code>AnalysisDesign.ByStratum</code></a> in <code>mzLib/Quantification/Differential/AnalysisDesign.cs</code> at mzLib <code>cc67b7a2</code></p></li>
+<li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/Differential/DesignInputs.cs" class="external-link"><code>NotRunContrast</code></a> in <code>mzLib/Quantification/Differential/DesignInputs.cs</code> at mzLib <code>cc67b7a2</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/Differential/AnalysisDesign.cs" class="external-link"><code>AnalysisDesign.Create</code></a> in <code>mzLib/Quantification/Differential/AnalysisDesign.cs</code> at mzLib <code>d10017ce</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/Differential/AnalysisDesign.cs" class="external-link"><code>AnalysisDesign.DefaultContrasts</code></a> in <code>mzLib/Quantification/Differential/AnalysisDesign.cs</code> at mzLib <code>d10017ce</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/Differential/AnalysisDesign.cs" class="external-link"><code>AnalysisDesign.Estimability</code></a> in <code>mzLib/Quantification/Differential/AnalysisDesign.cs</code> at mzLib <code>d10017ce</code></p></li>
@@ -255,7 +262,7 @@ aliased columns. Contrast ids are numbered within each stratum, so match strata 
 <dd><p>string; never <code>NA</code>. The stratum key (AnalysisDesign.StratumKey): the stratum columns sorted by name, each name=value, joined by ';', with %, ; and = in a value escaped as %25, %3B and %3D; all when there is no stratum column.</p></dd>
 
 <dt><code>contrast_id</code></dt>
-<dd><p>string; never <code>NA</code>. c1, c2, ... in mzLib's default order, numbered within the stratum. The name a contrasts file gives the contrast.</p></dd>
+<dd><p>string; never <code>NA</code>. c1, c2, ... in mzLib's default order, numbered once over every sample of the analysis (AnalysisDesign.ByStratum, since mzLib #1476), so an id is the same comparison in every stratum. The name a contrasts file gives the contrast.</p></dd>
 
 <dt><code>label</code></dt>
 <dd><p>string; never <code>NA</code>. Readable: factor=level vs factor=reference for a level, the covariate's column name for a slope (age (per decade)).</p></dd>
@@ -314,7 +321,7 @@ aliased columns. Contrast ids are numbered within each stratum, so match strata 
 <dd><p>string[]; never <code>NA</code>. What mzLib left out of the model or changed from the specification here, in plain words: a factor with one level, a reference level with no sample, one batch, no reference declared.</p></dd>
 
 <dt><code>not_run</code></dt>
-<dd><p>object[]; never <code>NA</code>. Contrasts the model asks for that this stratum cannot run, each with label and reason (not_in_stratum).</p></dd>
+<dd><p>object[]; never <code>NA</code>. Contrasts the model asks for that this stratum cannot run (mzLib's NotRunContrast), each with id (the default contrast's id, the same in every stratum; null when no default contrast stands for the entry, such as a factor with one level over the whole analysis), label and reason (not_in_stratum).</p></dd>
 
 <dt><code>covariate_centres</code></dt>
 <dd><p>map&lt;string,float&gt;; in <strong>the covariate's stored unit</strong>; never <code>NA</code>. The centre subtracted from each covariate here: the one given, else the stratum's mean.</p></dd>
@@ -358,9 +365,9 @@ aliased columns. Contrast ids are numbered within each stratum, so match strata 
 
 <ul><li><p>Each stratum's matrix is mzLib's AnalysisDesign: an intercept; each factor treatment-coded against its reference level, its other levels in ordinal order; batch against its first level; each covariate as (value - centre) / scale; then any interactions. It equals R's stats::model.matrix for the same formula and level order.</p></li>
 <li><p>Only mzLib's default contrasts are listed (AnalysisDesign.DefaultContrasts): each level against its factor's reference, every pair of levels when a factor has no reference, and each covariate's slope. With an interaction in the model, a factor's contrast is its effect at the reference level of the other factor.</p></li>
-<li><p>Contrast ids (c1, c2, ...) are numbered within each stratum, so one id can name different comparisons in two strata. Match contrasts across strata by label.</p></li>
+<li><p>Contrast ids (c1, c2, ...) are numbered once over every sample of the analysis (AnalysisDesign.ByStratum), so an id names the same comparison in every stratum. A stratum without samples on both sides of a contrast skips its id and lists it in not_run.</p></li>
 <li><p>A design file holds only the fitted columns (fitted_column_names): mzLib leaves out a column that is redundant with earlier ones, because LinearModel.Fit refuses a design without full column rank. A contrast that is not estimable has no fitted weights and is not in the contrasts file.</p></li>
-<li><p>Strata are never columns: each stratum gets its own design and nothing is shared between them. The individual a sample came from is never a fixed column either; it is for a mixed model's random intercept.</p></li>
+<li><p>Strata are never columns: each stratum gets its own design, centres and fit; only the default contrasts' ids are shared. The individual a sample came from is never a fixed column either; it is for a mixed model's random intercept.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>

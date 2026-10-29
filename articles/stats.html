@@ -443,9 +443,11 @@ a weight that is not a number, or a row of all zeros is refused.</p>
 <p>The traps:</p>
 <ul>
 <li>
-<strong>Contrast ids are numbered within each stratum</strong>, so
-<code>c1</code> can mean different comparisons in two strata. Read the
-labels from <code><a href="../reference/diff_design.html">diff_design()</a></code>, as above.</li>
+<strong>A stratum can skip a contrast id.</strong> Ids are numbered
+once over the whole analysis, so <code>c1</code> is the same comparison
+in every stratum, but a stratum without samples on both sides lists it
+in <code>not_run</code> instead. Read the labels from
+<code><a href="../reference/diff_design.html">diff_design()</a></code>, as above.</li>
 <li>
 <strong>With missing values the standard error is exact per
 feature</strong>, computed on the samples that feature was observed in.

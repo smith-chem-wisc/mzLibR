@@ -82,6 +82,12 @@ subset of another's, and not the plex, which you declare with exactly
 one of `plex_column`, `plex_file_name_pattern` and `single_plex`. Giving
 none, or several, is mzLib's refusal.
 
+Channel labels are read by mzLib's `SdrfIsobaricLabels`, the rule
+[`isobaric_kits`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md)'s
+`sdrf_label` writes: for TMT10, `TMT131` (PRIDE's spelling of the last
+channel) names `131N` (mzLib \#1467); for TMT11, where `131N` and `131C`
+are both channels, it is still refused.
+
 **The numbers are 1-based, as the SDRF writes them.**
 [`sdrf_design`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design.md)'s
 are 0-based. That split is mzLib's, and mzLibR converts neither.
@@ -141,7 +147,7 @@ when a document has it.
 ## Wraps
 
 Wire verb `sdrf isobaric-design`. Generated from the bridge's verb spec
-`sdrf.isobaric-design.yaml` (bridge commit `60b1d25968a1`) by
+`sdrf.isobaric-design.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -489,6 +495,11 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - A plex is one channel-to-sample map: every file of a plex carries all
   of its channels, so fractions share their samples.
+
+- Channel labels are read through mzLib's SdrfIsobaricLabels, one rule
+  for readers and writers. For TMT10, TMT131 (PRIDE's spelling of the
+  last channel) names 131N (since mzLib \#1467); TMT131 is still refused
+  for TMT11, where 131N and 131C are both channels.
 
 - Sample type is not read (mzLib MAP-08): every annotated channel is a
   study sample, a reference or pool channel included.

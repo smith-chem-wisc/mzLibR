@@ -116,6 +116,12 @@ MetaMorpheus quantifies TMT searches with:</p>
 <code>ReporterIonMzs</code>, <code>ReporterIonMzRanges</code>
 </td>
 </tr>
+<tr class="even">
+<td>the label an SDRF writes for a channel</td>
+<td><code>records$sdrf_label</code></td>
+<td>
+<code>SdrfIsobaricLabels.GetSdrfLabel</code> (#1467)</td>
+</tr>
 </tbody>
 </table>
 <div class="section level2">
@@ -149,6 +155,20 @@ phenylalanine immonium ion sits at m/z 120.081, so the eighth reagent is
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">catalogue</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">channel_label</span><span class="op">[</span><span class="va">catalogue</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">kit</span> <span class="op">==</span> <span class="st">"iTRAQ8"</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "113" "114" "115" "116" "117" "118" "119" "121"</span></span></code></pre></div>
+<p><strong>An SDRF names a channel its own way.</strong>
+<code>sdrf_label</code> is the SDRF <code>comment[label]</code> for each
+channel, by mzLib’s one rule for reading and writing them:
+<code>TMT</code>, <code>ITRAQ</code> or <code>DiLeu</code> and the
+channel - except TMT10’s last channel, which PRIDE spells
+<code>TMT131</code>, while TMT11 and TMTpro keep <code>TMT131N</code>.
+Write it when you build an SDRF; <code><a href="../reference/sdrf_isobaric_design.html">sdrf_isobaric_design()</a></code>
+reads it back to the channel.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tmt10</span> <span class="op">&lt;-</span> <span class="va">catalogue</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">catalogue</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">kit</span> <span class="op">==</span> <span class="st">"TMT10"</span>, <span class="op">]</span></span>
+<span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">tmt10</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"channel_label"</span>, <span class="st">"sdrf_label"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    channel_label sdrf_label</span></span>
+<span><span class="co">#&gt; 15          130C    TMT130C</span></span>
+<span><span class="co">#&gt; 16          131N     TMT131</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="one-kit-tmtpro-18-plex">One kit: TMTpro 18-plex<a class="anchor" aria-label="anchor" href="#one-kit-tmtpro-18-plex"></a>
@@ -160,7 +180,7 @@ phenylalanine immonium ion sits at m/z 120.081, so the eighth reagent is
 <code>"iTRAQ-4plex on K"</code> all work. A substring never does, so
 <code>"TMT10plex"</code> is refused with a list of the kits that exist,
 rather than quietly resolved to whichever kit’s name it contains.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tmtpro</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/isobaric_kits.html">isobaric_kits</a></span><span class="op">(</span><span class="st">"TMT18"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">tmtpro</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"channel_index"</span>, <span class="st">"channel_label"</span>, <span class="st">"reporter_ion_mz"</span>, <span class="st">"mz_min"</span>, <span class="st">"mz_max"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   channel_index channel_label reporter_ion_mz   mz_min   mz_max</span></span>
@@ -179,7 +199,7 @@ theoretical, at charge 1, never calibrated or observed. mzLib reads a
 reporter intensity as the most intense peak between <code>mz_min</code>
 and <code>mz_max</code>, <code>absolute_tolerance</code> Da either
 side:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tmtpro</span><span class="op">$</span><span class="va">absolute_tolerance</span></span>
 <span><span class="co">#&gt; [1] 0.003</span></span></code></pre></div>
 <p>mzLib takes that tolerance from the TMTpro 18-plex paper (Li et al.,
@@ -198,6 +218,10 @@ their specs:</p>
 the TMTpro-18plex reagents paper (Li et al. 2021); mzLib cites it as the
 source of its 0.003 Da reporter-ion matching tolerance
 (IsobaricMassTag.AbsoluteToleranceValue, IsobaricMassTag.cs:41).</li>
+<li>
+<a href="https://doi.org/10.1038/s41467-021-26111-3" class="external-link">doi:10.1038/s41467-021-26111-3</a>:
+SDRF-Proteomics, whose comment[label] column sdrf_label fills (Dai et
+al., Nat Commun 12, 5854, 2021).</li>
 </ul>
 <!-- END cite -->
 </div>

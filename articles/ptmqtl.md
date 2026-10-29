@@ -135,10 +135,22 @@ r[r$protein_accession == "STATES", c("run", "state", "fraction")]
 | `quantified` | the modified form was quantified | a measured fraction |
 | `floor` | the modified form was identified but not quantified, while forms covering the site were | low, **not zero** |
 | `count_only` | the modified form was identified, but nothing covering the site was quantified | present, amount unknown |
-| `not_detected` | the site was covered, but no modified form was identified | unknown, **not zero** |
+| `not_detected` | forms covering the site were identified (quantified or not), and none carried the modification | a bound below detection, **not zero** |
 
 So never average `fraction` with the `NA`s read as 0: they are censored,
-not absent.
+not absent. Each cell also counts the peptidoforms behind it,
+identifications rather than intensity: of the `covering_peptidoforms`
+identified there, `modified_peptidoforms` carried the modification.
+
+``` r
+
+r[r$protein_accession == "STATES", c("run", "state", "covering_peptidoforms", "modified_peptidoforms")]
+#>           run        state covering_peptidoforms modified_peptidoforms
+#> 6   countOnly   count_only                     1                     1
+#> 7       floor        floor                     2                     1
+#> 8 notDetected not_detected                     1                     0
+#> 9       quant   quantified                     2                     1
+```
 
 **A 1 can be a ceiling.** When a site is seen only in its modified form,
 every quantified form covering it carries the modification, so the
@@ -239,7 +251,7 @@ str(plain[c("covarying_run_count", "min_quantified_fraction", "exclude_ceiling")
 #> List of 3
 #>  $ covarying_run_count    : num 12
 #>  $ min_quantified_fraction: num 0.7
-#>  $ exclude_ceiling        : logi TRUE
+#>  $ exclude_ceiling        : logi NA
 pair_of <- function(result) {
   r <- result$records
   r[startsWith(r$site_a, "PAIR_S") & startsWith(r$site_b, "PAIR_T"), c("statistic", "p_value", "q", "fdr_family", "n")]
@@ -249,9 +261,20 @@ pair_of(plain)
 #> 15 0.7622378 0.003950449 0.003950449    A:inter 12
 ```
 
-`0.7` and `TRUE` are mzLib’s defaults, reported because you did not set
-them: a site enters pairs only if it is quantified in at least 70% of
-the runs, and ceilings are left out.
+`0.7` is mzLib’s default, reported because you did not set it: a site
+enters pairs only if it is quantified in at least 70% of the runs.
+`exclude_ceiling` is `NA` because you did not choose: mzLib decides it
+inside `PtmPairEngine.CoVarying`, and leaves ceilings out. It is `FALSE`
+with `keep_ceiling = TRUE`.
+
+A co-varying pair that was not tested says why in `test_status`
+(`"not_estimable"`, `"too_few_shared_runs"` or
+`"both_sites_mostly_bounds"`; `"tested"` otherwise, `NA` for physical
+pairs). `run_level_removed` says whether rho is partial given the run
+level; `bounds_included` and `run_covariate_removed` report two mzLib
+options (#1468) that
+[`ptmqtl_pairs()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_pairs.md)
+does not send yet, so here they are `FALSE`.
 
 **The trap: a batch correlates everything.** These twelve runs come in
 two batches, and every site reads 0.2 higher in the second. That alone
@@ -341,7 +364,8 @@ effects$records[, c("protein_accession", "status", "effect", "standard_error", "
 ```
 
 `TRAIT_SITE` recovers the 0.5 it was built with. **`effect` is in logit
-units per unit of the trait**, so `exp(0.5)` = 1.65: each dose unit
+units per unit of the trait** - natural-log odds, mzLib’s default scale,
+which `effects$scale` reports - so `exp(0.5)` = 1.65: each dose unit
 multiplies the odds of the modified form by about 1.65. The degrees of
 freedom are between replicates (six replicates, less the intercept and
 the dose), because the dose never varies within a replicate.

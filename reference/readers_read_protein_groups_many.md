@@ -65,7 +65,7 @@ groups over the files read and `returned_count` the groups returned;
 
 Wire verb `readers read-protein-groups` with `--paths-stdin`. Generated
 from the bridge's verb spec `readers.read-protein-groups.yaml` (bridge
-commit `60b1d25968a1`) by `scripts/build-man.R`; the spec owns these
+commit `45833ca804d6`) by `scripts/build-man.R`; the spec owns these
 facts, and all three bindings render the same ones.
 
 - [`ProteinGroupFromTsvFile.LoadResults`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/ProteinGroupFromTsvFile.cs)

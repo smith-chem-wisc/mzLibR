@@ -47,12 +47,15 @@ and several formats share `.tsv`. Nor is it always how dispatch works: a
 DIA-NN report is recognised by its columns, not its name, so a renamed
 `report.tsv` still reads, and any `.parquet` whose columns include
 `Precursor.Id`, `Stripped.Sequence` and `Run` is a `DiaNnReportParquet`
-while any other `.parquet` is refused.
+while any other `.parquet` is refused. A `.parquet` mzLib cannot open at
+all - another process holds it, or you may not read it - is an
+`mzlib_bridge_error` naming the I/O failure (`IOException` or
+`UnauthorizedAccessException`, mzLib \#1478), not that refusal.
 
 ## Wraps
 
 Wire verb `readers formats`. Generated from the bridge's verb spec
-`readers.formats.yaml` (bridge commit `60b1d25968a1`) by
+`readers.formats.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

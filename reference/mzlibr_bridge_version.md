@@ -47,7 +47,7 @@ paired with, so an old bridge is reported as old rather than answering
 ## Wraps
 
 Wire verb `version`. Generated from the bridge's verb spec
-`version.yaml` (bridge commit `60b1d25968a1`) by `scripts/build-man.R`;
+`version.yaml` (bridge commit `45833ca804d6`) by `scripts/build-man.R`;
 the spec owns these facts, and all three bindings render the same ones.
 
 - [`AssemblyInformationalVersionAttribute`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/UsefulProteomicsDatabases.csproj)
@@ -134,5 +134,5 @@ info <- mzlibr_bridge_version()
 info$protocol   # the compatibility contract
 #> [1] 1
 info$mzlib      # which mzLib produced the results, for a methods section
-#> [1] "1.0.0+d10017ce499600a338bc7ba447db7cfb6ffce790"
+#> [1] "1.0.0+cc67b7a29a760149efd5c0473ac6d3ad542c0a21"
 ```

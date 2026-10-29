@@ -57,7 +57,7 @@ count files; `record_count` counts groups over the files read and
 
 Wire verb `readers read-occupancy` with `--paths-stdin`. Generated from
 the bridge's verb spec `readers.read-occupancy.yaml` (bridge commit
-`60b1d25968a1`) by `scripts/build-man.R`; the spec owns these facts, and
+`45833ca804d6`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`ModificationOccupancyCell.Parse`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Omics/BioPolymerGroup/ModificationOccupancyCell.cs)

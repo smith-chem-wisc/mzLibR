@@ -104,7 +104,7 @@ entrapments per target is not implemented.
 ## Wraps
 
 Wire verb `stats entrapment-fdp`. Generated from the bridge's verb spec
-`stats.entrapment-fdp.yaml` (bridge commit `60b1d25968a1`) by
+`stats.entrapment-fdp.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

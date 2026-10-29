@@ -146,8 +146,16 @@ features.
 
 `peptides` has `monoisotopic_mass`, the neutral mass in Da; `length` in
 residues; `missed_cleavages` in cleavage sites; `modification_count` in
-modifications; and `fixed_charges`, the formal charge the intact peptide
-carries before protonation.
+modifications; and `fixed_charges` (charge), **deprecated and always
+0**. A permanently charged modification (trimethyllysine,
+dimethylproline, phosphocholine-Ser and the other UniProt entries
+PSI-MOD marks charged) counts at mzLib's charge-corrected mass, the
+neutral convention Unimod and MetaMorpheus use: trimethyllysine is C3H6,
+42.046951 Da, not UniProt's 43.054227. So no peptide carries a charge on
+top of `monoisotopic_mass`. The `modifications` table's `mass` is
+corrected the same way, and its `formal_charge` is likewise always 0 and
+deprecated. Both columns stay until the bridge's next protocol version
+removes them.
 
 `peptides` **holds peptidoforms, not distinct sequences.** One row per
 sequence-and-modification-placement, so albumin's default digest is
@@ -159,7 +167,7 @@ one for the other is a large error, not a rounding one. See
 ## Wraps
 
 Wire verb `peptidoform fragments`. Generated from the bridge's verb spec
-`peptidoform.fragments.yaml` (bridge commit `60b1d25968a1`) by
+`peptidoform.fragments.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -167,8 +175,8 @@ render the same ones.
   in `mzLib/UsefulProteomicsDatabases/ProteinDbLoader.cs` at mzLib
   `23c2490e`
 
-- [`Loaders.LoadUniprot`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/Loaders.cs)
-  in `mzLib/UsefulProteomicsDatabases/Loaders.cs` at mzLib `23c2490e`
+- [`Mods.UniprotModifications`](https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Omics/Modifications/Mods.cs)
+  in `mzLib/Omics/Modifications/Mods.cs` at mzLib `d10017ce`
 
 - [`Protein.Digest`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Proteomics/Protein/Protein.cs)
   in `mzLib/Proteomics/Protein/Protein.cs` at mzLib `23c2490e`
@@ -392,7 +400,10 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 - `monoisotopic_mass`:
 
   float; in **Da**; never `NA`. Neutral monoisotopic mass, modifications
-  included.
+  included. A permanently charged modification counts at mzLib's
+  charge-corrected mass, the neutral convention Unimod and MetaMorpheus
+  use (trimethyllysine C3H6, 42.046951, not UniProt's 43.054227), so m/z
+  at charge z is (monoisotopic_mass + z \* 1.00727646677) / z.
 
 - `length`:
 
@@ -417,12 +428,14 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
 
 - `fixed_charges`:
 
-  int; in **charge**; never `NA`. Formal charges the INTACT peptide
-  carries before protonation (e.g. trimethyllysine's quaternary
-  ammonium), recovered from each modification's formula-vs-recorded mass
-  deficit in whole electrons. m/z at charge z is (monoisotopic_mass +
-  (z - fixed_charges) \* 1.00727646677) / z. Does NOT apply to
-  fragments.
+  int; in **charge**; never `NA`. DEPRECATED: always 0, and removed at
+  the next protocol bump. mzLib loads each permanently charged
+  modification at its neutral-convention mass, so no peptide carries a
+  charge on top of monoisotopic_mass and (monoisotopic_mass + (z -
+  fixed_charges) \* 1.00727646677) / z is the ordinary formula. Until
+  2026-10-27 the bridge inferred it from each modification's
+  formula-vs-recorded mass gap, while monoisotopic_mass carried
+  UniProt's charged mass.
 
 - `modifications`:
 
@@ -432,8 +445,9 @@ Each field with its type, its unit, and what `NA` means when it is `NA`.
   'N' or 'C' instead (terminus is null for a residue modification); id
   is mzLib's IdWithMotif; mass is its monoisotopic mass in Da, never
   null for a loaded modification (mzLib keeps one only if it has a
-  formula or a mass, and fills a missing mass from the formula);
-  formal_charge in elementary charges.
+  formula or a mass, and fills a missing mass from the formula),
+  charge-corrected as for monoisotopic_mass; formal_charge is
+  DEPRECATED, always 0 for the same reason as fixed_charges.
 
 - `fragments`:
 
@@ -464,11 +478,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 
 - `mzlib_bridge_error` (correctness):
 
-  any other UniProt status (e.g. 403); UniProt's ptmlist.txt or
-  PSI-MOD.obo.xml missing from the bridge payload
-  (FileNotFoundException: every protein would otherwise look unmodified
-  or carry wrong charges); mzLib failing to parse the entry or to digest
-  it
+  any other UniProt status (e.g. 403); mzLib failing to load its
+  built-in modification lists, to parse the entry or to digest it
 
 ## Caveats
 
@@ -496,9 +507,18 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   boundary meets the initiator-Met cleavage site (mzLib#1108, open) are
   collapsed by the bridge on (start, end, full sequence).
 
-- Fragment masses are neutral. Converting one to m/z needs the fixed
-  charge within that fragment's span, which the wire does not report;
-  fixed_charges is whole-peptide only.
+- Fragment masses are neutral, charged modifications included at their
+  corrected mass, so a fragment's m/z at charge z is (neutral_mass + z
+  \* 1.00727646677) / z.
+
+- Since 2026-10-27 a peptide carrying a permanently charged modification
+  (the UniProt entries PSI-MOD marks charged, e.g. trimethyllysine,
+  dimethylproline, phosphocholine-Ser) reports monoisotopic_mass, and
+  its fragments neutral_mass, one proton lower per charge, with
+  fixed_charges 0. Its peptide m/z is unchanged. N,N,N-trimethylglycine
+  stays at UniProt's uncorrected mass, one hydrogen heavy, until the
+  bridge's mzLib includes mzLib#1415, whose charge table is the first to
+  list it.
 
 - ETD's zDot ions are suppressed N-terminal to proline while the
   complementary c ions are not, leaving about 4% of the c series
@@ -527,6 +547,12 @@ Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 ## Not yet verified
 
 The spec records these as open. They are listed rather than hidden:
+
+- fixed_charges and formal_charge are always 0 and deprecated. Removing
+  them breaks the wire (CONTRACT.md) and each binding's public mz():
+  mzLibR's peptide_mz would return NA if the column vanished. Remove
+  them, and simplify the three mz() functions, at the next protocol bump
+  (G-bridge-charge-fields-removal).
 
 - Integer options are not range-checked by the bridge (negative
   min-length, max-isoforms 0); the bindings check them, not alike

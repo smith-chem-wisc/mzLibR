@@ -150,7 +150,7 @@ modification across: a phosphosite on S is not a site on A.
 ## Wraps
 
 Wire verb `proteins align`. Generated from the bridge's verb spec
-`proteins.align.yaml` (bridge commit `60b1d25968a1`) by
+`proteins.align.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

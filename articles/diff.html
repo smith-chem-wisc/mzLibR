@@ -332,19 +332,20 @@ stratum gets its own design:</p>
 <span><span class="co">#&gt; $`organism part=muscle`</span></span>
 <span><span class="co">#&gt; [1] "s2" "s4" "s6"</span></span>
 <span><span class="va">design</span><span class="op">$</span><span class="va">strata</span><span class="op">[[</span><span class="st">"organism part=kidney"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">not_run</span></span>
-<span><span class="co">#&gt;                      label         reason</span></span>
-<span><span class="co">#&gt; 1 condition (one level: A) not_in_stratum</span></span>
+<span><span class="co">#&gt;                        label         reason id</span></span>
+<span><span class="co">#&gt; 1 condition=B vs condition=A not_in_stratum c1</span></span>
 <span><span class="va">design</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stratum"</span>, <span class="st">"contrast_id"</span>, <span class="st">"label"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                stratum contrast_id                      label</span></span>
 <span><span class="co">#&gt; 1  organism part=liver          c1 condition=B vs condition=A</span></span>
 <span><span class="co">#&gt; 2 organism part=muscle          c1 condition=B vs condition=A</span></span></code></pre></div>
 <p>Kidney has only condition A, so there is nothing to compare there,
-and <code>not_run</code> says so. <strong>A contrast id is numbered
-within its stratum:</strong> <code>c1</code> is liver’s first comparison
-and muscle’s first, so match strata by <code>label</code>. With
-<code>out</code>, stratum <em>i</em> writes <code>design_i.tsv</code>,
-numbered in the order of <code>strata</code>, because a stratum key can
-hold characters a file name cannot.</p>
+and <code>not_run</code> says so: it skips <code>c1</code>,
+<code>condition=B vs condition=A</code>. <strong>A contrast id is
+numbered once over the whole analysis:</strong> <code>c1</code> is the
+same comparison in liver and in muscle, and a stratum that cannot run it
+skips the id. With <code>out</code>, stratum <em>i</em> writes
+<code>design_i.tsv</code>, numbered in the order of <code>strata</code>,
+because a stratum key can hold characters a file name cannot.</p>
 </div>
 <div class="section level2">
 <h2 id="from-a-peptide-table-to-observations">From a peptide table to observations<a class="anchor" aria-label="anchor" href="#from-a-peptide-table-to-observations"></a>

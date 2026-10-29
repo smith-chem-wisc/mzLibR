@@ -13,6 +13,7 @@ returns **mzLib’s**, the one MetaMorpheus quantifies TMT searches with:
 | every kit mzLib knows, with every channel | [`isobaric_kits()`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md) | `IsobaricMassTag`, `IsobaricMassTagType` (#1375) |
 | one kit, by its name or a MetaMorpheus modification name | `isobaric_kits("TMT18")` | `IsobaricMassTag.TryGetTagType` |
 | a channel’s reporter-ion m/z and matching window | `records$reporter_ion_mz`, `mz_min`, `mz_max` | `ReporterIonMzs`, `ReporterIonMzRanges` |
+| the label an SDRF writes for a channel | `records$sdrf_label` | `SdrfIsobaricLabels.GetSdrfLabel` (#1467) |
 
 ## Every kit
 
@@ -48,6 +49,23 @@ phenylalanine immonium ion sits at m/z 120.081, so the eighth reagent is
 
 catalogue$records$channel_label[catalogue$records$kit == "iTRAQ8"]
 #> [1] "113" "114" "115" "116" "117" "118" "119" "121"
+```
+
+**An SDRF names a channel its own way.** `sdrf_label` is the SDRF
+`comment[label]` for each channel, by mzLib’s one rule for reading and
+writing them: `TMT`, `ITRAQ` or `DiLeu` and the channel - except TMT10’s
+last channel, which PRIDE spells `TMT131`, while TMT11 and TMTpro keep
+`TMT131N`. Write it when you build an SDRF;
+[`sdrf_isobaric_design()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_isobaric_design.md)
+reads it back to the channel.
+
+``` r
+
+tmt10 <- catalogue$records[catalogue$records$kit == "TMT10", ]
+utils::tail(tmt10[, c("channel_label", "sdrf_label")], 2)
+#>    channel_label sdrf_label
+#> 15          130C    TMT130C
+#> 16          131N     TMT131
 ```
 
 ## One kit: TMTpro 18-plex
@@ -98,3 +116,6 @@ specs:
   the TMTpro-18plex reagents paper (Li et al. 2021); mzLib cites it as
   the source of its 0.003 Da reporter-ion matching tolerance
   (IsobaricMassTag.AbsoluteToleranceValue, IsobaricMassTag.cs:41).
+- [doi:10.1038/s41467-021-26111-3](https://doi.org/10.1038/s41467-021-26111-3):
+  SDRF-Proteomics, whose comment\[label\] column sdrf_label fills (Dai
+  et al., Nat Commun 12, 5854, 2021).

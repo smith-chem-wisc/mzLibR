@@ -106,7 +106,7 @@ managed vendor assemblies and works everywhere. msalign files hold
 ## Wraps
 
 Wire verb `readers read-spectra`. Generated from the bridge's verb spec
-`readers.read-spectra.yaml` (bridge commit `60b1d25968a1`) by
+`readers.read-spectra.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

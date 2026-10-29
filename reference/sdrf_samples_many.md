@@ -54,7 +54,7 @@ document. `files` has one row per input: `path`, `sample_count`,
 ## Wraps
 
 Wire verb `sdrf samples` with `--paths-stdin`. Generated from the
-bridge's verb spec `sdrf.samples.yaml` (bridge commit `60b1d25968a1`) by
+bridge's verb spec `sdrf.samples.yaml` (bridge commit `45833ca804d6`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
