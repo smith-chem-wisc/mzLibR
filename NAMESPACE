@@ -71,7 +71,9 @@ S3method(print, mzlibr_occupancy_records)
 
 export(library_read)
 export(library_read_many)
+export(library_calibrate_rt)
 S3method(print, mzlibr_library_records)
+S3method(print, mzlibr_rt_calibration)
 
 export(sdrf_all)
 export(sdrf_assess)

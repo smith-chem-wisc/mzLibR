@@ -104,7 +104,7 @@ An \code{mzlibr_library_records}. \code{record_count} counts the precursors in t
 \strong{Retention time has a unit per row.} A library stores either an indexed retention time (iRT)
 or run minutes for each precursor (\code{MslLibraryEntry.RtIsCalibrated}), and one library can hold
 both. Read \code{retention_time_unit} on each row; there is no conversion between them without a
-calibration against a run.
+calibration against a run, which \code{\link{library_calibrate_rt}} fits.
 
 **"Not available" is \code{NA}, not a number.** A text library converted to \code{.msl} (from \code{.msp}) has
 no NCE, dissociation type, q-value, ion mobility or protein, so those are \code{NA} (and
