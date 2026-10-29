@@ -117,16 +117,23 @@ from its re-recorded fixtures, byte for byte: the stratified design's `not_run` 
 fit's `scale` (`test-ptmqtl.R`, offline and `LIVE:`); the SDRF's replicate numbers kept and the
 seventh caveat, and every kit channel's `sdrf_label` (`test-sdrf-design.R`).
 
-Not ported yet, with the functions and options they test (a later port; `docs/name-parity.md`
-lists the same gaps):
+## pyMzLib 0.7.0's verbs and options
 
-| pyMzLib test | waits on |
-|---|---|
-| `test_pairs_sends_only_what_was_given` (its `include_bounds`/`run_covariate` call), `test_pairs_with_bounds_tests_what_the_guard_kept_out`, `test_pairs_given_a_run_covariate`, the `ptmqtl_pairs_bounds*`/`ptmqtl_pairs_depth*` live cases | `ptmqtl_pairs(include_bounds = , run_covariate = )` |
-| `test_trait_effects_sends_only_what_was_given` (its `scale` call), `test_trait_effects_on_log2_odds_is_the_natural_fit_over_ln2`, the `ptmqtl_trait_effects_log2` live case | `ptmqtl_trait_effects(scale = )` |
-| `test_library_calibrate.py`, `test_library_calibrate_live.py` | `library calibrate-rt` |
-| `test_proteins_map_residues.py`, `test_proteins_map_residues_live.py` | `genes map-residues` |
-| `test_stats_latent.py`, `test_stats_latent_live.py` | `stats fit-latent-mixed`, `stats fit-link` |
+Every offline and live test pyMzLib 0.7.0 added for its four verbs and three options has a
+counterpart here: what each call sends (and that an option left out is not sent, so mzLib's default
+applies), what the recording parses to, every refusal before the bridge, the replay rules the
+examples depend on, and, `LIVE:`, that each recording is what the 0.7.0 bridge returns today and
+that each refusal crosses as an `mzlib_usage_error` or `mzlib_bridge_error`.
+
+| pyMzLib test | mzLibR test | adapted for R |
+|---|---|---|
+| `test_proteins_map_residues.py`, `test_proteins_map_residues_live.py` | `test-proteins-map-residues.R` | The queries are a list of `list(source, position, target)` or a three-column data.frame, not tuples; a position must be a whole number (R's `15` is a double). `alignment_index` is 1-based. The inputs are copied byte for byte into `tests/map_residues/` (`-text`, as `tests/orthology/`), and a test holds them to their recorded sizes. |
+| `test_library_calibrate.py`, `test_library_calibrate_live.py` | `test-library-calibrate.R` | Anchors and queries are data.frames (or lists of `list(group, rt_minutes, irt)`), `NA` where pyMzLib has `None`; a time crosses as its 17-digit text, which mzLib reads back exactly. `RtCalibration.group()` and `.failed_groups` are row filters on the `groups` data.frame, whose `error` is split into `error_kind`, `error_type` and `error_message`. |
+| `test_stats_latent.py`, `test_stats_latent_live.py` | `test-stats-latent.R` | `link` is `"identity"`, a numeric vector, an `mzlibr_detection_link` or an `mzlibr_link_fit`; the numbers cross as 17-digit text. The glmer and glmmTMB comparisons run offline too, on the recordings and the reference tables shipped in `extdata/stats/`. |
+| `test_ptmqtl.py`, `test_ptmqtl_live.py` (`include_bounds`, `run_covariate`, `scale` and the `ptmqtl_pairs_bounds*`, `ptmqtl_pairs_depth*` and `ptmqtl_trait_effects_log2` cases) | `test-ptmqtl.R` | None. |
+
+Present here and not in pyMzLib: `LIVE: a fitted link goes straight into fit_latent_mixed`, which
+sends `stats_fit_link()`'s result back as `link` and holds mzLib's echo of it to 1e-12.
 
 ## Deliberately not ported
 

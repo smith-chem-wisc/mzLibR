@@ -37,7 +37,7 @@ reference:
   - title: Spectral libraries
     desc: >
       mzLib's .msl spectral libraries, read with mzLib's own reader: every precursor, and its
-      fragment ions on request.
+      fragment ions on request; and a run's retention times calibrated onto a library's iRT scale.
     contents:
       - starts_with("library_")
   - title: SDRF-Proteomics experimental designs
@@ -54,7 +54,8 @@ reference:
     desc: >
       What an accession is, which gene it resolves to, whether a peptide is unique, and what each
       protein group does in Gene Ontology terms; where a residue is in another sequence, which
-      entry an accession names, and which genes are orthologous across species.
+      entry an accession names, which genes are orthologous across species, and which residue
+      corresponds across species in Compara's gene-tree alignment.
     contents:
       - starts_with("proteins_")
   - title: PRIDE Archive
@@ -80,8 +81,9 @@ reference:
   - title: Differential abundance
     desc: >
       limma's moderated t-test with contrasts, Benjamini-Hochberg adjustment, random-effects
-      meta-analysis, combined p-values, Spearman correlation, logistic and mixed models per feature,
-      and entrapment FDP estimates, computed by mzLib.
+      meta-analysis, combined p-values, Spearman correlation, logistic and mixed models per feature
+      (also on a latent scale, from measured and counted samples), and entrapment FDP estimates,
+      computed by mzLib.
     contents:
       - starts_with("stats_")
   - title: Differential design and observations

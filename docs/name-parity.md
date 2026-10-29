@@ -31,6 +31,7 @@ is the only renaming mzLibR is entitled to do.
 | `flashlfq_protein_count()` | `FlashLfqResults.protein_count` | 0 identical |
 | `flashlfq_quantify()` | `flashlfq.quantify` | 15 identical |
 | `isobaric_kits()` | `isobaric.kits` | 2 identical |
+| `library_calibrate_rt()` | `library.calibrate_rt` | 9 identical |
 | `library_read()` | `library.read` | 7 identical |
 | `library_read_many()` | `library.read_many` | 7 identical |
 | `mzlibr_bridge_path()` | *none* | transport; pyMzLib's equivalent is private (_bridge) |
@@ -53,6 +54,7 @@ is the only renaming mzLibR is entitled to do.
 | `proteins_annotate_go()` | `proteins.annotate_go` | 10 identical |
 | `proteins_build_orthology()` | `proteins.build_orthology` | 9 identical |
 | `proteins_classify_peptides()` | `proteins.classify_peptides` | 5 identical |
+| `proteins_map_residues()` | `proteins.map_residues` | 7 identical |
 | `proteins_map_source_to_target()` | `Alignment.map_source_to_target` | 1 identical |
 | `proteins_map_target_to_source()` | `Alignment.map_target_to_source` | 1 identical |
 | `proteins_orthology_pair()` | `OrthologySnapshot.pair` | 2 identical |
@@ -61,8 +63,8 @@ is the only renaming mzLibR is entitled to do.
 | `proteins_resolve_genes()` | `proteins.resolve_genes` | 8 identical |
 | `proteins_update_go()` | `proteins.update_go` | 2 identical |
 | `ptmqtl_occupancy()` | `ptmqtl.occupancy` | 6 identical |
-| `ptmqtl_pairs()` | `ptmqtl.pairs` | 11 identical; not taken yet: include_bounds, run_covariate |
-| `ptmqtl_trait_effects()` | `ptmqtl.trait_effects` | 7 identical; not taken yet: scale |
+| `ptmqtl_pairs()` | `ptmqtl.pairs` | 13 identical |
+| `ptmqtl_trait_effects()` | `ptmqtl.trait_effects` | 8 identical |
 | `readers_formats()` | `readers.formats` | 1 identical |
 | `readers_identify()` | `readers.identify` | 2 identical |
 | `readers_identify_many()` | `readers.identify_many` | 4 identical |
@@ -112,6 +114,8 @@ is the only renaming mzLibR is entitled to do.
 | `stats_correlate()` | `stats.correlate` | 4 identical |
 | `stats_entrapment_fdp()` | `stats.entrapment_fdp` | 5 identical |
 | `stats_fit()` | `stats.fit` | 10 identical |
+| `stats_fit_latent_mixed()` | `stats.fit_latent_mixed` | 11 identical |
+| `stats_fit_link()` | `stats.fit_link` | 5 identical |
 | `stats_fit_logistic()` | `stats.fit_logistic` | 7 identical |
 | `stats_fit_mixed()` | `stats.fit_mixed` | 7 identical |
 | `stats_meta()` | `stats.meta` | 3 identical |
@@ -129,10 +133,9 @@ is the only renaming mzLibR is entitled to do.
 | `IsobaricKit.sdrf_labels` | `records$sdrf_label[records$kit == name]` |
 | `LibraryFileReport.ok` | a column test on `files`: `is.na(error_kind)` |
 | `LibraryBatch.failed_files` | a row filter on `files`: `batch$files[!is.na(batch$files$error_kind), ]` |
-| `library.calibrate_rt` | not ported yet: wire `library calibrate-rt` (mzLib #1387), new in the pyMzLib 0.7.0 bridge |
-| `RtCalibration.group` | not ported yet: part of `library.calibrate_rt`'s result |
-| `RtCalibration.failed_groups` | not ported yet: part of `library.calibrate_rt`'s result |
-| `RtCalibrationGroup.ok` | not ported yet: part of `library.calibrate_rt`'s result |
+| `RtCalibration.group` | a row filter on `groups`: `cal$groups[cal$groups$group == name, ]` |
+| `RtCalibration.failed_groups` | a row filter on `groups`: `cal$groups[!is.na(cal$groups$error_kind), ]` |
+| `RtCalibrationGroup.ok` | a column test on `groups`: `is.na(error_kind)` |
 | `Peptide.is_modified` | a column comparison, `modification_count > 0` |
 | `Digest.fragment_count` | `nrow(digest$fragments)`; not promoted to a function because, for ETD, a bare total folds in the extra full-length z-dot per peptide — see ?digest_fragments_by_series |
 | `SequenceConversions.outputs` | `records$output` |
@@ -156,8 +159,7 @@ is the only renaming mzLibR is entitled to do.
 | `ParsedAccessions.entry_of` | two columns of `records`: `setNames(parsed$records$entry_accession, parsed$records$input)` |
 | `PairStatus.genes` | a row filter on `records`: `ps$records$gene_id[ps$records$status == status]` |
 | `WrittenSnapshot.manifest` | an element, `written$manifest`, not a function |
-| `proteins.map_residues` | not ported yet: wire `genes map-residues` (mzLib #1465), new in the pyMzLib 0.7.0 bridge |
-| `AlignedProteins.sequences` | not ported yet: part of `proteins.map_residues`'s result |
+| `AlignedProteins.sequences` | two columns of `proteins$records`: `setNames(m$proteins$records$sequence, m$proteins$records$protein_id)` |
 | `Peptide.intensity` | a row of the long `peptides` frame |
 | `Peptide.detection_type` | a column of the long `peptides` frame |
 | `ProteinGroup.intensity` | a row of the long `proteins` frame |
@@ -188,16 +190,6 @@ is the only renaming mzLibR is entitled to do.
 | `Adjusted.bh_adjusted` | `records$bh_adjusted` |
 | `CombinedPValues.p_values` | `setNames(records$p_value, records$feature)` |
 | `EntrapmentFdpEstimates.at` | `records[records$q_value_threshold == threshold, ]`, zero rows where nothing was discovered |
-| `stats.fit_latent_mixed` | not ported yet: wire `stats fit-latent-mixed` (mzLib #1469), new in the pyMzLib 0.7.0 bridge |
-| `stats.fit_link` | not ported yet: wire `stats fit-link` (mzLib #1469), new in the pyMzLib 0.7.0 bridge |
-
-### pyMzLib parameters an mzLibR function does not take yet
-
-| mzLibR | pyMzLib parameter | why not |
-|---|---|---|
-| `ptmqtl_pairs()` | `include_bounds` | not ported yet (mzLib #1468, wire `--include-bounds`); `include_bounds` in the result reports mzLib's default |
-| `ptmqtl_pairs()` | `run_covariate` | not ported yet (mzLib #1468, wire `--run-covariate`); `run_covariate_file` in the result is `NA` |
-| `ptmqtl_trait_effects()` | `scale` | not ported yet (mzLib #1464, wire `--scale`); `scale` in the result reports mzLib's default |
 
 ## data.frame columns against the wire
 
@@ -341,11 +333,11 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 |---|---|---|---|---|---|
 | `diff design` | `diff_design()` | 0.1.0 | 2 params, 11 fields with units | `diff_design_malat.json` | ok |
 | `diff observations` | `diff_observations()` | 0.1.0 | 9 params, 11 fields with units | `diff_observations_mm_mbr_kept.json` | ok |
-| `genes map-residues` | `proteins_map_residues` | — | *not projected yet* | | |
+| `genes map-residues` | `proteins_map_residues()` | — | 4 params, 6 fields with units | `genes_map_residues_tp53.json` | ok |
 | `genes orthology` | `proteins_build_orthology()` | 0.1.0 | 6 params, 11 fields with units | `genes_orthology_pair_status.json` | ok |
 | `genes resolve` | `proteins_resolve_genes()` | 0.1.0 | 7 params, 8 fields with units | `genes_resolve_human.json` | ok |
 | `isobaric kits` | `isobaric_kits()` | 0.1.0 | 1 params, 6 fields with units | `isobaric_kits.json` | ok |
-| `library calibrate-rt` | `library_calibrate_rt` | — | *not projected yet* | | |
+| `library calibrate-rt` | `library_calibrate_rt()` | — | 7 params, 13 fields with units | `library_calibrate_rt_pbmc_skip.json` | ok |
 | `library read` | `library_read()`, `library_read_many()` | 0.1.0 | 12 params, 40 fields with units | `library_read_synthetic.json` | ok |
 | `modifications resolve` | `modifications_resolve` | — | *not projected yet* | | |
 | `peptidoform convert` | `peptidoform_convert()` | 0.1.0 | 5 params, 4 fields with units | `peptidoform_convert_unimod.json` | ok |
@@ -362,8 +354,8 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 | `proteins read` | `proteins_read()` | 0.1.0 | 7 params, 7 fields with units | `proteins_read_human.json` | ok |
 | `proteins update-go` | `proteins_update_go()` | 0.1.0 | 1 params, 0 fields with units | `proteins_update_go.json` | ok |
 | `ptmqtl occupancy` | `ptmqtl_occupancy()` | 0.1.0 | 5 params, 11 fields with units | `ptmqtl_occupancy_fractions.json` | ok |
-| `ptmqtl pairs` | `ptmqtl_pairs()` | 0.1.0 | 10 params, 16 fields with units | `ptmqtl_pairs_batch_run_level.json` | ok |
-| `ptmqtl trait-effects` | `ptmqtl_trait_effects()` | 0.1.0 | 6 params, 19 fields with units | `ptmqtl_trait_effects.json` | ok |
+| `ptmqtl pairs` | `ptmqtl_pairs()` | 0.1.0 | 12 params, 16 fields with units | `ptmqtl_pairs_batch_run_level.json` | ok |
+| `ptmqtl trait-effects` | `ptmqtl_trait_effects()` | 0.1.0 | 7 params, 19 fields with units | `ptmqtl_trait_effects.json` | ok |
 | `quant flashlfq` | `flashlfq_quantify()` | 0.1.0 | 14 params, 8 fields with units | `flashlfq_small.json` | ok |
 | `quant median-polish` | `flashlfq_median_polish()` | 0.1.0 | 4 params, 3 fields with units | `median_polish_small.json` | ok |
 | `readers formats` | `readers_formats()` | 0.1.0 | 0 params, 0 fields with units | `readers_formats.json` | ok |
@@ -390,8 +382,8 @@ parsed from the verb's recorded fixture. Deviations are declared, with reasons, 
 | `stats combine-p` | `stats_combine_p()` | 0.1.0 | 2 params, 7 fields with units | `stats_combine_p_signed.json` | ok |
 | `stats correlate` | `stats_correlate()` | 0.1.0 | 3 params, 10 fields with units | `stats_correlate_limma_age_given_sex.json` | ok |
 | `stats entrapment-fdp` | `stats_entrapment_fdp()` | 0.1.0 | 4 params, 15 fields with units | `stats_entrapment_fdp_reference.json` | ok |
-| `stats fit-latent-mixed` | `stats_fit_latent_mixed` | — | *not projected yet* | | |
-| `stats fit-link` | `stats_fit_link` | — | *not projected yet* | | |
+| `stats fit-latent-mixed` | `stats_fit_latent_mixed()` | — | 10 params, 24 fields with units | `stats_fit_latent_mixed_link_ml.json` | ok |
+| `stats fit-link` | `stats_fit_link()` | — | 4 params, 5 fields with units | `stats_fit_link_simulated.json` | ok |
 | `stats fit-logistic` | `stats_fit_logistic()` | 0.1.0 | 6 params, 16 fields with units | `stats_fit_logistic_glm.json` | ok |
 | `stats fit-mixed` | `stats_fit_mixed()` | 0.1.0 | 6 params, 18 fields with units | `stats_fit_mixed_lmm_reml.json` | ok |
 | `stats fit` | `stats_fit()` | 0.1.0 | 9 params, 37 fields with units | `stats_fit_malat_contrasts.json` | ok |

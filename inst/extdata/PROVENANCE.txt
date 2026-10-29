@@ -1,6 +1,6 @@
 Where the tables in extdata/ come from
 
-Every file here is pyMzLib's, byte for byte (pkg/python/tests/fixtures/{stats,diff,ptmqtl}/ at the
+Every file here is pyMzLib's, byte for byte (pkg/python/tests/fixtures/{stats,diff,ptmqtl,calibration}/ at the
 pyMzLib commit named in scripts/pymzlib-ref), and every one is mzLib's own test data or derived
 from it by a rule a C# test in pyMzLib's bridge holds. None is hand-written. pyMzLib's README in
 each of those folders has the full table; in short:
@@ -26,6 +26,14 @@ stats/
   entrapment_reference_*.tsv
       mzLib's hand-built entrapment search (EntrapmentFdpTests.cs) and the entrapment project's
       reference script output at r = 1.
+  lnmm_reference_*.tsv, lnmm_link_*.tsv, lnmm_scatter_*.tsv, lnmm_counted_fit.tsv, lnmm_PROVENANCE.txt
+      mzLib's LogitNormalMixedModel reference input (16 and 20 simulated features, 23 samples in
+      8 animals, counted through a link or the identity) and lme4 2.0.6's glmer() and glmmTMB
+      1.1.15.2's fits of it (mzLib #1469).
+  lnmm_simulated_*.tsv
+      mzLib's measured-and-counted simulation (LogitNormalMixedModelTests.Simulated, seeds 1-3).
+  link_cells.tsv
+      mzLib's FitLink test cells: 4,000 cells simulated through the link (-0.5, 0.5, 0.3).
 
 diff/
   malat_dilution_samples.tsv
@@ -43,5 +51,17 @@ ptmqtl/
       mzLib's hand-computed PtmQtl test cases (PtmQtlTests.cs), one protein per case.
   trait_occupancy.tsv
       what ptmqtl occupancy --out writes from trait.tsv.
+  bounds.tsv
+      mzLib's BoundsEnterTypeAAsTiedRanks: two sites with a value in six of ten runs and a bound in
+      the rest (mzLib #1468).
+  depth.tsv, depth_psms.tsv
+      mzLib's ARunCovariateIsPartialledOut: twelve runs in two batches, and each run's target PSMs,
+      the run covariate (mzLib #1468).
+
+calibration/
+  diann2_hela_rt.tsv, diann_pbmc_rt.tsv, PROVENANCE.txt
+      two DIA-NN reports in mzLib's test data (one HeLa run; three PBMC runs), read by the bridge's
+      readers read-records and cut to six columns: run, precursor, q-value, observed retention time
+      (minutes), library iRT and DIA-NN's predicted retention time.
 
 mzLib is LGPL-3.0; see licenses/.

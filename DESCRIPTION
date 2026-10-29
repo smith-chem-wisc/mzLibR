@@ -7,17 +7,20 @@ Authors@R:
 Description: Calls the mzLib proteomics library from R over a language-neutral
     bridge: reading mass-spectrometry data files ('mzML', Thermo '.raw',
     Bruker '.d', timsTOF, MGF and msalign), spectral libraries ('.msl') and
-    the result files of a dozen search tools, SDRF-Proteomics
+    the result files of a dozen search tools, retention-time calibration
+    onto a library's iRT scale, SDRF-Proteomics
     experimental-design files (label-free and isobaric designs), protein
     databases ('UniProt' XML, FASTA) with 'Ensembl' gene resolution,
-    sequence alignment and 'Ensembl Compara' orthology, PRIDE repository
+    sequence alignment, 'Ensembl Compara' orthology and residue mapping
+    across species, PRIDE repository
     access with checksums, in-silico digestion and fragmentation of
     peptidoforms, conversion of full sequences to 'Unimod' and 'ProForma'
     notation, label-free quantification with match-between-runs via
     FlashLFQ, Gene Ontology annotation of protein groups, and the moderated
     t-test of 'limma' with contrasts, Benjamini-Hochberg adjustment,
     random-effects meta-analysis, p-value combination, Spearman correlation,
-    logistic and mixed models per feature, entrapment false discovery
+    logistic and mixed models per feature (also on a latent scale, from
+    measured and counted samples), entrapment false discovery
     estimates, design matrices from sample sheets, and PTM site occupancy as
     mzLib computes them. The bridge is a self-contained executable that
     carries its own .NET runtime, so no .NET installation is required. It is
