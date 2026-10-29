@@ -134,7 +134,7 @@ test's rows, so neither does this.
 ## Wraps
 
 Wire verb `diff observations`. Generated from the bridge's verb spec
-`diff.observations.yaml` (bridge commit `4e180efe8b59`) by
+`diff.observations.yaml` (bridge commit `aea14604d5f7`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

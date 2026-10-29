@@ -15,7 +15,9 @@ read off one peptide are correlated by construction. mzLib’s
 | the same, for a sample measured as several fractions? | `ptmqtl_occupancy(samples = )` | `SiteOccupancyCalculator.Calculate` with a run-to-sample map | fractions summed before the ratio |
 | which two modifications sit on one molecule? | `ptmqtl_pairs(type = "physical")` | `PtmPairEngine.Physical` (#1430) | median co-occupancy |
 | which two sites rise and fall together across runs? | `ptmqtl_pairs(type = "covarying")` | `PtmPairEngine.CoVarying` (#1430, \#1446) | Spearman’s rho, Benjamini-Hochberg |
+| the same, with runs a site was seen in only one form, or given each run’s depth? | `ptmqtl_pairs(include_bounds = , run_covariate = )` | `PtmPairEngine.CoVarying` (#1468) | tied ranks; partial Spearman |
 | does a site’s occupancy change with a per-run trait? | [`ptmqtl_trait_effects()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_trait_effects.md) | `SiteTraitEffects.Fit` (#1446) | a mixed model per site, a random intercept per replicate |
+| the same effect in log2 odds, where +1 doubles the odds? | `ptmqtl_trait_effects(scale = "log2_odds")` | `SiteTraitEffects.Fit` (#1464) | the natural-log fit over ln 2 |
 
 Every number below comes from mzLib’s own hand-computed test cases, so
 each is one mzLib’s tests assert.
@@ -271,10 +273,10 @@ A co-varying pair that was not tested says why in `test_status`
 (`"not_estimable"`, `"too_few_shared_runs"` or
 `"both_sites_mostly_bounds"`; `"tested"` otherwise, `NA` for physical
 pairs). `run_level_removed` says whether rho is partial given the run
-level; `bounds_included` and `run_covariate_removed` report two mzLib
-options (#1468) that
-[`ptmqtl_pairs()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_pairs.md)
-does not send yet, so here they are `FALSE`.
+level; `bounds_included` and `run_covariate_removed` say whether
+one-form runs entered as tied bounds and whether rho is partial given a
+run covariate, the two options below (mzLib \#1468); here they are
+`FALSE`.
 
 **The trap: a batch correlates everything.** These twelve runs come in
 two batches, and every site reads 0.2 higher in the second. That alone
@@ -316,6 +318,125 @@ own level, and a two-column file (`modification`, `group`) as
   correlate through detection alone; that is why mzLib leaves them out
   by default.
 
+### Counting one-form runs as bounds
+
+A site seen in only one form in a run has no fraction, but it is not
+missing either. A `"not_detected"` cell says the occupancy was below
+what the run could see; a ceiling says it was at the top. By default
+mzLib leaves such runs out of the correlation. A site that is often
+below detection then never reaches the 70% guard, and its pairs are
+never tested.
+
+`include_bounds = TRUE` lets those runs in as **tied ranks**, never as
+invented values (mzLib \#1468). A `"not_detected"` or `"floor"` cell
+ties below every fraction of its site. A ceiling, or a `"count_only"`
+cell whose covering peptidoforms all carry the mark (k of n with k = n),
+ties above. A `"count_only"` cell where both forms were identified has
+no rank and stays out.
+
+The example is mzLib’s `BoundsEnterTypeAAsTiedRanks`: two sites with a
+value in six of ten runs, and a bound in the other four.
+
+``` r
+
+bounds <- file.path(ptmqtl_data, "bounds.tsv")
+unbounded <- ptmqtl_pairs(bounds, type = "covarying")
+str(unbounded[c("row_count", "include_bounds")])
+#> List of 2
+#>  $ row_count     : num 0
+#>  $ include_bounds: logi FALSE
+bounded <- ptmqtl_pairs(bounds, type = "covarying", include_bounds = TRUE)
+bounded$records[, c("n", "test_status", "bounds_included", "statistic")]
+#>   n test_status bounds_included   statistic
+#> 1 9      tested            TRUE 0.004201681
+str(bounded[c("min_untied_share", "exclude_ceiling")])
+#> List of 2
+#>  $ min_untied_share: num 0.5
+#>  $ exclude_ceiling : logi NA
+```
+
+Six of ten is below the guard, so the plain call tests nothing. With
+bounds, `BOUND_S` has a value or a bound in all ten runs and `BOUND_T`
+in nine, and the pair is tested on the nine they share. The tenth is
+`BOUND_T`’s `"count_only"` cell with both forms identified (1 of 2): it
+has no rank. The two sites turn out unrelated (rho 0.004).
+
+**Too many ties make the test unreliable.** When both sites are mostly
+one bound, Spearman’s t test calls far too many pairs: in mzLib’s
+simulation, 2 to 5 times the nominal rate at p \< 0.001 with no relation
+at all. So a pair is tested only if one of its sites has at least
+`min_untied_share` (half) of the shared runs outside its largest tie.
+Otherwise its `test_status` is `"both_sites_mostly_bounds"`, and it has
+no p-value.
+
+`exclude_ceiling` stays `NA`: with bounds, mzLib treats a ceiling as a
+high bound. `keep_ceiling = TRUE` sends `FALSE` and gives the same
+answer.
+
+### Given each run’s depth
+
+Shallow runs miss low-abundance forms everywhere at once. With bounds
+in, that makes covered-zeros co-occur across unrelated sites, and any
+site that rises with depth correlates with every other. `run_covariate`
+takes a per-run value, such as the run’s target PSMs, and correlates the
+two sites **given** it: a partial Spearman correlation, as for the run
+level (mzLib \#1468).
+
+The file has a header row whose second field names the covariate, then
+one row per run:
+
+``` r
+
+head(read.delim(file.path(ptmqtl_data, "depth_psms.tsv")), 2)
+#>   run target_psms
+#> 1 r00        9000
+#> 2 r01       12000
+```
+
+The example is mzLib’s `ARunCovariateIsPartialledOut`: twelve runs in
+two batches, and two sites that also rise a little with each run’s
+depth.
+
+``` r
+
+depth <- file.path(ptmqtl_data, "depth.tsv")
+psms <- file.path(ptmqtl_data, "depth_psms.tsv")
+depth_pair <- function(result) {
+  r <- result$records
+  r <- r[startsWith(r$site_a, "DEPTH_S") & startsWith(r$site_b, "DEPTH_T"), ]
+  data.frame(rho = round(r$statistic, 2), p = round(r$p_value, 3), n = r$n)
+}
+depth_pair(ptmqtl_pairs(depth, type = "covarying"))
+#>    rho     p  n
+#> 1 0.77 0.003 12
+covariate <- ptmqtl_pairs(depth, type = "covarying", run_covariate = psms)
+depth_pair(covariate)
+#>    rho     p  n
+#> 1 0.76 0.006 12
+str(covariate[c("run_covariate_name", "run_covariate_runs_missing", "min_runs_for_run_level")])
+#> List of 3
+#>  $ run_covariate_name        : chr "target_psms"
+#>  $ run_covariate_runs_missing: chr(0) 
+#>  $ min_runs_for_run_level    : num 10
+depth_pair(ptmqtl_pairs(depth, type = "covarying", run_covariate = psms, remove_run_level = TRUE))
+#>    rho     p  n
+#> 1 0.08 0.832 12
+```
+
+Depth alone barely moves rho: in these runs most of the shared rise is
+the batch. Given the batch’s run level as well, the pair is unrelated. A
+covariate removes only what it explains.
+
+- **Any increasing transform gives the same answer.** The covariate is
+  ranked, so target PSMs and log2 target PSMs are the same input.
+- **Leave a run out for “unknown”.** It is then left out of every pair,
+  and listed in `run_covariate_runs_missing`. A blank or `NA` value is
+  not “unknown”: mzLib refuses it, and mzLibR raises an
+  `mzlib_usage_error`.
+- **The same floor of shared runs applies.** A pair partial on the
+  covariate is tested only on at least `min_runs_for_run_level` shared
+  runs; below that it is `"too_few_shared_runs"`.
+
 ## Does occupancy change with a trait?
 
 [`ptmqtl_trait_effects()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_trait_effects.md)
@@ -352,7 +473,7 @@ the call above writes, as this package ships it):
 effects <- ptmqtl_trait_effects(file.path(ptmqtl_data, "trait_occupancy.tsv"),
                                 file.path(ptmqtl_data, "trait_runs.tsv"))
 effects
-#> <mzlibr_trait_effects> 2 sites against dose, given injection (min 6 runs, 4 replicates)
+#> <mzlibr_trait_effects> 2 sites against dose, given injection (min 6 runs, 4 replicates), on natural_log_odds
 #>   fitted 2, below_support 0, too_few_observations 0, rank_deficient 0, too_few_groups 0, variance_ratio_at_limit 0, not_converged 0
 effects$records[, c("protein_accession", "status", "effect", "standard_error", "df", "q", "runs", "replicates")]
 #>   protein_accession status    effect standard_error df           q runs
@@ -387,6 +508,31 @@ strict$records[, c("protein_accession", "status", "effect", "replicates")]
 #> 1     CENSORED_SITE below_support        NA          5
 #> 2        TRAIT_SITE        fitted 0.5008514          6
 ```
+
+**In log2 odds.** Natural-log odds are mzLib’s default.
+`scale = "log2_odds"` reports the same fit in log2 odds, where an effect
+of +1 doubles the odds of the modified form per trait unit (mzLib
+\#1464):
+
+``` r
+
+log2 <- ptmqtl_trait_effects(file.path(ptmqtl_data, "trait_occupancy.tsv"),
+                             file.path(ptmqtl_data, "trait_runs.tsv"), scale = "log2_odds")
+c(effects$scale, log2$scale)
+#> [1] "natural_log_odds" "log2_odds"
+data.frame(site = effects$records$protein_accession,
+           natural = round(effects$records$effect, 3), log2 = round(log2$records$effect, 3),
+           p_natural = signif(effects$records$p_value, 3), p_log2 = signif(log2$records$p_value, 3))
+#>            site natural  log2 p_natural   p_log2
+#> 1 CENSORED_SITE   0.543 0.783  0.003610 0.003610
+#> 2    TRAIT_SITE   0.501 0.723  0.000817 0.000817
+```
+
+`TRAIT_SITE`’s 0.50 natural-log units are 0.72 log2 units: 2^0.72 =
+1.65, the same odds ratio per dose unit. mzLib does not refit. It
+divides the effects and standard errors by ln 2 and the two variances by
+(ln 2)^2, so `df`, `p_value` and `q` are unchanged. Pick the scale your
+other results use; the science does not change.
 
 This answers “does the modified share change?”, not “is the modification
 detected more often?”: floors, count-only and undetected cells are left

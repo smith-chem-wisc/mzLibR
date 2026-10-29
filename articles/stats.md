@@ -18,6 +18,8 @@ check the agreement rather than take it on trust.
 | which features rise or fall with a per-sample trait? | [`stats_correlate()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_correlate.md) | `SpearmanCorrelation.Correlate`, `.PartialCorrelate` (#1367, \#1446) | R `cor.test(method = "spearman")`, ppcor `pcor.test` |
 | does a 0/1 outcome (detected or not) follow a coefficient? | [`stats_fit_logistic()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_logistic.md) | `LogisticRegression.Fit` (#1367) | R `glm(family = binomial)` per feature |
 | which features change, when samples come in groups? | [`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md) | `MixedModel.Fit` (#1367) | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html) with a random intercept per group |
+| the same, when some samples are only counted (k of n trials)? | [`stats_fit_latent_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_latent_mixed.md) | `LogitNormalMixedModel.Fit` (#1469) | `lme4::glmer()` and `lmer()` in one model |
+| how does a count’s chance of success follow the latent value? | [`stats_fit_link()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.md) | `LogitNormalMixedModel.FitLink` (#1469) | maximum likelihood over the cells |
 | does a search really control its FDR? | [`stats_entrapment_fdp()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_entrapment_fdp.md) | `EntrapmentFdp.Sweep` (#1385) | Wen et al. 2025, as FDRBench |
 
 [`stats_fit()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.md)
@@ -746,6 +748,229 @@ mzLib matches nlme to 1e-5 relative (nlme’s own optimizer precision).
 Satterthwaite and Kenward-Roger df (lmerTest) are not implemented, so
 p-values differ from lmerTest’s.
 
+## When some samples are only counted
+
+| You want to know | Call | mzLib computes it with |
+|----|----|----|
+| Does a value follow a trait, when some runs measured it and others only counted successes (k of n)? | [`stats_fit_latent_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_latent_mixed.md) | `LogitNormalMixedModel.Fit` (#1469) |
+| How does a count’s chance of success follow the value (the link)? | [`stats_fit_link()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.md) | `LogitNormalMixedModel.FitLink` (#1469) |
+
+Some quantities are measured in some runs and only counted in others. A
+PTM site’s occupancy is the usual case: where the modified and
+unmodified peptides were both quantified, you have a number; where they
+were not, you may know only that 3 of 8 covering peptidoforms carried
+the modification.
+[`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)
+has to drop the counted runs.
+[`stats_fit_latent_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_latent_mixed.md)
+uses both kinds.
+
+It models a **latent** value per run, such as the log-odds of the site’s
+occupancy, with
+[`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)’s
+structure: fixed effects from your design, a random intercept per group
+(an animal, a donor), and run-to-run scatter. A measured run reads the
+latent value. A counted run has k of its n trials succeed, each with a
+chance g set by the latent value through a **link**: logit g =
+intercept + slope x latent + depth_slope x depth. With the identity link
+(0, 1), a count samples the same probability a measurement reads. The
+model is a binomial generalized linear mixed model (Breslow and Clayton
+1993), the kind R users fit with `lme4::glmer` (Bates et al. 2015).
+
+**You choose which cells are counted, and the link.** mzLibR builds
+neither. mzLib’s PTM-QTL code does not yet do it either, so the counts
+table is yours to write.
+
+mzLib’s own test of this model simulates 16 animals of 4 runs each, with
+a trait that is 0 or 1 per animal and a true trait effect of 1.0 on the
+latent scale. Every other run is measured; the rest are counted, 5
+trials each, through the link (0.4, 0.6). The package ships three of
+those simulations, one per feature. The counts table has the responses
+table’s layout, each cell `successes/trials`:
+
+``` r
+
+counts <- read.delim(file.path(data, "lnmm_simulated_counts.tsv"), colClasses = "character")
+counts[1, 1:5]
+#>   feature s1  s2 s3  s4
+#> 1   seed1    3/5    2/5
+latent <- stats_fit_latent_mixed(file.path(data, "lnmm_simulated_design.tsv"),
+  file.path(data, "lnmm_simulated_groups.tsv"), c("Intercept", "trait"), link = c(0.4, 0.6),
+  responses = file.path(data, "lnmm_simulated_responses.tsv"),
+  counts = file.path(data, "lnmm_simulated_counts.tsv"))
+latent
+#> <mzlibr_latent_mixed_model_fit> 3 features x 64 samples in 16 groups (animal), reml, reporting Intercept, trait
+#>   96 measured and 96 counted cells, through logit g = 0.4 + 0.6 x latent + 0 x depth, overdispersion 0
+#>   fitted 3, too_few_observations 0, rank_deficient 0, separated 0, not_converged 0, too_few_groups 0
+unlist(latent$link)
+#>      intercept          slope    depth_slope overdispersion 
+#>            0.4            0.6            0.0            0.0
+```
+
+`link` echoes what mzLib used. The depth slope and overdispersion were
+not given, so they are mzLib’s defaults. Now fit the measured runs alone
+with
+[`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md),
+and compare:
+
+``` r
+
+measured <- stats_fit_mixed(file.path(data, "lnmm_simulated_responses.tsv"),
+  file.path(data, "lnmm_simulated_design.tsv"), file.path(data, "lnmm_simulated_groups.tsv"),
+  c("Intercept", "trait"))
+ours <- latent$records[latent$records$coefficient == "trait", ]
+theirs <- measured$records[measured$records$coefficient == "trait", ]
+data.frame(feature = ours$feature,
+           latent = sprintf("%+.2f +- %.2f", ours$estimate, ours$standard_error),
+           runs = paste(ours$measured, "+", ours$counted),
+           measured_only = sprintf("%+.2f +- %.2f", theirs$estimate, theirs$standard_error),
+           measured_runs = theirs$observed)
+#>   feature        latent    runs measured_only measured_runs
+#> 1   seed1 +1.61 +- 0.33 32 + 32 +1.63 +- 0.33            32
+#> 2   seed2 +0.73 +- 0.26 32 + 32 +0.77 +- 0.27            32
+#> 3   seed3 +1.26 +- 0.28 32 + 32 +1.36 +- 0.28            32
+rbind(latent = latent$records$df[latent$records$coefficient == "Intercept"],
+      measured_only = measured$records$df[measured$records$coefficient == "Intercept"])
+#>               [,1] [,2] [,3]
+#> latent          48   48   48
+#> measured_only   16   16   16
+```
+
+Every trait estimate is within 2 standard errors of the true 1.0
+(mzLib’s own test asks for 3):
+
+``` r
+
+all(abs(ours$estimate - 1) < 2 * ours$standard_error)
+#> [1] TRUE
+```
+
+**The counted runs barely shrink the trait’s standard error, and that is
+correct.** The trait is constant within each animal, so it is tested
+between animals, on 16 animals minus 2 coefficients, 14 df in both fits.
+More runs per animal sharpen each animal’s baseline, but the number of
+animals limits how sure you can be about the trait. Effects that vary
+within animals gain more: the intercept is tested on 48 df with the
+counts, against 16 without.
+
+What each row says, beyond
+[`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)’s
+columns:
+
+- `estimate` and `standard_error` are on the **latent** scale: natural
+  log-odds here, so `exp(estimate)` is an odds ratio of occupancy.
+- `measured` and `counted` are the runs of each kind the feature
+  contributed. `df` counts both.
+- `residual_variance_given` is `TRUE` when sigma^2 came from your
+  `residual_variance` table rather than the fit. Give it for a feature
+  with too few measured runs to estimate its scatter.
+- `status` can be `"separated"`: the counts are split by the design
+  (every run of one group all 0, of another all full), so the estimate
+  runs to infinity. You get the status, never a p-value.
+
+**Check it against lme4 and glmmTMB.** mzLib’s reference input is 16
+simulated features over 23 runs in 8 animals, every run counted, through
+the link (-0.4, 0.6, 0.3) with a depth term, and R’s `glmer` fit of each
+with 25-point adaptive quadrature. Those fits have no run-to-run
+scatter, so each feature is given mzLib’s tiny sigma^2 of 2e-7, as
+mzLib’s own comparison does:
+
+``` r
+
+counted <- stats_fit_latent_mixed(file.path(data, "lnmm_reference_design.tsv"),
+  file.path(data, "lnmm_reference_groups.tsv"), c("Intercept", "trait", "x"),
+  link = c(-0.4, 0.6, 0.3), counts = file.path(data, "lnmm_link_counts.tsv"),
+  depth = file.path(data, "lnmm_link_depth.tsv"),
+  residual_variance = file.path(data, "lnmm_link_residual_variance.tsv"), estimator = "ml")
+glmer <- read.delim(file.path(data, "lnmm_counted_fit.tsv"))
+glmer <- glmer[glmer$link == "link" & glmer$method == "ML", ]
+sapply(c(Intercept = 0, trait = 1, x = 2), function(j) {
+  ours <- counted$records[counted$records$coefficient == c("Intercept", "trait", "x")[j + 1], ]
+  max(abs(ours$estimate - glmer[[paste0("b", j)]]) / glmer[[paste0("se", j)]]) < 1e-5
+})
+#> Intercept     trait         x 
+#>      TRUE      TRUE      TRUE
+```
+
+Every estimate is within 1e-5 of glmer’s standard error from glmer’s
+own. With run-to-run scatter estimated from counts alone, the reference
+is `glmmTMB` (Brooks et al. 2017), which integrates by a Laplace
+approximation where mzLib uses quadrature, so they agree to about 1%:
+
+``` r
+
+scatter <- stats_fit_latent_mixed(file.path(data, "lnmm_reference_design.tsv"),
+  file.path(data, "lnmm_reference_groups.tsv"), c("Intercept", "trait", "x"), link = "identity",
+  counts = file.path(data, "lnmm_scatter_counts.tsv"))
+tmb <- read.delim(file.path(data, "lnmm_scatter_fit.tsv"))
+tmb <- tmb[tmb$method == "REML", ]
+trait <- scatter$records[scatter$records$coefficient == "trait", ]
+c(group_variance = max(abs(trait$group_variance - tmb$tau2) / tmb$tau2) < 0.03,
+  standard_error = max(abs(trait$standard_error - tmb$se1) / tmb$se1) < 0.03)
+#> group_variance standard_error 
+#>           TRUE           TRUE
+```
+
+### Fitting the link
+
+The identity link says a count samples the very probability a
+measurement reads. Often it does not: whether a modified form is seen at
+all depends on how much of it there is, not only on its share.
+[`stats_fit_link()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.md)
+fits the link from **cells**: each with a count and the normal its
+latent value is taken to sit at (a mean and an SD, such as its feature’s
+mean and SD over the measured runs, mzLib’s own suggestion). By default
+it fits on **detection**: whether any trial succeeded, the event that
+makes a covered zero.
+
+mzLib’s own test of `FitLink` simulates 4,000 cells through the link
+(-0.5, 0.5, 0.3) with a depth term, and the package ships them:
+
+``` r
+
+link <- stats_fit_link(file.path(data, "link_cells.tsv"), with_depth = TRUE)
+str(link[c("cell_count", "with_depth", "with_overdispersion", "detection_only")])
+#> List of 4
+#>  $ cell_count         : num 4000
+#>  $ with_depth         : logi TRUE
+#>  $ with_overdispersion: logi FALSE
+#>  $ detection_only     : logi TRUE
+round(unlist(link$link), 2)
+#>      intercept          slope    depth_slope overdispersion 
+#>          -0.51           0.51           0.33           0.00
+```
+
+The link is recovered from detection alone. `with_overdispersion` and
+`detection_only` were left out, so they are mzLib’s defaults, which the
+result reports.
+[`stats_fit_link()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.md)’s
+result goes straight into `stats_fit_latent_mixed(link = )`.
+
+Before you trust a latent-scale mixed model:
+
+- **The inputs are on the latent scale.** Send logit occupancy, not a
+  fraction or an intensity.
+- **The link is a modelling choice.** The identity link assumes a count
+  samples the latent value itself; a fitted one depends on the cells you
+  chose.
+- **Standard errors are at the estimated variances.** They do not
+  include those variances’ own uncertainty, so they are not `glmmTMB`’s
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html).
+- **Under `"reml"`, the fixed effects are integrated out by a Laplace
+  approximation,** as `glmmTMB`’s `REML = TRUE` does. With nothing
+  counted it is exactly
+  [`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)’s
+  REML, and the two agree to about 1e-5. Under `"ml"`, estimates and
+  variances agree with
+  [`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)’s,
+  but its standard errors are scaled differently.
+- **The integrals are adaptive Gauss-Hermite quadrature** (Liu and
+  Pierce 1994): 40 nodes over each animal’s baseline, 12 over each
+  count’s run scatter, as `glmer`’s `nAGQ`. The source is
+  `mzLib/StatisticalModels/LogitNormalMixedModel.cs` (mzLib \#1469).
+- **Not adjusted across features.** Send `p_value` to
+  [`stats_adjust()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_adjust.md).
+
 ## Does a search really control its FDR?
 
 An entrapment experiment adds peptides that cannot be in the sample to
@@ -807,6 +1032,30 @@ specs:
   entrapment estimators mzLib implements, and why the sample estimator
   is invalid (Wen et al., Nat Methods 22:1454, 2025; the method FDRBench
   implements).
+- [doi:10.1080/01621459.1993.10594284](https://doi.org/10.1080/01621459.1993.10594284):
+  generalized linear mixed models, the class of model this verb fits: a
+  latent linear predictor with a random intercept, observed through a
+  binomial link (Breslow and Clayton, J Am Stat Assoc 88:9, 1993).
+- [doi:10.1093/biomet/81.3.624](https://doi.org/10.1093/biomet/81.3.624):
+  adaptive Gauss-Hermite quadrature, centred at the integrand’s mode and
+  scaled by its curvature, which mzLib uses to integrate the counted
+  samples (Liu and Pierce, Biometrika 81:624, 1994).
+- [doi:10.18637/jss.v067.i01](https://doi.org/10.18637/jss.v067.i01):
+  lme4’s lmer and glmer (nAGQ 25), the references mzLib’s fits are held
+  to (Bates, Maechler, Bolker and Walker, J Stat Softw 67:1, 2015).
+- [doi:10.32614/RJ-2017-066](https://doi.org/10.32614/RJ-2017-066):
+  glmmTMB, whose Laplace-approximated REML mzLib’s REML follows and
+  whose fits with run scatter are a reference (Brooks et al., R Journal
+  9:378, 2017).
+- [doi:10.1093/biomet/58.3.545](https://doi.org/10.1093/biomet/58.3.545):
+  restricted maximum likelihood, the default estimator (Patterson and
+  Thompson, Biometrika 58:545, 1971).
+- [doi:10.1111/j.2517-6161.1948.tb00014.x](https://doi.org/10.1111/j.2517-6161.1948.tb00014.x):
+  the beta-binomial distribution, which a link with overdispersion gives
+  a count cell (Skellam, J R Stat Soc B 10:257, 1948).
+- [doi:10.1093/comjnl/7.4.308](https://doi.org/10.1093/comjnl/7.4.308):
+  the simplex search mzLib maximizes the link’s likelihood with (Nelder
+  and Mead, Comput J 7:308, 1965).
 - [doi:10.2307/2344614](https://doi.org/10.2307/2344614): generalized
   linear models and their fitting by iteratively reweighted least
   squares, the estimator mzLib implements (Nelder and Wedderburn, J R
@@ -818,9 +1067,6 @@ specs:
 - [doi:10.2307/2529876](https://doi.org/10.2307/2529876): the
   random-effects linear model y = X beta + Z u + e this verb fits with
   one random intercept (Laird and Ware, Biometrics 38:963, 1982).
-- [doi:10.1093/biomet/58.3.545](https://doi.org/10.1093/biomet/58.3.545):
-  restricted maximum likelihood, the default estimator (Patterson and
-  Thompson, Biometrika 58:545, 1971).
 - [doi:10.2202/1544-6115.1027](https://doi.org/10.2202/1544-6115.1027):
   the empirical-Bayes moderated t this verb computes, for coefficients
   and contrasts (Smyth, Stat Appl Genet Mol Biol 3:3, 2004).

@@ -37,6 +37,7 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/index.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/library_calibrate_rt.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/library_read.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/library_read_many.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.html</loc></url>
@@ -64,6 +65,7 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_correlations.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_covariate_spec.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_design_stratum.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_detection_link.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_diff_design.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_digest.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_entrapment_fdp_estimates.html</loc></url>
@@ -74,7 +76,9 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_go_annotations.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_go_update.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_isobaric_kits.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_latent_mixed_model_fit.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_library_records.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_link_fit.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_logistic_model_fit.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_match_records.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_median_polish.html</loc></url>
@@ -94,8 +98,10 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_ptm_pairs.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_quant.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_quantified_peptide_records.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_residue_mappings.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_restricted_sdrf.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_result_records.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_rt_calibration.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_scan_records.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/print.mzlibr_sdrf_ages.html</loc></url>
@@ -113,6 +119,7 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_annotate_go.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_build_orthology.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_classify_peptides.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_residues.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_source_to_target.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_target_to_source.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/proteins_orthology_pair.html</loc></url>
@@ -172,6 +179,8 @@
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_correlate.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_entrapment_fdp.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_latent_mixed.html</loc></url>
+<url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_logistic.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.html</loc></url>
 <url><loc>https://smith-chem-wisc.github.io/mzLibR/reference/stats_meta.html</loc></url>

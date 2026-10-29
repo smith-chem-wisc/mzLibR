@@ -8,9 +8,9 @@ renders.
 
 This release projects mzLib 1.0.596. The verbs marked *needs the pyMzLib
 0.2.0 bridge*, *needs the pyMzLib 0.3.0 bridge*, *needs the pyMzLib
-0.4.0 bridge* or *needs the pyMzLib 0.6.0 bridge* below are new in the
-bridge that release publishes; with an older bridge they are refused,
-naming the release they need.
+0.4.0 bridge*, *needs the pyMzLib 0.6.0 bridge* or *needs the pyMzLib
+0.7.0 bridge* below are new in the bridge that release publishes; with
+an older bridge they are refused, naming the release they need.
 [`mzlibr_install_bridge()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.md)
 installs the bridge pyMzLib 0.7.0 publishes (mzLib 1.0.596, `cc67b7a2`),
 verified against that release’s SHA256SUMS.
@@ -26,13 +26,105 @@ pages and articles replay was re-recorded from the 0.7.0 bridge
 (pyMzLib’s, byte for byte), and the live tests hold each to what that
 bridge returns.
 
-The 0.7.0 bridge also has four verbs and three options this package does
-not project yet: `genes map-residues` (pyMzLib’s
-`proteins.map_residues()`), `library calibrate-rt`,
-`stats fit-latent-mixed` and `stats fit-link`; and `ptmqtl pairs`’
-`include_bounds` and `run_covariate` and `ptmqtl trait-effects`’
-`scale = "log2_odds"`. `docs/name-parity.md` lists them as not yet
-ported. The fields they report on every call are projected now (below).
+*New, each needing the pyMzLib 0.7.0 bridge.* Ported from pyMzLib 0.7.0,
+verb for verb; every number is mzLib’s, and every recording the help
+pages and articles replay is pyMzLib’s, byte for byte. Every option left
+out is not sent, so mzLib’s default applies and the result reports it.
+
+- **[`proteins_map_residues()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_map_residues.md):
+  a residue across species, through Ensembl Compara’s gene-tree
+  alignment** (wire `genes map-residues`, mzLib
+  [\#1465](https://github.com/smith-chem-wisc/mzLibR/issues/1465),
+  `ComparaGeneTreeAlignment`). For each
+  `(source protein, position, target protein)` query - a data.frame or a
+  list of `list(source, position, target)` - the residue of the target
+  in the same alignment column, or mzLib’s outcome saying why there is
+  none: `"GapInTarget"` (never the nearest residue),
+  `"DifferentAlignments"`, `"SourceNotInAlignment"`,
+  `"TargetNotInAlignment"`. It reads the release’s alignment file, its
+  gene-tree file and your species’ GTFs (`gtfs`, `gene_sets`, as
+  [`proteins_build_orthology()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_build_orthology.md)
+  takes them), all local; with none, mzLib keeps every gene and a caveat
+  says so. `proteins = TRUE` returns the kept Ensembl proteins with
+  their sequences, to chain with
+  [`proteins_align()`](https://smith-chem-wisc.github.io/mzLibR/reference/proteins_align.md)
+  from and back to UniProt positions; `alignment_index` is 1-based in R.
+  A position past the end of its source protein fails the whole call
+  with mzLib’s message, and mzLibR does not check lengths itself. The
+  proteins article gains the section, with the UniProt-to-UniProt chain
+  for human p53’s Ser15; the inputs are a verbatim cut of Ensembl
+  release 116 in `tests/map_residues/`.
+- **[`library_calibrate_rt()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_calibrate_rt.md):
+  a run’s minutes onto a spectral library’s iRT scale, and back** (wire
+  `library calibrate-rt`, mzLib
+  [\#1387](https://github.com/smith-chem-wisc/mzLibR/issues/1387),
+  `IrtCalibration`). From anchors you choose (a data.frame of `group`,
+  `rt_minutes`, `irt`), each group (run) is fitted on its own with
+  mzLib’s robust LOWESS (or `kind = "linear"`), and the queries sent
+  with them are converted either way: where a library precursor should
+  elute in this run, or an observed minute on the library’s scale, with
+  `is_extrapolated` outside the anchors. `minimum_anchors`, `bandwidth`,
+  `knots` and `robustness_iterations` are mzLib’s
+  `IrtCalibrationOptions`, each sent only when given (mzLib’s defaults
+  at the pin: 20 anchors, 0.3, 100 points, 3 iterations).
+  `on_error = "skip"` reports a run mzLib refuses in its row of `groups`
+  (`error_kind`, `error_type`, `error_message`) instead of failing. The
+  fitted curve cannot be returned - mzLib keeps its points private - so
+  queries travel in the same call as their anchors. The spectral-library
+  article gains the section, on two DIA-NN reports from mzLib’s test
+  data, shipped in `extdata/calibration/`.
+- **[`stats_fit_latent_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_latent_mixed.md):
+  a random-intercept mixed model per feature on a latent scale, from
+  samples measured on it, counted through it (k of n trials), or both**
+  (wire `stats fit-latent-mixed`, mzLib
+  [\#1469](https://github.com/smith-chem-wisc/mzLibR/issues/1469),
+  `LogitNormalMixedModel.Fit`). A PTM site’s occupancy is the usual
+  case. Counts are read through the detection `link` you choose -
+  `"identity"`, `c(intercept, slope[, depth_slope[, overdispersion]])`,
+  or
+  [`stats_fit_link()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.md)’s
+  result - required, because mzLib has no default. Rows add `measured`,
+  `counted` and `residual_variance_given`, and `"separated"` is a
+  status, never a p-value. The tests hold the recordings to lme4’s
+  `glmer()` and to `glmmTMB`, whose fits of mzLib’s reference input ship
+  in `extdata/stats/`. A function of its own, so
+  [`stats_fit_mixed()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_mixed.md)’s
+  answer does not change.
+- **[`stats_fit_link()`](https://smith-chem-wisc.github.io/mzLibR/reference/stats_fit_link.md):
+  fit that detection link** (wire `stats fit-link`, mzLib
+  [\#1469](https://github.com/smith-chem-wisc/mzLibR/issues/1469)) from
+  cells with a latent mean and SD and a count, on detection (any success
+  or none) by default; `with_depth`, `with_overdispersion` and
+  `detection_only` are sent only when given, and the result reports what
+  mzLib used. The link is an `mzlibr_detection_link`, `NULL` when
+  mzLib’s search did not converge.
+- **`ptmqtl_pairs(include_bounds = TRUE)`** lets a run where a site was
+  seen in only one form into co-varying pairs as a tied bound, never an
+  invented value: a covered-zero or floor ranks below every fraction, a
+  ceiling above (mzLib
+  [\#1468](https://github.com/smith-chem-wisc/mzLibR/issues/1468)). A
+  site often below detection can then be tested at all; a pair whose two
+  sites are both mostly one bound is `"both_sites_mostly_bounds"`, not
+  tested.
+- **`ptmqtl_pairs(run_covariate = )`** correlates two sites given each
+  run’s depth (or any per-run value), a partial Spearman correlation
+  (mzLib
+  [\#1468](https://github.com/smith-chem-wisc/mzLibR/issues/1468)). The
+  covariate’s name, file and the runs it leaves out are in the result.
+- **`ptmqtl_trait_effects(scale = "log2_odds")`** reports effects in
+  log2 odds, where +1 doubles the odds (mzLib
+  [\#1464](https://github.com/smith-chem-wisc/mzLibR/issues/1464)):
+  mzLib divides the natural-log fit by ln 2, so `df`, `p_value` and `q`
+  do not change. Left out, mzLib’s default stays natural-log odds.
+
+The articles teach each
+([`vignette("proteins")`](https://smith-chem-wisc.github.io/mzLibR/articles/proteins.md),
+[`vignette("library")`](https://smith-chem-wisc.github.io/mzLibR/articles/library.md),
+[`vignette("stats")`](https://smith-chem-wisc.github.io/mzLibR/articles/stats.md),
+[`vignette("ptmqtl")`](https://smith-chem-wisc.github.io/mzLibR/articles/ptmqtl.md)),
+and their citation blocks now carry the new verbs’ references. The
+parity check lists no pyMzLib 0.7.0 function or option as not yet
+ported.
 
 *Calls that used to fail now succeed.*
 
@@ -140,16 +232,16 @@ ported. The fields they report on every call are projected now (below).
   `bounds_included` and `run_covariate_removed`. The result gains
   `include_bounds`, `min_untied_share`, `run_covariate_file`,
   `run_covariate_name` and `run_covariate_runs_missing`, mzLib’s echo of
-  the two options not yet projected. Its caveat now counts untested
-  pairs by reason (“N co-varying pairs were not tested (…)”), where it
-  said “N co-varying pairs are not_estimable”. `spearman_method` is
-  still `"not_estimable"` for every untested pair.
+  the two new options (above). Its caveat now counts untested pairs by
+  reason (“N co-varying pairs were not tested (…)”), where it said “N
+  co-varying pairs are not_estimable”. `spearman_method` is still
+  `"not_estimable"` for every untested pair.
 - **[`ptmqtl_trait_effects()`](https://smith-chem-wisc.github.io/mzLibR/reference/ptmqtl_trait_effects.md)
   reports its `scale`** (mzLib
   [\#1464](https://github.com/smith-chem-wisc/mzLibR/issues/1464)),
   `"natural_log_odds"` at mzLib’s default, the unit of every effect,
   standard error and variance; a seventh caveat names it. The numbers
-  are unchanged.
+  are unchanged unless you pass `scale = "log2_odds"` (above).
 - **[`isobaric_kits()`](https://smith-chem-wisc.github.io/mzLibR/reference/isobaric_kits.md)
   gains an `sdrf_label` column** (mzLib
   [\#1467](https://github.com/smith-chem-wisc/mzLibR/issues/1467)): each

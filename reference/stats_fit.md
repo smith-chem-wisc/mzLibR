@@ -188,7 +188,7 @@ lacks what they add.
 ## Wraps
 
 Wire verb `stats fit`. Generated from the bridge's verb spec
-`stats.fit.yaml` (bridge commit `4e180efe8b59`) by
+`stats.fit.yaml` (bridge commit `aea14604d5f7`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

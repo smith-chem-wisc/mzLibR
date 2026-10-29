@@ -16,6 +16,7 @@ own reader, so a library reads in R exactly as MetaMorpheus reads it.
 | what are a precursor’s fragment ions? | `library_read(fragments = TRUE)` | `MslFragmentIon` |
 | can I read a library too large for memory? | `library_read(index_only_threshold = )` | `MslLibrary.LoadIndexOnly` |
 | several libraries into one table | [`library_read_many()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_read_many.md) | the same reader, in one bridge process |
+| where should this library precursor elute in my run, and back? | [`library_calibrate_rt()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_calibrate_rt.md) | `IrtCalibration.Fit`, `IrtCalibrationModel` (#1387) |
 
 Two small libraries are used. `myPrositLib.msl` is mzLib’s own test
 library `myPrositLib.msp` (five Prosit-predicted precursors) converted
@@ -138,8 +139,9 @@ lib$records[1:4, c("full_sequence", "retention_time", "retention_time_unit")]
 
 **Never plot or compare `retention_time` without
 `retention_time_unit`.** mzLibR converts nothing: iRT becomes minutes
-only through a calibration against a run, which is not in the library.
-Keep the rows of one unit before you use the numbers:
+only through a calibration against a run, which is not in the library
+(see “Calibrate a run onto library iRT” below). Keep the rows of one
+unit before you use the numbers:
 
 ``` r
 
@@ -315,6 +317,202 @@ unreadable library in its row of `files` and reads the rest. Never loop
 [`library_read()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_read.md)
 over files: each call starts a bridge process.
 
+## Calibrate a run onto library iRT
+
+A library’s iRT is a run-independent scale (Escher et al. 2012): it says
+that one peptide elutes after another, not at which minute. Each run has
+its own column, gradient and dead volume, so the same iRT falls at a
+different minute in every run. A **calibration** is the map between the
+two for one run, fitted from **anchors**: precursors you identified
+confidently in that run, each with the minute it was seen and its
+library iRT. With it you can ask where any library precursor should
+elute in that run, or put the run’s own times on the library’s scale.
+
+| You want to | Call | mzLib does it with |
+|----|----|----|
+| Fit one run’s map from anchors | `library_calibrate_rt(anchors)` | `IrtCalibration.Fit` |
+| Predict the minute a library precursor elutes at | a query with `irt` and `rt_minutes = NA` | `IrtCalibrationModel.ToRtMinutes` |
+| Put an observed minute on the library’s iRT scale | a query with `rt_minutes` and `irt = NA` | `IrtCalibrationModel.ToIrt` |
+| Know whether a time lies outside the anchors | the `is_extrapolated` column | `IrtCalibrationModel.IsExtrapolated` |
+| See how well the run follows the library | `groups$residual_sd`, and `irt - fitted_irt` per anchor | `IrtCalibrationModel.ResidualSd`, `ToIrt` |
+| Calibrate several runs in one call | one group per run | one `IrtCalibration.Fit` per group |
+| Choose a straight line, or tune the curve | `kind`, `bandwidth`, `knots`, `robustness_iterations`, `minimum_anchors` | `IrtCalibrationOptions` |
+
+**You choose the anchors.** mzLib asks for the observed apex time of
+confidently identified precursors and is robust to some wrong ones, but
+it applies no q-value cutoff, and neither does mzLibR. **Send the
+queries in the same call as their anchors**: mzLib keeps the fitted
+curve’s points private, so a calibration cannot be returned and used
+later. Refitting the same anchors gives the same map, because mzLib
+sorts them before it fits.
+
+### One run, from a DIA-NN report
+
+DIA-NN reports both numbers for every precursor it identifies: `RT`, the
+minute it was seen, and `iRT`, its value in the spectral library. The
+file used here is one HeLa run from a DIA-NN 2 report in mzLib’s own
+test data, read by
+[`readers_read_records()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_read_records.md)
+and cut to six columns; it ships in `extdata/calibration/`, with its
+provenance. The precursors at a q-value of 0.01 or below are the
+anchors; the rest are what we ask about.
+
+``` r
+
+hela <- read.delim(system.file("extdata", "calibration", "diann2_hela_rt.tsv", package = "mzLibR"),
+                   stringsAsFactors = FALSE)
+confident <- hela$q_value <= 0.01
+others <- hela[!confident, ]
+c(anchors = sum(confident), others = nrow(others))
+#> anchors  others 
+#>     418     114
+anchors <- data.frame(group = hela$run[confident], rt_minutes = hela$retention_time[confident],
+                      irt = hela$indexed_retention_time[confident])
+queries <- rbind(
+  data.frame(group = others$run, rt_minutes = NA, irt = others$indexed_retention_time),
+  data.frame(group = others$run, rt_minutes = others$retention_time, irt = NA)
+)
+calibration <- library_calibrate_rt(anchors, queries)
+calibration
+#> <mzlibr_rt_calibration> lowess: 1 of 1 group(s) fitted from 418 anchors, 228 queries converted
+#>   Fig2HeLa-0-5h_MHRM_R01_T0: lowess, 418 anchors over 15.99 to 40.9 min, residual SD 5 iRT
+run <- calibration$groups
+c(first = round(run$first_anchor_minutes, 1), last = round(run$last_anchor_minutes, 1))
+#> first  last 
+#>  16.0  40.9
+```
+
+Each anchor is a row with its `group` (the run), the minute it was seen
+and its library iRT. A query gives one time and `NA` for the other, and
+the `NA` is what the calibration fills in. With no options, mzLib fits
+its default, a robust LOWESS curve (Cleveland 1979), so a gradient that
+is not a straight line is followed.
+
+The rows come back in the order you sent them: the anchors, then each
+query. A `"to_minutes"` row predicts where a library precursor should
+elute in this run. For the lower-confidence precursors, compare the
+prediction with where DIA-NN saw them:
+
+``` r
+
+rows <- calibration$records
+predicted <- rows$rt_minutes[rows$role == "to_minutes"]
+round(median(abs(predicted - others$retention_time)), 2)
+#> [1] 0.53
+round(median(abs(others$predicted_retention_time - others$retention_time)), 2)
+#> [1] 0.38
+```
+
+Half of the predictions are within about half a minute of the observed
+time. DIA-NN’s own prediction for the same precursors, from its own
+calibration of this run, is a little closer. A search uses this map to
+decide where in the run to look for each library precursor, so the
+prediction error sets how wide that retention-time window must be.
+
+A `"to_irt"` row is the other direction: the run’s observed minute on
+the library’s scale. That is how runs with different gradients are
+compared, on one axis.
+
+``` r
+
+on_library_scale <- rows$irt[rows$role == "to_irt"]
+round(median(abs(on_library_scale - others$indexed_retention_time)), 1)
+#> [1] 3.4
+```
+
+### How good is the fit
+
+`residual_sd` is mzLib’s robust spread of the anchors around the curve,
+in **iRT units**, with the anchors that do not fit set aside. On the
+anchor rows, `fitted_irt` is the curve’s iRT at the anchor’s minute, so
+`irt - fitted_irt` is each anchor’s own residual. To read the spread in
+minutes, divide by how many iRT units the run covers per minute:
+
+``` r
+
+anchor_rows <- rows[rows$role == "anchor", ]
+per_minute <- diff(range(anchor_rows$fitted_irt)) / (run$last_anchor_minutes - run$first_anchor_minutes)
+round(c(residual_sd = run$residual_sd, irt_per_minute = per_minute,
+        minutes = run$residual_sd / per_minute), 2)
+#>    residual_sd irt_per_minute        minutes 
+#>           5.00           8.16           0.61
+sum(abs(anchor_rows$irt - anchor_rows$fitted_irt) > 3 * run$residual_sd)
+#> [1] 9
+```
+
+About 0.6 minutes of spread in a run where the anchors span 25 minutes.
+Nine anchors sit more than three robust SDs from the curve: those are
+the wrong identifications the robust fit set aside, and they did not
+pull the curve toward them.
+
+Beyond the first and last anchor the map is a straight line continued
+from the curve’s ends, not a fit. `is_extrapolated` marks those rows,
+and a caveat counts them:
+
+``` r
+
+sum(rows$is_extrapolated[rows$role != "anchor"])
+#> [1] 5
+calibration$caveats[length(calibration$caveats)]
+#> [1] "5 queries fall outside the anchors' span, where the map is extrapolated (is_extrapolated)."
+```
+
+### Several runs, and when mzLib refuses one
+
+Give every anchor and query its run as the group: each group is fitted
+on its own anchors, and its queries use that fit. These are three
+24-minute PBMC runs from a DIA-NN 1 report in mzLib’s test data. One
+precursor, `AAAAAAAAGAFAGR` at charge 2, is held out of the anchors so
+that each run can predict where it should elute:
+
+``` r
+
+pbmc <- read.delim(system.file("extdata", "calibration", "diann_pbmc_rt.tsv", package = "mzLibR"),
+                   stringsAsFactors = FALSE)
+held <- pbmc$precursor_id == "AAAAAAAAGAFAGR2"
+anchors <- data.frame(group = pbmc$run[!held], rt_minutes = pbmc$retention_time[!held],
+                      irt = pbmc$indexed_retention_time[!held])
+queries <- data.frame(group = pbmc$run[held], irt = 11.886096)
+refused <- library_calibrate_rt(anchors, queries, on_error = "skip")
+data.frame(run = substr(refused$groups$group, 1, 8), anchors = refused$groups$anchor_count,
+           error = refused$groups$error_message)
+#>        run anchors                                          error
+#> 1 20240316      13 Calibration needs at least 20 anchors; got 13.
+#> 2 20240317      11 Calibration needs at least 20 anchors; got 11.
+#> 3 20240315      10 Calibration needs at least 20 anchors; got 10.
+```
+
+mzLib refuses to fit a run from fewer than 20 anchors by default rather
+than return a curve that a handful of points would decide. Without
+`on_error = "skip"` the first refusal raises an `mzlib_usage_error`
+naming the run. These runs have ten to thirteen anchors each. That is
+too few for a LOWESS curve, which fits each point from a share of the
+anchors, but enough for a straight line: say so, and lower mzLib’s
+floor.
+
+``` r
+
+lines <- library_calibrate_rt(anchors, queries, kind = "linear", minimum_anchors = 10)
+data.frame(run = substr(lines$groups$group, 1, 8), kind = lines$groups$kind,
+           residual_sd = round(lines$groups$residual_sd, 1))
+#>        run   kind residual_sd
+#> 1 20240316 linear         4.1
+#> 2 20240317 linear         3.6
+#> 3 20240315 linear         0.7
+predicted <- lines$records[lines$records$role == "to_minutes", ]
+data.frame(run = substr(predicted$group, 1, 8), predicted = round(predicted$rt_minutes, 2),
+           seen = round(pbmc$retention_time[held], 2))
+#>        run predicted seen
+#> 1 20240316      9.22 9.21
+#> 2 20240317      9.45 9.23
+#> 3 20240315      9.17 8.94
+```
+
+Each run’s line predicts the held-out precursor within a quarter of a
+minute of where it was seen. With few anchors, prefer a line: a LOWESS
+curve through ten points can pass through nearly all of them, and a
+`residual_sd` near 0 then means an overfit, not a perfect run.
+
 ## Traps
 
 - **Stored order, not m/z order.** Rows follow `precursor_index`. Sort
@@ -346,6 +544,18 @@ over files: each call starts a bridge process.
 - **Query by m/z or retention-time window.** mzLib’s `QueryMzWindow` and
   `QueryWindow` are what a search engine calls. To find a precursor
   here, read the table and filter it.
+- **Choose calibration anchors.**
+  [`library_calibrate_rt()`](https://smith-chem-wisc.github.io/mzLibR/reference/library_calibrate_rt.md)
+  fits the anchors you send. A q-value cutoff, one anchor per precursor,
+  apex or MS2-scan time: each is your choice, and mzLib makes none.
+- **Keep a calibration for later.** mzLib keeps the fitted curve’s
+  points private (`IrtCalibrationModel`), so nothing can carry it out of
+  the call. Send the queries with their anchors, or send the same
+  anchors again: the fit is deterministic.
+- **Write calibrated times into a library.** mzLib’s
+  `MslLibrary.WithCalibratedRetentionTimes` takes a slope and intercept
+  and is not connected to `IrtCalibration`, and no wire verb projects
+  it.
 
 mzLib \#1383 added the entrapment flag and made `rt_is_calibrated` work,
 \#1421 added `GetEntry` without fragments, and \#1420 made libraries
@@ -356,4 +566,11 @@ over 2 GB open.
 The methods and resources behind the functions on this page, from their
 specs:
 
-- No publication: these verbs cite none in their specs.
+- [doi:10.1002/pmic.201100463](https://doi.org/10.1002/pmic.201100463):
+  the iRT concept: a normalized, run-independent retention time scale
+  that a run is mapped onto by a calibration (Escher et al., Proteomics
+  12:1111, 2012).
+- [doi:10.1080/01621459.1979.10481038](https://doi.org/10.1080/01621459.1979.10481038):
+  robust LOWESS with tricube local lines and bisquare reweighting at 6 x
+  the median absolute residual, the curve IrtCalibrationKind.Lowess fits
+  (Cleveland, J Am Stat Assoc 74:829, 1979).

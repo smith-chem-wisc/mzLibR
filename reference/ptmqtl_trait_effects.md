@@ -1,4 +1,4 @@
-# Fit, per site, the effect of a per-run trait on logit occupancy, with mzLib's SiteTraitEffects
+# Fit, per site, the effect of a per-run trait on the log odds of occupancy, with mzLib's SiteTraitEffects
 
 Per site, the effect of a per-run trait on the log odds of occupancy
 (natural log or log2), from a random-intercept mixed model per site, so
@@ -16,7 +16,7 @@ between-replicate degrees of freedom.
 
 ``` r
 ptmqtl_trait_effects(occupancy, runs, min_runs = NULL, min_replicates = NULL,
-  logit_epsilon = NULL, keep_ceiling = FALSE, timeout = 600)
+  logit_epsilon = NULL, keep_ceiling = FALSE, scale = NULL, timeout = 600)
 ```
 
 ## Arguments
@@ -58,6 +58,16 @@ ptmqtl_trait_effects(occupancy, runs, min_runs = NULL, min_replicates = NULL,
 
   Use runs where the site was seen only modified. `FALSE` sends nothing,
   so mzLib's default (leave them out) applies.
+
+- scale:
+
+  The unit of the effects and variances (mzLib \#1464):
+  `"natural_log_odds"`, where `exp(effect)` is the odds ratio per trait
+  unit, or `"log2_odds"`, where an effect of +1 doubles the odds. mzLib
+  divides the natural-log fit by ln 2 (variances by (ln 2)^2); `df`,
+  `p_value` and `q` do not change. `NULL` (the default) sends nothing:
+  mzLib's default, `"natural_log_odds"`, which `scale` in the result
+  reports.
 
 - timeout:
 
@@ -105,10 +115,10 @@ value (runs); `occupancy_runs_not_used`; `min_runs` (runs) and
 default; `logit_epsilon` (fraction, 0 to 1), the clamp used;
 `exclude_ceiling`; `scale`, the unit of every effect, standard error and
 variance, `"natural_log_odds"` (mzLib's default, the logit) or
-`"log2_odds"` (mzLib \#1464; `NA` from a bridge before pyMzLib 0.7.0);
-`status_counts`, sites (sites) per status; `ignored_columns`;
-`row_count` rows; `column_names`. - `caveats`: the model and what it
-leaves out, plus any that apply to this input.
+`"log2_odds"` (with `scale = "log2_odds"`; mzLib \#1464; `NA` from a
+bridge before pyMzLib 0.7.0); `status_counts`, sites (sites) per status;
+`ignored_columns`; `row_count` rows; `column_names`. - `caveats`: the
+model and what it leaves out, plus any that apply to this input.
 
 ## What it is not
 
@@ -120,7 +130,7 @@ q-value.
 ## Wraps
 
 Wire verb `ptmqtl trait-effects`. Generated from the bridge's verb spec
-`ptmqtl.trait-effects.yaml` (bridge commit `4e180efe8b59`) by
+`ptmqtl.trait-effects.yaml` (bridge commit `aea14604d5f7`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -208,7 +218,7 @@ render the same ones.
   unmodified_quantified false) as a response, clamped below 1. mzLib
   leaves such a ceiling out unless asked.
 
-- wire `--scale`:
+- `scale`:
 
   string; default
   `absent: mzLib's SiteTraitOptions.Scale, natural_log_odds at the pin`;
@@ -219,10 +229,7 @@ render the same ones.
   doubles the odds per unit; mzLib divides the natural-log fit's effects
   and standard errors by ln 2 and its variances by (ln 2)^2, and leaves
   df, p and q unchanged: a change of unit, not a refit. Absent, the
-  bridge sets nothing and mzLib's default applies. *Not an argument
-  here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later
-  mzLibR port; mzLib's default, natural_log_odds, always applies, and
-  the result's scale says so.*
+  bridge sets nothing and mzLib's default applies.
 
 ## Returned fields
 
@@ -535,10 +542,18 @@ data <- system.file("extdata", "ptmqtl", package = "mzLibR")
 fit <- ptmqtl_trait_effects(file.path(data, "trait_occupancy.tsv"),
   file.path(data, "trait_runs.tsv"))
 fit
-#> <mzlibr_trait_effects> 2 sites against dose, given injection (min 6 runs, 4 replicates)
+#> <mzlibr_trait_effects> 2 sites against dose, given injection (min 6 runs, 4 replicates), on natural_log_odds
 #>   fitted 2, below_support 0, too_few_observations 0, rank_deficient 0, too_few_groups 0, variance_ratio_at_limit 0, not_converged 0
 fit$records[, c("protein_accession", "status", "effect", "df", "runs", "replicates")]
 #>   protein_accession status    effect df runs replicates
 #> 1     CENSORED_SITE fitted 0.5428795  3   10          5
 #> 2        TRAIT_SITE fitted 0.5008514  4   12          6
+
+# The same fit in log2 odds, where +1 doubles the odds of the modified form:
+log2 <- ptmqtl_trait_effects(file.path(data, "trait_occupancy.tsv"),
+  file.path(data, "trait_runs.tsv"), scale = "log2_odds")
+trait <- log2$records[log2$records$protein_accession == "TRAIT_SITE", ]
+c(scale = log2$scale, effect = round(trait$effect, 2), p_value = signif(trait$p_value, 2))
+#>       scale      effect     p_value 
+#> "log2_odds"      "0.72"   "0.00082" 
 ```

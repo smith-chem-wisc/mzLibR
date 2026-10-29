@@ -128,6 +128,13 @@ reads in R exactly as MetaMorpheus reads it.</p>
 <td><code><a href="../reference/library_read_many.html">library_read_many()</a></code></td>
 <td>the same reader, in one bridge process</td>
 </tr>
+<tr class="odd">
+<td>where should this library precursor elute in my run, and back?</td>
+<td><code><a href="../reference/library_calibrate_rt.html">library_calibrate_rt()</a></code></td>
+<td>
+<code>IrtCalibration.Fit</code>, <code>IrtCalibrationModel</code>
+(#1387)</td>
+</tr>
 </tbody>
 </table>
 <p>Two small libraries are used. <code>myPrositLib.msl</code> is mzLib’s
@@ -350,8 +357,8 @@ both. So the unit is a column, not a property of the file:</p>
 <p><strong>Never plot or compare <code>retention_time</code> without
 <code>retention_time_unit</code>.</strong> mzLibR converts nothing: iRT
 becomes minutes only through a calibration against a run, which is not
-in the library. Keep the rows of one unit before you use the
-numbers:</p>
+in the library (see “Calibrate a run onto library iRT” below). Keep the
+rows of one unit before you use the numbers:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">irt</span> <span class="op">&lt;-</span> <span class="va">lib</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">lib</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">retention_time_unit</span> <span class="op">==</span> <span class="st">"iRT"</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>irt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">irt</span><span class="op">)</span>, all <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">lib</span><span class="op">$</span><span class="va">records</span><span class="op">)</span><span class="op">)</span></span>
@@ -525,6 +532,228 @@ of <code>files</code> and reads the rest. Never loop
 process.</p>
 </div>
 <div class="section level2">
+<h2 id="calibrate-a-run-onto-library-irt">Calibrate a run onto library iRT<a class="anchor" aria-label="anchor" href="#calibrate-a-run-onto-library-irt"></a>
+</h2>
+<p>A library’s iRT is a run-independent scale (Escher et al. 2012): it
+says that one peptide elutes after another, not at which minute. Each
+run has its own column, gradient and dead volume, so the same iRT falls
+at a different minute in every run. A <strong>calibration</strong> is
+the map between the two for one run, fitted from
+<strong>anchors</strong>: precursors you identified confidently in that
+run, each with the minute it was seen and its library iRT. With it you
+can ask where any library precursor should elute in that run, or put the
+run’s own times on the library’s scale.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>You want to</th>
+<th>Call</th>
+<th>mzLib does it with</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Fit one run’s map from anchors</td>
+<td><code>library_calibrate_rt(anchors)</code></td>
+<td><code>IrtCalibration.Fit</code></td>
+</tr>
+<tr class="even">
+<td>Predict the minute a library precursor elutes at</td>
+<td>a query with <code>irt</code> and <code>rt_minutes = NA</code>
+</td>
+<td><code>IrtCalibrationModel.ToRtMinutes</code></td>
+</tr>
+<tr class="odd">
+<td>Put an observed minute on the library’s iRT scale</td>
+<td>a query with <code>rt_minutes</code> and <code>irt = NA</code>
+</td>
+<td><code>IrtCalibrationModel.ToIrt</code></td>
+</tr>
+<tr class="even">
+<td>Know whether a time lies outside the anchors</td>
+<td>the <code>is_extrapolated</code> column</td>
+<td><code>IrtCalibrationModel.IsExtrapolated</code></td>
+</tr>
+<tr class="odd">
+<td>See how well the run follows the library</td>
+<td>
+<code>groups$residual_sd</code>, and <code>irt - fitted_irt</code>
+per anchor</td>
+<td>
+<code>IrtCalibrationModel.ResidualSd</code>, <code>ToIrt</code>
+</td>
+</tr>
+<tr class="even">
+<td>Calibrate several runs in one call</td>
+<td>one group per run</td>
+<td>one <code>IrtCalibration.Fit</code> per group</td>
+</tr>
+<tr class="odd">
+<td>Choose a straight line, or tune the curve</td>
+<td>
+<code>kind</code>, <code>bandwidth</code>, <code>knots</code>,
+<code>robustness_iterations</code>, <code>minimum_anchors</code>
+</td>
+<td><code>IrtCalibrationOptions</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>You choose the anchors.</strong> mzLib asks for the observed
+apex time of confidently identified precursors and is robust to some
+wrong ones, but it applies no q-value cutoff, and neither does mzLibR.
+<strong>Send the queries in the same call as their anchors</strong>:
+mzLib keeps the fitted curve’s points private, so a calibration cannot
+be returned and used later. Refitting the same anchors gives the same
+map, because mzLib sorts them before it fits.</p>
+<div class="section level3">
+<h3 id="one-run-from-a-dia-nn-report">One run, from a DIA-NN report<a class="anchor" aria-label="anchor" href="#one-run-from-a-dia-nn-report"></a>
+</h3>
+<p>DIA-NN reports both numbers for every precursor it identifies:
+<code>RT</code>, the minute it was seen, and <code>iRT</code>, its value
+in the spectral library. The file used here is one HeLa run from a
+DIA-NN 2 report in mzLib’s own test data, read by
+<code><a href="../reference/readers_read_records.html">readers_read_records()</a></code> and cut to six columns; it ships in
+<code>extdata/calibration/</code>, with its provenance. The precursors
+at a q-value of 0.01 or below are the anchors; the rest are what we ask
+about.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hela</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"calibration"</span>, <span class="st">"diann2_hela_rt.tsv"</span>, package <span class="op">=</span> <span class="st">"mzLibR"</span><span class="op">)</span>,</span>
+<span>                   stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">confident</span> <span class="op">&lt;-</span> <span class="va">hela</span><span class="op">$</span><span class="va">q_value</span> <span class="op">&lt;=</span> <span class="fl">0.01</span></span>
+<span><span class="va">others</span> <span class="op">&lt;-</span> <span class="va">hela</span><span class="op">[</span><span class="op">!</span><span class="va">confident</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>anchors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">confident</span><span class="op">)</span>, others <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">others</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; anchors  others </span></span>
+<span><span class="co">#&gt;     418     114</span></span>
+<span><span class="va">anchors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">hela</span><span class="op">$</span><span class="va">run</span><span class="op">[</span><span class="va">confident</span><span class="op">]</span>, rt_minutes <span class="op">=</span> <span class="va">hela</span><span class="op">$</span><span class="va">retention_time</span><span class="op">[</span><span class="va">confident</span><span class="op">]</span>,</span>
+<span>                      irt <span class="op">=</span> <span class="va">hela</span><span class="op">$</span><span class="va">indexed_retention_time</span><span class="op">[</span><span class="va">confident</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">queries</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">others</span><span class="op">$</span><span class="va">run</span>, rt_minutes <span class="op">=</span> <span class="cn">NA</span>, irt <span class="op">=</span> <span class="va">others</span><span class="op">$</span><span class="va">indexed_retention_time</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">others</span><span class="op">$</span><span class="va">run</span>, rt_minutes <span class="op">=</span> <span class="va">others</span><span class="op">$</span><span class="va">retention_time</span>, irt <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">calibration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/library_calibrate_rt.html">library_calibrate_rt</a></span><span class="op">(</span><span class="va">anchors</span>, <span class="va">queries</span><span class="op">)</span></span>
+<span><span class="va">calibration</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_rt_calibration&gt; lowess: 1 of 1 group(s) fitted from 418 anchors, 228 queries converted</span></span>
+<span><span class="co">#&gt;   Fig2HeLa-0-5h_MHRM_R01_T0: lowess, 418 anchors over 15.99 to 40.9 min, residual SD 5 iRT</span></span>
+<span><span class="va">run</span> <span class="op">&lt;-</span> <span class="va">calibration</span><span class="op">$</span><span class="va">groups</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>first <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">run</span><span class="op">$</span><span class="va">first_anchor_minutes</span>, <span class="fl">1</span><span class="op">)</span>, last <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">run</span><span class="op">$</span><span class="va">last_anchor_minutes</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; first  last </span></span>
+<span><span class="co">#&gt;  16.0  40.9</span></span></code></pre></div>
+<p>Each anchor is a row with its <code>group</code> (the run), the
+minute it was seen and its library iRT. A query gives one time and
+<code>NA</code> for the other, and the <code>NA</code> is what the
+calibration fills in. With no options, mzLib fits its default, a robust
+LOWESS curve (Cleveland 1979), so a gradient that is not a straight line
+is followed.</p>
+<p>The rows come back in the order you sent them: the anchors, then each
+query. A <code>"to_minutes"</code> row predicts where a library
+precursor should elute in this run. For the lower-confidence precursors,
+compare the prediction with where DIA-NN saw them:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="va">calibration</span><span class="op">$</span><span class="va">records</span></span>
+<span><span class="va">predicted</span> <span class="op">&lt;-</span> <span class="va">rows</span><span class="op">$</span><span class="va">rt_minutes</span><span class="op">[</span><span class="va">rows</span><span class="op">$</span><span class="va">role</span> <span class="op">==</span> <span class="st">"to_minutes"</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">predicted</span> <span class="op">-</span> <span class="va">others</span><span class="op">$</span><span class="va">retention_time</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 0.53</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">others</span><span class="op">$</span><span class="va">predicted_retention_time</span> <span class="op">-</span> <span class="va">others</span><span class="op">$</span><span class="va">retention_time</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 0.38</span></span></code></pre></div>
+<p>Half of the predictions are within about half a minute of the
+observed time. DIA-NN’s own prediction for the same precursors, from its
+own calibration of this run, is a little closer. A search uses this map
+to decide where in the run to look for each library precursor, so the
+prediction error sets how wide that retention-time window must be.</p>
+<p>A <code>"to_irt"</code> row is the other direction: the run’s
+observed minute on the library’s scale. That is how runs with different
+gradients are compared, on one axis.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">on_library_scale</span> <span class="op">&lt;-</span> <span class="va">rows</span><span class="op">$</span><span class="va">irt</span><span class="op">[</span><span class="va">rows</span><span class="op">$</span><span class="va">role</span> <span class="op">==</span> <span class="st">"to_irt"</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">on_library_scale</span> <span class="op">-</span> <span class="va">others</span><span class="op">$</span><span class="va">indexed_retention_time</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 3.4</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="how-good-is-the-fit">How good is the fit<a class="anchor" aria-label="anchor" href="#how-good-is-the-fit"></a>
+</h3>
+<p><code>residual_sd</code> is mzLib’s robust spread of the anchors
+around the curve, in <strong>iRT units</strong>, with the anchors that
+do not fit set aside. On the anchor rows, <code>fitted_irt</code> is the
+curve’s iRT at the anchor’s minute, so <code>irt - fitted_irt</code> is
+each anchor’s own residual. To read the spread in minutes, divide by how
+many iRT units the run covers per minute:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">anchor_rows</span> <span class="op">&lt;-</span> <span class="va">rows</span><span class="op">[</span><span class="va">rows</span><span class="op">$</span><span class="va">role</span> <span class="op">==</span> <span class="st">"anchor"</span>, <span class="op">]</span></span>
+<span><span class="va">per_minute</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">anchor_rows</span><span class="op">$</span><span class="va">fitted_irt</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">run</span><span class="op">$</span><span class="va">last_anchor_minutes</span> <span class="op">-</span> <span class="va">run</span><span class="op">$</span><span class="va">first_anchor_minutes</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>residual_sd <span class="op">=</span> <span class="va">run</span><span class="op">$</span><span class="va">residual_sd</span>, irt_per_minute <span class="op">=</span> <span class="va">per_minute</span>,</span>
+<span>        minutes <span class="op">=</span> <span class="va">run</span><span class="op">$</span><span class="va">residual_sd</span> <span class="op">/</span> <span class="va">per_minute</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    residual_sd irt_per_minute        minutes </span></span>
+<span><span class="co">#&gt;           5.00           8.16           0.61</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">anchor_rows</span><span class="op">$</span><span class="va">irt</span> <span class="op">-</span> <span class="va">anchor_rows</span><span class="op">$</span><span class="va">fitted_irt</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">run</span><span class="op">$</span><span class="va">residual_sd</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 9</span></span></code></pre></div>
+<p>About 0.6 minutes of spread in a run where the anchors span 25
+minutes. Nine anchors sit more than three robust SDs from the curve:
+those are the wrong identifications the robust fit set aside, and they
+did not pull the curve toward them.</p>
+<p>Beyond the first and last anchor the map is a straight line continued
+from the curve’s ends, not a fit. <code>is_extrapolated</code> marks
+those rows, and a caveat counts them:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">rows</span><span class="op">$</span><span class="va">is_extrapolated</span><span class="op">[</span><span class="va">rows</span><span class="op">$</span><span class="va">role</span> <span class="op">!=</span> <span class="st">"anchor"</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 5</span></span>
+<span><span class="va">calibration</span><span class="op">$</span><span class="va">caveats</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">calibration</span><span class="op">$</span><span class="va">caveats</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "5 queries fall outside the anchors' span, where the map is extrapolated (is_extrapolated)."</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="several-runs-and-when-mzlib-refuses-one">Several runs, and when mzLib refuses one<a class="anchor" aria-label="anchor" href="#several-runs-and-when-mzlib-refuses-one"></a>
+</h3>
+<p>Give every anchor and query its run as the group: each group is
+fitted on its own anchors, and its queries use that fit. These are three
+24-minute PBMC runs from a DIA-NN 1 report in mzLib’s test data. One
+precursor, <code>AAAAAAAAGAFAGR</code> at charge 2, is held out of the
+anchors so that each run can predict where it should elute:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"calibration"</span>, <span class="st">"diann_pbmc_rt.tsv"</span>, package <span class="op">=</span> <span class="st">"mzLibR"</span><span class="op">)</span>,</span>
+<span>                   stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">held</span> <span class="op">&lt;-</span> <span class="va">pbmc</span><span class="op">$</span><span class="va">precursor_id</span> <span class="op">==</span> <span class="st">"AAAAAAAAGAFAGR2"</span></span>
+<span><span class="va">anchors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">pbmc</span><span class="op">$</span><span class="va">run</span><span class="op">[</span><span class="op">!</span><span class="va">held</span><span class="op">]</span>, rt_minutes <span class="op">=</span> <span class="va">pbmc</span><span class="op">$</span><span class="va">retention_time</span><span class="op">[</span><span class="op">!</span><span class="va">held</span><span class="op">]</span>,</span>
+<span>                      irt <span class="op">=</span> <span class="va">pbmc</span><span class="op">$</span><span class="va">indexed_retention_time</span><span class="op">[</span><span class="op">!</span><span class="va">held</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">queries</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">pbmc</span><span class="op">$</span><span class="va">run</span><span class="op">[</span><span class="va">held</span><span class="op">]</span>, irt <span class="op">=</span> <span class="fl">11.886096</span><span class="op">)</span></span>
+<span><span class="va">refused</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/library_calibrate_rt.html">library_calibrate_rt</a></span><span class="op">(</span><span class="va">anchors</span>, <span class="va">queries</span>, on_error <span class="op">=</span> <span class="st">"skip"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>run <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">refused</span><span class="op">$</span><span class="va">groups</span><span class="op">$</span><span class="va">group</span>, <span class="fl">1</span>, <span class="fl">8</span><span class="op">)</span>, anchors <span class="op">=</span> <span class="va">refused</span><span class="op">$</span><span class="va">groups</span><span class="op">$</span><span class="va">anchor_count</span>,</span>
+<span>           error <span class="op">=</span> <span class="va">refused</span><span class="op">$</span><span class="va">groups</span><span class="op">$</span><span class="va">error_message</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        run anchors                                          error</span></span>
+<span><span class="co">#&gt; 1 20240316      13 Calibration needs at least 20 anchors; got 13.</span></span>
+<span><span class="co">#&gt; 2 20240317      11 Calibration needs at least 20 anchors; got 11.</span></span>
+<span><span class="co">#&gt; 3 20240315      10 Calibration needs at least 20 anchors; got 10.</span></span></code></pre></div>
+<p>mzLib refuses to fit a run from fewer than 20 anchors by default
+rather than return a curve that a handful of points would decide.
+Without <code>on_error = "skip"</code> the first refusal raises an
+<code>mzlib_usage_error</code> naming the run. These runs have ten to
+thirteen anchors each. That is too few for a LOWESS curve, which fits
+each point from a share of the anchors, but enough for a straight line:
+say so, and lower mzLib’s floor.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/library_calibrate_rt.html">library_calibrate_rt</a></span><span class="op">(</span><span class="va">anchors</span>, <span class="va">queries</span>, kind <span class="op">=</span> <span class="st">"linear"</span>, minimum_anchors <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>run <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">lines</span><span class="op">$</span><span class="va">groups</span><span class="op">$</span><span class="va">group</span>, <span class="fl">1</span>, <span class="fl">8</span><span class="op">)</span>, kind <span class="op">=</span> <span class="va">lines</span><span class="op">$</span><span class="va">groups</span><span class="op">$</span><span class="va">kind</span>,</span>
+<span>           residual_sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">lines</span><span class="op">$</span><span class="va">groups</span><span class="op">$</span><span class="va">residual_sd</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        run   kind residual_sd</span></span>
+<span><span class="co">#&gt; 1 20240316 linear         4.1</span></span>
+<span><span class="co">#&gt; 2 20240317 linear         3.6</span></span>
+<span><span class="co">#&gt; 3 20240315 linear         0.7</span></span>
+<span><span class="va">predicted</span> <span class="op">&lt;-</span> <span class="va">lines</span><span class="op">$</span><span class="va">records</span><span class="op">[</span><span class="va">lines</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">role</span> <span class="op">==</span> <span class="st">"to_minutes"</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>run <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">predicted</span><span class="op">$</span><span class="va">group</span>, <span class="fl">1</span>, <span class="fl">8</span><span class="op">)</span>, predicted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">predicted</span><span class="op">$</span><span class="va">rt_minutes</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>           seen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">pbmc</span><span class="op">$</span><span class="va">retention_time</span><span class="op">[</span><span class="va">held</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        run predicted seen</span></span>
+<span><span class="co">#&gt; 1 20240316      9.22 9.21</span></span>
+<span><span class="co">#&gt; 2 20240317      9.45 9.23</span></span>
+<span><span class="co">#&gt; 3 20240315      9.17 8.94</span></span></code></pre></div>
+<p>Each run’s line predicts the held-out precursor within a quarter of a
+minute of where it was seen. With few anchors, prefer a line: a LOWESS
+curve through ten points can pass through nearly all of them, and a
+<code>residual_sd</code> near 0 then means an overfit, not a perfect
+run.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="traps">Traps<a class="anchor" aria-label="anchor" href="#traps"></a>
 </h2>
 <ul>
@@ -575,6 +804,21 @@ yet.</li>
 <code>QueryMzWindow</code> and <code>QueryWindow</code> are what a
 search engine calls. To find a precursor here, read the table and filter
 it.</li>
+<li>
+<strong>Choose calibration anchors.</strong>
+<code><a href="../reference/library_calibrate_rt.html">library_calibrate_rt()</a></code> fits the anchors you send. A q-value
+cutoff, one anchor per precursor, apex or MS2-scan time: each is your
+choice, and mzLib makes none.</li>
+<li>
+<strong>Keep a calibration for later.</strong> mzLib keeps the
+fitted curve’s points private (<code>IrtCalibrationModel</code>), so
+nothing can carry it out of the call. Send the queries with their
+anchors, or send the same anchors again: the fit is deterministic.</li>
+<li>
+<strong>Write calibrated times into a library.</strong> mzLib’s
+<code>MslLibrary.WithCalibratedRetentionTimes</code> takes a slope and
+intercept and is not connected to <code>IrtCalibration</code>, and no
+wire verb projects it.</li>
 </ul>
 <p>mzLib #1383 added the entrapment flag and made
 <code>rt_is_calibrated</code> work, #1421 added <code>GetEntry</code>
@@ -587,7 +831,16 @@ without fragments, and #1420 made libraries over 2 GB open.</p>
 their specs:</p>
 <!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
 <ul>
-<li>No publication: these verbs cite none in their specs.</li>
+<li>
+<a href="https://doi.org/10.1002/pmic.201100463" class="external-link">doi:10.1002/pmic.201100463</a>:
+the iRT concept: a normalized, run-independent retention time scale that
+a run is mapped onto by a calibration (Escher et al., Proteomics
+12:1111, 2012).</li>
+<li>
+<a href="https://doi.org/10.1080/01621459.1979.10481038" class="external-link">doi:10.1080/01621459.1979.10481038</a>:
+robust LOWESS with tricube local lines and bisquare reweighting at 6 x
+the median absolute residual, the curve IrtCalibrationKind.Lowess fits
+(Cleveland, J Am Stat Assoc 74:829, 1979).</li>
 </ul>
 <!-- END cite -->
 </div>

@@ -136,7 +136,9 @@ precursor with no fragment ions is one row with those cells `NA`.
 indexed retention time (iRT) or run minutes for each precursor
 (`MslLibraryEntry.RtIsCalibrated`), and one library can hold both. Read
 `retention_time_unit` on each row; there is no conversion between them
-without a calibration against a run.
+without a calibration against a run, which
+[`library_calibrate_rt`](https://smith-chem-wisc.github.io/mzLibR/reference/library_calibrate_rt.md)
+fits.
 
 \*\*"Not available" is `NA`, not a number.\*\* A text library converted
 to `.msl` (from `.msp`) has no NCE, dissociation type, q-value, ion
@@ -150,7 +152,7 @@ precursors (`ET`, `ED`) are rows; filter on `is_decoy` or
 ## Wraps
 
 Wire verb `library read`. Generated from the bridge's verb spec
-`library.read.yaml` (bridge commit `4e180efe8b59`) by
+`library.read.yaml` (bridge commit `aea14604d5f7`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

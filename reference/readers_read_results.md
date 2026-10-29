@@ -100,7 +100,7 @@ rather than by hand.
 ## Wraps
 
 Wire verb `readers read-results`. Generated from the bridge's verb spec
-`readers.read-results.yaml` (bridge commit `4e180efe8b59`) by
+`readers.read-results.yaml` (bridge commit `aea14604d5f7`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

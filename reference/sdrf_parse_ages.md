@@ -56,7 +56,7 @@ a day 1/365.25.
 ## Wraps
 
 Wire verb `sdrf parse-age`. Generated from the bridge's verb spec
-`sdrf.parse-age.yaml` (bridge commit `4e180efe8b59`) by
+`sdrf.parse-age.yaml` (bridge commit `aea14604d5f7`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

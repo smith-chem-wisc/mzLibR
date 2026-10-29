@@ -197,7 +197,7 @@
       </dl></div><div class="section level2">
       <h2 id="spectral-libraries">Spectral libraries<a class="anchor" aria-label="anchor" href="#spectral-libraries"></a></h2>
 
-      <div class="section-desc"><p>mzLib’s .msl spectral libraries, read with mzLib’s own reader: every precursor, and its fragment ions on request.</p></div>
+      <div class="section-desc"><p>mzLib’s .msl spectral libraries, read with mzLib’s own reader: every precursor, and its fragment ions on request; and a run’s retention times calibrated onto a library’s iRT scale.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -205,6 +205,13 @@
 
 
       <dl><dt>
+
+          <code><a href="library_calibrate_rt.html">library_calibrate_rt()</a></code>
+
+        </dt>
+        <dd>Fit each run's map from minutes onto a library's iRT scale, and convert times either way</dd>
+
+        <dt>
 
           <code><a href="library_read.html">library_read()</a></code>
 
@@ -413,7 +420,7 @@
       </dl></div><div class="section level2">
       <h2 id="protein-databases">Protein databases<a class="anchor" aria-label="anchor" href="#protein-databases"></a></h2>
 
-      <div class="section-desc"><p>What an accession is, which gene it resolves to, whether a peptide is unique, and what each protein group does in Gene Ontology terms; where a residue is in another sequence, which entry an accession names, and which genes are orthologous across species.</p></div>
+      <div class="section-desc"><p>What an accession is, which gene it resolves to, whether a peptide is unique, and what each protein group does in Gene Ontology terms; where a residue is in another sequence, which entry an accession names, which genes are orthologous across species, and which residue corresponds across species in Compara’s gene-tree alignment.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -454,6 +461,13 @@
 
         </dt>
         <dd>Classify peptides by how widely they are shared across protein databases, with I = L</dd>
+
+        <dt>
+
+          <code><a href="proteins_map_residues.html">proteins_map_residues()</a></code>
+
+        </dt>
+        <dd>Map residues across species through Ensembl Compara's gene-tree alignments</dd>
 
         <dt>
 
@@ -708,7 +722,7 @@
       </dl></div><div class="section level2">
       <h2 id="differential-abundance">Differential abundance<a class="anchor" aria-label="anchor" href="#differential-abundance"></a></h2>
 
-      <div class="section-desc"><p>limma’s moderated t-test with contrasts, Benjamini-Hochberg adjustment, random-effects meta-analysis, combined p-values, Spearman correlation, logistic and mixed models per feature, and entrapment FDP estimates, computed by mzLib.</p></div>
+      <div class="section-desc"><p>limma’s moderated t-test with contrasts, Benjamini-Hochberg adjustment, random-effects meta-analysis, combined p-values, Spearman correlation, logistic and mixed models per feature (also on a latent scale, from measured and counted samples), and entrapment FDP estimates, computed by mzLib.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -749,6 +763,20 @@
 
         </dt>
         <dd>Fit one linear model per feature and test coefficients, and contrasts, with limma's moderated t</dd>
+
+        <dt>
+
+          <code><a href="stats_fit_latent_mixed.html">stats_fit_latent_mixed()</a></code>
+
+        </dt>
+        <dd>Fit a mixed model per feature on a latent scale, from samples measured on it, counted through it, or both</dd>
+
+        <dt>
+
+          <code><a href="stats_fit_link.html">stats_fit_link()</a></code>
+
+        </dt>
+        <dd>Fit the detection link: how a cell's latent value sets the chance that a trial succeeds</dd>
 
         <dt>
 
@@ -836,7 +864,7 @@
           <code><a href="ptmqtl_trait_effects.html">ptmqtl_trait_effects()</a></code>
 
         </dt>
-        <dd>Fit, per site, the effect of a per-run trait on logit occupancy, with mzLib's SiteTraitEffects</dd>
+        <dd>Fit, per site, the effect of a per-run trait on the log odds of occupancy, with mzLib's SiteTraitEffects</dd>
       </dl></div><div class="section level2">
       <h2 id="the-bridge">The bridge<a class="anchor" aria-label="anchor" href="#the-bridge"></a></h2>
 
@@ -958,6 +986,13 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_detection_link.html">print(<i>&lt;mzlibr_detection_link&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a detection link</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_diff_design.html">print(<i>&lt;mzlibr_diff_design&gt;</i>)</a></code>
 
         </dt>
@@ -1028,10 +1063,24 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_latent_mixed_model_fit.html">print(<i>&lt;mzlibr_latent_mixed_model_fit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a latent-scale mixed-model fit</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_library_records.html">print(<i>&lt;mzlibr_library_records&gt;</i>)</a></code>
 
         </dt>
         <dd>Print a spectral library read</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_link_fit.html">print(<i>&lt;mzlibr_link_fit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a fitted detection link</dd>
 
         <dt>
 
@@ -1168,6 +1217,13 @@
 
         <dt>
 
+          <code><a href="print.mzlibr_residue_mappings.html">print(<i>&lt;mzlibr_residue_mappings&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print residue mappings</dd>
+
+        <dt>
+
           <code><a href="print.mzlibr_restricted_sdrf.html">print(<i>&lt;mzlibr_restricted_sdrf&gt;</i>)</a></code>
 
         </dt>
@@ -1179,6 +1235,13 @@
 
         </dt>
         <dd>Print a record view</dd>
+
+        <dt>
+
+          <code><a href="print.mzlibr_rt_calibration.html">print(<i>&lt;mzlibr_rt_calibration&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a retention-time calibration</dd>
 
         <dt>
 

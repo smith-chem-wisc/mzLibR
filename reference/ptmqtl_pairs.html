@@ -58,8 +58,8 @@ Two kinds of evidence, which you choose between with type:"></head><body>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ptmqtl_pairs</span><span class="op">(</span><span class="va">observations</span>, <span class="va">type</span>, samples <span class="op">=</span> <span class="cn">NULL</span>, modifications <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  categories <span class="op">=</span> <span class="cn">NULL</span>, min_quantified_fraction <span class="op">=</span> <span class="cn">NULL</span>, keep_ceiling <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  remove_run_level <span class="op">=</span> <span class="cn">FALSE</span>, run_level_group <span class="op">=</span> <span class="cn">NULL</span>, run_level_groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  timeout <span class="op">=</span> <span class="fl">600</span><span class="op">)</span></span></code></pre></div>
+<span>  include_bounds <span class="op">=</span> <span class="cn">FALSE</span>, run_covariate <span class="op">=</span> <span class="cn">NULL</span>, remove_run_level <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  run_level_group <span class="op">=</span> <span class="cn">NULL</span>, run_level_groups <span class="op">=</span> <span class="cn">NULL</span>, timeout <span class="op">=</span> <span class="fl">600</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -99,6 +99,23 @@ Two kinds of evidence, which you choose between with type:"></head><body>
   nothing, so mzLib's default (leave them out) applies.</p></dd>
 
 
+<dt id="arg-include-bounds">include_bounds<a class="anchor" aria-label="anchor" href="#arg-include-bounds"></a></dt>
+<dd><p>Co-varying only. Let a run where a site was seen in only one form enter as a
+  tied bound, never an invented value (mzLib #1468): <code>"not_detected"</code> and <code>"floor"</code> cells rank
+  below every fraction of the site, ceilings and count-only cells seen only modified above. A site
+  often below detection can then be tested at all. A pair whose two sites are both mostly one
+  bound is not tested (<code>"both_sites_mostly_bounds"</code>). <code>FALSE</code> (the default) sends nothing:
+  mzLib's default, no bounds.</p></dd>
+
+
+<dt id="arg-run-covariate">run_covariate<a class="anchor" aria-label="anchor" href="#arg-run-covariate"></a></dt>
+<dd><p>Co-varying only. A TSV with a header row whose second field names the
+  covariate (e.g. <code>target_psms</code>), then <code>run</code>, value: each run's depth, or any per-run value, in
+  any unit. Pairs become the partial Spearman correlation given it (mzLib #1468); it is ranked, so
+  log2 gives the same answer. Leave a run out for "unknown"; it is then left out of every pair.
+  mzLib refuses a value that is not finite. <code>NULL</code> (the default): no covariate.</p></dd>
+
+
 <dt id="arg-remove-run-level">remove_run_level<a class="anchor" aria-label="anchor" href="#arg-remove-run-level"></a></dt>
 <dd><p>Co-varying only. Correlate given each run's level - the median occupancy
   of the other tested sites of the pair's group - to remove a batch or loading shift. <strong>Batch
@@ -130,7 +147,8 @@ Two kinds of evidence, which you choose between with type:"></head><body>
   oppositely) across runs. <code>statistic</code> is Spearman's rho on the runs where both are quantified,
   with a Benjamini-Hochberg <code>q</code> per family. Floors, undetected cells and, by default, ceilings are
   left out: two unrelated sites both read 1 in low-load runs, which would correlate them through
-  detection alone.</p>
+  detection alone. <code>include_bounds = TRUE</code> lets them in as tied bounds instead, and
+  <code>run_covariate</code> correlates given each run's depth.</p>
 <p>Occupancy is computed inside by the same mzLib call <code><a href="ptmqtl_occupancy.html">ptmqtl_occupancy</a></code> makes.</p>
     </div>
     <div class="section level2">
@@ -152,8 +170,8 @@ Two kinds of evidence, which you choose between with type:"></head><body>
     <code>test_status</code>, mzLib's <code>PairTestStatus</code> (#1468): <code>"tested"</code>, or why not - <code>"not_estimable"</code>,
     <code>"too_few_shared_runs"</code> or <code>"both_sites_mostly_bounds"</code> - <code>NA</code> for physical; and
     <code>bounds_included</code> and <code>run_covariate_removed</code>, whether one-form cells entered as tied bounds
-    and whether rho is partial given a run covariate, two mzLib options this function does not
-    send yet (always <code>FALSE</code> for physical).
+    (<code>include_bounds</code>) and whether rho is partial given the run covariate (<code>run_covariate</code>),
+    always <code>FALSE</code> for physical.
   - <code>observations_file</code>, <code>samples_file</code> and <code>run_level_groups_file</code> (<code>NA</code> when not given), as
     absolute paths; <code>type</code>; <code>observation_count</code> rows read; <code>run_count</code> runs; <code>sample_count</code>
     samples, <code>NA</code> without <code>samples</code>; <code>run_names</code>; and, <code>NA</code> for <code>type = "physical"</code>:
@@ -161,12 +179,19 @@ Two kinds of evidence, which you choose between with type:"></head><body>
     denominator of <code>min_quantified_fraction</code> (fraction of the runs, 0 to 1), the guard used;
     <code>exclude_ceiling</code>, <code>FALSE</code> with <code>keep_ceiling = TRUE</code> and <code>NA</code> when you did not choose (mzLib
     decides inside <code>PtmPairEngine.CoVarying</code>, and leaves ceilings out; mzLib #1468);
-    <code>include_bounds</code>, mzLib's default (<code>FALSE</code>) here; <code>remove_run_level</code>; <code>run_level_group</code>,
+    <code>include_bounds</code>, whether one-form cells entered as tied bounds, yours or mzLib's default
+    (<code>FALSE</code>); <code>remove_run_level</code>; <code>run_level_group</code>,
     <code>"none"</code>, <code>"category"</code>, <code>"modification"</code> or <code>"file"</code>, <code>NA</code> when the run level was not removed;
-    <code>min_runs_for_run_level</code> (runs) and <code>min_sites_for_run_level</code> (sites), mzLib's thresholds,
-    <code>NA</code> when not removed; <code>min_untied_share</code> (fraction of the shared runs, 0 to 1), mzLib's
-    guard with bounds, <code>NA</code> without them; <code>run_covariate_file</code> and <code>run_covariate_name</code>, <code>NA</code>, and
-    <code>run_covariate_runs_missing</code>, <code>NULL</code>, without a run covariate; <code>modifications</code> and
+    <code>min_runs_for_run_level</code> (runs), with the run level or a run covariate removed, the fewest
+    shared runs a pair is tested on (fewer is <code>"too_few_shared_runs"</code>), and
+    <code>min_sites_for_run_level</code> (sites), the fewest other sites a run's group needs to have a level,
+    mzLib's thresholds, <code>NA</code> when not removed; <code>min_untied_share</code> (fraction of the shared runs, 0
+    to 1), mzLib's guard with bounds - a pair is tested only if one of its sites has at least this
+    share of the shared runs outside its largest tie - <code>NA</code> without bounds; <code>run_covariate_file</code>
+    (absolute path) and <code>run_covariate_name</code> (the covariate table's second header), <code>NA</code> without
+    a run covariate; <code>run_covariate_runs_missing</code>, the runs (or samples) with no covariate value,
+    left out of every pair, empty when every run has one and <code>NULL</code> without a run covariate;
+    <code>modifications</code> and
     <code>categories</code>, <code>NULL</code> for no filter;
     <code>ignored_columns</code>; <code>physical_count</code> pairs (<code>NA</code> for <code>"covarying"</code>) and <code>covarying_count</code>
     pairs (<code>NA</code> for <code>"physical"</code>); <code>row_count</code> rows; <code>column_names</code>.
@@ -175,7 +200,7 @@ Two kinds of evidence, which you choose between with type:"></head><body>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>ptmqtl pairs</code>. Generated from the bridge's verb spec <code>ptmqtl.pairs.yaml</code> (bridge commit <code>4e180efe8b59</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>ptmqtl pairs</code>. Generated from the bridge's verb spec <code>ptmqtl.pairs.yaml</code> (bridge commit <code>aea14604d5f7</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs" class="external-link"><code>PtmPairEngine.Physical</code></a> in <code>mzLib/Quantification/PtmQtl/PtmPairs.cs</code> at mzLib <code>d10017ce</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/PtmPairs.cs" class="external-link"><code>PtmPairEngine.CoVarying</code></a> in <code>mzLib/Quantification/PtmQtl/PtmPairs.cs</code> at mzLib <code>cc67b7a2</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs" class="external-link"><code>PtmPairEngine.DefaultMinQuantifiedFraction</code></a> in <code>mzLib/Quantification/PtmQtl/PtmPairs.cs</code> at mzLib <code>d10017ce</code></p></li>
@@ -211,11 +236,11 @@ Two kinds of evidence, which you choose between with type:"></head><body>
 <dt><code>keep_ceiling</code> (wire <code>--keep-ceiling</code>)</dt>
 <dd><p>flag; default <samp>absent: null is sent, and mzLib's CoVarying resolves its nullable excludeCeiling itself (ceilings left out)</samp>. Co-varying only. Keep a run where a site was seen only modified (a fraction of 1 with unmodified_quantified false). Two unrelated sites both read 1 in low-load runs, so ceilings can correlate sites through detection alone; mzLib leaves them out unless asked. With include-bounds it sends false, which mzLib accepts: a ceiling is then a high bound either way.</p></dd>
 
-<dt>wire <code>--include-bounds</code></dt>
-<dd><p>flag; default <samp>absent: mzLib's includeBounds default, false at the pin, so one-form cells are left out</samp>. Co-varying only. Let a run where a site was seen in only one form enter as a bound, never as an invented value (mzLib's includeBounds, #1468): not_detected (a covered-zero) and floor cells tie below every fraction of that site; a ceiling, or a count_only cell whose covering peptidoforms all carry the modification, ties above every fraction. A count_only cell where both forms were identified has no rank and is left out. Bounds count toward min-quantified-fraction and toward a run's level. A pair whose two sites are both mostly one bound is not tested (both_sites_mostly_bounds). The bridge never sends excludeCeiling true, so mzLib's refusal of the two together cannot arise from this verb. <em>Not an argument here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later mzLibR port.</em></p></dd>
+<dt><code>include_bounds</code> (wire <code>--include-bounds</code>)</dt>
+<dd><p>flag; default <samp>absent: mzLib's includeBounds default, false at the pin, so one-form cells are left out</samp>. Co-varying only. Let a run where a site was seen in only one form enter as a bound, never as an invented value (mzLib's includeBounds, #1468): not_detected (a covered-zero) and floor cells tie below every fraction of that site; a ceiling, or a count_only cell whose covering peptidoforms all carry the modification, ties above every fraction. A count_only cell where both forms were identified has no rank and is left out. Bounds count toward min-quantified-fraction and toward a run's level. A pair whose two sites are both mostly one bound is not tested (both_sites_mostly_bounds). The bridge never sends excludeCeiling true, so mzLib's refusal of the two together cannot arise from this verb.</p></dd>
 
-<dt>wire <code>--run-covariate</code></dt>
-<dd><p>path; default absent. Co-varying only. A TSV with a header row whose second field names the covariate (for example target_psms), then run, value: one row per run (or with samples, per sample), in any unit. Pairs are then the partial Spearman correlation given it (mzLib's runCovariate, #1468), for example the run's depth: shallow runs make covered-zeros co-occur across unrelated sites. It is ranked, so any increasing transform (log2) gives the same result. A run left out of the file is left out of every pair; a blank, NA or NaN value is sent as NaN and mzLib refuses it (leave the run out instead). Absent, none is sent. <em>Not an argument here: not ported yet: the pyMzLib 0.7.0 bridge's option, a later mzLibR port.</em></p></dd>
+<dt><code>run_covariate</code> (wire <code>--run-covariate</code>)</dt>
+<dd><p>path; default absent. Co-varying only. A TSV with a header row whose second field names the covariate (for example target_psms), then run, value: one row per run (or with samples, per sample), in any unit. Pairs are then the partial Spearman correlation given it (mzLib's runCovariate, #1468), for example the run's depth: shallow runs make covered-zeros co-occur across unrelated sites. It is ranked, so any increasing transform (log2) gives the same result. A run left out of the file is left out of every pair; a blank, NA or NaN value is sent as NaN and mzLib refuses it (leave the run out instead). Absent, none is sent.</p></dd>
 
 <dt><code>remove_run_level</code> (wire <code>--remove-run-level</code>)</dt>
 <dd><p>flag; default <samp>absent: mzLib's removeRunLevel default, false at the pin</samp>. Co-varying only. Correlate given each run's level: the partial Spearman correlation with the run's median occupancy over the other tested sites of the pair's group (the pair's own two left out). Removes a batch or loading shift that moves many sites in the same runs. Batch only: where the run level follows the design, removing it tests the correlation within conditions instead.</p></dd>
@@ -459,6 +484,17 @@ Two kinds of evidence, which you choose between with type:"></head><body>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>plain <span class="op">=</span> <span class="fu">pick</span><span class="op">(</span><span class="va">plain</span><span class="op">$</span><span class="va">records</span><span class="op">)</span>, given <span class="op">=</span> <span class="fu">pick</span><span class="op">(</span><span class="va">given</span><span class="op">$</span><span class="va">records</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> plain given </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  0.76  0.03 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Two sites with a value in six of ten runs and a bound in the rest (mzLib's</span></span></span>
+<span class="r-in"><span><span class="co"># BoundsEnterTypeAAsTiedRanks). Six is below mzLib's 70% guard, so no pair is tested until the</span></span></span>
+<span class="r-in"><span><span class="co"># bounds enter:</span></span></span>
+<span class="r-in"><span><span class="va">bounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ptmqtl"</span>, <span class="st">"bounds.tsv"</span>, package <span class="op">=</span> <span class="st">"mzLibR"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">ptmqtl_pairs</span><span class="op">(</span><span class="va">bounds</span>, type <span class="op">=</span> <span class="st">"covarying"</span><span class="op">)</span><span class="op">$</span><span class="va">row_count</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
+<span class="r-in"><span><span class="va">bounded</span> <span class="op">&lt;-</span> <span class="fu">ptmqtl_pairs</span><span class="op">(</span><span class="va">bounds</span>, type <span class="op">=</span> <span class="st">"covarying"</span>, include_bounds <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">bounded</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"test_status"</span>, <span class="st">"bounds_included"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   n test_status bounds_included</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 9      tested            TRUE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

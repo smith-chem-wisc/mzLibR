@@ -130,11 +130,26 @@ map</td>
 <td>Spearman’s rho, Benjamini-Hochberg</td>
 </tr>
 <tr class="odd">
+<td>the same, with runs a site was seen in only one form, or given each
+run’s depth?</td>
+<td><code>ptmqtl_pairs(include_bounds = , run_covariate = )</code></td>
+<td>
+<code>PtmPairEngine.CoVarying</code> (#1468)</td>
+<td>tied ranks; partial Spearman</td>
+</tr>
+<tr class="even">
 <td>does a site’s occupancy change with a per-run trait?</td>
 <td><code><a href="../reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects()</a></code></td>
 <td>
 <code>SiteTraitEffects.Fit</code> (#1446)</td>
 <td>a mixed model per site, a random intercept per replicate</td>
+</tr>
+<tr class="odd">
+<td>the same effect in log2 odds, where +1 doubles the odds?</td>
+<td><code>ptmqtl_trait_effects(scale = "log2_odds")</code></td>
+<td>
+<code>SiteTraitEffects.Fit</code> (#1464)</td>
+<td>the natural-log fit over ln 2</td>
 </tr>
 </tbody>
 </table>
@@ -407,9 +422,9 @@ not choose: mzLib decides it inside
 otherwise, <code>NA</code> for physical pairs).
 <code>run_level_removed</code> says whether rho is partial given the run
 level; <code>bounds_included</code> and
-<code>run_covariate_removed</code> report two mzLib options (#1468) that
-<code><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs()</a></code> does not send yet, so here they are
-<code>FALSE</code>.</p>
+<code>run_covariate_removed</code> say whether one-form runs entered as
+tied bounds and whether rho is partial given a run covariate, the two
+options below (mzLib #1468); here they are <code>FALSE</code>.</p>
 <p><strong>The trap: a batch correlates everything.</strong> These
 twelve runs come in two batches, and every site reads 0.2 higher in the
 second. That alone gives <code>PAIR_S</code> and <code>PAIR_T</code> a
@@ -453,6 +468,119 @@ site was seen only modified. Two unrelated sites that both read 1 in
 low-load runs then correlate through detection alone; that is why mzLib
 leaves them out by default.</li>
 </ul>
+<div class="section level3">
+<h3 id="counting-one-form-runs-as-bounds">Counting one-form runs as bounds<a class="anchor" aria-label="anchor" href="#counting-one-form-runs-as-bounds"></a>
+</h3>
+<p>A site seen in only one form in a run has no fraction, but it is not
+missing either. A <code>"not_detected"</code> cell says the occupancy
+was below what the run could see; a ceiling says it was at the top. By
+default mzLib leaves such runs out of the correlation. A site that is
+often below detection then never reaches the 70% guard, and its pairs
+are never tested.</p>
+<p><code>include_bounds = TRUE</code> lets those runs in as <strong>tied
+ranks</strong>, never as invented values (mzLib #1468). A
+<code>"not_detected"</code> or <code>"floor"</code> cell ties below
+every fraction of its site. A ceiling, or a <code>"count_only"</code>
+cell whose covering peptidoforms all carry the mark (k of n with k = n),
+ties above. A <code>"count_only"</code> cell where both forms were
+identified has no rank and stays out.</p>
+<p>The example is mzLib’s <code>BoundsEnterTypeAAsTiedRanks</code>: two
+sites with a value in six of ten runs, and a bound in the other
+four.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"bounds.tsv"</span><span class="op">)</span></span>
+<span><span class="va">unbounded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">bounds</span>, type <span class="op">=</span> <span class="st">"covarying"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">unbounded</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_count"</span>, <span class="st">"include_bounds"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 2</span></span>
+<span><span class="co">#&gt;  $ row_count     : num 0</span></span>
+<span><span class="co">#&gt;  $ include_bounds: logi FALSE</span></span>
+<span><span class="va">bounded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">bounds</span>, type <span class="op">=</span> <span class="st">"covarying"</span>, include_bounds <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">bounded</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"test_status"</span>, <span class="st">"bounds_included"</span>, <span class="st">"statistic"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   n test_status bounds_included   statistic</span></span>
+<span><span class="co">#&gt; 1 9      tested            TRUE 0.004201681</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">bounded</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"min_untied_share"</span>, <span class="st">"exclude_ceiling"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 2</span></span>
+<span><span class="co">#&gt;  $ min_untied_share: num 0.5</span></span>
+<span><span class="co">#&gt;  $ exclude_ceiling : logi NA</span></span></code></pre></div>
+<p>Six of ten is below the guard, so the plain call tests nothing. With
+bounds, <code>BOUND_S</code> has a value or a bound in all ten runs and
+<code>BOUND_T</code> in nine, and the pair is tested on the nine they
+share. The tenth is <code>BOUND_T</code>’s <code>"count_only"</code>
+cell with both forms identified (1 of 2): it has no rank. The two sites
+turn out unrelated (rho 0.004).</p>
+<p><strong>Too many ties make the test unreliable.</strong> When both
+sites are mostly one bound, Spearman’s t test calls far too many pairs:
+in mzLib’s simulation, 2 to 5 times the nominal rate at p &lt; 0.001
+with no relation at all. So a pair is tested only if one of its sites
+has at least <code>min_untied_share</code> (half) of the shared runs
+outside its largest tie. Otherwise its <code>test_status</code> is
+<code>"both_sites_mostly_bounds"</code>, and it has no p-value.</p>
+<p><code>exclude_ceiling</code> stays <code>NA</code>: with bounds,
+mzLib treats a ceiling as a high bound. <code>keep_ceiling = TRUE</code>
+sends <code>FALSE</code> and gives the same answer.</p>
+</div>
+<div class="section level3">
+<h3 id="given-each-runs-depth">Given each run’s depth<a class="anchor" aria-label="anchor" href="#given-each-runs-depth"></a>
+</h3>
+<p>Shallow runs miss low-abundance forms everywhere at once. With bounds
+in, that makes covered-zeros co-occur across unrelated sites, and any
+site that rises with depth correlates with every other.
+<code>run_covariate</code> takes a per-run value, such as the run’s
+target PSMs, and correlates the two sites <strong>given</strong> it: a
+partial Spearman correlation, as for the run level (mzLib #1468).</p>
+<p>The file has a header row whose second field names the covariate,
+then one row per run:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"depth_psms.tsv"</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   run target_psms</span></span>
+<span><span class="co">#&gt; 1 r00        9000</span></span>
+<span><span class="co">#&gt; 2 r01       12000</span></span></code></pre></div>
+<p>The example is mzLib’s <code>ARunCovariateIsPartialledOut</code>:
+twelve runs in two batches, and two sites that also rise a little with
+each run’s depth.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">depth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"depth.tsv"</span><span class="op">)</span></span>
+<span><span class="va">psms</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"depth_psms.tsv"</span><span class="op">)</span></span>
+<span><span class="va">depth_pair</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">records</span></span>
+<span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">site_a</span>, <span class="st">"DEPTH_S"</span><span class="op">)</span> <span class="op">&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">site_b</span>, <span class="st">"DEPTH_T"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>rho <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">statistic</span>, <span class="fl">2</span><span class="op">)</span>, p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">3</span><span class="op">)</span>, n <span class="op">=</span> <span class="va">r</span><span class="op">$</span><span class="va">n</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">depth_pair</span><span class="op">(</span><span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">depth</span>, type <span class="op">=</span> <span class="st">"covarying"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    rho     p  n</span></span>
+<span><span class="co">#&gt; 1 0.77 0.003 12</span></span>
+<span><span class="va">covariate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">depth</span>, type <span class="op">=</span> <span class="st">"covarying"</span>, run_covariate <span class="op">=</span> <span class="va">psms</span><span class="op">)</span></span>
+<span><span class="fu">depth_pair</span><span class="op">(</span><span class="va">covariate</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    rho     p  n</span></span>
+<span><span class="co">#&gt; 1 0.76 0.006 12</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">covariate</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"run_covariate_name"</span>, <span class="st">"run_covariate_runs_missing"</span>, <span class="st">"min_runs_for_run_level"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 3</span></span>
+<span><span class="co">#&gt;  $ run_covariate_name        : chr "target_psms"</span></span>
+<span><span class="co">#&gt;  $ run_covariate_runs_missing: chr(0) </span></span>
+<span><span class="co">#&gt;  $ min_runs_for_run_level    : num 10</span></span>
+<span><span class="fu">depth_pair</span><span class="op">(</span><span class="fu"><a href="../reference/ptmqtl_pairs.html">ptmqtl_pairs</a></span><span class="op">(</span><span class="va">depth</span>, type <span class="op">=</span> <span class="st">"covarying"</span>, run_covariate <span class="op">=</span> <span class="va">psms</span>, remove_run_level <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    rho     p  n</span></span>
+<span><span class="co">#&gt; 1 0.08 0.832 12</span></span></code></pre></div>
+<p>Depth alone barely moves rho: in these runs most of the shared rise
+is the batch. Given the batch’s run level as well, the pair is
+unrelated. A covariate removes only what it explains.</p>
+<ul>
+<li>
+<strong>Any increasing transform gives the same answer.</strong> The
+covariate is ranked, so target PSMs and log2 target PSMs are the same
+input.</li>
+<li>
+<strong>Leave a run out for “unknown”.</strong> It is then left out
+of every pair, and listed in <code>run_covariate_runs_missing</code>. A
+blank or <code>NA</code> value is not “unknown”: mzLib refuses it, and
+mzLibR raises an <code>mzlib_usage_error</code>.</li>
+<li>
+<strong>The same floor of shared runs applies.</strong> A pair
+partial on the covariate is tested only on at least
+<code>min_runs_for_run_level</code> shared runs; below that it is
+<code>"too_few_shared_runs"</code>.</li>
+</ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="does-occupancy-change-with-a-trait">Does occupancy change with a trait?<a class="anchor" aria-label="anchor" href="#does-occupancy-change-with-a-trait"></a>
@@ -464,7 +592,7 @@ are not counted as independent evidence. The example is mzLib’s
 <code>TraitDesign</code>: six replicates at three doses, two injections
 each, built so that logit(occupancy) = -2 + 0.5 x dose + a replicate
 offset. First compute occupancy, and write it to a file:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">written</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_occupancy.html">ptmqtl_occupancy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait.tsv"</span><span class="op">)</span>,</span>
 <span>                            out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>cells_written <span class="op">=</span> <span class="va">written</span><span class="op">$</span><span class="va">written</span><span class="op">$</span><span class="va">row_count</span>, rows_returned <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">written</span><span class="op">$</span><span class="va">records</span><span class="op">)</span><span class="op">)</span></span>
@@ -481,11 +609,11 @@ offset. First compute occupancy, and write it to a file:</p>
 <p>The runs table gives each run its replicate, then the trait, then any
 covariates, each column named by its header. Then fit (here on the file
 the call above writes, as this package ships it):</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">effects</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span>,</span>
 <span>                                <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_runs.tsv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">effects</span></span>
-<span><span class="co">#&gt; &lt;mzlibr_trait_effects&gt; 2 sites against dose, given injection (min 6 runs, 4 replicates)</span></span>
+<span><span class="co">#&gt; &lt;mzlibr_trait_effects&gt; 2 sites against dose, given injection (min 6 runs, 4 replicates), on natural_log_odds</span></span>
 <span><span class="co">#&gt;   fitted 2, below_support 0, too_few_observations 0, rank_deficient 0, too_few_groups 0, variance_ratio_at_limit 0, not_converged 0</span></span>
 <span><span class="va">effects</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"protein_accession"</span>, <span class="st">"status"</span>, <span class="st">"effect"</span>, <span class="st">"standard_error"</span>, <span class="st">"df"</span>, <span class="st">"q"</span>, <span class="st">"runs"</span>, <span class="st">"replicates"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   protein_accession status    effect standard_error df           q runs</span></span>
@@ -509,13 +637,34 @@ five replicates and three degrees of freedom.</p>
 <code>min_replicates</code> replicates with a response, mzLib’s defaults
 reported in the result. Ask for six replicates, and
 <code>CENSORED_SITE</code> is below support:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">strict</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span>,</span>
 <span>                               <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_runs.tsv"</span><span class="op">)</span>, min_replicates <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">strict</span><span class="op">$</span><span class="va">records</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"protein_accession"</span>, <span class="st">"status"</span>, <span class="st">"effect"</span>, <span class="st">"replicates"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   protein_accession        status    effect replicates</span></span>
 <span><span class="co">#&gt; 1     CENSORED_SITE below_support        NA          5</span></span>
 <span><span class="co">#&gt; 2        TRAIT_SITE        fitted 0.5008514          6</span></span></code></pre></div>
+<p><strong>In log2 odds.</strong> Natural-log odds are mzLib’s default.
+<code>scale = "log2_odds"</code> reports the same fit in log2 odds,
+where an effect of +1 doubles the odds of the modified form per trait
+unit (mzLib #1464):</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">log2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ptmqtl_trait_effects.html">ptmqtl_trait_effects</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_occupancy.tsv"</span><span class="op">)</span>,</span>
+<span>                             <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ptmqtl_data</span>, <span class="st">"trait_runs.tsv"</span><span class="op">)</span>, scale <span class="op">=</span> <span class="st">"log2_odds"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">effects</span><span class="op">$</span><span class="va">scale</span>, <span class="va">log2</span><span class="op">$</span><span class="va">scale</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "natural_log_odds" "log2_odds"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>site <span class="op">=</span> <span class="va">effects</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">protein_accession</span>,</span>
+<span>           natural <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">effects</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">effect</span>, <span class="fl">3</span><span class="op">)</span>, log2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">log2</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">effect</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>           p_natural <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">effects</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">3</span><span class="op">)</span>, p_log2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">log2</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">p_value</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            site natural  log2 p_natural   p_log2</span></span>
+<span><span class="co">#&gt; 1 CENSORED_SITE   0.543 0.783  0.003610 0.003610</span></span>
+<span><span class="co">#&gt; 2    TRAIT_SITE   0.501 0.723  0.000817 0.000817</span></span></code></pre></div>
+<p><code>TRAIT_SITE</code>’s 0.50 natural-log units are 0.72 log2 units:
+2^0.72 = 1.65, the same odds ratio per dose unit. mzLib does not refit.
+It divides the effects and standard errors by ln 2 and the two variances
+by (ln 2)^2, so <code>df</code>, <code>p_value</code> and <code>q</code>
+are unchanged. Pick the scale your other results use; the science does
+not change.</p>
 <p>This answers “does the modified share change?”, not “is the
 modification detected more often?”: floors, count-only and undetected
 cells are left out, never entered as 0. <code>q</code> adjusts over this

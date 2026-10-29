@@ -144,6 +144,13 @@ why not?</td>
 <code>OrthologySnapshot</code>, <code>OrthologySnapshotWriter</code>
 (#1381)</td>
 </tr>
+<tr class="odd">
+<td>which mouse residue sits in the same Compara alignment column as
+human p53’s Ser15?</td>
+<td><code><a href="../reference/proteins_map_residues.html">proteins_map_residues()</a></code></td>
+<td>
+<code>ComparaGeneTreeAlignment.MapResidue</code> (#1465)</td>
+</tr>
 </tbody>
 </table>
 <p>The first three take one database or several - UniProt XML or FASTA,
@@ -1060,6 +1067,327 @@ build and 40 s more to write 13 files (9.0 MB).</li>
 </div>
 </div>
 <div class="section level2">
+<h2 id="map-a-residue-across-species-comparas-gene-tree-alignment">Map a residue across species: Compara’s gene-tree alignment<a class="anchor" aria-label="anchor" href="#map-a-residue-across-species-comparas-gene-tree-alignment"></a>
+</h2>
+<p><strong>The problem.</strong> You have a site in a human protein,
+human p53’s phosphoserine 15, and a mouse experiment. Which mouse
+residue is it? Counting along the two sequences fails as soon as one has
+an insertion. Aligning just the two proteins works, but it is your
+alignment, made with your parameters. Ensembl Compara has already
+aligned every protein of each gene tree, across all its species, to
+build the tree. A residue’s column in that alignment is the published
+answer.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>You want to know</th>
+<th>Call</th>
+<th>mzLib</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Which residue of the mouse protein sits in the same alignment column
+as residue 15 of the human protein?</td>
+<td><code><a href="../reference/proteins_map_residues.html">proteins_map_residues()</a></code></td>
+<td>
+<code>ComparaGeneTreeAlignment.MapResidue</code> (#1465)</td>
+</tr>
+<tr class="even">
+<td>Which proteins did the alignment hold, and what are their Ensembl
+sequences?</td>
+<td><code>proteins_map_residues(proteins = TRUE)</code></td>
+<td>
+<code>ComparaGeneTreeAlignment.Proteins</code> (#1465)</td>
+</tr>
+<tr class="odd">
+<td>Where does my UniProt residue sit in the Ensembl protein, and
+back?</td>
+<td><code><a href="../reference/proteins_align.html">proteins_align()</a></code></td>
+<td>
+<code>PairwiseAligner</code> (#1428)</td>
+</tr>
+</tbody>
+</table>
+<p><code><a href="../reference/proteins_map_residues.html">proteins_map_residues()</a></code> reads Compara’s peptide
+alignments (<code>ComparaGeneTreeAlignment.Load</code>), keeping only
+the canonical proteins of your species’ genes, and answers each query
+with mzLib’s <code>MapResidue</code>. This example is a real cut of
+Ensembl release 116, which the package’s tests carry in
+<code>tests/map_residues/</code>: the TP53 and GAPDH gene trees’
+alignments, with the human, mouse and rat rows exactly as Ensembl
+publishes them. The same queries on the full files give the same
+rows.</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gtfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>homo_sapiens <span class="op">=</span> <span class="st">"Homo_sapiens.GRCh38.116.gtf"</span>,</span>
+<span>          mus_musculus <span class="op">=</span> <span class="st">"Mus_musculus.GRCm39.116.gtf"</span>,</span>
+<span>          rattus_norvegicus <span class="op">=</span> <span class="st">"Rattus_norvegicus.GRCr8.116.gtf"</span><span class="op">)</span></span>
+<span><span class="va">tp53</span> <span class="op">&lt;-</span> <span class="st">"ENSP00000269305"</span></span>
+<span><span class="va">trp53</span> <span class="op">&lt;-</span> <span class="st">"ENSMUSP00000104298"</span></span>
+<span><span class="va">rat_tp53</span> <span class="op">&lt;-</span> <span class="st">"ENSRNOP00000074031"</span></span>
+<span><span class="va">queries</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">15</span>, <span class="va">trp53</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">20</span>, <span class="va">trp53</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">46</span>, <span class="va">trp53</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">392</span>, <span class="va">trp53</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">trp53</span>, <span class="fl">18</span>, <span class="va">tp53</span><span class="op">)</span>,                      <span class="co"># and back</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">15</span>, <span class="va">rat_tp53</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">15</span>, <span class="st">"ENSMUSP00000113213"</span><span class="op">)</span>,       <span class="co"># mouse GAPDH: another gene tree</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"ENSP00000352610"</span>, <span class="fl">15</span>, <span class="va">trp53</span><span class="op">)</span>,         <span class="co"># a TP53 isoform Compara did not align</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="fl">15</span>, <span class="st">"ENSMUSP00000005371"</span><span class="op">)</span>        <span class="co"># a Trp53 isoform, likewise</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_map_residues.html">proteins_map_residues</a></span><span class="op">(</span><span class="va">queries</span>, alignment <span class="op">=</span> <span class="st">"Compara.116.protein_default.aa.fasta.gz"</span>,</span>
+<span>  gene_trees <span class="op">=</span> <span class="st">"vertebrates.GeneTree_content.default.e116.txt.gz"</span>, gtfs <span class="op">=</span> <span class="va">gtfs</span>, proteins <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">mapped</span><span class="op">$</span><span class="va">records</span></span>
+<span><span class="co">#&gt;    source_protein_id position  target_protein_id              outcome column</span></span>
+<span><span class="co">#&gt; 1    ENSP00000269305       15 ENSMUSP00000104298              Aligned    476</span></span>
+<span><span class="co">#&gt; 2    ENSP00000269305       20 ENSMUSP00000104298              Aligned    547</span></span>
+<span><span class="co">#&gt; 3    ENSP00000269305       46 ENSMUSP00000104298          GapInTarget    863</span></span>
+<span><span class="co">#&gt; 4    ENSP00000269305      392 ENSMUSP00000104298              Aligned   3036</span></span>
+<span><span class="co">#&gt; 5 ENSMUSP00000104298       18    ENSP00000269305              Aligned    476</span></span>
+<span><span class="co">#&gt; 6    ENSP00000269305       15 ENSRNOP00000074031              Aligned    476</span></span>
+<span><span class="co">#&gt; 7    ENSP00000269305       15 ENSMUSP00000113213  DifferentAlignments     NA</span></span>
+<span><span class="co">#&gt; 8    ENSP00000352610       15 ENSMUSP00000104298 SourceNotInAlignment     NA</span></span>
+<span><span class="co">#&gt; 9    ENSP00000269305       15 ENSMUSP00000005371 TargetNotInAlignment     NA</span></span>
+<span><span class="co">#&gt;   target_position target_residue</span></span>
+<span><span class="co">#&gt; 1              18              S</span></span>
+<span><span class="co">#&gt; 2              23              S</span></span>
+<span><span class="co">#&gt; 3              NA           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 4             389              S</span></span>
+<span><span class="co">#&gt; 5              15              S</span></span>
+<span><span class="co">#&gt; 6              15              S</span></span>
+<span><span class="co">#&gt; 7              NA           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 8              NA           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 9              NA           &lt;NA&gt;</span></span></code></pre></div>
+<p>The queries can also be a data.frame with the columns
+<code>source_protein_id</code>, <code>position</code> and
+<code>target_protein_id</code>. Reading the table row by row:</p>
+<ul>
+<li>
+<strong>Human Ser15 is mouse Ser18</strong>, Ser20 is Ser23, and
+Ser392 is Ser389. The mouse protein is three residues shorter near its
+N-terminus, so the numbers shift, and the column says by how much.</li>
+<li>
+<strong>Human Ser46 faces a gap in mouse.</strong> No mouse residue
+sits in column 863, and the outcome is <code>"GapInTarget"</code>. It
+never offers the nearest residue instead.</li>
+<li>
+<strong>Mapping back gives the residue you started from.</strong>
+Mouse residue 18 is in the same column, 476.</li>
+<li>
+<strong>Rat is a separate query</strong> against the same alignment:
+human Ser15 is rat Ser15.</li>
+<li>
+<strong>GAPDH is in another gene tree</strong>, so the alignment
+says nothing about it: <code>"DifferentAlignments"</code>.</li>
+<li>
+<strong>Only each gene’s canonical protein is aligned.</strong>
+<code>ENSP00000352610</code> is a real TP53 protein, but not the one
+Compara used, so it is <code>"SourceNotInAlignment"</code>. It is not
+mapped through the canonical protein. The gene-tree file names each
+gene’s canonical protein, in the row flagged <code>Y</code>.</li>
+</ul>
+<p><code>outcome_counts</code> counts the queries per outcome, every
+outcome present:</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mapped</span><span class="op">$</span><span class="va">outcome_counts</span></span>
+<span><span class="co">#&gt;              Aligned          GapInTarget  DifferentAlignments </span></span>
+<span><span class="co">#&gt;                    5                    1                    1 </span></span>
+<span><span class="co">#&gt; SourceNotInAlignment TargetNotInAlignment </span></span>
+<span><span class="co">#&gt;                    1                    1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>release <span class="op">=</span> <span class="va">mapped</span><span class="op">$</span><span class="va">alignment</span><span class="op">$</span><span class="va">release</span>, proteins_kept <span class="op">=</span> <span class="va">mapped</span><span class="op">$</span><span class="va">alignment</span><span class="op">$</span><span class="va">protein_count</span>,</span>
+<span>  genes_kept <span class="op">=</span> <span class="va">mapped</span><span class="op">$</span><span class="va">gene_trees</span><span class="op">$</span><span class="va">member_count</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       release proteins_kept    genes_kept </span></span>
+<span><span class="co">#&gt;         "116"           "5"           "5"</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th>outcome</th>
+<th>what it means</th>
+<th><code>column</code></th>
+<th>
+<code>target_position</code>, <code>target_residue</code>
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>Aligned</code></td>
+<td>the target has a residue in the source residue’s column</td>
+<td>set</td>
+<td>set</td>
+</tr>
+<tr class="even">
+<td><code>GapInTarget</code></td>
+<td>the target has a gap in that column: no residue corresponds</td>
+<td>set</td>
+<td><code>NA</code></td>
+</tr>
+<tr class="odd">
+<td><code>DifferentAlignments</code></td>
+<td>the two proteins are in different gene trees</td>
+<td><code>NA</code></td>
+<td><code>NA</code></td>
+</tr>
+<tr class="even">
+<td><code>SourceNotInAlignment</code></td>
+<td>the source protein was not kept: not in the file, not canonical, or
+outside your gene sets</td>
+<td><code>NA</code></td>
+<td><code>NA</code></td>
+</tr>
+<tr class="odd">
+<td><code>TargetNotInAlignment</code></td>
+<td>the target protein was not kept</td>
+<td><code>NA</code></td>
+<td><code>NA</code></td>
+</tr>
+</tbody>
+</table>
+<p>The outcome names are mzLib’s own
+(<code>ComparaColumnOutcome</code>), in mzLib’s order.</p>
+<div class="section level3">
+<h3 id="from-a-uniprot-position-to-a-uniprot-position">From a UniProt position to a UniProt position<a class="anchor" aria-label="anchor" href="#from-a-uniprot-position-to-a-uniprot-position"></a>
+</h3>
+<p>Compara’s positions are positions in <strong>Ensembl</strong>
+proteins. A site from a search against UniProt needs two more steps
+around <code><a href="../reference/proteins_map_residues.html">proteins_map_residues()</a></code>, each an alignment:</p>
+<ol style="list-style-type: decimal">
+<li>Align the UniProt sequence to the canonical Ensembl protein, and map
+the position across.</li>
+<li>Map the Ensembl position through the gene-tree column with
+<code><a href="../reference/proteins_map_residues.html">proteins_map_residues()</a></code>.</li>
+<li>Align the target’s canonical Ensembl protein to its UniProt
+sequence, and map across again.</li>
+</ol>
+<p>Any of the three can meet a gap. <code>proteins = TRUE</code>
+returned the Ensembl sequences, so no second file is needed for them.
+The UniProt sequences come from UniProt’s FASTA for human p53 (P04637)
+and mouse p53 (P02340):</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">uniprot</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_read.html">proteins_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"P04637.fasta"</span>, <span class="st">"P02340.fasta"</span><span class="op">)</span>, sequences <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">uniprot_seq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">uniprot</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">sequence</span>, <span class="va">uniprot</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">accession</span><span class="op">)</span></span>
+<span><span class="va">ensembl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">mapped</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">sequence</span>, <span class="va">mapped</span><span class="op">$</span><span class="va">proteins</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">protein_id</span><span class="op">)</span></span>
+<span><span class="va">legs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_alignments.html">proteins_alignments</a></span><span class="op">(</span><span class="fu"><a href="../reference/proteins_align.html">proteins_align</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">uniprot_seq</span><span class="op">[[</span><span class="st">"P04637"</span><span class="op">]</span><span class="op">]</span>, <span class="va">ensembl</span><span class="op">[[</span><span class="va">tp53</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,    <span class="co"># leg 1: UniProt human -&gt; Ensembl human</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">ensembl</span><span class="op">[[</span><span class="va">trp53</span><span class="op">]</span><span class="op">]</span>, <span class="va">uniprot_seq</span><span class="op">[[</span><span class="st">"P02340"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>    <span class="co"># leg 3: Ensembl mouse -&gt; UniProt mouse</span></span>
+<span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>leg1_identical <span class="op">=</span> <span class="va">legs</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">identical</span>, human_length <span class="op">=</span> <span class="va">legs</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">source_length</span>,</span>
+<span>  leg3_identical <span class="op">=</span> <span class="va">legs</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">identical</span>, mouse_length <span class="op">=</span> <span class="va">legs</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">target_length</span><span class="op">)</span></span>
+<span><span class="co">#&gt; leg1_identical   human_length leg3_identical   mouse_length </span></span>
+<span><span class="co">#&gt;            393            393            390            390</span></span>
+<span><span class="va">ensembl_position</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_map_source_to_target.html">proteins_map_source_to_target</a></span><span class="op">(</span><span class="va">legs</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span></span>
+<span><span class="va">site</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_map_residues.html">proteins_map_residues</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">tp53</span>, <span class="va">ensembl_position</span>, <span class="va">trp53</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  alignment <span class="op">=</span> <span class="st">"Compara.116.protein_default.aa.fasta.gz"</span>,</span>
+<span>  gene_trees <span class="op">=</span> <span class="st">"vertebrates.GeneTree_content.default.e116.txt.gz"</span>, gtfs <span class="op">=</span> <span class="va">gtfs</span><span class="op">)</span></span>
+<span><span class="va">mouse_position</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proteins_map_source_to_target.html">proteins_map_source_to_target</a></span><span class="op">(</span><span class="va">legs</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">site</span><span class="op">$</span><span class="va">records</span><span class="op">$</span><span class="va">target_position</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">mouse_position</span>, <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">uniprot_seq</span><span class="op">[[</span><span class="st">"P02340"</span><span class="op">]</span><span class="op">]</span>, <span class="va">mouse_position</span>, <span class="va">mouse_position</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "18" "S"</span></span></code></pre></div>
+<p>For p53 the UniProt and Ensembl canonical sequences are identical in
+both species, so legs 1 and 3 map every residue to itself. That is
+common for canonical sequences, but check it every time
+(<code>identical</code> equal to both lengths) rather than assume it.
+For an isoform, or an entry whose sequence UniProt and Ensembl annotate
+differently, those legs shift positions or meet gaps, as the alignment
+section above shows.</p>
+<p><strong>Check the residue at every step.</strong> A column pairs
+positions the alignment puts together, which is homology, not identity.
+Here it is serine on both sides. Where the target residue is a different
+amino acid, the site does not carry over: a phosphosite on S is not a
+site on A.</p>
+</div>
+<div class="section level3">
+<h3 id="what-to-download-for-residue-mapping-once-per-release">What to download for residue mapping, once per release<a class="anchor" aria-label="anchor" href="#what-to-download-for-residue-mapping-once-per-release"></a>
+</h3>
+<p>Nothing is downloaded for you. For release 116, from
+<code>https://ftp.ensembl.org/pub/release-116/</code>:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Input</th>
+<th>Path under the release</th>
+<th>Argument</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>The peptide alignments of every gene tree</td>
+<td><code>emf/ensembl-compara/homologies/Compara.116.protein_default.aa.fasta.gz</code></td>
+<td><code>alignment</code></td>
+</tr>
+<tr class="even">
+<td>The gene trees, one file for all species</td>
+<td><code>compara/vertebrates.GeneTree_content.default.e116.txt.gz</code></td>
+<td><code>gene_trees</code></td>
+</tr>
+<tr class="odd">
+<td>Each species’ primary-assembly GTF</td>
+<td><code>gtf/homo_sapiens/Homo_sapiens.GRCh38.116.gtf.gz</code></td>
+<td><code>gtfs = c(species = path)</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<strong>Use the alignment and the gene trees of one
+release.</strong> mzLib does not compare them, and a gene’s canonical
+protein and tree can change between releases. Keep Ensembl’s file names:
+the result reports the release each name carries, and a caveat says when
+they differ or one is missing.</li>
+<li>
+<strong>Give your species’ gene sets.</strong> They are used only to
+choose what is kept. Without them, mzLib’s default keeps every gene in
+the gene-tree file, millions for the vertebrates, and every canonical
+protein in the alignment, and a caveat says so. The answers for your
+species’ proteins are the same either way. A compact gene table
+(<code>gene_sets</code>) works as it does for
+<code><a href="../reference/proteins_build_orthology.html">proteins_build_orthology()</a></code>.</li>
+<li>
+<strong>Batch your queries.</strong> Reading the alignment is the
+cost: for human, mouse and rat at release 116, the whole call took about
+a minute. Each query after that is a lookup, so send them all in one
+call.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="the-traps-of-residue-mapping">The traps of residue mapping<a class="anchor" aria-label="anchor" href="#the-traps-of-residue-mapping"></a>
+</h3>
+<ul>
+<li>
+<strong>A position past the end of the source protein fails the
+whole call.</strong> mzLib’s <code>MapResidue</code> throws for it
+rather than returning an outcome, so
+<code><a href="../reference/proteins_map_residues.html">proteins_map_residues()</a></code> raises an
+<code>mzlib_usage_error</code> with mzLib’s message (“ENSP00000269305
+has 393 residues.”) and returns no row, not even for the queries that
+were fine. mzLibR does not check lengths itself. Keep each position
+within its protein: with <code>proteins = TRUE</code>, a sequence’s
+length is the last valid position.</li>
+<li>
+<strong>Use Ensembl ids and Ensembl positions.</strong> A UniProt
+accession is <code>"SourceNotInAlignment"</code>, never an error. Cross
+over with <code><a href="../reference/proteins_align.html">proteins_align()</a></code> first, as above.</li>
+<li>
+<strong>Sharing a gene tree is not orthology.</strong> A tree holds
+a gene family, paralogs included, so an <code>"Aligned"</code> answer
+between two proteins of one tree does not make them orthologs. Ask
+<code><a href="../reference/proteins_build_orthology.html">proteins_build_orthology()</a></code> which genes are orthologs, then
+map their residues here.</li>
+<li>
+<strong><code>"DifferentAlignments"</code> is not
+“unrelated”.</strong> It says only that this alignment cannot
+answer.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
 <h2 id="what-to-cite">What to cite<a class="anchor" aria-label="anchor" href="#what-to-cite"></a>
 </h2>
 <p>The methods and resources behind the functions on this page, from
@@ -1068,12 +1396,12 @@ their specs:</p>
 <ul>
 <li>
 <a href="https://doi.org/10.1101/gr.073585.107" class="external-link">doi:10.1101/gr.073585.107</a>:
-Ensembl Compara gene trees, the duplication-aware phylogenies its
-orthology and paralogy calls are read from (Vilella et al. 2009, Genome
-Res 19:327).</li>
+Ensembl Compara gene trees, each built on a multiple alignment of its
+member proteins, the alignment this verb reads columns from (Vilella et
+al. 2009, Genome Res 19:327).</li>
 <li>
 <a href="https://doi.org/10.1093/nar/gkaf1239" class="external-link">doi:10.1093/nar/gkaf1239</a>:
-Ensembl releases, their GTFs and the Compara homology dumps (Ensembl
+Ensembl releases, their GTFs and the Compara gene-tree files (Ensembl
 2026, NAR).</li>
 <li>
 <a href="https://doi.org/10.1093/nar/gkae1010" class="external-link">doi:10.1093/nar/gkae1010</a>:
