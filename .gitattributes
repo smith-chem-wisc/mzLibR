@@ -1,5 +1,7 @@
-# Byte-exact fixtures. The orthology inputs' sha256s are part of what their recordings pin (the
-# snapshot_id is a sha256 over them), so a CRLF checkout on Windows must not change them, as
-# pyMzLib's .gitattributes marks them. They sit in tests/orthology/ rather than tests/fixtures/, so
-# no path in the built package passes the 100 bytes a portable tarball can store.
+# Byte-exact fixtures. The orthology and residue-mapping inputs' sha256s are part of what their
+# recordings pin (the snapshot_id is a sha256 over them, and genes map-residues reports each file's),
+# so a CRLF checkout on Windows must not change them, as pyMzLib's .gitattributes marks them. They
+# sit in tests/orthology/ and tests/map_residues/ rather than tests/fixtures/, so no path in the
+# built package passes the 100 bytes a portable tarball can store.
 tests/orthology/** -text
+tests/map_residues/** -text
