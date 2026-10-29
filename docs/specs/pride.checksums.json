@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -127,11 +127,11 @@
     },
     "rust": {
       "name": "mzlib::pride::file_checksums_with",
-      "note": "Planned name: ported after a pyMzLib release carries the verb (G-new-verbs-1.0.595)."
+      "note": "Takes a timeout, not an options struct. Returns a BTreeMap of PrideFileChecksum keyed by file name."
     },
     "r": {
       "name": "pride_file_checksums",
-      "note": "Planned name: ported after a pyMzLib release carries the verb (G-new-verbs-1.0.595)."
+      "note": "Returns a data.frame, one row per file, in file-name order."
     }
   },
   "examples": [

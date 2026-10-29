@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -444,11 +444,11 @@
     "rust": {
       "name": "mzlib::sdrf::isobaric_design_with",
       "options": "IsobaricDesignOptions",
-      "note": "Planned name: ported after a pyMzLib release carries the verb."
+      "note": "plex_ids is a BTreeMap, so it iterates in name order; each plex keeps mzLib's PlexId."
     },
     "r": {
       "name": "sdrf_isobaric_design",
-      "note": "Planned name: ported after a pyMzLib release carries the verb. The fraction, replicate and plex_id numbers stay 1-based in R too: they are the SDRF's numbers, not row indexes."
+      "note": "The fraction, replicate and plex_id numbers stay 1-based in R too: they are the SDRF's numbers, not row indexes."
     }
   },
   "examples": [

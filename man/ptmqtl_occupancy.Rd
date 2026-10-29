@@ -89,7 +89,7 @@ protein group, so its \code{IntensityOccupancy_} can differ.
 
 }
 \section{Wraps}{
-Wire verb \code{ptmqtl occupancy}. Generated from the bridge's verb spec \code{ptmqtl.occupancy.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{ptmqtl occupancy}. Generated from the bridge's verb spec \code{ptmqtl.occupancy.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Quantification/PtmQtl/SiteOccupancy.cs}{\code{SiteOccupancyCalculator.Calculate}} in \code{mzLib/Quantification/PtmQtl/SiteOccupancy.cs} at mzLib \code{cc67b7a2}
@@ -182,7 +182,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.6.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.6.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \seealso{
 \code{\link{ptmqtl_pairs}}, \code{\link{ptmqtl_trait_effects}}, \code{\link{readers_read_occupancy}}

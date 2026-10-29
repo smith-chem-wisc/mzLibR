@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -855,12 +855,12 @@
       "name": "mzlib::library::read_with",
       "bulk": "mzlib::library::read_many",
       "options": "LibraryReadOptions",
-      "note": "Planned name: ported after a pyMzLib release carries the verb."
+      "note": "read_many takes LibraryBulkOptions."
     },
     "r": {
       "name": "library_read",
       "bulk": "library_read_many",
-      "note": "Planned name: ported after a pyMzLib release carries the verb. source_index is 1-based in R (the wire is 0-based)."
+      "note": "precursor_index and source_index are 1-based in R (the wire is 0-based)."
     }
   },
   "examples": [

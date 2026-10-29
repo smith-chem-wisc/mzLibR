@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -301,11 +301,10 @@
     "rust": {
       "name": "mzlib::stats::correlate_with",
       "options": "CorrelateOptions",
-      "note": "not yet ported"
+      "note": "The trait table argument is trait_table, because trait is a Rust keyword."
     },
     "r": {
-      "name": "stats_correlate",
-      "note": "not yet ported"
+      "name": "stats_correlate"
     }
   },
   "examples": [

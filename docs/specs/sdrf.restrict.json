@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -257,11 +257,11 @@
     "rust": {
       "name": "mzlib::sdrf::restrict_with",
       "options": "RestrictOptions",
-      "note": "Planned name: ported after a pyMzLib release carries the verb."
+      "note": "The searched files are a slice of SearchedFile, each naming its acquired file where known."
     },
     "r": {
       "name": "sdrf_restrict",
-      "note": "Planned name: ported after a pyMzLib release carries the verb. The searched files are a character vector, named by acquired file where known."
+      "note": "The searched files are a character vector, named by acquired file where known."
     }
   },
   "examples": [

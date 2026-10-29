@@ -114,7 +114,7 @@ phosphosite on S is not a site on A. \code{mapped_residue} sits beside \code{res
 
 }
 \section{Wraps}{
-Wire verb \code{proteins align}. Generated from the bridge's verb spec \code{proteins.align.yaml} (bridge commit \code{45833ca804d6}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{proteins align}. Generated from the bridge's verb spec \code{proteins.align.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Omics/SequenceAlignment/PairwiseAligner.cs}{\code{PairwiseAligner}} in \code{mzLib/Omics/SequenceAlignment/PairwiseAligner.cs} at mzLib \code{d10017ce}
@@ -209,7 +209,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.6.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.6.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:

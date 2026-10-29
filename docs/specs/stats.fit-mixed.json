@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -403,12 +403,10 @@
     },
     "rust": {
       "name": "mzlib::stats::fit_mixed_with",
-      "options": "FitMixedOptions",
-      "note": "not yet ported"
+      "options": "FitMixedOptions"
     },
     "r": {
-      "name": "stats_fit_mixed",
-      "note": "not yet ported"
+      "name": "stats_fit_mixed"
     }
   },
   "examples": [

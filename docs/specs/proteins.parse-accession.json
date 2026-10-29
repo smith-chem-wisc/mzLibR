@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.6.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -198,12 +198,10 @@
       "note": "Plural because it takes a list; the verb is singular because each stdin line is one accession, as sdrf parse-age."
     },
     "rust": {
-      "name": "mzlib::proteins::parse_accessions",
-      "note": "planned; not yet ported"
+      "name": "mzlib::proteins::parse_accessions"
     },
     "r": {
-      "name": "proteins_parse_accessions",
-      "note": "planned; not yet ported"
+      "name": "proteins_parse_accessions"
     }
   },
   "examples": [
