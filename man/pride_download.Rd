@@ -59,7 +59,7 @@ MGF" cannot be said in that vocabulary at all - and can all be said with \code{[
 A character vector of the paths where the files now are.
 }
 \section{Wraps}{
-Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride download}. Generated from the bridge's verb spec \code{pride.download.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.DownloadProjectFilesAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{23c2490e}

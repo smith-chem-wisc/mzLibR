@@ -451,11 +451,10 @@
     "rust": {
       "name": "mzlib::ptmqtl::trait_effects_with",
       "options": "TraitEffectsOptions",
-      "note": "scale (pyMzLib 0.7.0) is not yet ported."
+      "note": "scale is the OccupancyScale enum."
     },
     "r": {
-      "name": "ptmqtl_trait_effects",
-      "note": "scale (pyMzLib 0.7.0) is not yet ported."
+      "name": "ptmqtl_trait_effects"
     }
   },
   "examples": [

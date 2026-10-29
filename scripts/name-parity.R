@@ -193,7 +193,9 @@ for (name in functions) {
   # pyMzLib parameters this function does not take yet, each with its reason
   # (PARENT_PARAM_OMISSIONS, scripts/deviations/<module>.R).
   # An entry R now takes, or the parent no longer has, is stale and fails.
-  param_keys <- names(param_omissions)[startsWith(names(param_omissions), paste0(name, "."))]
+  # as.character(): an empty list has NULL names, once every option is ported.
+  param_keys <- as.character(names(param_omissions))
+  param_keys <- param_keys[startsWith(param_keys, paste0(name, "."))]
   for (key in param_keys) {
     param <- substring(key, nchar(name) + 2L)
     if (!param %in% only_theirs) {

@@ -104,7 +104,7 @@ An \code{mzlibr_library_records}. \code{record_count} counts the precursors in t
 \strong{Retention time has a unit per row.} A library stores either an indexed retention time (iRT)
 or run minutes for each precursor (\code{MslLibraryEntry.RtIsCalibrated}), and one library can hold
 both. Read \code{retention_time_unit} on each row; there is no conversion between them without a
-calibration against a run.
+calibration against a run, which \code{\link{library_calibrate_rt}} fits.
 
 **"Not available" is \code{NA}, not a number.** A text library converted to \code{.msl} (from \code{.msp}) has
 no NCE, dissociation type, q-value, ion mobility or protein, so those are \code{NA} (and
@@ -115,7 +115,7 @@ rows; filter on \code{is_decoy} or \code{decoy_contaminant_target} before counti
 
 }
 \section{Wraps}{
-Wire verb \code{library read}. Generated from the bridge's verb spec \code{library.read.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{library read}. Generated from the bridge's verb spec \code{library.read.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Readers/SpectralLibrary/Mslfiletypehandler.cs}{\code{MslFileTypeHandler.Open}} in \code{mzLib/Readers/SpectralLibrary/Mslfiletypehandler.cs} at mzLib \code{d10017ce}

@@ -73,7 +73,7 @@ large transfers at the right size with its own error text written over part of t
 
 }
 \section{Wraps}{
-Wire verb \code{pride checksums}. Generated from the bridge's verb spec \code{pride.checksums.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{pride checksums}. Generated from the bridge's verb spec \code{pride.checksums.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs}{\code{PrideArchiveClient.GetFileChecksumsAsync}} in \code{mzLib/UsefulProteomicsDatabases/PrideArchiveClient.cs} at mzLib \code{d10017ce}

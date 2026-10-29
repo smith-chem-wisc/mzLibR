@@ -21,7 +21,9 @@
 #   * a recording with a `written` key fits an `--out` call only if `written` is set, and a call
 #     without `--out` only if it is null;
 #   * a recording listed in `REPLAY_RECORDED_WITH` fits only a call that sends the options it was
-#     made with.
+#     made with;
+#   * `--link` (stats fit-latent-mixed) must give the numbers of the recording's `link` echo, and a
+#     `true`/`false` option (stats fit-link --with-depth) must equal its boolean echo.
 #
 # No fit, or more than one, is answered as a usage error naming every recording and why it did not
 # fit - so the example fails and says why, rather than printing something plausible.
@@ -189,6 +191,72 @@ REPLAY_STDIN_CHECKS <- list(
     ""
   }
 )
+
+# pyMzLib 0.7.0's two data verbs.
+#
+# genes map-residues: the same species as the recording's `gene_sets`, and the same queries after
+# `--`, in the same order, as its source, position and target columns.
+REPLAY_STDIN_CHECKS[["genes map-residues"]] <- function(data, lines) {
+  lines <- trimws(lines)
+  cut <- match("--", lines)
+  if (is.na(cut)) cut <- length(lines) + 1L
+  species <- sort(vapply(strsplit(lines[seq_len(cut - 1L)], "\t", fixed = TRUE), function(f) trimws(f[[1L]]),
+    character(1L)), method = "radix")
+  recorded_species <- sort(names(data[["gene_sets"]]), method = "radix")
+  if (is.null(recorded_species)) recorded_species <- character(0)
+  if (!identical(species, recorded_species)) {
+    return(paste0("recorded for species ", paste(recorded_species, collapse = ", "), ", not ",
+      paste(species, collapse = ", ")))
+  }
+  sent <- if (cut < length(lines)) lines[(cut + 1L):length(lines)] else character(0)
+  sent <- vapply(strsplit(sent, "\t", fixed = TRUE), function(f) paste(trimws(f), collapse = "\t"), character(1L))
+  columns <- data[["columns"]]
+  recorded <- if (is.list(columns)) {
+    paste(wire_strings(columns[["source_protein_id"]]),
+      vapply(columns[["position"]], function(p) sprintf("%.0f", as.numeric(p)), character(1L)),
+      wire_strings(columns[["target_protein_id"]]), sep = "\t")
+  } else {
+    character(0)
+  }
+  if (!identical(unname(sent), recorded)) {
+    return(paste0("recorded for queries ", paste(utils::head(recorded, 2L), collapse = "; "), "..., not these"))
+  }
+  ""
+}
+
+# library calibrate-rt: the same lines, in the same order, as the recording's rows: each line's
+# group, role (anchor before `--`; to_irt or to_minutes after it, by which time is given) and the
+# times it gives, compared as numbers.
+REPLAY_STDIN_CHECKS[["library calibrate-rt"]] <- function(data, lines) {
+  number <- function(text) if (nzchar(trimws(text))) suppressWarnings(as.numeric(text)) else NA_real_
+  value <- function(v) if (wire_null(v)) NA_real_ else as.numeric(v)
+  queries <- FALSE
+  sent <- list()
+  for (line in lines) {
+    if (identical(trimws(line), "--")) {
+      queries <- TRUE
+      next
+    }
+    f <- c(strsplit(line, "\t", fixed = TRUE)[[1L]], "", "")
+    rt <- number(f[[2L]])
+    irt <- number(f[[3L]])
+    role <- if (!queries) "anchor" else if (!is.na(rt)) "to_irt" else "to_minutes"
+    sent[[length(sent) + 1L]] <- list(trimws(f[[1L]]), role, if (role != "to_minutes") rt else NA_real_,
+      if (role != "to_irt") irt else NA_real_)
+  }
+  columns <- data[["columns"]]
+  groups <- if (is.list(columns)) wire_strings(columns[["group"]]) else character(0)
+  roles <- if (is.list(columns)) wire_strings(columns[["role"]]) else character(0)
+  recorded <- lapply(seq_along(groups), function(i) {
+    list(groups[[i]], roles[[i]],
+      if (roles[[i]] != "to_minutes") value(columns[["rt_minutes"]][[i]]) else NA_real_,
+      if (roles[[i]] != "to_irt") value(columns[["irt"]][[i]]) else NA_real_)
+  })
+  if (!isTRUE(all.equal(sent, recorded, tolerance = 1e-12))) {
+    return(paste0("recorded for ", length(recorded), " other lines"))
+  }
+  ""
+}
 REPLAY_STDIN_ECHO <- c(REPLAY_STDIN_ECHO, names(REPLAY_STDIN_CHECKS))
 
 # The call's stdin must be the recording's input. quant flashlfq: the same mzML runs, by file
@@ -243,16 +311,37 @@ REPLAY_RECORDED_WITH[c(
   c("min-replicates" = "6")
 )
 
+# pyMzLib 0.7.0's recordings, by the same rule: ptmqtl's new options; library calibrate-rt, which
+# echoes the options it applied (mzLib's defaults when absent); stats fit-latent-mixed's ML fit; and
+# stats fit-link, which echoes the value it passed, mzLib's declared default when absent.
+REPLAY_RECORDED_WITH[c(
+  "ptmqtl_pairs_bounds.json", "ptmqtl_pairs_depth_covariate_run_level.json", "ptmqtl_trait_effects_log2.json",
+  "library_calibrate_rt_pbmc_skip.json", "library_calibrate_rt_pbmc_linear.json",
+  "stats_fit_latent_mixed_link_ml.json", "stats_fit_link_simulated.json"
+)] <- list(
+  c("include-bounds" = "TRUE"),
+  c("remove-run-level" = "TRUE"),
+  c(scale = "log2_odds"),
+  c("on-error" = "skip"),
+  c(kind = "linear", "minimum-anchors" = "10"),
+  c(estimator = "ml"),
+  c("with-depth" = "true")
+)
+
 # Their input travels on stdin and is echoed: the coefficients, the model, the runs, the tests.
 REPLAY_MODEL_STDIN <- c(
-  "stats combine-p", "stats fit", "stats fit-logistic", "stats fit-mixed", "diff design", "diff observations"
+  "stats combine-p", "stats fit", "stats fit-logistic", "stats fit-mixed", "stats fit-latent-mixed",
+  "diff design", "diff observations"
 )
 REPLAY_STDIN_ECHO <- c(REPLAY_STDIN_ECHO, REPLAY_MODEL_STDIN)
 
 # Optional input files a verb echoes as `<name>_file`, null when the option was not given. A
 # recording made with one answers only a call that gives one, and the reverse, or a plain
 # correlation could print a partial one.
-REPLAY_OPTIONAL_FILES <- c("given", "protein-groups", "samples", "run-level-groups", "contrasts")
+REPLAY_OPTIONAL_FILES <- c(
+  "given", "protein-groups", "samples", "run-level-groups", "run-covariate", "contrasts",
+  "responses", "counts", "depth", "residual-variance"
+)
 
 # Options echoed inside an object rather than at the top level (stats fit --estimator as
 # prior.estimator, --confidence as contrasts.confidence_level).
@@ -356,7 +445,7 @@ replay_recorded_diff_model <- function(data) {
 # weights and effects given or not as `weighted` and `signed` say.
 replay_model_stdin_mismatch <- function(data, stdin, verb) {
   lines <- stdin[nzchar(trimws(stdin))]
-  if (verb %in% c("stats fit", "stats fit-logistic", "stats fit-mixed")) {
+  if (verb %in% c("stats fit", "stats fit-logistic", "stats fit-mixed", "stats fit-latent-mixed")) {
     sent <- trimws(lines)
     recorded <- wire_strings(data$tested_coefficients)
     if (!identical(sent, recorded)) {
@@ -410,8 +499,35 @@ replay_model_stdin_mismatch <- function(data, stdin, verb) {
   ""
 }
 
+# stats fit-latent-mixed --link against the recording's link echo: `identity` is (0, 1), and each
+# number given must equal the echo's at its place (intercept, slope, depth_slope, overdispersion).
+replay_link_mismatch <- function(echo, sent) {
+  given <- if (identical(tolower(trimws(sent)), "identity")) {
+    c(0, 1)
+  } else {
+    suppressWarnings(as.numeric(strsplit(sent, ",", fixed = TRUE)[[1L]]))
+  }
+  if (anyNA(given)) {
+    return(paste0("--link ", sent, " is not numbers"))
+  }
+  names <- c("intercept", "slope", "depth_slope", "overdispersion")
+  for (i in seq_along(given)) {
+    recorded <- echo[[names[[i]]]]
+    if (wire_null(recorded) || !isTRUE(all.equal(as.numeric(recorded), given[[i]], tolerance = 1e-12))) {
+      return(paste0("recorded with another link, not --link ", sent))
+    }
+  }
+  ""
+}
+
 # Why this recording cannot be the answer to these options, or "" when it can.
 replay_mismatch <- function(data, options) {
+  if (is.list(data[["link"]]) && is.character(options[["link"]])) {
+    why <- replay_link_mismatch(data[["link"]], options[["link"]])
+    if (nzchar(why)) {
+      return(why)
+    }
+  }
   presence <- replay_presence_mismatch(data, options)
   if (nzchar(presence)) {
     return(presence)
@@ -517,9 +633,19 @@ replay_mismatch <- function(data, options) {
     }
   }
   trees <- data[["gene_trees"]]
-  if (is.list(trees) && "restricted_to_gene_sets" %in% names(trees) &&
+  if (is.list(trees) && "restricted_to_gene_sets" %in% names(trees) && !"alignment" %in% names(data) &&
     !is.null(options[["restrict-gene-trees"]]) != is.list(trees[["restricted_to_gene_sets"]])) {
     return("a recording with the other --restrict-gene-trees choice")
+  }
+  # genes map-residues: --proteins fills proteins, and only then; and the alignment file is the
+  # recording's (by file name), as --path is.
+  if ("proteins_included" %in% names(data) && !is.null(options[["proteins"]]) != isTRUE(data[["proteins_included"]])) {
+    return("a recording with the other --proteins choice")
+  }
+  alignment <- data[["alignment"]]
+  if (is.list(alignment) && is.character(options[["alignment"]]) &&
+    !identical(replay_base(options[["alignment"]]), as.character(alignment[["source_file_name"]]))) {
+    return(paste0("recorded from '", alignment[["source_file_name"]], "', not '", replay_base(options[["alignment"]]), "'"))
   }
 
   # A filter the recording applied that the call did not ask for.

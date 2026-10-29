@@ -29,11 +29,26 @@ FIELD_CHECKS[["library read"]] <- list("library_read_synthetic.json", function(d
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "library read", fixture = "library_read_fragments.json")
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "library read", fixture = "library_read_index_only.json")
 
-# Not yet ported: the pyMzLib 0.7.0 bridge's library calibrate-rt (mzLib #1387), a later mzLibR port.
-PARENT_OMISSIONS[c("library.calibrate_rt", "RtCalibration.group", "RtCalibration.failed_groups",
-                   "RtCalibrationGroup.ok")] <- c(
-  "not ported yet: wire `library calibrate-rt` (mzLib #1387), new in the pyMzLib 0.7.0 bridge",
-  "not ported yet: part of `library.calibrate_rt`'s result",
-  "not ported yet: part of `library.calibrate_rt`'s result",
-  "not ported yet: part of `library.calibrate_rt`'s result"
+# ---------------------------------------------------------------- calibrate-rt (pyMzLib 0.7.0)
+
+R_TABLE["library calibrate-rt"] <- "records"
+R_DEVIATIONS[["library calibrate-rt"]] <- list(
+  "param.stdin" = as_r("anchors", paste(
+    "a data.frame (or list) of group, rt_minutes and irt, one stdin line each; `queries`, in the same",
+    "shape, follows a `--` line"
+  )),
+  "field.columns" = RECORDS,
+  "field.groups" = as_r("groups", paste(
+    "a data.frame, one row per group: `error` is split into error_kind, error_type and error_message,",
+    "as a batch's `files` is"
+  ))
 )
+
+PARENT_MAP["library_calibrate_rt"] <- "library.calibrate_rt"
+PARENT_OMISSIONS[c("RtCalibration.group", "RtCalibration.failed_groups", "RtCalibrationGroup.ok")] <- c(
+  "a row filter on `groups`: `cal$groups[cal$groups$group == name, ]`",
+  "a row filter on `groups`: `cal$groups[!is.na(cal$groups$error_kind), ]`",
+  "a column test on `groups`: `is.na(error_kind)`"
+)
+
+FIELD_CHECKS[["library calibrate-rt"]] <- list("library_calibrate_rt_pbmc_skip.json", function(d) mz$library_parse_calibration(d))

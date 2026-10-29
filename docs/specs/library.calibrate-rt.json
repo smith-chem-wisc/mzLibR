@@ -5,8 +5,8 @@
   "since": {
     "protocol": 1,
     "pymzlib": "0.7.0",
-    "mzlibrust": null,
-    "mzlibr": null
+    "mzlibrust": "0.1.0",
+    "mzlibr": "0.1.0"
   },
   "wraps": [
     {
@@ -341,11 +341,12 @@
     },
     "rust": {
       "name": "mzlib::library::calibrate_rt",
-      "note": "Planned name: ported after a pyMzLib release carries the verb."
+      "options": "RtCalibrationOptions",
+      "note": "Anchors are RtAnchor values and queries RtQuery values (ToIrt or ToMinutes), so a query cannot give both times or neither."
     },
     "r": {
       "name": "library_calibrate_rt",
-      "note": "Planned name: ported after a pyMzLib release carries the verb."
+      "note": "Anchors and queries are data.frames or lists of list(...); each query gives exactly one of rt_minutes and irt, the other NA."
     }
   },
   "examples": [

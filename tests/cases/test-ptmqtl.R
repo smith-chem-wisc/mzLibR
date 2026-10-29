@@ -1,6 +1,7 @@
 # ptmqtl_occupancy(), ptmqtl_pairs() and ptmqtl_trait_effects().
 #
-# Ported from pyMzLib's test_ptmqtl.py and test_ptmqtl_live.py. The payloads are pyMzLib's
+# Ported from pyMzLib's test_ptmqtl.py and test_ptmqtl_live.py, at 0.7.0 (pairs' include_bounds
+# and run_covariate, mzLib #1468; trait_effects' scale, #1464). The payloads are pyMzLib's
 # recordings, verbatim; the inputs are mzLib's hand-computed PtmQtl cases, shipped in
 # extdata/ptmqtl/. Three layers: what is sent and parsed, and refusals before the bridge; replayed
 # end to end; and LIVE, the bridge today returns what was recorded.
@@ -110,6 +111,18 @@ test_that("pairs sends only what was given", {
     "--min-quantified-fraction", "0.5", "--keep-ceiling", "--remove-run-level", "--run-level-group", "category"))
   expect_identical(utils::tail(build(remove_run_level = TRUE, run_level_groups = "groups.tsv"), 2L),
     c("--run-level-groups", "groups.tsv"))
+  # mzLib #1468's options, each sent only when given: left out, mzLib's defaults (no bounds, no
+  # covariate) apply.
+  expect_identical(build(observations = "depth.tsv", include_bounds = TRUE, run_covariate = "psms.tsv"),
+    c("ptmqtl", "pairs", "--observations", "depth.tsv", "--type", "covarying", "--include-bounds",
+      "--run-covariate", "psms.tsv"))
+  expect_false(any(c("--include-bounds", "--run-covariate") %in% build()))
+  seen <- recorded_bridge_call("ptmqtl_pairs_bounds.json", function() {
+    ptmqtl_pairs("bounds.tsv", type = "covarying", include_bounds = TRUE, run_covariate = "psms.tsv")
+  })
+  expect_identical(utils::tail(seen$args, 3L), c("--include-bounds", "--run-covariate", "psms.tsv"))
+  expect_error(build(include_bounds = "yes"), class = "mzlib_usage_error", contains = "include_bounds must be TRUE or FALSE")
+  expect_error(build(run_covariate = 3), class = "mzlib_usage_error", contains = "run_covariate must be")
   expect_error(build(type = "all"), class = "mzlib_usage_error", contains = "type must be one of")
   expect_error(build(type = NULL), class = "mzlib_usage_error", contains = "type must be one of")
   expect_error(ptmqtl_pairs("batch.tsv"), class = "mzlib_usage_error", contains = "type is required")
@@ -175,6 +188,47 @@ test_that("the co-varying recordings report mzLib's defaults, and the run level 
   expect_identical(sprintf("%.2f", c(pick(plain$records), pick(given$records))), c("0.76", "0.03"))
 })
 
+test_that("with bounds, the pair the guard kept out is tested", {
+  # mzLib's BoundsEnterTypeAAsTiedRanks: six values in ten runs is below the 70% guard.
+  plain <- mz$ptmqtl_parse_pairs(recorded_data("ptmqtl_pairs_bounds_plain.json"))
+  expect_identical(plain$row_count, 0)
+  expect_identical(nrow(plain$records), 0L)
+  expect_false(plain$include_bounds)
+  expect_true(is.na(plain$min_untied_share))
+  bounded <- mz$ptmqtl_parse_pairs(recorded_data("ptmqtl_pairs_bounds.json"))
+  expect_true(bounded$include_bounds)
+  expect_identical(bounded$min_untied_share, 0.5)
+  expect_identical(bounded$exclude_ceiling, NA)
+  pair <- bounded$records
+  expect_identical(nrow(pair), 1L)
+  expect_identical(c(pair$n, pair$test_status), c("9", "tested"))
+  expect_true(pair$bounds_included)
+  expect_false(is.na(pair$statistic))
+  expect_false(pair$run_covariate_removed)
+  expect_true(pair$test_status %in% mz$PTMQTL_PAIR_TEST_STATUSES)
+  expect_true(any(startsWith(bounded$caveats, "With --include-bounds, a pair is tested only if")))
+})
+
+test_that("given a run covariate, rho is partial and the bookkeeping says so", {
+  # mzLib's ARunCovariateIsPartialledOut: two sites that rise with each run's depth, and a batch.
+  pick <- function(r) r[startsWith(r$site_a, "DEPTH_S") & startsWith(r$site_b, "DEPTH_T"), ]
+  plain <- mz$ptmqtl_parse_pairs(recorded_data("ptmqtl_pairs_depth.json"))
+  expect_true(is.na(plain$run_covariate_file) && is.na(plain$run_covariate_name))
+  expect_false(pick(plain$records)$run_covariate_removed)
+  given <- mz$ptmqtl_parse_pairs(recorded_data("ptmqtl_pairs_depth_covariate.json"))
+  expect_true(endsWith(given$run_covariate_file, "depth_psms.tsv"))
+  expect_identical(given$run_covariate_name, "target_psms")
+  expect_identical(given$run_covariate_runs_missing, character(0))
+  expect_identical(given$min_runs_for_run_level, 10)
+  expect_true(is.na(given$min_sites_for_run_level))
+  expect_true(pick(given$records)$run_covariate_removed)
+  expect_false(pick(given$records)$run_level_removed)
+  expect_false(identical(pick(given$records)$statistic, pick(plain$records)$statistic))
+  both <- mz$ptmqtl_parse_pairs(recorded_data("ptmqtl_pairs_depth_covariate_run_level.json"))
+  expect_true(pick(both$records)$run_covariate_removed && pick(both$records)$run_level_removed)
+  expect_true(abs(pick(both$records)$statistic) < 0.1)
+})
+
 # ---------------------------------------------------------------- trait_effects
 
 test_that("trait_effects sends only what was given", {
@@ -186,6 +240,18 @@ test_that("trait_effects sends only what was given", {
   # double on Apple silicon, so the round trip lands a bit off there while mzLib (C#) parses it exactly.
   expect_identical(every[[12L]], "9.9999999999999995e-07")
   expect_identical(every[[13L]], "--keep-ceiling")
+  # mzLib #1464's scale, sent only when given.
+  expect_identical(utils::tail(mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", NULL, NULL, NULL, FALSE, "log2_odds"), 2L),
+    c("--scale", "log2_odds"))
+  expect_false("--scale" %in% every)
+  seen <- recorded_bridge_call("ptmqtl_trait_effects_log2.json", function() {
+    ptmqtl_trait_effects("occ.tsv", "runs.tsv", scale = "log2_odds")
+  })
+  expect_identical(utils::tail(seen$args, 2L), c("--scale", "log2_odds"))
+  expect_error(mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", NULL, NULL, NULL, FALSE, "log10_odds"),
+    class = "mzlib_usage_error", contains = "scale must be one of natural_log_odds, log2_odds")
+  expect_error(mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", NULL, NULL, NULL, FALSE, 2),
+    class = "mzlib_usage_error", contains = "scale must be one of")
   expect_error(mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", 6.5, NULL, NULL, FALSE), class = "mzlib_usage_error",
     contains = "min_runs must be a whole number")
   expect_error(mz$ptmqtl_build_trait_args("occ.tsv", "runs.tsv", NULL, TRUE, NULL, FALSE), class = "mzlib_usage_error",
@@ -231,6 +297,22 @@ test_that("a site below support has NA statistics, and NA covariate effects", {
   expect_identical(censored$replicates, 5)
 })
 
+test_that("trait effects on log2 odds are the natural-log fit over ln 2", {
+  # mzLib's TraitFitOnLog2OddsIsTheNaturalLogFitDividedByLn2: a change of unit, not a refit.
+  natural <- mz$ptmqtl_parse_trait_effects(recorded_data("ptmqtl_trait_effects.json"))$records
+  log2 <- mz$ptmqtl_parse_trait_effects(recorded_data("ptmqtl_trait_effects_log2.json"))
+  expect_identical(log2$scale, "log2_odds")
+  expect_true(log2$scale %in% mz$PTMQTL_OCCUPANCY_SCALES)
+  expect_true(any(startsWith(log2$caveats, "scale is log2_odds")))
+  r <- log2$records
+  expect_identical(r$site_key, natural$site_key)
+  close <- function(a, b) all(abs(a - b) <= 1e-12 * abs(b))
+  expect_true(close(r$effect, natural$effect / log(2)))
+  expect_true(close(r$standard_error, natural$standard_error / log(2)))
+  expect_true(close(r$replicate_variance, natural$replicate_variance / log(2)^2))
+  expect_identical(c(r$df, r$p_value, r$q), c(natural$df, natural$p_value, natural$q))
+})
+
 # ---------------------------------------------------------------- end to end, replayed
 
 test_that("the three verbs replay end to end, a flag or option choosing the recording", {
@@ -247,6 +329,19 @@ test_that("the three verbs replay end to end, a flag or option choosing the reco
   default <- ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv"))
   strict <- ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv"), min_replicates = 6)
   expect_identical(c(default$min_replicates, strict$min_replicates), c(4, 6))
+  # The 0.7.0 options choose their recordings too, and a recording made with one never answers without it.
+  expect_identical(ptmqtl_pairs(ptmqtl_path("bounds.tsv"), type = "covarying")$row_count, 0)
+  expect_true(ptmqtl_pairs(ptmqtl_path("bounds.tsv"), type = "covarying", include_bounds = TRUE)$include_bounds)
+  covariate <- ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying", run_covariate = ptmqtl_path("depth_psms.tsv"))
+  expect_identical(covariate$run_covariate_name, "target_psms")
+  expect_true(is.na(ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying")$run_covariate_name))
+  both <- ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying", run_covariate = ptmqtl_path("depth_psms.tsv"),
+    remove_run_level = TRUE)
+  expect_true(both$remove_run_level)
+  log2 <- ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv"), scale = "log2_odds")
+  expect_identical(c(default$scale, log2$scale), c("natural_log_odds", "log2_odds"))
+  expect_error(ptmqtl_pairs(ptmqtl_path("bounds.tsv"), type = "covarying", run_covariate = ptmqtl_path("depth_psms.tsv")),
+    class = "mzlib_usage_error", contains = "replay bridge")
 })
 
 # ---------------------------------------------------------------- against a real mzLib
@@ -268,6 +363,19 @@ test_that("LIVE: the ptmqtl recordings are what the bridge returns today", {
     ptmqtl_trait_effects.json = function() ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv")),
     ptmqtl_trait_effects_strict.json = function() {
       ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv"), min_replicates = 6)
+    },
+    ptmqtl_pairs_bounds_plain.json = function() ptmqtl_pairs(ptmqtl_path("bounds.tsv"), type = "covarying"),
+    ptmqtl_pairs_bounds.json = function() ptmqtl_pairs(ptmqtl_path("bounds.tsv"), type = "covarying", include_bounds = TRUE),
+    ptmqtl_pairs_depth.json = function() ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying"),
+    ptmqtl_pairs_depth_covariate.json = function() {
+      ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying", run_covariate = ptmqtl_path("depth_psms.tsv"))
+    },
+    ptmqtl_pairs_depth_covariate_run_level.json = function() {
+      ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying", run_covariate = ptmqtl_path("depth_psms.tsv"),
+        remove_run_level = TRUE)
+    },
+    ptmqtl_trait_effects_log2.json = function() {
+      ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv"), scale = "log2_odds")
     }
   )
   parsers <- list(ptmqtl_occupancy = mz$ptmqtl_parse_occupancy, ptmqtl_pairs = mz$ptmqtl_parse_pairs,
@@ -331,4 +439,11 @@ test_that("LIVE: refusals cross as usage errors", {
   expect_error(ptmqtl_occupancy(repeated), class = "mzlib_usage_error", contains = "not one per PSM")
   expect_error(ptmqtl_trait_effects(ptmqtl_path("trait_occupancy.tsv"), ptmqtl_path("trait_runs.tsv"), logit_epsilon = 0.5),
     class = "mzlib_usage_error", contains = "above 0 and below 0.5")
+  expect_error(ptmqtl_pairs(ptmqtl_path("bounds.tsv"), type = "physical", include_bounds = TRUE),
+    class = "mzlib_usage_error", contains = "--include-bounds shapes co-varying pairs only")
+  # mzLib refuses a covariate that is not finite, in its own words.
+  nan <- tempfile(fileext = ".tsv")
+  writeLines(c("run\ttarget_psms", "r00\tNaN"), nan)
+  expect_error(ptmqtl_pairs(ptmqtl_path("depth.tsv"), type = "covarying", run_covariate = nan),
+    class = "mzlib_usage_error", contains = "must be finite")
 })

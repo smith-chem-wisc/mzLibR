@@ -29,6 +29,7 @@ answered by mzLib from the protein database you searched:
 | where is residue 120 of this protein in its isoform, or in the bovine protein? | `proteins_align()`, `proteins_map_source_to_target()` | `PairwiseAligner` (#1428) |
 | which entry, isoform and variants does `P04637-2_S70N` or `NP_000537.3_R72P` name? | `proteins_parse_accessions()` | `VariantApplication.ParseAccession` (#1382) |
 | which mouse genes are orthologous to this human gene, and if none, why not? | `proteins_build_orthology()` | `OrthologySnapshot`, `OrthologySnapshotWriter` (#1381) |
+| which mouse residue sits in the same Compara alignment column as human p53's Ser15? | `proteins_map_residues()` | `ComparaGeneTreeAlignment.MapResidue` (#1465) |
 
 The first three take one database or several - UniProt XML or FASTA, optionally gzipped - and
 read several in **one** bridge call, `threads` at a time. Mark contaminant databases with
@@ -524,14 +525,164 @@ as `NA`. `?proteins_build_orthology` lists every column of the three tables.
 - **It is slow and large.** Every input is read whole. For human, mouse and rat at release 116,
   mzLib reports about 20 s to build and 40 s more to write 13 files (9.0 MB).
 
+## Map a residue across species: Compara's gene-tree alignment
+
+**The problem.** You have a site in a human protein, human p53's phosphoserine 15, and a mouse
+experiment. Which mouse residue is it? Counting along the two sequences fails as soon as one has an
+insertion. Aligning just the two proteins works, but it is your alignment, made with your
+parameters. Ensembl Compara has already aligned every protein of each gene tree, across all its
+species, to build the tree. A residue's column in that alignment is the published answer.
+
+| You want to know | Call | mzLib |
+|---|---|---|
+| Which residue of the mouse protein sits in the same alignment column as residue 15 of the human protein? | `proteins_map_residues()` | `ComparaGeneTreeAlignment.MapResidue` (#1465) |
+| Which proteins did the alignment hold, and what are their Ensembl sequences? | `proteins_map_residues(proteins = TRUE)` | `ComparaGeneTreeAlignment.Proteins` (#1465) |
+| Where does my UniProt residue sit in the Ensembl protein, and back? | `proteins_align()` | `PairwiseAligner` (#1428) |
+
+`proteins_map_residues()` reads Compara's peptide alignments (`ComparaGeneTreeAlignment.Load`),
+keeping only the canonical proteins of your species' genes, and answers each query with mzLib's
+`MapResidue`. This example is a real cut of Ensembl release 116, which the package's tests carry in
+`tests/map_residues/`: the TP53 and GAPDH gene trees' alignments, with the human, mouse and rat rows
+exactly as Ensembl publishes them. The same queries on the full files give the same rows.
+
+```{r}
+gtfs <- c(homo_sapiens = "Homo_sapiens.GRCh38.116.gtf",
+          mus_musculus = "Mus_musculus.GRCm39.116.gtf",
+          rattus_norvegicus = "Rattus_norvegicus.GRCr8.116.gtf")
+tp53 <- "ENSP00000269305"
+trp53 <- "ENSMUSP00000104298"
+rat_tp53 <- "ENSRNOP00000074031"
+queries <- list(
+  list(tp53, 15, trp53), list(tp53, 20, trp53), list(tp53, 46, trp53), list(tp53, 392, trp53),
+  list(trp53, 18, tp53),                      # and back
+  list(tp53, 15, rat_tp53),
+  list(tp53, 15, "ENSMUSP00000113213"),       # mouse GAPDH: another gene tree
+  list("ENSP00000352610", 15, trp53),         # a TP53 isoform Compara did not align
+  list(tp53, 15, "ENSMUSP00000005371")        # a Trp53 isoform, likewise
+)
+mapped <- proteins_map_residues(queries, alignment = "Compara.116.protein_default.aa.fasta.gz",
+  gene_trees = "vertebrates.GeneTree_content.default.e116.txt.gz", gtfs = gtfs, proteins = TRUE)
+mapped$records
+```
+
+The queries can also be a data.frame with the columns `source_protein_id`, `position` and
+`target_protein_id`. Reading the table row by row:
+
+- **Human Ser15 is mouse Ser18**, Ser20 is Ser23, and Ser392 is Ser389. The mouse protein is three
+  residues shorter near its N-terminus, so the numbers shift, and the column says by how much.
+- **Human Ser46 faces a gap in mouse.** No mouse residue sits in column 863, and the outcome is
+  `"GapInTarget"`. It never offers the nearest residue instead.
+- **Mapping back gives the residue you started from.** Mouse residue 18 is in the same column, 476.
+- **Rat is a separate query** against the same alignment: human Ser15 is rat Ser15.
+- **GAPDH is in another gene tree**, so the alignment says nothing about it: `"DifferentAlignments"`.
+- **Only each gene's canonical protein is aligned.** `ENSP00000352610` is a real TP53 protein, but
+  not the one Compara used, so it is `"SourceNotInAlignment"`. It is not mapped through the
+  canonical protein. The gene-tree file names each gene's canonical protein, in the row flagged `Y`.
+
+`outcome_counts` counts the queries per outcome, every outcome present:
+
+```{r}
+mapped$outcome_counts
+c(release = mapped$alignment$release, proteins_kept = mapped$alignment$protein_count,
+  genes_kept = mapped$gene_trees$member_count)
+```
+
+| outcome | what it means | `column` | `target_position`, `target_residue` |
+|---|---|---|---|
+| `Aligned` | the target has a residue in the source residue's column | set | set |
+| `GapInTarget` | the target has a gap in that column: no residue corresponds | set | `NA` |
+| `DifferentAlignments` | the two proteins are in different gene trees | `NA` | `NA` |
+| `SourceNotInAlignment` | the source protein was not kept: not in the file, not canonical, or outside your gene sets | `NA` | `NA` |
+| `TargetNotInAlignment` | the target protein was not kept | `NA` | `NA` |
+
+The outcome names are mzLib's own (`ComparaColumnOutcome`), in mzLib's order.
+
+### From a UniProt position to a UniProt position
+
+Compara's positions are positions in **Ensembl** proteins. A site from a search against UniProt
+needs two more steps around `proteins_map_residues()`, each an alignment:
+
+1. Align the UniProt sequence to the canonical Ensembl protein, and map the position across.
+2. Map the Ensembl position through the gene-tree column with `proteins_map_residues()`.
+3. Align the target's canonical Ensembl protein to its UniProt sequence, and map across again.
+
+Any of the three can meet a gap. `proteins = TRUE` returned the Ensembl sequences, so no second file
+is needed for them. The UniProt sequences come from UniProt's FASTA for human p53 (P04637) and
+mouse p53 (P02340):
+
+```{r}
+uniprot <- proteins_read(c("P04637.fasta", "P02340.fasta"), sequences = TRUE)
+uniprot_seq <- setNames(uniprot$proteins$sequence, uniprot$proteins$accession)
+ensembl <- setNames(mapped$proteins$records$sequence, mapped$proteins$records$protein_id)
+legs <- proteins_alignments(proteins_align(list(
+  c(uniprot_seq[["P04637"]], ensembl[[tp53]]),    # leg 1: UniProt human -> Ensembl human
+  c(ensembl[[trp53]], uniprot_seq[["P02340"]])    # leg 3: Ensembl mouse -> UniProt mouse
+)))
+c(leg1_identical = legs[[1]]$identical, human_length = legs[[1]]$source_length,
+  leg3_identical = legs[[2]]$identical, mouse_length = legs[[2]]$target_length)
+ensembl_position <- proteins_map_source_to_target(legs[[1]], 15)
+site <- proteins_map_residues(list(list(tp53, ensembl_position, trp53)),
+  alignment = "Compara.116.protein_default.aa.fasta.gz",
+  gene_trees = "vertebrates.GeneTree_content.default.e116.txt.gz", gtfs = gtfs)
+mouse_position <- proteins_map_source_to_target(legs[[2]], site$records$target_position)
+c(mouse_position, substr(uniprot_seq[["P02340"]], mouse_position, mouse_position))
+```
+
+For p53 the UniProt and Ensembl canonical sequences are identical in both species, so legs 1 and 3
+map every residue to itself. That is common for canonical sequences, but check it every time
+(`identical` equal to both lengths) rather than assume it. For an isoform, or an entry whose
+sequence UniProt and Ensembl annotate differently, those legs shift positions or meet gaps, as the
+alignment section above shows.
+
+**Check the residue at every step.** A column pairs positions the alignment puts together, which is
+homology, not identity. Here it is serine on both sides. Where the target residue is a different
+amino acid, the site does not carry over: a phosphosite on S is not a site on A.
+
+### What to download for residue mapping, once per release
+
+Nothing is downloaded for you. For release 116, from `https://ftp.ensembl.org/pub/release-116/`:
+
+| Input | Path under the release | Argument |
+|---|---|---|
+| The peptide alignments of every gene tree | `emf/ensembl-compara/homologies/Compara.116.protein_default.aa.fasta.gz` | `alignment` |
+| The gene trees, one file for all species | `compara/vertebrates.GeneTree_content.default.e116.txt.gz` | `gene_trees` |
+| Each species' primary-assembly GTF | `gtf/homo_sapiens/Homo_sapiens.GRCh38.116.gtf.gz` | `gtfs = c(species = path)` |
+
+- **Use the alignment and the gene trees of one release.** mzLib does not compare them, and a gene's
+  canonical protein and tree can change between releases. Keep Ensembl's file names: the result
+  reports the release each name carries, and a caveat says when they differ or one is missing.
+- **Give your species' gene sets.** They are used only to choose what is kept. Without them, mzLib's
+  default keeps every gene in the gene-tree file, millions for the vertebrates, and every canonical
+  protein in the alignment, and a caveat says so. The answers for your species' proteins are the
+  same either way. A compact gene table (`gene_sets`) works as it does for
+  `proteins_build_orthology()`.
+- **Batch your queries.** Reading the alignment is the cost: for human, mouse and rat at release
+  116, the whole call took about a minute. Each query after that is a lookup, so send them all in
+  one call.
+
+### The traps of residue mapping
+
+- **A position past the end of the source protein fails the whole call.** mzLib's `MapResidue`
+  throws for it rather than returning an outcome, so `proteins_map_residues()` raises an
+  `mzlib_usage_error` with mzLib's message ("ENSP00000269305 has 393 residues.") and returns no
+  row, not even for the queries that were fine. mzLibR does not check lengths itself. Keep each
+  position within its protein: with `proteins = TRUE`, a sequence's length is the last valid
+  position.
+- **Use Ensembl ids and Ensembl positions.** A UniProt accession is `"SourceNotInAlignment"`, never
+  an error. Cross over with `proteins_align()` first, as above.
+- **Sharing a gene tree is not orthology.** A tree holds a gene family, paralogs included, so an
+  `"Aligned"` answer between two proteins of one tree does not make them orthologs. Ask
+  `proteins_build_orthology()` which genes are orthologs, then map their residues here.
+- **`"DifferentAlignments"` is not "unrelated".** It says only that this alignment cannot answer.
+
 ## What to cite
 
 The methods and resources behind the functions on this page, from their specs:
 
 <!-- BEGIN cite: generated by scripts/render-cite.R from the verb specs; do not edit -->
 
-- [doi:10.1101/gr.073585.107](https://doi.org/10.1101/gr.073585.107): Ensembl Compara gene trees, the duplication-aware phylogenies its orthology and paralogy calls are read from (Vilella et al. 2009, Genome Res 19:327).
-- [doi:10.1093/nar/gkaf1239](https://doi.org/10.1093/nar/gkaf1239): Ensembl releases, their GTFs and the Compara homology dumps (Ensembl 2026, NAR).
+- [doi:10.1101/gr.073585.107](https://doi.org/10.1101/gr.073585.107): Ensembl Compara gene trees, each built on a multiple alignment of its member proteins, the alignment this verb reads columns from (Vilella et al. 2009, Genome Res 19:327).
+- [doi:10.1093/nar/gkaf1239](https://doi.org/10.1093/nar/gkaf1239): Ensembl releases, their GTFs and the Compara gene-tree files (Ensembl 2026, NAR).
 - [doi:10.1093/nar/gkae1010](https://doi.org/10.1093/nar/gkae1010): UniProt, whose XML dbReferences carry the gene links resolved (UniProt Consortium 2025, NAR).
 - [doi:10.1016/0022-2836(70)90057-4](https://doi.org/10.1016/0022-2836%2870%2990057-4): Global alignment by dynamic programming (Needleman and Wunsch 1970, J Mol Biol 48:443).
 - [doi:10.1016/0022-2836(82)90398-9](https://doi.org/10.1016/0022-2836%2882%2990398-9): Affine gap costs in the same time and memory order, the form mzLib implements (Gotoh 1982, J Mol Biol 162:705).

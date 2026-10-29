@@ -83,7 +83,7 @@ column to \code{\link{stats_adjust}} for Benjamini-Hochberg.
 
 }
 \section{Wraps}{
-Wire verb \code{stats fit-logistic}. Generated from the bridge's verb spec \code{stats.fit-logistic.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats fit-logistic}. Generated from the bridge's verb spec \code{stats.fit-logistic.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/LogisticRegression.cs}{\code{LogisticRegression.Fit}} in \code{mzLib/StatisticalModels/LogisticRegression.cs} at mzLib \code{d10017ce}

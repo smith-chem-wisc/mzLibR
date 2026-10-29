@@ -46,8 +46,9 @@ proteins_orthology_release <- function(release) {
   text
 }
 
-# The stdin species lines, `species<TAB>gtf|gene-set<TAB>path`, in the order given.
-proteins_species_lines <- function(gtfs, gene_sets) {
+# The stdin species lines, `species<TAB>gtf|gene-set<TAB>path`, in the order given. genes
+# orthology needs at least one species; genes map-residues takes none (mzLib keeps every gene).
+proteins_species_lines <- function(gtfs, gene_sets, required = TRUE) {
   lines <- character(0)
   seen <- character(0)
   for (kind in c("gtf", "gene-set")) {
@@ -79,7 +80,7 @@ proteins_species_lines <- function(gtfs, gene_sets) {
       lines <- c(lines, paste0(species, "\t", kind, "\t", path))
     }
   }
-  if (length(lines) == 0L) {
+  if (length(lines) == 0L && required) {
     stop(mzlib_usage_error(paste0(
       "At least one species is required: gtfs = c(homo_sapiens = \"Homo_sapiens.GRCh38.116.gtf.gz\", ...) ",
       "(or gene_sets = for compact gene tables)."
