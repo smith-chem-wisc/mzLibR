@@ -78,9 +78,31 @@ FIELD_CHECKS[["stats entrapment-fdp"]] <- list("stats_entrapment_fdp_reference.j
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "stats fit", fixture = "stats_fit_malat_diff_design.json")
 REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "stats fit", fixture = "stats_fit_malat_diff_design_contrasts.json")
 
-# Not yet ported: the pyMzLib 0.7.0 bridge's latent-scale mixed model and its detection link
-# (stats fit-latent-mixed, stats fit-link; mzLib #1469), a later mzLibR port.
-PARENT_OMISSIONS[c("stats.fit_latent_mixed", "stats.fit_link")] <- c(
-  "not ported yet: wire `stats fit-latent-mixed` (mzLib #1469), new in the pyMzLib 0.7.0 bridge",
-  "not ported yet: wire `stats fit-link` (mzLib #1469), new in the pyMzLib 0.7.0 bridge"
+# ---------------------------------------------------------------- the latent scale (pyMzLib 0.7.0)
+
+# The link is one object, an `mzlibr_detection_link` (a named list), in both verbs' results.
+STATS_LINK <- function(field) {
+  as_r(paste0("link$", field), "the link is one object, an `mzlibr_detection_link`, a named list")
+}
+STATS_LINK_DEVIATIONS <- list(
+  "table.link" = as_r("link", "an `mzlibr_detection_link`, a named list of these four numbers"),
+  "field.link.intercept" = STATS_LINK("intercept"),
+  "field.link.slope" = STATS_LINK("slope"),
+  "field.link.depth_slope" = STATS_LINK("depth_slope"),
+  "field.link.overdispersion" = STATS_LINK("overdispersion")
 )
+R_TABLE["stats fit-latent-mixed"] <- "records"
+R_DEVIATIONS[["stats fit-latent-mixed"]] <- c(
+  list("param.stdin" = STATS_COEFFICIENTS, "field.columns" = RECORDS),
+  STATS_LINK_DEVIATIONS
+)
+R_DEVIATIONS[["stats fit-link"]] <- STATS_LINK_DEVIATIONS
+
+PARENT_MAP[c("stats_fit_latent_mixed", "stats_fit_link")] <- c("stats.fit_latent_mixed", "stats.fit_link")
+
+FIELD_CHECKS[["stats fit-latent-mixed"]] <- list("stats_fit_latent_mixed_link_ml.json", function(d) mz$stats_parse_latent(d))
+FIELD_CHECKS[["stats fit-link"]] <- list("stats_fit_link_simulated.json", function(d) mz$stats_parse_link_fit(d))
+
+# The stats article: stats_fit_mixed() on the measured half of mzLib's measured-and-counted
+# simulation, which stats_fit_latent_mixed() fits whole (pyMzLib's conftest REPLAY_EXTRA).
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "stats fit-mixed", fixture = "stats_fit_mixed_lnmm_simulated.json")
