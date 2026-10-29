@@ -124,7 +124,7 @@ An \code{mzlibr_ptm_pairs}:
 
 }
 \section{Wraps}{
-Wire verb \code{ptmqtl pairs}. Generated from the bridge's verb spec \code{ptmqtl.pairs.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{ptmqtl pairs}. Generated from the bridge's verb spec \code{ptmqtl.pairs.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Quantification/PtmQtl/PtmPairs.cs}{\code{PtmPairEngine.Physical}} in \code{mzLib/Quantification/PtmQtl/PtmPairs.cs} at mzLib \code{d10017ce}

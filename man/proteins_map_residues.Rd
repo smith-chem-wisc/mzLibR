@@ -140,7 +140,7 @@ site on A.
 
 }
 \section{Wraps}{
-Wire verb \code{genes map-residues}. Generated from the bridge's verb spec \code{genes.map-residues.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{genes map-residues}. Generated from the bridge's verb spec \code{genes.map-residues.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a29/mzLib/UsefulProteomicsDatabases/Ensembl/ComparaGeneTreeAlignment.cs}{\code{ComparaGeneTreeAlignment.Load}} in \code{mzLib/UsefulProteomicsDatabases/Ensembl/ComparaGeneTreeAlignment.cs} at mzLib \code{cc67b7a2}
@@ -270,7 +270,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.7.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.7.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \section{Not yet verified}{
 The spec records these as open. They are listed rather than hidden:

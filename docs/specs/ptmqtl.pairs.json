@@ -597,11 +597,10 @@
     "rust": {
       "name": "mzlib::ptmqtl::pairs_with",
       "options": "PairsOptions",
-      "note": "The pair type is the PairType enum. include_bounds and run_covariate (pyMzLib 0.7.0) are not yet ported."
+      "note": "The pair type is the PairType enum."
     },
     "r": {
-      "name": "ptmqtl_pairs",
-      "note": "include_bounds and run_covariate (pyMzLib 0.7.0) are not yet ported."
+      "name": "ptmqtl_pairs"
     }
   },
   "examples": [

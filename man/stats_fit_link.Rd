@@ -64,7 +64,7 @@ modelling choices, and the link fitted from them is only as good as they are. Wi
 
 }
 \section{Wraps}{
-Wire verb \code{stats fit-link}. Generated from the bridge's verb spec \code{stats.fit-link.yaml} (bridge commit \code{4e180efe8b59}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats fit-link}. Generated from the bridge's verb spec \code{stats.fit-link.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/StatisticalModels/LogitNormalMixedModel.cs}{\code{LogitNormalMixedModel.FitLink}} in \code{mzLib/StatisticalModels/LogitNormalMixedModel.cs} at mzLib \code{cc67b7a2}
@@ -133,7 +133,7 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 }
 \section{Since}{
-Wire protocol 1; pyMzLib 0.7.0; mzLibRust not yet shipped; mzLibR not yet shipped.
+Wire protocol 1; pyMzLib 0.7.0; mzLibRust 0.1.0; mzLibR 0.1.0.
 }
 \references{
 \itemize{
