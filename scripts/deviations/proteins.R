@@ -169,8 +169,45 @@ FIELD_CHECKS[["genes orthology"]] <- list("genes_orthology_pair_status.json", fu
   snapshot
 })
 
-# Not yet ported: the pyMzLib 0.7.0 bridge's genes map-residues (mzLib #1465), a later mzLibR port.
-PARENT_OMISSIONS[c("proteins.map_residues", "AlignedProteins.sequences")] <- c(
-  "not ported yet: wire `genes map-residues` (mzLib #1465), new in the pyMzLib 0.7.0 bridge",
-  "not ported yet: part of `proteins.map_residues`'s result"
+# ---------------------------------------------------------------- genes map-residues (pyMzLib 0.7.0)
+
+map_alignment <- function(field) as_r(paste0("alignment$", field), "an element of the alignment list")
+map_trees <- function(field) as_r(paste0("gene_trees$", field), "an element of the gene_trees list")
+R_TABLE["genes map-residues"] <- "records"
+R_DEVIATIONS[["genes map-residues"]] <- c(
+  list(
+    "param.species" = not_here(paste(
+      "rendered from gtfs and gene_sets, two named character vectors from Ensembl production name",
+      "to path, one stdin line per species (none: mzLib keeps every gene)"
+    )),
+    "field.columns" = RECORDS,
+    "field.gene_sets" = as_r("gene_sets", "a data.frame, one row per species, `species` first"),
+    "table.alignment" = as_r("alignment", "a list"),
+    "table.gene_trees" = as_r("gene_trees", "a list, as proteins_build_orthology() reports it"),
+    "table.gene_sets" = as_r("gene_sets", "a data.frame, one row per species, `species` first"),
+    "table.proteins" = as_r("proteins$records", "a data.frame, one row per kept protein, inside the proteins list"),
+    "field.proteins.alignment_index" = as_r("alignment_index", "1-based in R, like every position")
+  ),
+  stats::setNames(lapply(c("source_file_name", "sha256", "release", "collection", "alignment_count",
+    "protein_count", "restricted_to_gene_tree_content"), map_alignment),
+    paste0("field.alignment.", c("source_file_name", "sha256", "release", "collection", "alignment_count",
+      "protein_count", "restricted_to_gene_tree_content"))),
+  stats::setNames(lapply(c("source_file_name", "sha256", "release", "collection", "member_count",
+    "restricted_to_gene_sets"), map_trees),
+    paste0("field.gene_trees.", c("source_file_name", "sha256", "release", "collection", "member_count",
+      "restricted_to_gene_sets")))
 )
+rm(map_alignment, map_trees)
+
+PARENT_MAP["proteins_map_residues"] <- "proteins.map_residues"
+PARENT_OMISSIONS["AlignedProteins.sequences"] <- paste(
+  "two columns of `proteins$records`:",
+  "`setNames(m$proteins$records$sequence, m$proteins$records$protein_id)`"
+)
+
+FIELD_CHECKS[["genes map-residues"]] <- list("genes_map_residues_tp53.json", function(d) mz$proteins_parse_residue_mappings(d))
+
+# The proteins article's cross-species chain: UniProt's human and mouse p53, read with their
+# sequences, and aligned to and from Ensembl's canonical proteins around genes map-residues.
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "proteins read", fixture = "proteins_read_p53.json")
+REPLAY_EXTRA[[length(REPLAY_EXTRA) + 1L]] <- c(verb = "proteins align", fixture = "proteins_align_tp53_chain.json")
