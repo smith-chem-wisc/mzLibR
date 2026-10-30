@@ -72,7 +72,7 @@ Label-free only: an isobaric (TMT, iTRAQ) SDRF needs a channel design this does 
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf design}. Generated from the bridge's verb spec \code{sdrf.design.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a2/mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs}{\code{SdrfLabelFreeDesign.Read}} in \code{mzLib/Readers/Sdrf/SdrfLabelFreeDesign.cs} at mzLib \code{cc67b7a2}

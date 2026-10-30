@@ -26,6 +26,8 @@ R_DEVIATIONS[["readers formats"]] <- list(
 R_DEVIATIONS[["readers identify"]] <- list(
   "field.error" = ONE_PATH_ERROR
 )
+# identify reads no records, so its bulk answer has no table: only the paths and `files`.
+R_DEVIATIONS[["readers identify (bulk)"]] <- BULK_READ[c("param.paths-stdin", "field.files")]
 for (verb in c(
   "readers read-results", "readers read-records", "readers read-features", "readers read-matches",
   "readers read-spectra", "readers read-protein-groups", "readers read-quantified-peptides",

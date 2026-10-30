@@ -50,7 +50,7 @@ An \code{mzlibr_quantified_peptide_records}. \code{record_count} counts the pept
 
 }
 \section{Wraps}{
-Wire verb \code{readers read-quantified-peptides}. Generated from the bridge's verb spec \code{readers.read-quantified-peptides.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers read-quantified-peptides}. Generated from the bridge's verb spec \code{readers.read-quantified-peptides.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs}{\code{QuantifiedPeptideFile.LoadResults}} in \code{mzLib/Readers/InternalResults/ResultFiles/QuantifiedPeptideFile.cs} at mzLib \code{23c2490e}

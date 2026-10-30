@@ -17,6 +17,12 @@ because mzLib changed them; each is listed below, as pyMzLib 0.7.0's upgrading n
 Every recording the help pages and articles replay was re-recorded from the 0.7.0 bridge (pyMzLib's,
 byte for byte), and the live tests hold each to what that bridge returns.
 
+* **`flashlfq_quantify()`'s `max_threads` now defaults to `-1` (every core), not 1**, as in mzLib,
+  the bridge, pyMzLib and mzLibRust. The answer does not change. The default was 1 while
+  mzLib#1111 made multithreaded match-between-runs nondeterministic; mzLib#1155 fixed that, and
+  mzLib's K562 pair re-measured identical: five runs at `-1` and one at `1` gave the same results.
+  Pass `max_threads = 1` to keep the old setting; on a two-run pair it is a little faster.
+
 *New, each needing the pyMzLib 0.7.0 bridge.* Ported from pyMzLib 0.7.0, verb for verb; every
 number is mzLib's, and every recording the help pages and articles replay is pyMzLib's, byte for
 byte. Every option left out is not sent, so mzLib's default applies and the result reports it.

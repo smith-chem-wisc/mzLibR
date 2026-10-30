@@ -80,7 +80,7 @@ paired estimator for k entrapments per target is not implemented.
 
 }
 \section{Wraps}{
-Wire verb \code{stats entrapment-fdp}. Generated from the bridge's verb spec \code{stats.entrapment-fdp.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{stats entrapment-fdp}. Generated from the bridge's verb spec \code{stats.entrapment-fdp.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/StatisticalModels/EntrapmentFdp.cs}{\code{EntrapmentFdp.Sweep}} in \code{mzLib/StatisticalModels/EntrapmentFdp.cs} at mzLib \code{d10017ce}

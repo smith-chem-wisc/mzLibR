@@ -1,0 +1,129 @@
+# Written 2026-10-29 BEFORE the verb (SPEC-1: spec first; PYMZ-B3 item 5, aging REQ-PYMZ-1,
+# G-verb-specs-uniprot-modlookup), from mzLib's ProteinDbRetriever read at tag 1.0.596 (cc67b7a2):
+# RetrieveEntry, TryRetrieveEntry, Get, ReadBody, ThrowIfServiceUnavailable and the class remarks that
+# state its failure contract. The bridge's classifier was read at pyMzLib origin/main (Program.cs
+# ClassifyError, ClassifyHttpFailure, StatusCodeOf). UniProt's REST answers were probed by hand the
+# same day: P02768, P02768-2 and p02768 in both formats, a malformed accession (XYZ), a well-formed
+# unknown one (Q00000) and an unknown isoform (P02768-99). Those answers are in the caveats.
+verb: proteins fetch
+module: proteins
+summary: >-
+  Download UniProtKB entries by accession, one file per accession in XML or FASTA, and report for
+  each whether UniProt has it and where it was written.
+since: {protocol: 1, pymzlib: null, mzlibrust: null, mzlibr: null}
+wraps:
+  - {symbol: "ProteinDbRetriever.TryRetrieveEntry(string, string, ProteomeFormat)", path: mzLib/UsefulProteomicsDatabases/ProteinDbRetriever.cs, pin: cc67b7a2}
+  - {symbol: ProteinDbRetriever.ProteomeFormat, path: mzLib/UsefulProteomicsDatabases/ProteinDbRetriever.cs, pin: cc67b7a2}
+cite:
+  - {doi: "10.1093/nar/gkae1010", for: "UniProt, the knowledgebase the entries are downloaded from (UniProt Consortium 2025, NAR)"}
+
+params:
+  - name: accession
+    type: string
+    required: false
+    unit: null
+    range: "letters, digits and '-' (mzLib's guard); an isoform suffix such as -2 is allowed"
+    default: null
+    doc: >-
+      One UniProtKB accession, e.g. P02768 or P02768-2. Exactly one of accession and
+      accessions-stdin is given. Matching is case-insensitive at UniProt; the file is named with
+      the accession as given.
+  - name: accessions-stdin
+    type: flag
+    required: false
+    unit: null
+    range: null
+    default: false
+    doc: >-
+      Read the accessions from stdin instead, one per line (newline-delimited; blank lines
+      ignored; each line trimmed; a UTF-8 BOM on the first line stripped). Stdin rather than argv
+      because argv caps near 32 KB. Exclusive with accession.
+  - name: stdin
+    type: "string[]"
+    required: false
+    unit: null
+    range: ">= 1 non-blank line when accessions-stdin is given; no accession twice, compared case-insensitively"
+    default: null
+    doc: >-
+      Read only with accessions-stdin: the accessions, in the order the results are reported. A
+      repeat is refused before any request, compared case-insensitively, because UniProt treats
+      P02768 and p02768 as one entry and a case-insensitive file system treats their files as one
+      file.
+  - name: dest
+    type: path
+    required: true
+    unit: null
+    range: "an existing directory"
+    default: null
+    doc: >-
+      Directory to write into. It must already exist: mzLib refuses a missing one
+      (DirectoryNotFoundException) on purpose, because a directory that is not there usually means
+      a misconfigured path. The bridge makes it absolute before calling mzLib, so every path in the
+      result is absolute.
+  - name: format
+    type: string
+    required: false
+    unit: null
+    range: "xml | fasta"
+    default: xml
+    doc: >-
+      The download format (mzLib ProteomeFormat). mzLib supports only these two for an entry, and
+      xml is its default. XML carries the annotations proteins read reports; FASTA carries the
+      sequence and header only.
+  - name: on-error
+    type: string
+    required: false
+    unit: null
+    range: "fail | skip"
+    default: fail
+    doc: >-
+      As in BULK.md. fail stops at the first accession whose request fails, with that failure's
+      error; files already written stay. skip records the failure in that accession's row and
+      carries on. An accession UniProt does not have is never a failure: it is a row with found
+      false, under either setting.
+
+result:
+  envelope_fields:
+    - {wire: destination_directory, type: string, unit: null, nullable: false, null_means: null, doc: "dest, made absolute."}
+    - {wire: format, type: string, unit: null, nullable: false, null_means: null, doc: "xml or fasta, as used."}
+    - {wire: record_count, type: int, unit: accessions, nullable: false, null_means: null, doc: "Rows in the table: one per accession given."}
+    - {wire: found_count, type: int, unit: accessions, nullable: false, null_means: null, doc: "Rows with found true; each wrote one file."}
+    - {wire: not_found_count, type: int, unit: accessions, nullable: false, null_means: null, doc: "Rows with found false: UniProt answered and has no such entry."}
+    - {wire: failed_count, type: int, unit: accessions, nullable: false, null_means: null, doc: "Rows whose request failed; non-zero only under on-error skip."}
+  columns:
+    - {wire: source_index, type: int, unit: null, nullable: false, null_means: null, doc: "0-based position in the input list (0 for accession)."}
+    - {wire: accession, type: string, unit: null, nullable: false, null_means: null, doc: "The accession, as given."}
+    - {wire: found, type: bool, unit: null, nullable: true, null_means: "the request failed, so UniProt's answer is unknown (see error_kind); only under on-error skip", doc: "Whether UniProt has this entry (mzLib's Found)."}
+    - {wire: path, type: string, unit: null, nullable: true, null_means: "nothing was written: not found, or the request failed", doc: "The absolute path of the file written, '<accession as given>.<format>' in dest."}
+    - {wire: error_kind, type: string, unit: null, nullable: true, null_means: "this accession did not fail", doc: "usage, service_unavailable or correctness, as the whole call would have raised it under on-error fail."}
+    - {wire: error_message, type: string, unit: null, nullable: true, null_means: "this accession did not fail", doc: "mzLib's message for the failure."}
+
+errors:
+  - {kind: usage, when: "neither or both of accession and accessions-stdin; accession given but blank; accessions-stdin with no non-blank line, or with an accession twice (compared case-insensitively); dest missing or blank, or not an existing directory; format other than xml or fasta; on-error other than fail or skip. All are refused before any request."}
+  - {kind: usage, when: "under on-error fail, an accession mzLib refuses (ArgumentException: a character other than a letter, a digit or '-'). mzLib checks it when the accession is reached, so the accessions before it have already been downloaded. Under skip it is a failed row."}
+  - {kind: service_unavailable, when: "under on-error fail, UniProt was unreachable, sent no response headers within 2 minutes, answered 408, 429 or any 5xx, or let the body stall for 2 minutes. mzLib reports all of these, and only these, as HttpRequestException; its class remarks make that type mean 'try again later'. The handler classifies an HttpRequestException from ProteinDbRetriever as service_unavailable at this call site. The bridge's general classifier cannot do it while mzLib#1490 is open: ThrowIfServiceUnavailable puts the status in its message ('UniProt is unavailable: HTTP 503 ...') but not in StatusCode, and that wording does not match the 'failed with status NNN' pattern StatusCodeOf reads, so a 503 would cross as correctness."}
+  - {kind: correctness, when: "under on-error fail, UniProt answered a non-success status other than 400, 404, 408, 429 or 5xx, such as 401, 403 or 410 (MzLibException: a rejected or misdirected request, not an outage); or the file could not be written (a local disk failure)."}
+
+caveats:
+  - "found is false, and nothing is written, for each of the three ways UniProt says it has no such entry: 400 for a malformed accession (XYZ), 404 for a well-formed unknown one (Q00000) or an unknown isoform (P02768-99), and 200 with no entry in the body for a deleted or demerged one. mzLib treats all three alike, so a mistyped accession and a withdrawn one look the same in the result."
+  - "An isoform accession fetches that isoform (probed 2026-10-29): P02768-2.fasta holds '>sp|P02768-2|ALBU_HUMAN Isoform 2 of Albumin' and its own sequence, and P02768-2.xml holds one entry whose accession is P02768-2 (64 KB, against 261 KB for P02768.xml)."
+  - "Each file is '<accession as given>.<format>' in dest, and holds UniProt's response byte for byte. An existing file of that name is replaced. UniProt matches case-insensitively, so p02768 fetches P02768's entry into p02768.fasta."
+  - "Accessions are fetched one at a time, in input order. mzLib does not retry a UniProt request (PrideArchiveClient does). Each request waits up to 2 minutes for response headers, and the body may stall for up to 2 minutes, so a dead service costs up to about 4 minutes per accession before the failure is reported."
+  - "An entry is UniProt's current version, so the same accession can return different content after a UniProt release. The FASTA header's SV field and the XML entry's version attribute say which."
+  - "An XML file is a one-entry UniProt XML that proteins read loads (mzLib's ProteinDbLoader.LoadProteinXML). A FASTA file is a one-record UniProt FASTA."
+
+bindings:
+  py: {name: pymzlib.proteins.fetch, note: "planned; not yet shipped"}
+  rust: {name: "mzlib::proteins::fetch_with", options: FetchOptions, note: "planned; not yet shipped"}
+  r: {name: proteins_fetch, note: "planned; not yet shipped"}
+
+examples: []
+
+open_questions:
+  - "Not built. A replay needs a stub bridge that also fakes the written files, as for pride download, so record the table from a live run: P02768 and P02768-2 in both formats, XYZ (400), Q00000 (404), and a deleted accession (200 with no entry; find one from UniProt's deleted-accession list at build time)."
+  - "No --threads: the verb is sequential. UniProt rate-limits (429), and nothing yet measures what concurrency it tolerates. Add --threads (BULK.md's default 1) only when a consumer needs the throughput; per PARALLELISM.md a binding must never loop over this verb in parallel instead."
+  - "mzLib checks an accession's characters only when it reaches it, so under on-error fail a bad accession late in the list arrives after the earlier files are written. Refusing every bad accession before the first request needs mzLib's guard as a public predicate (an mzLib request, not a check copied into the bridge)."
+  - "When mzLib#1490 is released, ProteinDbRetriever's availability failures carry StatusCode, and the general classifier handles them. The call-site rule above can then go, and peptidoform fragments can drop its own UniProt client for RetrieveEntry."
+  - "Whether proteins read loads an isoform's XML (P02768-2.xml) as the isoform, with its own sequence, is not yet checked. Check it when the fixtures are recorded."
+  - "pyMzLib's PYB-5 asks that every writer create its output folder. This verb does not, because mzLib refuses a missing directory on purpose (see dest). The rule comes from mzLib, so the bindings must not create it either."
+  - "Whole proteomes (ProteinDbRetriever.RetrieveProteome) are a separate verb if a consumer asks for one. They download thousands of entries per call and need their own review, organism and isoform options."

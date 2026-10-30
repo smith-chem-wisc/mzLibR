@@ -14,10 +14,9 @@
 #   2. **A peptide intensity of 0 and a protein intensity of NA mean different things**, and R
 #      is the only one of the three bindings whose type system can say so. See below.
 #
-# `max_threads` defaults to 1 here, where the wire, pyMzLib and mzLibRust default to -1. That
-# default dates from mzLib#1111 - multithreaded runs dropped MBR intensities nondeterministically -
-# which mzLib#1155 fixed inside the pinned bridge, so the runtime warning that used to sit here is
-# gone. The default stays until someone re-measures the K562 pair at -1; see ?flashlfq_quantify.
+# `max_threads` defaults to -1, as in mzLib, the wire, pyMzLib and mzLibRust. It was 1 here while
+# mzLib#1111 made multithreaded runs drop MBR intensities nondeterministically; mzLib#1155 fixed
+# that, and the K562 pair re-measured identical at -1 on 2026-10-30. See ?flashlfq_quantify.
 
 # The wire's spelling of a number, independent of the R session's locale.
 #
@@ -434,14 +433,14 @@ flashlfq_parse <- function(data) {
 #' @param use_pep_q_value Store each identification's PEP q-value as its q-value, instead of its
 #'   q-value. **It filters nothing here**: FlashLFQ is given every identification either way. It
 #'   changes the q-value FlashLFQ carries, which match-between-runs reads.
-#' @param max_threads Worker threads, or `-1` for one per core. **Defaults to 1 here, where the
-#'   bridge, pyMzLib and mzLibRust default to -1.**
+#' @param max_threads Worker threads, or `-1` for one per core, the default here as in mzLib, the
+#'   bridge, pyMzLib and mzLibRust.
 #'
-#'   One thread is reproducible by construction, and it is what this package has always shipped.
-#'   The multithreaded nondeterminism that made it the default here (the peptide roll-up dropping
-#'   MBR intensities, smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
-#'   includes, so `-1` is expected to give the same answer faster; that has not yet been
-#'   re-measured on mzLib's K562 pair, which is why the default has not moved.
+#'   The thread count changes the speed, not the answer. Multithreaded runs once dropped MBR
+#'   intensities nondeterministically (smith-chem-wisc/mzLib#1111), which is why this package
+#'   defaulted to 1 until 2026-10-30. mzLib#1155 fixed that, and the pinned bridge includes it: on
+#'   mzLib's K562 pair, five runs at `-1` and one at `1` gave identical results. On a pair that
+#'   small, `1` is a little faster.
 #' @param output_directory Where FlashLFQ should write its TSV output, or `NULL` to write none.
 #' @param timeout Seconds to allow, or `NULL` to wait as long as it takes.
 #'
@@ -511,7 +510,7 @@ flashlfq_quantify <- function(psms, spectra, normalize = FALSE, ppm_tolerance = 
                               mbr_q_value_threshold = 0.05,
                               use_shared_peptides_for_protein_quant = FALSE,
                               bayesian_protein_quant = FALSE, use_pep_q_value = FALSE,
-                              max_threads = 1, output_directory = NULL, timeout = NULL) {
+                              max_threads = -1, output_directory = NULL, timeout = NULL) {
   args <- flashlfq_build_args(
     psms, normalize, ppm_tolerance, isotope_ppm_tolerance, integrate, match_between_runs,
     mbr_ppm_tolerance, mbr_q_value_threshold, use_shared_peptides_for_protein_quant,

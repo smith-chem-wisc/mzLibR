@@ -9,8 +9,8 @@ readers_identify_many(paths, threads = 1, on_error = "fail", timeout = 60)
 \arguments{
 \item{paths}{A character vector of paths. A Bruker \code{.d} directory is accepted.}
 
-\item{threads}{Paths identified at once. \code{1}, the default, or \code{-1} for one per core. The answer
-  does not depend on it.}
+\item{threads}{Paths identified at once, in files. \code{1}, the default, or \code{-1} for one per core.
+  The answer does not depend on it.}
 
 \item{on_error}{\code{"fail"}, the default, stops at the first path that cannot be identified.
   \code{"skip"} records why in that path's row and identifies the rest.}
@@ -33,7 +33,7 @@ An \code{mzlibr_identify_batch}. \code{files} is a data.frame with one row per p
 
 }
 \section{Wraps}{
-Wire verb \code{readers identify} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{readers identify} with \code{--paths-stdin}. Generated from the bridge's verb spec \code{readers.identify.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -41,18 +41,21 @@ Wire verb \code{readers identify} with \code{--paths-stdin}. Generated from the 
 }
 }
 \section{Parameters: units, ranges and defaults}{
-This verb takes no parameters.
+\describe{
+\item{\code{paths} (wire \code{--paths-stdin})}{flag; default absent. Identify MANY paths: newline-delimited paths on stdin (blank lines ignored; a repeated path is a usage error). Exclusive with path; offset, limit and out are refused with it.}
+\item{\code{threads}}{int; in \strong{files}; default \code{1}; range \code{>= 1, or -1 for one per core}. Paths identified at once. The answer is identical at any value (files are reported in input order).}
+\item{\code{on_error} (wire \code{--on-error})}{string; default \code{fail}; range \code{fail | skip}. fail: the first path that cannot be identified stops the batch with its usage or correctness error, the message starting 'Input <i> (<path>)'. skip: the failure goes in that path's files[i].error and the rest are identified. skip with a single path is a usage error.}
+}
 }
 \section{Returned fields}{
 Each field with its type, its unit, and what \code{NA} means when it is \code{NA}.
 
 \describe{
-\item{\code{path}}{string; never \code{NA}. Absolute path identified.}
-\item{\code{file_type}}{string; never \code{NA}. The mzLib SupportedFileType.}
-\item{\code{extension}}{string; \code{NA} when mzLib maps no extension to this type. The extension mzLib dispatched on.}
-\item{\code{reader}}{string; never \code{NA}. The mzLib reader class that would parse it.}
-\item{\code{views}}{string[]; never \code{NA}. The cross-format views it offers; often empty.}
-\item{\code{error}}{object; \code{NA} when always, for a single path; in a paths-stdin entry, the path was identified. \{kind, type, message\} for a path that failed under on-error skip.}
+\item{\code{file_count}}{int; in \strong{files}; never \code{NA}. Paths given.}
+\item{\code{read_count}}{int; in \strong{files}; never \code{NA}. Paths identified.}
+\item{\code{failed_count}}{int; in \strong{files}; never \code{NA}. Paths not identified; non-zero only under on-error skip.}
+\item{\code{on_error}}{string; never \code{NA}. fail or skip, as requested. \code{--threads} is deliberately not echoed: the envelope is identical at every thread count.}
+\item{\code{files}}{object[]; never \code{NA}. One per input, in input order: the single-path answer (path, file_type, extension, reader, views, error). A path not identified has error set and file_type, extension and reader null, views empty.}
 }
 }
 \section{Errors}{
@@ -71,7 +74,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \itemize{
 \item Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and a .mztab's first five, a .parquet's column schema and a .d directory's listing to dispatch them. A .parquet mzLib can open and read without the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run), or bytes that are not Parquet at all, is a usage error, 'Parquet file type not supported' (mzLib #1384). One it cannot open is an I/O error instead (#1478).
 \item No software field: mzLib's Software property is Unspecified for everything its factory builds; file_type already names the tool.
-\item Many paths: \code{--paths-stdin} (newline-delimited paths on stdin) with \code{--threads} N (default 1, -1 = one per core; the answer is identical at any value) and \code{--on-error} fail|skip answers \{file_count, read_count, failed_count, on_error, files\}, files[i] being path i's answer in input order with error set when it could not be identified under skip (readers_many_identify.json). There is no table and no \code{--out}.
+\item Many paths (result.bulk): there is no table and no \code{--out}, and no record_count, because nothing is read.
 }
 }
 \section{Performance}{
@@ -86,13 +89,6 @@ Every call starts one bridge process, which costs a .NET start-up before any wor
 }
 \section{Since}{
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-}
-\section{Not yet verified}{
-The spec records these as open. They are listed rather than hidden:
-
-\itemize{
-\item The \code{--paths-stdin} answer is not declared as result.bulk because check_verbs.py requires a record_count there (BULK.md section 2), and the bridge sends none: at pyMzLib v0.2.0 (pkg/bridge/Reading.cs Identify) it is \{file_count, read_count, failed_count, on_error, files\}, as are IdentifyBatch (Rust) and readers_identify_many (R). All three bindings ship identify_many. Declare result.bulk once the checker allows a table-less bulk verb, or add record_count (0) to the wire.
-}
 }
 \seealso{
 \code{\link{readers_identify}}, \code{\link{readers_formats}}
