@@ -1,8 +1,9 @@
 # Download a bridge executable into a local cache
 
-mzLibR needs a bridge executable and does not ship one: it is about 140
-MB, which no CRAN package may carry. This fetches the one built for your
-platform, verifies it against a recorded SHA-256, and unpacks it where
+mzLibR needs a bridge executable and does not ship one: it is about 65
+MB to download and about 110 MB unpacked, which no CRAN package may
+carry. This fetches the one built for your platform, verifies it against
+a recorded SHA-256, and unpacks it where
 [`mzlibr_bridge_path`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_bridge_path.md)
 will find it.
 

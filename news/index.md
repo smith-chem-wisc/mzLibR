@@ -1083,6 +1083,11 @@ rendered from the bridge’s specs.
 - New
   [`?mzlib_error`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlib_error.md)
   documents the condition classes and how to handle each.
+- [`mzlibr_install_bridge()`](https://smith-chem-wisc.github.io/mzLibR/reference/mzlibr_install_bridge.md),
+  its help page and the README give the bridge’s real size: about 65 MB
+  to download and about 110 MB unpacked, measured on pyMzLib 0.7.0’s
+  assets. They said about 140 MB, a figure from before the bridge
+  stopped carrying libtorch.
 - A pkgdown site, with an article for each module.
 - The articles are now vignettes, so `R CMD check` builds and runs every
   one of them, on every platform, against the replay bridge. Each opens
