@@ -32,9 +32,10 @@ mzlibr_install_bridge(version = MZLIB_BRIDGE_VERSION, destination = NULL, consen
 
 }
 \description{
-mzLibR needs a bridge executable and does not ship one: it is about 140 MB, which no CRAN
-package may carry. This fetches the one built for your platform, verifies it against a
-recorded SHA-256, and unpacks it where \code{\link{mzlibr_bridge_path}} will find it.
+mzLibR needs a bridge executable and does not ship one: it is about 65 MB to download and
+about 110 MB unpacked, which no CRAN package may carry. This fetches the one built for
+your platform, verifies it against a recorded SHA-256, and unpacks it where
+\code{\link{mzlibr_bridge_path}} will find it.
 }
 \details{
 \strong{It is never called for you.} CRAN policy forbids a package downloading anything at install

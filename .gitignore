@@ -1,4 +1,4 @@
-# The bridge payload is ~140 MB and is never committed — it is staged, cached or downloaded.
+# The bridge payload is ~110 MB unpacked and is never committed — it is staged, cached or downloaded.
 _dotnet/
 inst/_dotnet/
 

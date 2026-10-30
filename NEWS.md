@@ -612,6 +612,9 @@ pages carry them too, rendered from the bridge's specs.
   answers each call from a recording of the real one, so the examples need no bridge, .NET or
   network.
 * New `?mzlib_error` documents the condition classes and how to handle each.
+* `mzlibr_install_bridge()`, its help page and the README give the bridge's real size: about
+  65 MB to download and about 110 MB unpacked, measured on pyMzLib 0.7.0's assets. They said
+  about 140 MB, a figure from before the bridge stopped carrying libtorch.
 * A pkgdown site, with an article for each module.
 * The articles are now vignettes, so `R CMD check` builds and runs every one of them, on every
   platform, against the replay bridge. Each opens with a question -> function -> mzLib table,

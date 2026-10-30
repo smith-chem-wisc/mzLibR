@@ -98,7 +98,7 @@ test_that("the executable name follows the platform", {
 
 test_that("the cache directory is laid out the way R_user_dir would have", {
   # `tools::R_user_dir()` is R >= 4.0 and this package supports 3.5, so the path is built by
-  # hand — but it must land in the same place, or a user who upgrades R downloads 140 MB again.
+  # hand — but it must land in the same place, or a user who upgrades R downloads the bridge again.
   path <- mz$mzlibr_cache_dir()
   expect_true(is.character(path) && length(path) == 1L)
   expect_true(grepl("mzLibR", path, fixed = TRUE))

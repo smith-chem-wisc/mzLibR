@@ -45,7 +45,7 @@ transfers <- flashlfq_mbr_peaks(quant)              # read peaks, never the pept
 ```r
 install.packages("remotes")
 remotes::install_github("smith-chem-wisc/mzLibR")
-mzlibr_install_bridge()          # ~140 MB, asks first, verifies a SHA-256
+mzlibr_install_bridge()          # ~65 MB download, asks first, verifies a SHA-256
 ```
 
 The bridge is a self-contained executable carrying its own .NET runtime, so **no .NET
