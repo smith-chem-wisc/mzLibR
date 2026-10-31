@@ -115,8 +115,8 @@ sample, and only the roll-up is redone.
 - Give `spectra` a `condition` and `biological_replicate` so FlashLFQ knows which runs are
   comparable; match-between-runs needs a balanced design. `sdrf_design_spectra()` builds that
   from an SDRF.
-- `max_threads` defaults to 1 here and to every core in pyMzLib and mzLibRust;
-  `?flashlfq_quantify` says why.
+- `max_threads` defaults to every core, as in pyMzLib and mzLibRust. The thread count changes the
+  speed, not the answer.
 
 ## What to cite
 

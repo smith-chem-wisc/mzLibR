@@ -307,11 +307,11 @@ test_that("an impossible thread count is refused", {
 
 # ---------------------------------------------------------------- reproducibility
 
-test_that("max_threads defaults to 1, which differs from the wire's -1 deliberately", {
-  # The bridge, pyMzLib and mzLibRust default to -1. mzLibR's 1 dates from mzLib#1111, which
-  # mzLib#1155 fixed inside the pinned bridge; it stays until -1 is re-measured on the K562 pair.
-  # See ?flashlfq_quantify.
-  expect_identical(formals(flashlfq_quantify)$max_threads, 1)
+test_that("max_threads defaults to -1, as the wire, pyMzLib and mzLibRust do", {
+  # It was 1 here while mzLib#1111 made multithreaded runs nondeterministic. mzLib#1155 fixed
+  # that, and the K562 pair re-measured identical at -1 (2026-10-30). See ?flashlfq_quantify.
+  # A default of -1 is stored as the call `-1`, not the number, so evaluate it.
+  expect_identical(eval(formals(flashlfq_quantify)$max_threads), -1)
 })
 
 test_that("a multithreaded call no longer warns: mzLib#1155 fixed the nondeterminism", {

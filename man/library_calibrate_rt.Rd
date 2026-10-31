@@ -112,7 +112,7 @@ there.
 
 }
 \section{Wraps}{
-Wire verb \code{library calibrate-rt}. Generated from the bridge's verb spec \code{library.calibrate-rt.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{library calibrate-rt}. Generated from the bridge's verb spec \code{library.calibrate-rt.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/cc67b7a29/mzLib/Chromatography/RetentionTimeCalibration/IrtCalibration.cs}{\code{IrtCalibration.Fit}} in \code{mzLib/Chromatography/RetentionTimeCalibration/IrtCalibration.cs} at mzLib \code{cc67b7a2}

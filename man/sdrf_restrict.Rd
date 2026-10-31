@@ -74,7 +74,7 @@ paths as this platform writes them (\code{file.path()} does).
 
 }
 \section{Wraps}{
-Wire verb \code{sdrf restrict}. Generated from the bridge's verb spec \code{sdrf.restrict.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{sdrf restrict}. Generated from the bridge's verb spec \code{sdrf.restrict.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/d10017ce/mzLib/Readers/Sdrf/SdrfSearchScope.cs}{\code{SdrfSearchScope.Restrict}} in \code{mzLib/Readers/Sdrf/SdrfSearchScope.cs} at mzLib \code{d10017ce}

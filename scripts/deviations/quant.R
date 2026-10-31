@@ -12,7 +12,7 @@ R_DEVIATIONS[["quant flashlfq"]] <- list(
   "param.shared-peptides" = as_r("use_shared_peptides_for_protein_quant", "mzLib's parameter name"),
   "param.bayesian" = as_r("bayesian_protein_quant", "mzLib's parameter name"),
   "param.use-pep-q" = as_r("use_pep_q_value", "mzLib's parameter name"),
-  "param.threads" = as_r("max_threads", "mzLib's parameter name; the default is 1 here, see its argument"),
+  "param.threads" = as_r("max_threads", "mzLib's parameter name"),
   "param.out" = as_r("output_directory", "mzLib's parameter name"),
   "field.peptide_count" = not_here("flashlfq_peptide_count() of the result"),
   "field.protein_count" = not_here("flashlfq_protein_count() of the result"),

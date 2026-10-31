@@ -8,7 +8,7 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
   isotope_ppm_tolerance = 5, integrate = FALSE, match_between_runs = FALSE,
   mbr_ppm_tolerance = 10, mbr_q_value_threshold = 0.05,
   use_shared_peptides_for_protein_quant = FALSE, bayesian_protein_quant = FALSE,
-  use_pep_q_value = FALSE, max_threads = 1, output_directory = NULL, timeout = NULL)
+  use_pep_q_value = FALSE, max_threads = -1, output_directory = NULL, timeout = NULL)
 }
 \arguments{
 \item{psms}{Path to a PSM result file. **Use a MetaMorpheus \code{.psmtsv} or \code{.osmtsv}.** Every
@@ -56,14 +56,14 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
   q-value. \strong{It filters nothing here}: FlashLFQ is given every identification either way. It
   changes the q-value FlashLFQ carries, which match-between-runs reads.}
 
-\item{max_threads}{Worker threads, or \code{-1} for one per core. \strong{Defaults to 1 here, where the
-  bridge, pyMzLib and mzLibRust default to -1.}
+\item{max_threads}{Worker threads, or \code{-1} for one per core, the default here as in mzLib, the
+  bridge, pyMzLib and mzLibRust.
 
-  One thread is reproducible by construction, and it is what this package has always shipped.
-  The multithreaded nondeterminism that made it the default here (the peptide roll-up dropping
-  MBR intensities, smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
-  includes, so \code{-1} is expected to give the same answer faster; that has not yet been
-  re-measured on mzLib's K562 pair, which is why the default has not moved.}
+  The thread count changes the speed, not the answer. Multithreaded runs once dropped MBR
+  intensities nondeterministically (smith-chem-wisc/mzLib#1111), which is why this package
+  defaulted to 1 until 2026-10-30. mzLib#1155 fixed that, and the pinned bridge includes it: on
+  mzLib's K562 pair, five runs at \code{-1} and one at \code{1} gave identical results. On a pair that
+  small, \code{1} is a little faster.}
 
 \item{output_directory}{Where FlashLFQ should write its TSV output, or \code{NULL} to write none.}
 
@@ -133,7 +133,7 @@ and \strong{847} are 0 in both runs. "No usable number" is 849; "could not be re
 
 }
 \section{Wraps}{
-Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{aea14604d5f7}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
+Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{quant.flashlfq.yaml} (bridge commit \code{84c3b984b6b9}) by \code{scripts/build-man.R}; the spec owns these facts, and all three bindings render the same ones.
 
 \itemize{
 \item \href{https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs}{\code{FileReader.ReadQuantifiableResultFile}} in \code{mzLib/Readers/FileReader.cs} at mzLib \code{23c2490e}
@@ -158,7 +158,7 @@ Wire verb \code{quant flashlfq}. Generated from the bridge's verb spec \code{qua
 \item{\code{use_shared_peptides_for_protein_quant} (wire \code{--shared-peptides})}{flag; default \code{FALSE}. Let peptides shared between protein groups contribute to protein quant (UseSharedPeptidesForProteinQuant).}
 \item{\code{bayesian_protein_quant} (wire \code{--bayesian})}{flag; default \code{FALSE}. Also run FlashLFQ's Bayesian protein fold-change engine (BayesianProteinQuant). Its results are not on the wire; they reach only out's BayesianProteinQuant.tsv.}
 \item{\code{use_pep_q_value} (wire \code{--use-pep-q})}{flag; default \code{FALSE}. Store each identification's PEP q-value as its q-value instead of its q-value (MakeIdentifications usePepQValue). It filters nothing here: it changes the value FlashLFQ's own q-value thresholds (e.g. MBR donor selection) later read. For a DIA-NN report the stored value is the raw PEP, not a q-value.}
-\item{\code{max_threads} (wire \code{--threads})}{int; in \strong{threads}; default \code{-1}; range \code{any integer; -1 means one fewer than the logical cores}. FlashLFQ MaxThreads. mzLib resolves it in the engine constructor: -1, or any value >= the core count, becomes (cores - 1); anything that leaves <= 0 becomes 1. parameters.max_threads echoes the RESOLVED value, so it depends on the machine. See caveats for what the thread count does to answers at this pin.}
+\item{\code{max_threads} (wire \code{--threads})}{int; in \strong{threads}; default \code{-1}; range \code{any integer; -1 means one fewer than the logical cores}. FlashLFQ MaxThreads. mzLib resolves it in the engine constructor: -1, or any value >= the core count, becomes (cores - 1); anything that leaves <= 0 becomes 1. parameters.max_threads echoes the RESOLVED value, so it depends on the machine. The answer does not depend on it (see caveats).}
 \item{\code{output_directory} (wire \code{--out})}{path; default absent. Directory (created if absent) where FlashLFQ also writes QuantifiedPeaks.tsv, QuantifiedPeptides.tsv, QuantifiedProteins.tsv and, with bayesian, BayesianProteinQuant.tsv. Absent or blank writes nothing.}
 }
 }
@@ -233,7 +233,7 @@ Each is an R condition carrying the class shown and \code{mzlib_error}; see \cod
 \itemize{
 \item Since mzLib 1.0.595 (#1422), normalize and bayesian walk the biological replicates that exist, not 0 to the largest number, and normalize takes the first condition's lowest biorep and each fraction's lowest techrep as its reference, with techreps in numeric order. A design numbered from 1 is now normalized (before, biorep normalization silently did nothing); a gapped design with fractions, which threw, now quantifies; a replicate sharing no peptide with the reference no longer stops the rest of the step. Omitted bioreps are numbered by line across all conditions, so every condition after the first has a gap; that is handled the same way.
 \item Since mzLib 1.0.595 (#1424), condition A1 biorep 0 beside condition A biorep 10 quantifies: median polish keyed its samples by the two joined as one string, which threw IndexOutOfRangeException and crossed as correctness.
-\item THREADS AT THIS PIN: mzLib#1111 (peptide roll-up nondeterministically dropping MBR intensities at MaxThreads -1, flipping protein groups between null and a number) is fixed by mzLib#1155, which is in the pin: PEP training rows are now built in a fixed order, and its commit reports identical peptides and proteins across runs. The bindings' 'set threads to 1 to reproduce' warnings predate the fix. The bridge project has not re-measured the K562 case at -1 on this pin; until it does, 1 remains the conservative choice for published numbers.
+\item The thread count does not change the answer. mzLib#1111 (the peptide roll-up dropping MBR intensities nondeterministically at MaxThreads -1) was fixed by mzLib#1155, which builds the PEP training rows in a fixed order; mzLib's TestMbrDeterminism checks the K562 pair at -1 on every PR. Re-measured through the bridge on 2026-10-30 (pyMzLib 0.7.0, mzLib 1.0.596): five runs at -1 and one at 1 gave byte-identical QuantifiedPeaks, Peptides and Proteins.tsv (140 MBR peaks) and identical returned results. On a pair this small, 1 thread was a little faster (about 11 s against 14.5 s).
 \item mzML only: .raw and .d are rejected up front; convert them first.
 \item For match-between-runs read peaks, not peptides: the peptide roll-up (as in QuantifiedPeptides.tsv) reports far fewer MBR transfers than happened (K562 pair: 140 MBR peaks, 52 MBR peptide entries).
 \item Peptide intensity 0 means not quantified; protein intensity null means unquantifiable. Neither is a measured zero.
@@ -259,8 +259,6 @@ The spec records these as open. They are listed rather than hidden:
 
 \itemize{
 \item An omitted biorep is the line's 0-based index across all lines, the convention MetaMorpheus uses for a run with no design. It is the bridge's own default: mzLib has no reader that says what a run without a design is (MetaMorpheus's ExperimentalDesign reader lives in MetaMorpheus). If mzLib gains one, the bridge should use it and send nothing for an omitted field.
-\item Re-measure the K562 MBR pair at threads -1 on the current bridge (mzLib pin d10017ce; G-flashlfq-stale-caveats). Until then the caveat above states what mzLib#1155 claims, not a bridge measurement. All three bindings already say so: #1155 fixed it, it is not re-measured, and 1 is the conservative choice (pyMzLib since 0.3.0). When the re-measure passes, delete that sentence in all three.
-\item Default divergence: the wire, pyMzLib and mzLibRust default threads to -1; mzLibR defaults max_threads to 1. R no longer warns on other values, and keeps 1 until the K562 re-measure above. Once that passes, pick one default for all three (G-flashlfq-stale-caveats).
 \item flashlfq_small.json is hand-shaped (paths '/abs/...', 4 identifications), not recorded from a live bridge; a live recording would make the example executable against real files.
 \item ppm tolerances and mbr-q are not range-checked by the bridge (a negative or zero tolerance reaches FlashLFQ); the ranges above are FlashLFQ's meaningful ones, not enforced ones. An option given with no value is silently defaulted by the Arguments parser.
 \item A PSM file of an unsupported or non-quantifiable type crosses as correctness (mzLib's MzLibException from FileReader.ReadQuantifiableResultFile), though it is arguably the caller's mistake.

@@ -19,8 +19,8 @@ readers_read_many <- function(verb, paths, out, threads, on_error, timeout, fn, 
 #' at a time, and answers in input order.
 #'
 #' @param paths A character vector of paths. A Bruker `.d` directory is accepted.
-#' @param threads Paths identified at once. `1`, the default, or `-1` for one per core. The answer
-#'   does not depend on it.
+#' @param threads Paths identified at once, in files. `1`, the default, or `-1` for one per core.
+#'   The answer does not depend on it.
 #' @param on_error `"fail"`, the default, stops at the first path that cannot be identified.
 #'   `"skip"` records why in that path's row and identifies the rest.
 #' @param timeout Seconds to allow, or `NULL` to wait indefinitely.
