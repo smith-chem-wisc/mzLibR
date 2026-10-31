@@ -269,8 +269,8 @@ convert <code>.raw</code> first.</li>
 comparable; match-between-runs needs a balanced design.
 <code><a href="../reference/sdrf_design_spectra.html">sdrf_design_spectra()</a></code> builds that from an SDRF.</li>
 <li>
-<code>max_threads</code> defaults to 1 here and to every core in
-pyMzLib and mzLibRust; <code><a href="../reference/flashlfq_quantify.html">?flashlfq_quantify</a></code> says why.</li>
+<code>max_threads</code> defaults to every core, as in pyMzLib and
+mzLibRust. The thread count changes the speed, not the answer.</li>
 </ul>
 </div>
 <div class="section level2">

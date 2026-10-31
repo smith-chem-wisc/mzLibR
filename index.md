@@ -127,11 +127,6 @@ pinned by a test.
   different things.** `0` is “not measured in this run”; `NA` is
   “FlashLFQ could not resolve a number”. `NA` is the rare outcome (2
   proteins) and `0` the common one (847).
-- **`max_threads` defaults to 1 here, where pyMzLib and mzLibRust use
-  -1** (every core). The multithreaded nondeterminism that set this
-  default (mzLib#1111) was fixed by mzLib#1155, which the pinned bridge
-  includes; the default stays until -1 is re-measured. See
-  [`?flashlfq_quantify`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md).
 - **[`readers_identify()`](https://smith-chem-wisc.github.io/mzLibR/reference/readers_identify.md)
   does not validate contents**, and a `TRUE` from `is_quantifiable` is
   not permission — it reports what mzLib’s interface offers, not that

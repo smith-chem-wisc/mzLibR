@@ -110,7 +110,7 @@ The failed and warned rows are
 ## Wraps
 
 Wire verb `peptidoform convert`. Generated from the bridge's verb spec
-`peptidoform.convert.yaml` (bridge commit `aea14604d5f7`) by
+`peptidoform.convert.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

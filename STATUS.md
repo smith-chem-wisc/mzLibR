@@ -83,13 +83,11 @@ decoy control non-specific, and **refused to report an MBR number** —
 then wished for “an installable R package that does
 FlashLFQ/IonQuant-style quant end-to-end,” not knowing Arm B existed.
 
-## Two things done differently from the siblings, both deliberate
+## One thing done differently from the siblings, deliberately
 
-- **`max_threads` defaults to 1**, not the wire’s, pyMzLib’s and
-  mzLibRust’s −1. It was chosen when multithreaded runs dropped MBR
-  intensities nondeterministically (mzLib#1111); mzLib#1155 fixed that
-  inside the pinned bridge, so the runtime warning is gone. The default
-  stays until −1 is re-measured on mzLib’s K562 pair.
+(`max_threads` defaulted to 1 here until 2026-10-30; it is now −1, as
+everywhere else. See NEWS.)
+
 - **Docs and man pages are generated from the `#'` blocks** by
   `scripts/build-man.R` (no roxygen2 dependency), and **name parity is
   machine-checked** by `scripts/name-parity.R` against pyMzLib and the

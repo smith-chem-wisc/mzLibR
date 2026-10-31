@@ -111,7 +111,7 @@ paths as this platform writes them
 ## Wraps
 
 Wire verb `sdrf restrict`. Generated from the bridge's verb spec
-`sdrf.restrict.yaml` (bridge commit `aea14604d5f7`) by
+`sdrf.restrict.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

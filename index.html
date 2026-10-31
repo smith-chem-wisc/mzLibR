@@ -192,8 +192,6 @@
 <li>
 <strong>A peptide intensity of <code>0</code> and a protein intensity of <code>NA</code> mean different things.</strong> <code>0</code> is “not measured in this run”; <code>NA</code> is “FlashLFQ could not resolve a number”. <code>NA</code> is the rare outcome (2 proteins) and <code>0</code> the common one (847).</li>
 <li>
-<strong><code>max_threads</code> defaults to 1 here, where pyMzLib and mzLibRust use -1</strong> (every core). The multithreaded nondeterminism that set this default (mzLib#1111) was fixed by mzLib#1155, which the pinned bridge includes; the default stays until -1 is re-measured. See <code><a href="reference/flashlfq_quantify.html">?flashlfq_quantify</a></code>.</li>
-<li>
 <strong><code><a href="reference/readers_identify.html">readers_identify()</a></code> does not validate contents</strong>, and a <code>TRUE</code> from <code>is_quantifiable</code> is not permission — it reports what mzLib’s interface offers, not that the numbers are comparable.</li>
 </ul>
 </div>

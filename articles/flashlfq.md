@@ -170,10 +170,8 @@ and only the roll-up is redone.
   design.
   [`sdrf_design_spectra()`](https://smith-chem-wisc.github.io/mzLibR/reference/sdrf_design_spectra.md)
   builds that from an SDRF.
-- `max_threads` defaults to 1 here and to every core in pyMzLib and
-  mzLibRust;
-  [`?flashlfq_quantify`](https://smith-chem-wisc.github.io/mzLibR/reference/flashlfq_quantify.md)
-  says why.
+- `max_threads` defaults to every core, as in pyMzLib and mzLibRust. The
+  thread count changes the speed, not the answer.
 
 ## What to cite
 

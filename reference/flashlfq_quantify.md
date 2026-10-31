@@ -13,7 +13,7 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
   isotope_ppm_tolerance = 5, integrate = FALSE, match_between_runs = FALSE,
   mbr_ppm_tolerance = 10, mbr_q_value_threshold = 0.05,
   use_shared_peptides_for_protein_quant = FALSE, bayesian_protein_quant = FALSE,
-  use_pep_q_value = FALSE, max_threads = 1, output_directory = NULL, timeout = NULL)
+  use_pep_q_value = FALSE, max_threads = -1, output_directory = NULL, timeout = NULL)
 ```
 
 ## Arguments
@@ -94,16 +94,15 @@ flashlfq_quantify(psms, spectra, normalize = FALSE, ppm_tolerance = 10,
 
 - max_threads:
 
-  Worker threads, or `-1` for one per core. **Defaults to 1 here, where
-  the bridge, pyMzLib and mzLibRust default to -1.**
+  Worker threads, or `-1` for one per core, the default here as in
+  mzLib, the bridge, pyMzLib and mzLibRust.
 
-  One thread is reproducible by construction, and it is what this
-  package has always shipped. The multithreaded nondeterminism that made
-  it the default here (the peptide roll-up dropping MBR intensities,
-  smith-chem-wisc/mzLib#1111) was fixed by mzLib#1155, which the pinned
-  bridge includes, so `-1` is expected to give the same answer faster;
-  that has not yet been re-measured on mzLib's K562 pair, which is why
-  the default has not moved.
+  The thread count changes the speed, not the answer. Multithreaded runs
+  once dropped MBR intensities nondeterministically
+  (smith-chem-wisc/mzLib#1111), which is why this package defaulted to 1
+  until 2026-10-30. mzLib#1155 fixed that, and the pinned bridge
+  includes it: on mzLib's K562 pair, five runs at `-1` and one at `1`
+  gave identical results. On a pair that small, `1` is a little faster.
 
 - output_directory:
 
@@ -176,7 +175,7 @@ is 849; "could not be resolved" is 2.
 ## Wraps
 
 Wire verb `quant flashlfq`. Generated from the bridge's verb spec
-`quant.flashlfq.yaml` (bridge commit `aea14604d5f7`) by
+`quant.flashlfq.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -286,8 +285,8 @@ render the same ones.
   MaxThreads. mzLib resolves it in the engine constructor: -1, or any
   value \>= the core count, becomes (cores - 1); anything that leaves
   \<= 0 becomes 1. parameters.max_threads echoes the RESOLVED value, so
-  it depends on the machine. See caveats for what the thread count does
-  to answers at this pin.
+  it depends on the machine. The answer does not depend on it (see
+  caveats).
 
 - `output_directory` (wire `--out`):
 
@@ -531,14 +530,15 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
   joined as one string, which threw IndexOutOfRangeException and crossed
   as correctness.
 
-- THREADS AT THIS PIN: mzLib#1111 (peptide roll-up nondeterministically
-  dropping MBR intensities at MaxThreads -1, flipping protein groups
-  between null and a number) is fixed by mzLib#1155, which is in the
-  pin: PEP training rows are now built in a fixed order, and its commit
-  reports identical peptides and proteins across runs. The bindings'
-  'set threads to 1 to reproduce' warnings predate the fix. The bridge
-  project has not re-measured the K562 case at -1 on this pin; until it
-  does, 1 remains the conservative choice for published numbers.
+- The thread count does not change the answer. mzLib#1111 (the peptide
+  roll-up dropping MBR intensities nondeterministically at MaxThreads
+  -1) was fixed by mzLib#1155, which builds the PEP training rows in a
+  fixed order; mzLib's TestMbrDeterminism checks the K562 pair at -1 on
+  every PR. Re-measured through the bridge on 2026-10-30 (pyMzLib 0.7.0,
+  mzLib 1.0.596): five runs at -1 and one at 1 gave byte-identical
+  QuantifiedPeaks, Peptides and Proteins.tsv (140 MBR peaks) and
+  identical returned results. On a pair this small, 1 thread was a
+  little faster (about 11 s against 14.5 s).
 
 - mzML only: .raw and .d are rejected up front; convert them first.
 
@@ -584,18 +584,6 @@ The spec records these as open. They are listed rather than hidden:
   a design is (MetaMorpheus's ExperimentalDesign reader lives in
   MetaMorpheus). If mzLib gains one, the bridge should use it and send
   nothing for an omitted field.
-
-- Re-measure the K562 MBR pair at threads -1 on the current bridge
-  (mzLib pin d10017ce; G-flashlfq-stale-caveats). Until then the caveat
-  above states what mzLib#1155 claims, not a bridge measurement. All
-  three bindings already say so: \#1155 fixed it, it is not re-measured,
-  and 1 is the conservative choice (pyMzLib since 0.3.0). When the
-  re-measure passes, delete that sentence in all three.
-
-- Default divergence: the wire, pyMzLib and mzLibRust default threads to
-  -1; mzLibR defaults max_threads to 1. R no longer warns on other
-  values, and keeps 1 until the K562 re-measure above. Once that passes,
-  pick one default for all three (G-flashlfq-stale-caveats).
 
 - flashlfq_small.json is hand-shaped (paths '/abs/...', 4
   identifications), not recorded from a live bridge; a live recording

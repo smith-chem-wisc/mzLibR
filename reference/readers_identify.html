@@ -101,7 +101,7 @@ returns.</p>
     </div>
     <div class="section level2">
     <h2 id="wraps">Wraps<a class="anchor" aria-label="anchor" href="#wraps"></a></h2>
-    <p>Wire verb <code>readers identify</code>. Generated from the bridge's verb spec <code>readers.identify.yaml</code> (bridge commit <code>aea14604d5f7</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
+    <p>Wire verb <code>readers identify</code>. Generated from the bridge's verb spec <code>readers.identify.yaml</code> (bridge commit <code>84c3b984b6b9</code>) by <code>scripts/build-man.R</code>; the spec owns these facts, and all three bindings render the same ones.</p>
 <ul><li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs" class="external-link"><code>FileReader.ReadResultFile</code></a> in <code>mzLib/Readers/FileReader.cs</code> at mzLib <code>23c2490e</code></p></li>
 <li><p><a href="https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/Util/SupportedFileTypes.cs" class="external-link"><code>SupportedFileTypeExtensions.ParseFileType</code></a> in <code>mzLib/Readers/Util/SupportedFileTypes.cs</code> at mzLib <code>23c2490e</code></p></li>
 </ul></div>
@@ -164,7 +164,7 @@ returns.</p>
 
 <ul><li><p>Cheap but not pure: mzLib reads a bare .tsv's first line, a .txt's and a .mztab's first five, a .parquet's column schema and a .d directory's listing to dispatch them. A .parquet mzLib can open and read without the DIA-NN report columns (Precursor.Id, Stripped.Sequence, Run), or bytes that are not Parquet at all, is a usage error, 'Parquet file type not supported' (mzLib #1384). One it cannot open is an I/O error instead (#1478).</p></li>
 <li><p>No software field: mzLib's Software property is Unspecified for everything its factory builds; file_type already names the tool.</p></li>
-<li><p>Many paths: <code>--paths-stdin</code> (newline-delimited paths on stdin) with <code>--threads</code> N (default 1, -1 = one per core; the answer is identical at any value) and <code>--on-error</code> fail|skip answers {file_count, read_count, failed_count, on_error, files}, files[i] being path i's answer in input order with error set when it could not be identified under skip (readers_many_identify.json). There is no table and no <code>--out</code>.</p></li>
+<li><p>Many paths (result.bulk): there is no table and no <code>--out</code>, and no record_count, because nothing is read.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a></h2>
@@ -181,11 +181,6 @@ returns.</p>
     <h2 id="since">Since<a class="anchor" aria-label="anchor" href="#since"></a></h2>
     <p>Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.</p>
     </div>
-    <div class="section level2">
-    <h2 id="not-yet-verified">Not yet verified<a class="anchor" aria-label="anchor" href="#not-yet-verified"></a></h2>
-    <p>The spec records these as open. They are listed rather than hidden:</p>
-<ul><li><p>The <code>--paths-stdin</code> answer is not declared as result.bulk because check_verbs.py requires a record_count there (BULK.md section 2), and the bridge sends none: at pyMzLib v0.2.0 (pkg/bridge/Reading.cs Identify) it is {file_count, read_count, failed_count, on_error, files}, as are IdentifyBatch (Rust) and readers_identify_many (R). All three bindings ship identify_many. Declare result.bulk once the checker allows a table-less bulk verb, or add record_count (0) to the wire.</p></li>
-</ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="readers_identify_many.html">readers_identify_many</a></code>, <code><a href="readers_formats.html">readers_formats</a></code>, <code><a href="readers_read_results.html">readers_read_results</a></code></p></div>

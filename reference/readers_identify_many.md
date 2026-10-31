@@ -23,8 +23,8 @@ readers_identify_many(paths, threads = 1, on_error = "fail", timeout = 60)
 
 - threads:
 
-  Paths identified at once. `1`, the default, or `-1` for one per core.
-  The answer does not depend on it.
+  Paths identified at once, in files. `1`, the default, or `-1` for one
+  per core. The answer does not depend on it.
 
 - on_error:
 
@@ -48,7 +48,7 @@ and `error_message`, which are `NA` for a path that was identified.
 
 Wire verb `readers identify` with `--paths-stdin`. Generated from the
 bridge's verb spec `readers.identify.yaml` (bridge commit
-`aea14604d5f7`) by `scripts/build-man.R`; the spec owns these facts, and
+`84c3b984b6b9`) by `scripts/build-man.R`; the spec owns these facts, and
 all three bindings render the same ones.
 
 - [`FileReader.ReadResultFile`](https://github.com/smith-chem-wisc/mzLib/blob/23c2490e/mzLib/Readers/FileReader.cs)
@@ -59,38 +59,55 @@ all three bindings render the same ones.
 
 ## Parameters: units, ranges and defaults
 
-This verb takes no parameters.
+- `paths` (wire `--paths-stdin`):
+
+  flag; default absent. Identify MANY paths: newline-delimited paths on
+  stdin (blank lines ignored; a repeated path is a usage error).
+  Exclusive with path; offset, limit and out are refused with it.
+
+- `threads`:
+
+  int; in **files**; default `1`; range `>= 1, or -1 for one per core`.
+  Paths identified at once. The answer is identical at any value (files
+  are reported in input order).
+
+- `on_error` (wire `--on-error`):
+
+  string; default `fail`; range `fail | skip`. fail: the first path that
+  cannot be identified stops the batch with its usage or correctness
+  error, the message starting 'Input \<i\> (\<path\>)'. skip: the
+  failure goes in that path's files\[i\].error and the rest are
+  identified. skip with a single path is a usage error.
 
 ## Returned fields
 
 Each field with its type, its unit, and what `NA` means when it is `NA`.
 
-- `path`:
+- `file_count`:
 
-  string; never `NA`. Absolute path identified.
+  int; in **files**; never `NA`. Paths given.
 
-- `file_type`:
+- `read_count`:
 
-  string; never `NA`. The mzLib SupportedFileType.
+  int; in **files**; never `NA`. Paths identified.
 
-- `extension`:
+- `failed_count`:
 
-  string; `NA` when mzLib maps no extension to this type. The extension
-  mzLib dispatched on.
-
-- `reader`:
-
-  string; never `NA`. The mzLib reader class that would parse it.
-
-- `views`:
-
-  string\[\]; never `NA`. The cross-format views it offers; often empty.
-
-- `error`:
-
-  object; `NA` when always, for a single path; in a paths-stdin entry,
-  the path was identified. {kind, type, message} for a path that failed
+  int; in **files**; never `NA`. Paths not identified; non-zero only
   under on-error skip.
+
+- `on_error`:
+
+  string; never `NA`. fail or skip, as requested. `--threads` is
+  deliberately not echoed: the envelope is identical at every thread
+  count.
+
+- `files`:
+
+  object\[\]; never `NA`. One per input, in input order: the single-path
+  answer (path, file_type, extension, reader, views, error). A path not
+  identified has error set and file_type, extension and reader null,
+  views empty.
 
 ## Errors
 
@@ -141,13 +158,8 @@ Each is an R condition carrying the class shown and `mzlib_error`; see
 - No software field: mzLib's Software property is Unspecified for
   everything its factory builds; file_type already names the tool.
 
-- Many paths: `--paths-stdin` (newline-delimited paths on stdin) with
-  `--threads` N (default 1, -1 = one per core; the answer is identical
-  at any value) and `--on-error` fail\|skip answers {file_count,
-  read_count, failed_count, on_error, files}, files\[i\] being path i's
-  answer in input order with error set when it could not be identified
-  under skip (readers_many_identify.json). There is no table and no
-  `--out`.
+- Many paths (result.bulk): there is no table and no `--out`, and no
+  record_count, because nothing is read.
 
 ## Performance
 
@@ -168,19 +180,6 @@ reason it exists: never loop the one-path function over many files.
 ## Since
 
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- The `--paths-stdin` answer is not declared as result.bulk because
-  check_verbs.py requires a record_count there (BULK.md section 2), and
-  the bridge sends none: at pyMzLib v0.2.0 (pkg/bridge/Reading.cs
-  Identify) it is {file_count, read_count, failed_count, on_error,
-  files}, as are IdentifyBatch (Rust) and readers_identify_many (R). All
-  three bindings ship identify_many. Declare result.bulk once the
-  checker allows a table-less bulk verb, or add record_count (0) to the
-  wire.
 
 ## See also
 

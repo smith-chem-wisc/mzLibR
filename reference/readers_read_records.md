@@ -106,7 +106,7 @@ destroy data.
 ## Wraps
 
 Wire verb `readers read-records`. Generated from the bridge's verb spec
-`readers.read-records.yaml` (bridge commit `aea14604d5f7`) by
+`readers.read-records.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

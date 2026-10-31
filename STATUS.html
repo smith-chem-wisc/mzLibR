@@ -99,10 +99,9 @@
 </tr></tbody></table><p>The quant Arm A is the thesis: no installable R tool does FlashLFQ-style MBR, so the ecosystem biologist hand-rolled an XIC engine, found their decoy control non-specific, and <strong>refused to report an MBR number</strong> — then wished for “an installable R package that does FlashLFQ/IonQuant-style quant end-to-end,” not knowing Arm B existed.</p>
 </div>
 <div class="section level2">
-<h2 id="two-things-done-differently-from-the-siblings-both-deliberate">Two things done differently from the siblings, both deliberate<a class="anchor" aria-label="anchor" href="#two-things-done-differently-from-the-siblings-both-deliberate"></a></h2>
+<h2 id="one-thing-done-differently-from-the-siblings-deliberately">One thing done differently from the siblings, deliberately<a class="anchor" aria-label="anchor" href="#one-thing-done-differently-from-the-siblings-deliberately"></a></h2>
+<p>(<code>max_threads</code> defaulted to 1 here until 2026-10-30; it is now −1, as everywhere else. See NEWS.)</p>
 <ul><li>
-<strong><code>max_threads</code> defaults to 1</strong>, not the wire’s, pyMzLib’s and mzLibRust’s −1. It was chosen when multithreaded runs dropped MBR intensities nondeterministically (mzLib#1111); mzLib#1155 fixed that inside the pinned bridge, so the runtime warning is gone. The default stays until −1 is re-measured on mzLib’s K562 pair.</li>
-<li>
 <strong>Docs and man pages are generated from the <code>#'</code> blocks</strong> by <code>scripts/build-man.R</code> (no roxygen2 dependency), and <strong>name parity is machine-checked</strong> by <code>scripts/name-parity.R</code> against pyMzLib and the wire — it exits non-zero on any undeclared difference. <code>docs/name-parity.md</code> currently: none.</li>
 </ul></div>
 <div class="section level2">

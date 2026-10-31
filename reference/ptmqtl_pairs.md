@@ -180,7 +180,7 @@ removed, plus any that apply to this input.
 ## Wraps
 
 Wire verb `ptmqtl pairs`. Generated from the bridge's verb spec
-`ptmqtl.pairs.yaml` (bridge commit `aea14604d5f7`) by
+`ptmqtl.pairs.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

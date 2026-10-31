@@ -55,7 +55,7 @@ all - another process holds it, or you may not read it - is an
 ## Wraps
 
 Wire verb `readers formats`. Generated from the bridge's verb spec
-`readers.formats.yaml` (bridge commit `aea14604d5f7`) by
+`readers.formats.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

@@ -85,7 +85,7 @@ raises.
 ## Wraps
 
 Wire verb `proteins classify-peptides`. Generated from the bridge's verb
-spec `proteins.classify-peptides.yaml` (bridge commit `aea14604d5f7`) by
+spec `proteins.classify-peptides.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 

@@ -53,7 +53,7 @@ and the `caveats` it returns.
 ## Wraps
 
 Wire verb `readers identify`. Generated from the bridge's verb spec
-`readers.identify.yaml` (bridge commit `aea14604d5f7`) by
+`readers.identify.yaml` (bridge commit `84c3b984b6b9`) by
 `scripts/build-man.R`; the spec owns these facts, and all three bindings
 render the same ones.
 
@@ -153,13 +153,8 @@ only from
 - No software field: mzLib's Software property is Unspecified for
   everything its factory builds; file_type already names the tool.
 
-- Many paths: `--paths-stdin` (newline-delimited paths on stdin) with
-  `--threads` N (default 1, -1 = one per core; the answer is identical
-  at any value) and `--on-error` fail\|skip answers {file_count,
-  read_count, failed_count, on_error, files}, files\[i\] being path i's
-  answer in input order with error set when it could not be identified
-  under skip (readers_many_identify.json). There is no table and no
-  `--out`.
+- Many paths (result.bulk): there is no table and no `--out`, and no
+  record_count, because nothing is read.
 
 ## Performance
 
@@ -183,19 +178,6 @@ the thread count stated on the wire.
 ## Since
 
 Wire protocol 1; pyMzLib 0.1.0; mzLibRust 0.1.0; mzLibR 0.1.0.
-
-## Not yet verified
-
-The spec records these as open. They are listed rather than hidden:
-
-- The `--paths-stdin` answer is not declared as result.bulk because
-  check_verbs.py requires a record_count there (BULK.md section 2), and
-  the bridge sends none: at pyMzLib v0.2.0 (pkg/bridge/Reading.cs
-  Identify) it is {file_count, read_count, failed_count, on_error,
-  files}, as are IdentifyBatch (Rust) and readers_identify_many (R). All
-  three bindings ship identify_many. Declare result.bulk once the
-  checker allows a table-less bulk verb, or add record_count (0) to the
-  wire.
 
 ## See also
 
