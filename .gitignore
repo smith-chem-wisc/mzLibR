@@ -12,6 +12,8 @@ src/*.o
 src/*.so
 src/*.dll
 
-# pkgdown output, and the pyMzLib checkout CI's docs job compares names against
+# pkgdown output, the pyMzLib checkout CI's docs job compares names against, and the one
+# mzLib test file the live job reads
 _site/
 .pymzlib/
+.mzlib/

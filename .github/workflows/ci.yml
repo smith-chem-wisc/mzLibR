@@ -223,6 +223,25 @@ jobs:
           ref: ${{ steps.pymzlib.outputs.ref }}
           path: .pymzlib
           sparse-checkout: pkg/python/tests/fixtures
+      # One SDRF input is not among pyMzLib's fixtures: PXD000070.sdrf.tsv sits in mzLib's own test
+      # folder, where pyMzLib's matching test reads it. Take that one file from mzLib at the commit
+      # that pyMzLib ref pins (code/mzlib.pin), so the recorded `sdrf read` answer is checked against
+      # the bridge instead of skipping.
+      - name: Which mzLib that pyMzLib pins
+        id: mzlib
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pin=$(gh api "repos/smith-chem-wisc/pyMzLib/contents/code/mzlib.pin?ref=${{ steps.pymzlib.outputs.ref }}" \
+            -H 'Accept: application/vnd.github.raw' | tr -d '[:space:]')
+          echo "pin=$pin" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: smith-chem-wisc/mzLib
+          ref: ${{ steps.mzlib.outputs.pin }}
+          path: .mzlib
+          sparse-checkout: mzLib/Test/FileReadingTests/ExternalFileTypes/PXD000070.sdrf.tsv
+          sparse-checkout-cone-mode: false
       # limma and metafor, so the stats canaries also compare against them as computed here.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -233,6 +252,7 @@ jobs:
           MZLIB_BRIDGE: ${{ github.workspace }}/_dotnet/linux-x64/mzlib-bridge
           MZLIB_PROTEINS_FILES: ${{ github.workspace }}/.pymzlib/pkg/python/tests/fixtures/proteins
           MZLIBR_SDRF_FIXTURES: ${{ github.workspace }}/.pymzlib/pkg/python/tests/fixtures
+          MZLIB_TEST_FILES: ${{ github.workspace }}/.mzlib/mzLib/Test
         run: |
           R CMD INSTALL .
           Rscript tests/run-tests.R
